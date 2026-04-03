@@ -435,12 +435,12 @@ export class NonInjectedItemListLayoutContent<
   }
 
   renderNoItems() {
-    if (this.failedToLoad) {
-      return <NoItems>{this.props.failedToLoadMessage}</NoItems>;
+    if (!this.props.getIsReady() || this.props.store.isLoading) {
+      return <Spinner center data-testid={this.props.spinnerTestId} />;
     }
 
-    if (!this.props.getIsReady()) {
-      return <Spinner center data-testid={this.props.spinnerTestId} />;
+    if (this.failedToLoad) {
+      return <NoItems>{this.props.failedToLoadMessage}</NoItems>;
     }
 
     if (this.props.getFilters().length > 0) {

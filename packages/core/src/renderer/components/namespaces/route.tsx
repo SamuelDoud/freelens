@@ -56,6 +56,9 @@ const NonInjectedNamespacesRoute = ({
         get isLoaded() {
           return namespaceStore.isLoaded;
         },
+        get isLoading() {
+          return namespaceStore.isLoading;
+        },
         get selectedItems() {
           return namespaceStore.selectedItems;
         },

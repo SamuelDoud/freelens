@@ -85,6 +85,7 @@ class NonInjectedHelmCharts extends Component<Dependencies> {
             get isLoaded() {
               return !charts.pending.get();
             },
+            isLoading: false,
             failedLoading: false,
             getTotalCount: () => charts.value.get().length,
             isSelected: (item) => item === selectedChart,

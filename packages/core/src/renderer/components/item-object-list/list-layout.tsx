@@ -25,6 +25,8 @@ import { FilterType } from "./page-filters/store";
 import pageFiltersStoreInjectable from "./page-filters/store.injectable";
 import itemListLayoutStorageInjectable from "./storage.injectable";
 
+const EMPTY_ROW_PROPS = {} as const;
+
 import type { ItemObject, TableCellProps } from "@freelensapp/list-layout";
 import type { IClassName, SingleOrMany, StrictReactNode } from "@freelensapp/utilities";
 
@@ -59,6 +61,7 @@ function normalizeText(value: Primitive) {
 
 export type ItemListStore<I extends ItemObject, PreLoadStores extends boolean> = {
   readonly isLoaded: boolean;
+  readonly isLoading: boolean;
   readonly failedLoading: boolean;
   getTotalCount: () => number;
   isSelected: (item: I) => boolean;
@@ -164,7 +167,7 @@ const defaultProps: Partial<ItemListLayoutProps<ItemObject, true>> = {
   hasDetailsView: true,
   onDetails: noop,
   virtual: true,
-  customizeTableRowProps: () => ({}),
+  customizeTableRowProps: () => EMPTY_ROW_PROPS,
   failedToLoadMessage: "Failed to load items",
 };
 
