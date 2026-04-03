@@ -12,6 +12,7 @@ import type { Deployment } from "@freelensapp/kube-object";
 
 import type { KubeObjectStoreDependencies, KubeObjectStoreOptions } from "../../../common/k8s-api/kube-object.store";
 import type { PodStore } from "../workloads-pods/store";
+import type { ReplicaSetStore } from "../workloads-replicasets/store";
 
 // This needs to be disables because of https://github.com/microsoft/TypeScript/issues/15300
 export type DeploymentStatuses = {
@@ -22,6 +23,7 @@ export type DeploymentStatuses = {
 
 export interface DeploymentStoreDependencies extends KubeObjectStoreDependencies {
   readonly podStore: PodStore;
+  readonly replicaSetStore: ReplicaSetStore;
 }
 
 export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> {
@@ -61,8 +63,10 @@ export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> 
   }
 
   getChildPods(deployment: Deployment) {
-    return this.dependencies.podStore
-      .getByLabel(deployment.getTemplateLabels())
-      .filter((pod) => pod.getNs() === deployment.getNs());
+    // Deployment -> ReplicaSets (via owner index) -> Pods (via owner index)
+    // This replaces the O(pods) getByLabel scan with two O(1) indexed lookups.
+    const replicaSets = this.dependencies.replicaSetStore.getReplicaSetsByOwner(deployment);
+
+    return replicaSets.flatMap((rs) => this.dependencies.podStore.getPodsByOwnerId(rs.getId()));
   }
 }
