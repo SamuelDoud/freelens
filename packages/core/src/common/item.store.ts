@@ -139,11 +139,9 @@ export abstract class ItemStore<Item extends ItemObject> {
     const item = await Promise.resolve(request()).catch(() => null);
 
     if (item) {
-      const existingItem = this.items.find((el) => el.getId() === item.getId());
+      const index = this.items.findIndex((el) => el.getId() === item.getId());
 
-      if (existingItem) {
-        const index = this.items.findIndex((item) => item === existingItem);
-
+      if (index >= 0) {
         this.items.splice(index, 1, item);
       } else {
         let items = [...this.items, item];
