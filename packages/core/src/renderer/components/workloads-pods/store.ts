@@ -56,12 +56,7 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
   }
 
   getStatuses(pods: Pod[]) {
-    return countBy(
-      pods
-        .map((pod) => pod.getStatus())
-        .sort()
-        .reverse(),
-    );
+    return countBy(pods.map((pod) => pod.getStatus()));
   }
 
   getPodKubeMetrics(pod: Pod) {
