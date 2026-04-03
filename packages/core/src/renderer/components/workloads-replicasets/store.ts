@@ -6,7 +6,7 @@
 
 import { PodStatusPhase } from "@freelensapp/kube-object";
 import { computed } from "mobx";
-import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
+import { buildOwnerIndex, KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 
 import type { ReplicaSetApi } from "@freelensapp/kube-api";
 import type { Deployment, ReplicaSet } from "@freelensapp/kube-object";
@@ -53,22 +53,7 @@ export class ReplicaSetStore extends KubeObjectStore<ReplicaSet, ReplicaSetApi> 
   }
 
   @computed private get replicaSetsByOwnerId(): Map<string, ReplicaSet[]> {
-    const map = new Map<string, ReplicaSet[]>();
-
-    for (const rs of this.items) {
-      for (const ref of rs.metadata.ownerReferences ?? []) {
-        let list = map.get(ref.uid);
-
-        if (!list) {
-          list = [];
-          map.set(ref.uid, list);
-        }
-
-        list.push(rs);
-      }
-    }
-
-    return map;
+    return buildOwnerIndex(this.items);
   }
 
   getReplicaSetsByOwner(deployment: Deployment) {

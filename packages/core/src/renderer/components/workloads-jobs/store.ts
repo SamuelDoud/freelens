@@ -6,7 +6,7 @@
 
 import { PodStatusPhase } from "@freelensapp/kube-object";
 import { computed } from "mobx";
-import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
+import { buildOwnerIndex, KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 
 import type { JobApi } from "@freelensapp/kube-api";
 import type { CronJob, Job, Pod } from "@freelensapp/kube-object";
@@ -35,22 +35,7 @@ export class JobStore extends KubeObjectStore<Job, JobApi> {
   }
 
   @computed private get jobsByOwnerId(): Map<string, Job[]> {
-    const map = new Map<string, Job[]>();
-
-    for (const job of this.items) {
-      for (const ref of job.metadata.ownerReferences ?? []) {
-        let list = map.get(ref.uid);
-
-        if (!list) {
-          list = [];
-          map.set(ref.uid, list);
-        }
-
-        list.push(job);
-      }
-    }
-
-    return map;
+    return buildOwnerIndex(this.items);
   }
 
   getJobsByOwner(cronJob: CronJob) {

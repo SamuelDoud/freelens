@@ -289,6 +289,16 @@ export class NonInjectedItemListLayoutContent<
     return flexGrow ? parseFloat(flexGrow) : 1;
   }
 
+  @computed get itemsById(): Map<string, Item> {
+    const map = new Map<string, Item>();
+
+    for (const item of this.props.getItems()) {
+      map.set(item.getId(), item);
+    }
+
+    return map;
+  }
+
   @computed get failedToLoad() {
     return this.props.store.failedLoading;
   }
@@ -364,7 +374,7 @@ export class NonInjectedItemListLayoutContent<
       <div key={uid}>
         <Observer>
           {() => {
-            const item = this.props.getItems().find((item) => item.getId() === uid);
+            const item = this.itemsById.get(uid);
 
             if (!item) return null;
 
