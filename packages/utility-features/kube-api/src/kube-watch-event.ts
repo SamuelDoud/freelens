@@ -12,6 +12,10 @@ export type IKubeWatchEvent<T> =
       readonly object: T;
     }
   | {
+      readonly type: "BOOKMARK";
+      readonly object: T;
+    }
+  | {
       readonly type: "ERROR";
       readonly object?: KubeStatusData;
     };

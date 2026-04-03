@@ -311,9 +311,13 @@ export class KubeObjectStore<
 
       return items;
     } catch (error) {
-      console.warn("[KubeObjectStore] loadAll failed", this.api.apiBase, error);
-      this.resetOnError(error);
-      this.failedLoading = true;
+      // Aborts are intentional cancellations (e.g. namespace switch) — don't
+      // reset the store or mark as failed, since a new load is already in flight.
+      if (!this.isAbortError(error)) {
+        console.warn("[KubeObjectStore] loadAll failed", this.api.apiBase, error);
+        this.resetOnError(error);
+        this.failedLoading = true;
+      }
     } finally {
       this.isLoading = false;
     }
@@ -353,8 +357,12 @@ export class KubeObjectStore<
     return items;
   }
 
+  private isAbortError(error: unknown): boolean {
+    return (error instanceof DOMException || error instanceof Error) && (error as Error).name === "AbortError";
+  }
+
   protected resetOnError(error: any) {
-    if (error) this.reset();
+    if (error && !this.isAbortError(error)) this.reset();
   }
 
   protected async loadItem(params: { name: string; namespace?: string }): Promise<K | null> {
@@ -585,8 +593,9 @@ export class KubeObjectStore<
 
   @action
   protected updateFromEventsBuffer() {
-    const items = this.getItems();
-
+    // Mutate this.items directly instead of calling items.replace() so that
+    // MobX only notifies observers of the specific indices that changed,
+    // avoiding a full cascade re-render of every visible row.
     for (const event of this.eventsBuffer.clear()) {
       if (event.type === "ERROR") {
         continue;
@@ -599,31 +608,27 @@ export class KubeObjectStore<
           this.dependencies.logger.warn("[KUBE-STORE]: watch event did not have defined .metadata.uid, skipping", {
             event,
           });
-          // Other parts of the code will break if this happens
           continue;
         }
 
-        const index = items.findIndex((item) => item.getId() === object.metadata.uid);
-        const item = items[index];
+        const index = this.items.findIndex((item) => item.getId() === object.metadata.uid);
 
         switch (type) {
           case "ADDED":
-
-          // fallthrough
           case "MODIFIED": {
             const newItem = new this.api.objectConstructor(object);
 
-            if (!item) {
-              items.push(newItem);
+            if (index < 0) {
+              this.items.push(newItem);
             } else {
-              items[index] = newItem;
+              this.items[index] = newItem;
             }
 
             break;
           }
           case "DELETED":
-            if (item) {
-              items.splice(index, 1);
+            if (index >= 0) {
+              this.items.splice(index, 1);
             }
             break;
         }
@@ -632,7 +637,9 @@ export class KubeObjectStore<
       }
     }
 
-    // update items
-    this.items.replace(this.sortItems(items.slice(-this.bufferSize)));
+    // Trim to buffer size if needed
+    if (this.items.length > this.bufferSize) {
+      this.items.splice(0, this.items.length - this.bufferSize);
+    }
   }
 }

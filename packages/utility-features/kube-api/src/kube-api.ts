@@ -130,6 +130,7 @@ export interface KubeApiQueryParams {
   continue?: string; // might be used with ?limit from second request
   labelSelector?: string | string[]; // restrict list of objects by their labels, e.g. labelSelector: ["label=value"]
   fieldSelector?: string | string[]; // restrict list of objects by their fields, e.g. fieldSelector: "field=name"
+  allowWatchBookmarks?: boolean; // receive BOOKMARK events to keep resourceVersion fresh
 }
 
 export const defaultKubeApiPageSize = 500;
@@ -898,6 +899,7 @@ export class KubeApi<
     return this.formatUrlForListing(namespace, {
       watch: 1,
       resourceVersion: this.getResourceVersion(namespace),
+      allowWatchBookmarks: true,
       ...query,
     });
   }
@@ -1013,6 +1015,13 @@ export class KubeApi<
               return callback(null, new KubeStatus(event.object));
             }
 
+            // BOOKMARK events only carry a resourceVersion update — don't forward to store
+            if (event.type === "BOOKMARK") {
+              this.modifyWatchEvent(event);
+
+              return;
+            }
+
             this.modifyWatchEvent(event);
             callback(event, null);
           } catch (ignore) {
@@ -1037,11 +1046,14 @@ export class KubeApi<
       return;
     }
 
-    this.ensureMetadataSelfLink(event.object.metadata);
-
     const { namespace, resourceVersion } = event.object.metadata;
 
     assert(resourceVersion, "watch events failed to return resourceVersion from kube api");
+
+    // BOOKMARK events have minimal metadata (no name), skip selfLink generation
+    if (event.type !== "BOOKMARK") {
+      this.ensureMetadataSelfLink(event.object.metadata);
+    }
 
     this.setResourceVersion(namespace, resourceVersion);
     this.setResourceVersion("", resourceVersion);
