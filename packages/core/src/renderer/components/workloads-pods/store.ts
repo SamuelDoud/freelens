@@ -6,8 +6,9 @@
 
 import { cpuUnitsToNumber, unitsToBytes } from "@freelensapp/utilities";
 import countBy from "lodash/countBy";
-import { observable } from "mobx";
-import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
+import { computed, observable } from "mobx";
+import { buildOwnerIndex, KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
+import { PERF_DEBUG } from "../../../common/utils/perf-debug";
 
 import type { PodApi, PodMetricsApi } from "@freelensapp/kube-api";
 import type { KubeObject, NamespaceScopedMetadata, Pod, PodMetrics } from "@freelensapp/kube-object";
@@ -27,34 +28,58 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
     super(dependencies, api, opts);
   }
 
-  readonly kubeMetrics = observable.array<PodMetrics>([]);
+  readonly kubeMetrics = observable.array<PodMetrics>([], { deep: false });
+  private metricsLoadInFlight = false;
 
-  @computed private get podsByOwnerId(): Map<string, Pod[]> {
-    const map = new Map<string, Pod[]>();
+  @computed private get kubeMetricsIndex(): Map<string, PodMetrics> {
+    const start = PERF_DEBUG ? performance.now() : 0;
+    const map = new Map<string, PodMetrics>();
 
-    for (const pod of this.items) {
-      for (const ref of pod.metadata.ownerReferences ?? []) {
-        let pods = map.get(ref.uid);
-
-        if (!pods) {
-          pods = [];
-          map.set(ref.uid, pods);
-        }
-
-        pods.push(pod);
-      }
+    for (const metric of this.kubeMetrics) {
+      map.set(`${metric.getNs()}/${metric.getName()}`, metric);
     }
+
+    if (PERF_DEBUG)
+      console.debug(
+        `[PERF] kubeMetricsIndex: ${map.size} metrics indexed in ${(performance.now() - start).toFixed(1)}ms`,
+      );
 
     return map;
   }
 
-  async loadKubeMetrics(namespace?: string) {
-    try {
-      const metrics = await this.dependencies.podMetricsApi.list({ namespace });
+  @computed private get podsByOwnerId(): Map<string, Pod[]> {
+    return buildOwnerIndex(this.items);
+  }
 
-      this.kubeMetrics.replace(metrics ?? []);
+  async loadKubeMetrics(namespace?: string) {
+    if (this.metricsLoadInFlight) return;
+    this.metricsLoadInFlight = true;
+    const start = PERF_DEBUG ? performance.now() : 0;
+
+    try {
+      // Scope to context namespaces instead of fetching all namespaces
+      const namespaces = namespace ? [namespace] : this.dependencies.context.contextNamespaces;
+
+      const results = await Promise.allSettled(
+        namespaces.map((ns) => this.dependencies.podMetricsApi.list({ namespace: ns })),
+      );
+      const allMetrics: PodMetrics[] = [];
+
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value) {
+          allMetrics.push(...result.value);
+        }
+      }
+
+      this.kubeMetrics.replace(allMetrics);
+      if (PERF_DEBUG)
+        console.debug(
+          `[PERF] loadKubeMetrics: ${allMetrics.length} metrics from ${namespaces.length} namespaces in ${(performance.now() - start).toFixed(0)}ms`,
+        );
     } catch (error) {
       console.warn("loadKubeMetrics failed", error);
+    } finally {
+      this.metricsLoadInFlight = false;
     }
   }
 
@@ -134,9 +159,7 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
   getPodKubeMetrics(pod: Pod) {
     const containers = pod.getContainers();
     const empty = { cpu: 0, memory: 0 };
-    const metrics = this.kubeMetrics?.find((metric) => {
-      return [metric.getName() === pod.getName(), metric.getNs() === pod.getNs()].every((v) => v);
-    });
+    const metrics = this.kubeMetricsIndex.get(`${pod.getNs()}/${pod.getName()}`);
 
     if (!metrics || !metrics.containers || !containers) return { cpu: NaN, memory: NaN };
 
