@@ -9,6 +9,7 @@
 import openShellSessionInjectable from "./create-shell-session.injectable";
 import { registerInjectables as registerLocalShellSessionInjectables } from "./local-shell-session/register-injectables";
 import { registerInjectables as registerNodeShellSessionInjectables } from "./node-shell-session/register-injectables";
+import openExternalTerminalInjectable from "./open-external-terminal.injectable";
 import shellSessionProcessesInjectable from "./processes.injectable";
 import { registerInjectables as registerShellEnvModifierInjectables } from "./shell-env-modifier/register-injectables";
 import shellSessionEnvsInjectable from "./shell-envs.injectable";
@@ -49,6 +50,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerShellEnvModifierInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(openExternalTerminalInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
