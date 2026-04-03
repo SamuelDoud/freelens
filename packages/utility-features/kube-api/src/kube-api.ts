@@ -629,22 +629,63 @@ export class KubeApi<
   async list(
     { namespace = "", reqInit }: KubeApiListOptions = {},
     query?: KubeApiQueryParams,
+    onPage?: (items: Object[]) => void,
   ): Promise<Object[] | null> {
     await this.checkPreferredVersion();
 
     const url = this.formatUrlForListing(namespace);
-    const res = await this.request.get(url, { query }, reqInit);
-    const parsed = this.parseResponse(res, namespace);
 
-    if (Array.isArray(parsed)) {
-      return parsed;
+    // When caller specifies an explicit limit (e.g. refreshResourceVersion uses limit:1),
+    // use a single request without pagination to respect the caller's intent.
+    if (query?.limit) {
+      const res = await this.request.get(url, { query }, reqInit);
+      const parsed = this.parseResponse(res, namespace);
+
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+
+      if (!parsed) {
+        return null;
+      }
+
+      throw new Error(`GET multiple request to ${url} returned not an array: ${JSON.stringify(parsed)}`);
     }
 
-    if (!parsed) {
-      return null;
-    }
+    // Paginate in chunks of 500, parsing each page individually so that
+    // the onPage callback can progressively render items as they arrive.
+    const pageSize = 500;
+    const allItems: Object[] = [];
+    let continueToken: string | undefined;
 
-    throw new Error(`GET multiple request to ${url} returned not an array: ${JSON.stringify(parsed)}`);
+    do {
+      // Check for abort between pages
+      if (reqInit?.signal?.aborted) {
+        throw new DOMException("The operation was aborted", "AbortError");
+      }
+
+      const paginatedQuery: KubeApiQueryParams = {
+        ...query,
+        limit: pageSize,
+        ...(continueToken ? { continue: continueToken } : {}),
+      };
+
+      const pageRes = await this.request.get(url, { query: paginatedQuery }, reqInit);
+      const pageParsed = this.parseResponse(pageRes, namespace);
+
+      if (Array.isArray(pageParsed)) {
+        allItems.push(...pageParsed);
+        onPage?.(allItems);
+      } else if (!pageParsed) {
+        return allItems.length > 0 ? allItems : null;
+      } else {
+        throw new Error(`GET multiple request to ${url} returned not an array: ${JSON.stringify(pageParsed)}`);
+      }
+
+      continueToken = (pageRes?.metadata as Record<string, unknown>)?.continue as string | undefined;
+    } while (continueToken);
+
+    return allItems;
   }
 
   async get(desc: ResourceDescriptor, query?: KubeApiQueryParams): Promise<Object | null> {

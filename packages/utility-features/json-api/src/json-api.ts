@@ -245,13 +245,13 @@ export class JsonApi<Data = JsonApiData, Params extends JsonApiParams<Data> = Js
 
     if (status >= 200 && status < 300) {
       this.onData.emit(data, res);
-      this.writeLog({ ...log, data });
+      this.writeLog(log);
 
       return data;
     }
 
     if (log.method === "GET" && res.status === 403) {
-      this.writeLog({ ...log, error: data });
+      this.dependencies.logger.debug(`[JSON-API] request ${log.method} ${log.reqUrl} → 403 Forbidden`);
 
       throw data;
     }
@@ -259,7 +259,7 @@ export class JsonApi<Data = JsonApiData, Params extends JsonApiParams<Data> = Js
     const error = new JsonApiErrorParsed(data as JsonApiError, this.parseError(data, res));
 
     this.onError.emit(error, res);
-    this.writeLog({ ...log, error });
+    this.dependencies.logger.debug(`[JSON-API] request ${log.method} ${log.reqUrl} → ${res.status} ${error}`);
 
     throw error;
   }
@@ -287,8 +287,6 @@ export class JsonApi<Data = JsonApiData, Params extends JsonApiParams<Data> = Js
   }
 
   protected writeLog(log: JsonApiLog) {
-    const { method, reqUrl, ...params } = log;
-
-    this.dependencies.logger.debug(`[JSON-API] request ${method} ${reqUrl}`, params);
+    this.dependencies.logger.debug(`[JSON-API] request ${log.method} ${log.reqUrl}`);
   }
 }

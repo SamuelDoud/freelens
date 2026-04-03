@@ -207,7 +207,12 @@ export class KubeObjectStore<
         this.loadedNamespaces.set([]);
       }
 
-      const res = this.api.list({ reqInit }, this.query);
+      // Progressively render items as each page arrives from the paginated API
+      const onPage = action((items: K[]) => {
+        this.items.replace(this.sortItems(this.filterItemsOnLoad(items)));
+      });
+
+      const res = this.api.list({ reqInit }, this.query, onPage);
 
       if (onLoadFailure) {
         try {
