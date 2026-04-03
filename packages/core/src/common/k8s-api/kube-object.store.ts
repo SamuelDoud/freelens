@@ -83,6 +83,7 @@ export interface StatusProvider<K> {
 export interface KubeObjectStoreOptions {
   limit?: number;
   bufferSize?: number;
+  listPageSize?: number;
 }
 
 export type KubeApiDataFrom<K extends KubeObject, A> =
@@ -100,8 +101,12 @@ export class KubeObjectStore<
   A extends KubeApi<K, D> = KubeApi<K, KubeJsonApiDataFor<K>>,
   D extends KubeJsonApiDataFor<K> = KubeApiDataFrom<K, A>,
 > extends ItemStore<K> {
+  /** Global default page size for paginated API list calls. Set from user preferences. */
+  static defaultListPageSize: number | undefined;
+
   public readonly limit: number | undefined;
   public readonly bufferSize: number;
+  public readonly listPageSize: number | undefined;
 
   private readonly loadedNamespaces = observable.box<string[]>();
 
@@ -113,6 +118,7 @@ export class KubeObjectStore<
     super();
     this.limit = opts?.limit;
     this.bufferSize = opts?.bufferSize ?? Infinity;
+    this.listPageSize = opts?.listPageSize;
 
     makeObservable(this);
     autoBind(this);
@@ -201,6 +207,7 @@ export class KubeObjectStore<
 
   protected async loadItems({ namespaces, reqInit, onLoadFailure }: KubeObjectStoreLoadingParams): Promise<K[]> {
     const isLoadingAll = this.dependencies.context.isLoadingAll(namespaces);
+    const effectivePageSize = this.listPageSize ?? KubeObjectStore.defaultListPageSize;
 
     if (!this.api.isNamespaced || isLoadingAll) {
       if (this.api.isNamespaced) {
@@ -212,7 +219,7 @@ export class KubeObjectStore<
         this.items.replace(this.sortItems(this.filterItemsOnLoad(items)));
       });
 
-      const res = this.api.list({ reqInit }, this.query, onPage);
+      const res = this.api.list({ reqInit, pageSize: effectivePageSize }, this.query, onPage);
 
       if (onLoadFailure) {
         try {
@@ -234,7 +241,7 @@ export class KubeObjectStore<
     this.loadedNamespaces.set(namespaces);
 
     const results = await Promise.allSettled(
-      namespaces.map((namespace) => this.api.list({ namespace, reqInit }, this.query)),
+      namespaces.map((namespace) => this.api.list({ namespace, reqInit, pageSize: effectivePageSize }, this.query)),
     );
     const res: K[] = [];
 

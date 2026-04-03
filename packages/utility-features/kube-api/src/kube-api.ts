@@ -124,9 +124,12 @@ export interface KubeApiQueryParams {
   fieldSelector?: string | string[]; // restrict list of objects by their fields, e.g. fieldSelector: "field=name"
 }
 
+export const defaultKubeApiPageSize = 500;
+
 export interface KubeApiListOptions {
   namespace?: string;
   reqInit?: RequestInit;
+  pageSize?: number;
 }
 
 export interface IKubePreferredVersion {
@@ -474,21 +477,32 @@ export class KubeApi<
     throw new Error(`Can't find working API for the Kubernetes resource ${this.apiResource}`);
   }
 
-  protected async checkPreferredVersion() {
+  private versionCheckPromise?: Promise<void>;
+
+  protected checkPreferredVersion(): Promise<void> {
     if (!this.doCheckPreferredVersion && (this.fallbackApiBases || this.allowedUsableVersions)) {
       throw new Error(
         "checkPreferredVersion must be enabled if either fallbackApiBases or allowedUsableVersions are set in KubeApi",
       );
     }
 
-    if (this.doCheckPreferredVersion && this.apiVersionPreferred === undefined) {
-      const { apiPrefix, apiGroup, apiVersionPreferred } = await this.getLatestApiPrefixGroup();
-
-      this.apiPrefix = apiPrefix;
-      this.apiGroup = apiGroup;
-      this.apiVersionPreferred = apiVersionPreferred;
-      this.apiBase = this.computeApiBase();
+    if (!this.doCheckPreferredVersion || this.apiVersionPreferred !== undefined) {
+      return Promise.resolve();
     }
+
+    // Deduplicate concurrent calls — share the same promise so that
+    // parallel list()/get() calls during cluster connect don't each
+    // fire independent API discovery requests.
+    return (this.versionCheckPromise ??= this.resolvePreferredVersion());
+  }
+
+  private async resolvePreferredVersion(): Promise<void> {
+    const { apiPrefix, apiGroup, apiVersionPreferred } = await this.getLatestApiPrefixGroup();
+
+    this.apiPrefix = apiPrefix;
+    this.apiGroup = apiGroup;
+    this.apiVersionPreferred = apiVersionPreferred;
+    this.apiBase = this.computeApiBase();
   }
 
   setResourceVersion(namespace = "", newVersion: string) {
@@ -627,7 +641,7 @@ export class KubeApi<
   }
 
   async list(
-    { namespace = "", reqInit }: KubeApiListOptions = {},
+    { namespace = "", reqInit, pageSize: customPageSize }: KubeApiListOptions = {},
     query?: KubeApiQueryParams,
     onPage?: (items: Object[]) => void,
   ): Promise<Object[] | null> {
@@ -652,9 +666,9 @@ export class KubeApi<
       throw new Error(`GET multiple request to ${url} returned not an array: ${JSON.stringify(parsed)}`);
     }
 
-    // Paginate in chunks of 500, parsing each page individually so that
+    // Paginate in chunks, parsing each page individually so that
     // the onPage callback can progressively render items as they arrive.
-    const pageSize = 500;
+    const pageSize = customPageSize ?? defaultKubeApiPageSize;
     const allItems: Object[] = [];
     let continueToken: string | undefined;
 

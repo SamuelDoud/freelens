@@ -19,6 +19,7 @@ import setupKubernetesClusterContextMenuOpenInjectable from "./setup-kubernetes-
 import setupLensProxyCertificateInjectable from "./setup-lens-proxy-certificate.injectable";
 import setupRootMacClassnameInjectable from "./setup-root-mac-class.injectable";
 import setupWeblinkContextMenuOpenInjectable from "./setup-weblink-context-menu-open.injectable";
+import syncListPageSizePreferenceInjectable from "./sync-list-page-size-preference.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
@@ -85,6 +86,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(setupWeblinkContextMenuOpenInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(syncListPageSizePreferenceInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

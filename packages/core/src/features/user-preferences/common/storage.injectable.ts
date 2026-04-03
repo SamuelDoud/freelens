@@ -59,6 +59,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
         state.terminalCopyOnSelect = descriptors.terminalCopyOnSelect.fromStore(preferences.terminalCopyOnSelect);
         state.terminalTheme = descriptors.terminalTheme.fromStore(preferences.terminalTheme);
         state.clusterPageMenuOrder = descriptors.clusterPageMenuOrder.fromStore(preferences.clusterPageMenuOrder);
+        state.listPageSize = descriptors.listPageSize.fromStore(preferences.listPageSize);
       }),
       toJSON: () =>
         toJS({
@@ -84,6 +85,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
             terminalCopyOnSelect: descriptors.terminalCopyOnSelect.toStore(state.terminalCopyOnSelect),
             terminalTheme: descriptors.terminalTheme.toStore(state.terminalTheme),
             clusterPageMenuOrder: descriptors.clusterPageMenuOrder.toStore(state.clusterPageMenuOrder),
+            listPageSize: descriptors.listPageSize.toStore(state.listPageSize),
           },
         }),
     });

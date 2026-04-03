@@ -72,8 +72,8 @@ export interface JsonApiConfig {
   getRequestOptions?: GetRequestOptions;
 }
 
-const httpAgent = new HttpAgent({ keepAlive: true });
-const httpsAgent = new HttpsAgent({ keepAlive: true });
+const httpAgent = new HttpAgent({ keepAlive: true, maxSockets: 16, maxFreeSockets: 8 });
+const httpsAgent = new HttpsAgent({ keepAlive: true, maxSockets: 16, maxFreeSockets: 8 });
 
 export type QueryParam =
   | string

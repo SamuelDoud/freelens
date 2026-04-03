@@ -4,6 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { defaultKubeApiPageSize } from "@freelensapp/kube-api";
 import { getInjectable } from "@ogre-tools/injectable";
 import { merge } from "lodash";
 import { observable } from "mobx";
@@ -149,6 +150,14 @@ const userPreferenceDescriptorsInjectable = getInjectable({
       clusterPageMenuOrder: getPreferenceDescriptor<ClusterPageMenuOrder | undefined>({
         fromStore: (val) => val,
         toStore: (val) => val,
+      }),
+      listPageSize: getPreferenceDescriptor<number>({
+        fromStore: (val) => {
+          const n = typeof val === "number" && Number.isFinite(val) ? Math.floor(val) : defaultKubeApiPageSize;
+
+          return Math.max(1, n);
+        },
+        toStore: (val) => (val === defaultKubeApiPageSize ? undefined : val),
       }),
     } as const;
   },
