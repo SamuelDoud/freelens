@@ -20,7 +20,7 @@ const main: webpack.Configuration = {
     path: buildDir,
   },
   optimization: {
-    minimize: false,
+    minimize: !isDevelopment,
   },
   resolve: {
     extensions: [".json", ".js", ".ts"],
