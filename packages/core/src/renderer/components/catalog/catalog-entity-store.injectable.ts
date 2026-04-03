@@ -64,6 +64,7 @@ const catalogEntityStoreInjectable = getInjectable({
         ),
       onRun: (entity) => catalogEntityRegistry.onRun(entity),
       failedLoading: false,
+      isLoading: false,
       getTotalCount: () => entities.get().length,
       isLoaded: true,
       isSelected: (item) => item.getId() === selectedCatalogEntityParam.get(),

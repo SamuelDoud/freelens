@@ -11,7 +11,7 @@ import "./virtual-list.scss";
 import { cssNames, noop } from "@freelensapp/utilities";
 import isEqual from "lodash/isEqual";
 import { observer } from "mobx-react";
-import React, { createRef, forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { VariableSizeList } from "react-window";
 
@@ -59,7 +59,7 @@ function VirtualListInner<T extends { getId(): string } | string>({
   forwardedRef,
 }: VirtualListProps<T> & { forwardedRef?: ForwardedRef<VirtualListRef> }) {
   const [overscanCount, setOverscanCount] = useState(initialOffset);
-  const listRef = createRef<VariableSizeList>();
+  const listRef = useRef<VariableSizeList>(null);
   const prevItems = useRef(items);
   const prevRowHeights = useRef(rowHeights);
   const scrollToSelectedItem = useCallback(() => {
@@ -72,7 +72,7 @@ function VirtualListInner<T extends { getId(): string } | string>({
     if (index >= 0) {
       listRef.current?.scrollToItem(index, "smart");
     }
-  }, [selectedItemId, [items]]);
+  }, [selectedItemId, items]);
   const getItemSize = (index: number) => rowHeights[index];
 
   useImperativeHandle(forwardedRef, () => ({
@@ -83,7 +83,7 @@ function VirtualListInner<T extends { getId(): string } | string>({
   useEffect(() => {
     scrollToSelectedItem();
     setOverscanCount(readyOffset);
-  });
+  }, [selectedItemId, items, readyOffset]);
 
   useEffect(() => {
     try {
@@ -96,6 +96,8 @@ function VirtualListInner<T extends { getId(): string } | string>({
     }
   }, [items, rowHeights]);
 
+  const itemData = useMemo(() => ({ items, getRow: getRow as never }), [items, getRow]);
+
   const renderList = (height: number) => (
     <VariableSizeList
       className="list"
@@ -103,10 +105,7 @@ function VirtualListInner<T extends { getId(): string } | string>({
       height={height}
       itemSize={getItemSize}
       itemCount={items.length}
-      itemData={{
-        items,
-        getRow: getRow as never,
-      }}
+      itemData={itemData}
       overscanCount={overscanCount}
       ref={listRef}
       outerRef={outerRef}

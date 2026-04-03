@@ -34,6 +34,7 @@ const makeStorage = () => {
 type StubStore = {
   pickOnlySelected: (items: ItemObject[]) => ItemObject[];
   isLoaded: boolean;
+  isLoading: boolean;
   failedLoading: boolean;
   getTotalCount: () => number;
   isSelected: (item: ItemObject) => boolean;
@@ -60,6 +61,7 @@ const baseProps: ItemListLayoutContentProps<ItemObject, boolean> & {
   store: {
     pickOnlySelected: (items) => items,
     isLoaded: true,
+    isLoading: false,
     failedLoading: false,
     getTotalCount: () => 0,
     isSelected: () => false,

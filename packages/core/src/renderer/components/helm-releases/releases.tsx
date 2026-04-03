@@ -87,6 +87,7 @@ class NonInjectedHelmReleases extends Component<Dependencies> {
         return !releasesArePending.get();
       },
 
+      isLoading: false,
       failedLoading: false,
 
       getTotalCount: () => releases.get().length,
