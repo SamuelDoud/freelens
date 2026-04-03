@@ -57,7 +57,7 @@ const renderer: webpack.Configuration = {
     return;
   },
   optimization: {
-    minimize: false,
+    minimize: !isDevelopment,
   },
   module: {
     parser: {
