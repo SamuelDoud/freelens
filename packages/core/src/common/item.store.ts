@@ -63,6 +63,26 @@ export abstract class ItemStore<Item extends ItemObject> {
     sorting: ((item: Item) => any)[] = [this.defaultSorting],
     order?: "asc" | "desc",
   ): Item[] {
+    // Fast path: check if already sorted to avoid O(n log n) + array allocation
+    if (items.length > 1 && sorting.length === 1 && (!order || order === "asc")) {
+      const key = sorting[0];
+      let sorted = true;
+      let prev = key(items[0]);
+
+      for (let i = 1; i < items.length; i++) {
+        const curr = key(items[i]);
+
+        if (prev == null || curr == null || curr < prev) {
+          sorted = false;
+          break;
+        }
+
+        prev = curr;
+      }
+
+      if (sorted) return items;
+    }
+
     return orderBy(items, sorting, order);
   }
 

@@ -300,11 +300,18 @@ export class KubeObjectStore<
   }: KubeObjectStoreLoadAllParams = {}): Promise<undefined | K[]> {
     namespaces ??= this.dependencies.context.contextNamespaces;
     this.isLoading = true;
+    this.failedLoading = false;
 
     try {
+      const isLoadingAll = this.dependencies.context.isLoadingAll(namespaces);
       const items = await this.loadItems({ namespaces, reqInit, onLoadFailure });
 
-      this.mergeItems(items, { merge, namespaces });
+      // When loading all (progressive rendering path), onPage already
+      // sorted, filtered, and replaced items incrementally — skip the
+      // expensive redundant sort/filter in mergeItems.
+      const skipSort = !this.api.isNamespaced || isLoadingAll;
+
+      this.mergeItems(items, { merge, namespaces, sort: !skipSort, filter: !skipSort });
 
       this.isLoaded = true;
       this.failedLoading = false;
@@ -347,7 +354,7 @@ export class KubeObjectStore<
     if (merge && this.api.isNamespaced) {
       const ns = new Set(namespaces);
 
-      items = [...this.items.filter((item) => !ns.has(item.getNs() as string)), ...partialItems];
+      items = this.items.filter((item) => !ns.has(item.getNs() as string)).concat(partialItems);
     }
 
     if (filter) items = this.filterItemsOnLoad(items);
