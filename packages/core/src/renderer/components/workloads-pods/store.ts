@@ -29,6 +29,25 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
 
   readonly kubeMetrics = observable.array<PodMetrics>([]);
 
+  @computed private get podsByOwnerId(): Map<string, Pod[]> {
+    const map = new Map<string, Pod[]>();
+
+    for (const pod of this.items) {
+      for (const ref of pod.metadata.ownerReferences ?? []) {
+        let pods = map.get(ref.uid);
+
+        if (!pods) {
+          pods = [];
+          map.set(ref.uid, pods);
+        }
+
+        pods.push(pod);
+      }
+    }
+
+    return map;
+  }
+
   async loadKubeMetrics(namespace?: string) {
     try {
       const metrics = await this.dependencies.podMetricsApi.list({ namespace });
@@ -40,13 +59,11 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
   }
 
   getPodsByOwner(workload: KubeObject<NamespaceScopedMetadata, unknown, unknown>): Pod[] {
-    return this.items.filter((pod) => pod.getOwnerRefs().find((owner) => owner.uid === workload.getId()));
+    return this.podsByOwnerId.get(workload.getId()) ?? [];
   }
 
   getPodsByOwnerId(workloadId: string): Pod[] {
-    return this.items.filter((pod) => {
-      return pod.getOwnerRefs().find((owner) => owner.uid === workloadId);
-    });
+    return this.podsByOwnerId.get(workloadId) ?? [];
   }
 
   getPodsByNode(node: string) {

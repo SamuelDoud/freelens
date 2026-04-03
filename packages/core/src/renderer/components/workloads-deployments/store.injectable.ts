@@ -11,6 +11,7 @@ import assert from "assert";
 import { kubeObjectStoreInjectionToken } from "../../../common/k8s-api/api-manager/kube-object-store-token";
 import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-frame-context/for-namespaced-resources.injectable";
 import podStoreInjectable from "../workloads-pods/store.injectable";
+import replicaSetStoreInjectable from "../workloads-replicasets/store.injectable";
 import { DeploymentStore } from "./store";
 
 const deploymentStoreInjectable = getInjectable({
@@ -26,6 +27,7 @@ const deploymentStoreInjectable = getInjectable({
     return new DeploymentStore(
       {
         podStore: di.inject(podStoreInjectable),
+        replicaSetStore: di.inject(replicaSetStoreInjectable),
         context: di.inject(clusterFrameContextForNamespacedResourcesInjectable),
         logger: di.inject(loggerInjectionToken),
       },

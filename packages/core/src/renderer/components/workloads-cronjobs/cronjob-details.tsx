@@ -60,11 +60,14 @@ class NonInjectedCronJobDetails extends React.Component<CronJobDetailsProps & De
       return null;
     }
 
-    const childJobs = jobStore.getJobsByOwner(cronJob).sort((a, b) => {
-      const aTime = a.status?.startTime ? new Date(a.status.startTime).getTime() : 0;
-      const bTime = b.status?.startTime ? new Date(b.status.startTime).getTime() : 0;
-      return bTime - aTime;
-    });
+    const childJobs = jobStore
+      .getJobsByOwner(cronJob)
+      .slice()
+      .sort((a, b) => {
+        const aTime = a.status?.startTime ? new Date(a.status.startTime).getTime() : 0;
+        const bTime = b.status?.startTime ? new Date(b.status.startTime).getTime() : 0;
+        return bTime - aTime;
+      });
 
     return (
       <div className="CronJobDetails">
