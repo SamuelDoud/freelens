@@ -54,6 +54,24 @@ class NonInjectedPodDetailsList extends React.Component<PodDetailsListProps & De
     autoBindReact(this);
   }
 
+  private podsMapCache?: { pods: Pod[]; map: Map<string, Pod> };
+
+  private getPodsById(): Map<string, Pod> {
+    const { pods } = this.props;
+
+    if (!this.podsMapCache || this.podsMapCache.pods !== pods) {
+      const map = new Map<string, Pod>();
+
+      for (const pod of pods) {
+        map.set(pod.getId(), pod);
+      }
+
+      this.podsMapCache = { pods, map };
+    }
+
+    return this.podsMapCache.map;
+  }
+
   private metricsWatcher = interval(120, () => {
     this.props.podStore.loadKubeMetrics(this.props.owner.getNs());
   });
@@ -110,8 +128,8 @@ class NonInjectedPodDetailsList extends React.Component<PodDetailsListProps & De
   }
 
   getTableRow(uid: string) {
-    const { pods, owner, podStore, showDetails } = this.props;
-    const pod = pods.find((pod) => pod.getId() == uid);
+    const { owner, podStore, showDetails } = this.props;
+    const pod = this.getPodsById().get(uid);
 
     const hideNode = owner.kind === "Node";
     const linkToPod = owner.kind !== "Pod";

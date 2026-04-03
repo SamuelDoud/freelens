@@ -92,7 +92,7 @@ class NonInjectedClusterIssues extends React.Component<ClusterIssuesProps & Depe
           ageMs: -node.getCreationTimestamp(),
         })),
       ),
-      ...this.props.eventStore.getWarnings().map((warning) => ({
+      ...this.props.eventStore.warnings.map((warning) => ({
         getId: () => warning.involvedObject.uid,
         getName: () => warning.involvedObject.name,
         renderAge: () => <KubeObjectAge key="age" object={warning} />,
@@ -104,10 +104,19 @@ class NonInjectedClusterIssues extends React.Component<ClusterIssuesProps & Depe
     ];
   }
 
+  @computed get warningsById(): Map<string, Warning> {
+    const map = new Map<string, Warning>();
+
+    for (const w of this.warnings) {
+      map.set(w.getId(), w);
+    }
+
+    return map;
+  }
+
   getTableRow = (uid: string) => {
-    const { warnings } = this;
     const { kubeSelectedUrlParam, toggleKubeDetailsPane: toggleDetails } = this.props;
-    const warning = warnings.find((warn) => warn.getId() == uid);
+    const warning = this.warningsById.get(uid);
 
     if (!warning) {
       return undefined;

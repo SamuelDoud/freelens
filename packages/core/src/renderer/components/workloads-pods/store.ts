@@ -66,10 +66,31 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
     return this.podsByOwnerId.get(workloadId) ?? [];
   }
 
+  @computed private get podsByNodeIndex(): Map<string, Pod[]> {
+    const map = new Map<string, Pod[]>();
+
+    for (const pod of this.items) {
+      const nodeName = pod.spec?.nodeName;
+
+      if (nodeName) {
+        let list = map.get(nodeName);
+
+        if (!list) {
+          list = [];
+          map.set(nodeName, list);
+        }
+
+        list.push(pod);
+      }
+    }
+
+    return map;
+  }
+
   getPodsByNode(node: string) {
     if (!this.isLoaded) return [];
 
-    return this.items.filter((pod) => pod.spec.nodeName === node);
+    return this.podsByNodeIndex.get(node) ?? [];
   }
 
   getStatuses(pods: Pod[]) {

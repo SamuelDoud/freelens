@@ -266,7 +266,8 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
       sortedItems = this.getSorted(sortedItems);
 
       if (rows.length) {
-        rows = sortedItems.map((item) => rows.find((row) => item == row.props.sortItem)).filter(isDefined);
+        const rowMap = new Map(rows.map((row) => [row.props.sortItem, row]));
+        rows = sortedItems.map((item) => rowMap.get(item)).filter(isDefined);
       }
     }
 

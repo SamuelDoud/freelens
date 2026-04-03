@@ -48,9 +48,27 @@ class NonInjectedVolumeDetailsList extends React.Component<VolumeDetailsListProp
     [sortBy.status]: (volume: PersistentVolume) => volume.getStatus(),
   };
 
+  private volumesMapCache?: { volumes: PersistentVolume[]; map: Map<string, PersistentVolume> };
+
+  private getVolumesById(): Map<string, PersistentVolume> {
+    const { persistentVolumes } = this.props;
+
+    if (!this.volumesMapCache || this.volumesMapCache.volumes !== persistentVolumes) {
+      const map = new Map<string, PersistentVolume>();
+
+      for (const v of persistentVolumes) {
+        map.set(v.getId(), v);
+      }
+
+      this.volumesMapCache = { volumes: persistentVolumes, map };
+    }
+
+    return this.volumesMapCache.map;
+  }
+
   getTableRow = (uid: string) => {
-    const { persistentVolumes, showDetails } = this.props;
-    const volume = persistentVolumes.find((volume) => volume.getId() === uid);
+    const { showDetails } = this.props;
+    const volume = this.getVolumesById().get(uid);
 
     if (!volume) {
       return undefined;
