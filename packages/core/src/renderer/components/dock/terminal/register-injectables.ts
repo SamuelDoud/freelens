@@ -10,6 +10,7 @@ import clearTerminalTabDataInjectable from "./clear-terminal-tab-data.injectable
 import createTerminalInjectable from "./create-terminal.injectable";
 import createTerminalTabInjectable from "./create-terminal-tab.injectable";
 import getTerminalApiInjectable from "./get-terminal-api.injectable";
+import openExternalTerminalInjectable from "./open-external-terminal.injectable";
 import sendCommandInjectable from "./send-command.injectable";
 import terminalStoreInjectable from "./store.injectable";
 import terminalSpawningPoolInjectable from "./terminal-spawning-pool.injectable";
@@ -34,6 +35,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(getTerminalApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(openExternalTerminalInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

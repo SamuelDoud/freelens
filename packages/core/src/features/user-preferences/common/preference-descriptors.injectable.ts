@@ -159,6 +159,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
         },
         toStore: (val) => (val === defaultKubeApiPageSize ? undefined : val),
       }),
+      useExternalTerminal: getPreferenceDescriptor<boolean>({
+        fromStore: (val) => val ?? false,
+        toStore: (val) => (val ? true : undefined),
+      }),
     } as const;
   },
 });

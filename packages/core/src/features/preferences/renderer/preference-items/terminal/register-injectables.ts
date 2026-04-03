@@ -7,6 +7,7 @@
  */
 
 import { registerInjectables as registerCopyPasteFromTerminalInjectables } from "./copy-paste-from-terminal/register-injectables";
+import { registerInjectables as registerExternalTerminalInjectables } from "./external-terminal/register-injectables";
 import { registerInjectables as registerTerminalFontFamilyInjectables } from "./terminal-font-family/register-injectables";
 import { registerInjectables as registerTerminalFontSizeInjectables } from "./terminal-font-size/register-injectables";
 import terminalPagePreferenceItemInjectable from "./terminal-page-preference-item.injectable";
@@ -49,6 +50,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerTerminalThemeInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerExternalTerminalInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

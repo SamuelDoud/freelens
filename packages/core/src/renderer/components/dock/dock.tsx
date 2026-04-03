@@ -24,6 +24,7 @@ import { EditResource } from "./edit-resource/view";
 import { InstallChart } from "./install-chart/view";
 import { LogsDockTab } from "./logs/view";
 import createTerminalTabInjectable from "./terminal/create-terminal-tab.injectable";
+import openExternalTerminalInjectable from "./terminal/open-external-terminal.injectable";
 import { TerminalWindow } from "./terminal/view";
 import { UpgradeChart } from "./upgrade-chart/view";
 
@@ -36,6 +37,7 @@ export interface DockProps {
 interface Dependencies {
   createResourceTab: () => void;
   createTerminalTab: () => void;
+  openExternalTerminal: (command?: string) => void;
   dockStore: DockStore;
 }
 
@@ -168,6 +170,10 @@ class NonInjectedDock extends React.Component<DockProps & Dependencies> {
                   <Icon small material="terminal" />
                   Terminal session
                 </MenuItem>
+                <MenuItem className="open-external-terminal" onClick={() => this.props.openExternalTerminal()}>
+                  <Icon small material="open_in_new" />
+                  External terminal
+                </MenuItem>
                 <MenuItem className="create-resource-tab" onClick={() => this.props.createResourceTab()}>
                   <Icon small material="create" />
                   Create resource
@@ -204,6 +210,7 @@ export const Dock = withInjectables<Dependencies, DockProps>(
       createResourceTab: di.inject(createResourceTabInjectable),
       dockStore: di.inject(dockStoreInjectable),
       createTerminalTab: di.inject(createTerminalTabInjectable),
+      openExternalTerminal: di.inject(openExternalTerminalInjectable),
       ...props,
     }),
   },
