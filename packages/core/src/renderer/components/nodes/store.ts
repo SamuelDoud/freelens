@@ -31,15 +31,31 @@ export class NodeStore extends KubeObjectStore<Node, NodeApi> {
     autoBind(this);
   }
 
-  readonly kubeMetrics = observable.array<NodeMetrics>([]);
+  readonly kubeMetrics = observable.array<NodeMetrics>([], { deep: false });
+  private metricsLoadInFlight = false;
+
+  @computed private get kubeMetricsIndex(): Map<string, NodeMetrics> {
+    const map = new Map<string, NodeMetrics>();
+
+    for (const metric of this.kubeMetrics) {
+      map.set(metric.getName(), metric);
+    }
+
+    return map;
+  }
 
   async loadKubeMetrics() {
+    if (this.metricsLoadInFlight) return;
+    this.metricsLoadInFlight = true;
+
     try {
       const metrics = await this.dependencies.nodeMetricsApi.list();
 
       this.kubeMetrics.replace(metrics ?? []);
     } catch (error) {
       console.warn("loadKubeMetrics failed", error);
+    } finally {
+      this.metricsLoadInFlight = false;
     }
   }
 
@@ -56,9 +72,7 @@ export class NodeStore extends KubeObjectStore<Node, NodeApi> {
   }
 
   getNodeKubeMetrics(node: Node) {
-    const metrics = this.kubeMetrics.find((metric) => {
-      return [metric.getName() === node.getName()].every((v) => v);
-    });
+    const metrics = this.kubeMetricsIndex.get(node.getName());
 
     if (!metrics) return { cpu: NaN, memory: NaN };
 

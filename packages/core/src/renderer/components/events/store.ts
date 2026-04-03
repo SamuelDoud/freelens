@@ -29,7 +29,7 @@ export class EventStore extends KubeObjectStore<KubeEvent, KubeEventApi> {
     api: KubeEventApi,
     opts: KubeObjectStoreOptions = {},
   ) {
-    super(dependencies, api, { limit: 1000, ...opts });
+    super(dependencies, api, { limit: 1000, bufferSize: 10_000, ...opts });
     autoBind(this);
   }
 

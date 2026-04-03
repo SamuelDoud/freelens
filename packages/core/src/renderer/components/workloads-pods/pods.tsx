@@ -28,7 +28,7 @@ interface Dependencies {
   columns: SpecificKubeListLayoutColumn<Pod>[];
 }
 
-const REFRESH_METRICS_INTERVAL = 10;
+const REFRESH_METRICS_INTERVAL = 60;
 
 const NonInjectedPods = observer((props: Dependencies) => {
   const { columns, eventStore, podStore } = props;
