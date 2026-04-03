@@ -504,7 +504,7 @@ export class KubeObjectStore<
 
   protected bindWatchEventsUpdater(delay = 1000) {
     reaction(
-      () => [...this.eventsBuffer],
+      () => this.eventsBuffer.length,
       () => this.updateFromEventsBuffer(),
       {
         delay,
@@ -593,9 +593,19 @@ export class KubeObjectStore<
 
   @action
   protected updateFromEventsBuffer() {
+    // Build an index for O(1) lookup instead of O(n) findIndex per event.
+    const indexById = new Map<string, number>();
+
+    for (let i = 0; i < this.items.length; i++) {
+      indexById.set(this.items[i].getId(), i);
+    }
+
     // Mutate this.items directly instead of calling items.replace() so that
     // MobX only notifies observers of the specific indices that changed,
     // avoiding a full cascade re-render of every visible row.
+    // Collect deletions and apply them in reverse order to preserve indices.
+    const deletionIndices: number[] = [];
+
     for (const event of this.eventsBuffer.clear()) {
       if (event.type === "ERROR") {
         continue;
@@ -611,15 +621,24 @@ export class KubeObjectStore<
           continue;
         }
 
-        const index = this.items.findIndex((item) => item.getId() === object.metadata.uid);
+        const uid = object.metadata.uid;
+        const index = indexById.get(uid) ?? -1;
 
         switch (type) {
           case "ADDED":
           case "MODIFIED": {
+            // Skip reconstruction if the resource version hasn't changed
+            if (index >= 0 && this.items[index].getResourceVersion() === object.metadata.resourceVersion) {
+              break;
+            }
+
             const newItem = new this.api.objectConstructor(object);
 
             if (index < 0) {
+              const newIndex = this.items.length;
+
               this.items.push(newItem);
+              indexById.set(uid, newIndex);
             } else {
               this.items[index] = newItem;
             }
@@ -628,12 +647,22 @@ export class KubeObjectStore<
           }
           case "DELETED":
             if (index >= 0) {
-              this.items.splice(index, 1);
+              deletionIndices.push(index);
+              indexById.delete(uid);
             }
             break;
         }
       } catch (error) {
         this.dependencies.logger.error("[KUBE-STORE]: failed to handle event from watch buffer", { error, event });
+      }
+    }
+
+    // Apply deletions in reverse index order so earlier indices stay valid
+    if (deletionIndices.length > 0) {
+      deletionIndices.sort((a, b) => b - a);
+
+      for (const index of deletionIndices) {
+        this.items.splice(index, 1);
       }
     }
 
