@@ -6,13 +6,7 @@
 
 // Base class for building all kubernetes apis
 
-import {
-  isJsonApiData,
-  isJsonApiDataList,
-  isKubeStatusData,
-  isPartialJsonApiData,
-  KubeStatus,
-} from "@freelensapp/kube-object";
+import { isJsonApiData, isKubeStatusData, KubeStatus } from "@freelensapp/kube-object";
 import { isDefined, noop, WrappedAbortController } from "@freelensapp/utilities";
 import assert from "assert";
 import byline from "byline";
@@ -629,29 +623,39 @@ export class KubeApi<
     const KubeObjectConstructor = this.objectConstructor;
 
     // process items list response, check before single item since there is overlap
-    if (isJsonApiDataList(data, isPartialJsonApiData)) {
+    // Fast envelope check: verify the response is a list shape without validating every item.
+    // The full isJsonApiDataList runs isPartialJsonApiData on ALL items (O(n) type checks),
+    // which is ~650k calls for 50k items. Items are validated individually by the constructor.
+    const dataObj = data as Record<string, unknown> | null | undefined;
+
+    if (
+      dataObj &&
+      typeof dataObj === "object" &&
+      typeof dataObj.kind === "string" &&
+      typeof dataObj.apiVersion === "string" &&
+      dataObj.metadata &&
+      typeof dataObj.metadata === "object" &&
+      Array.isArray(dataObj.items)
+    ) {
       const { apiVersion, items, metadata } = data;
 
       this.setResourceVersion(namespace, metadata.resourceVersion);
       this.setResourceVersion("", metadata.resourceVersion);
 
-      return items
-        .map((item) => {
-          if (item.metadata) {
-            this.ensureMetadataSelfLink(item.metadata);
-          } else {
-            return undefined;
-          }
+      // Mutate items in place — they are freshly parsed JSON, not shared.
+      // This avoids 50k shallow object copies from spread.
+      const result: Object[] = [];
 
-          const object = new KubeObjectConstructor({
-            ...(item as Data),
-            kind: this.kind,
-            apiVersion,
-          });
+      for (const item of items) {
+        if (!item.metadata) continue;
 
-          return object;
-        })
-        .filter(isDefined);
+        this.ensureMetadataSelfLink(item.metadata);
+        (item as Record<string, unknown>).kind = this.kind;
+        (item as Record<string, unknown>).apiVersion = apiVersion;
+        result.push(new KubeObjectConstructor(item as Data));
+      }
+
+      return result;
     }
 
     // process a single item
@@ -672,16 +676,19 @@ export class KubeApi<
       .map((data) => new KubeObjectConstructor(data as Data));
   }
 
+  private selfLinkBase?: string;
+
   private ensureMetadataSelfLink<T extends { selfLink?: string; namespace?: string; name: string }>(
     metadata: T,
   ): asserts metadata is T & { selfLink: string } {
-    metadata.selfLink ||= createKubeApiURL({
-      apiPrefix: this.apiPrefix,
-      apiVersion: this.apiVersionWithGroup,
-      resource: this.apiResource,
-      namespace: metadata.namespace,
-      name: metadata.name,
-    });
+    if (metadata.selfLink) return;
+
+    // Cache the common prefix — apiPrefix/apiVersion/resource never change per API instance
+    this.selfLinkBase ??= `${this.apiPrefix}/${this.apiVersionWithGroup}`;
+
+    metadata.selfLink = metadata.namespace
+      ? `${this.selfLinkBase}/namespaces/${metadata.namespace}/${this.apiResource}/${metadata.name}`
+      : `${this.selfLinkBase}/${this.apiResource}/${metadata.name}`;
   }
 
   async list(

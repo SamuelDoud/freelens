@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import autoBind from "auto-bind";
 import { KubeObject } from "../kube-object";
 
 import type { KubeJsonApiData, KubeObjectMetadata, KubeObjectScope, NamespaceScopedMetadata } from "../api-types";
@@ -30,7 +29,6 @@ export class ConfigMap extends KubeObject<NamespaceScopedMetadata, void, void> {
 
   constructor({ data, binaryData, immutable, ...rest }: ConfigMapData) {
     super(rest);
-    autoBind(this);
 
     this.data = data ?? {};
     this.binaryData = binaryData ?? {};

@@ -5,7 +5,6 @@
  */
 
 import { formatDuration, isObject, isString } from "@freelensapp/utilities";
-import autoBind from "auto-bind";
 import { omit } from "lodash";
 import moment from "moment";
 import { KubeCreationError } from "./api-types";
@@ -121,7 +120,6 @@ export class KubeObject<
     }
 
     Object.assign(this, data);
-    autoBind(this);
   }
 
   get selfLink(): string {

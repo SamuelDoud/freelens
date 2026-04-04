@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import autoBind from "auto-bind";
 import { KubeObject } from "../kube-object";
 import { EndpointConditions, EndpointHints, EndpointPort } from "./endpoint";
 
@@ -59,7 +58,6 @@ export class EndpointSlice extends KubeObject<NamespaceScopedMetadata, void, voi
 
   constructor({ addressType, endpoints, ports, ...rest }: EndpointSliceData) {
     super(rest);
-    autoBind(this);
     this.addressType = addressType;
     this.endpoints = endpoints;
     this.ports = ports;
