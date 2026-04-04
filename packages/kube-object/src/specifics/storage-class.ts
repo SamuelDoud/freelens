@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import autoBind from "auto-bind";
 import { KubeObject } from "../kube-object";
 
 import type { ClusterScopedMetadata, KubeJsonApiData, KubeObjectMetadata, KubeObjectScope } from "../api-types";
@@ -60,7 +59,6 @@ export class StorageClass extends KubeObject<ClusterScopedMetadata, void, void> 
     ...rest
   }: StorageClassData) {
     super(rest);
-    autoBind(this);
     this.allowVolumeExpansion = allowVolumeExpansion;
     this.allowedTopologies = allowedTopologies;
     this.mountOptions = mountOptions;
