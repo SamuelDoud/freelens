@@ -14,6 +14,7 @@ import { computed, makeObservable, untracked } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import selectedFilterNamespacesInjectable from "../../../common/k8s-api/selected-filter-namespaces.injectable";
+import { PERF_DEBUG } from "../../../common/utils/perf-debug";
 import userPreferencesStateInjectable, {
   type UserPreferencesState,
 } from "../../../features/user-preferences/common/state.injectable";
@@ -253,19 +254,32 @@ class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores extends bool
 
   private searchTextCache = new WeakMap<I, string>();
   private warmingIdleHandle?: number;
+  private warmingItems?: I[];
 
   /**
    * Proactively build search cache in background idle frames so the
    * first keystroke doesn't block the UI for 500ms+ on 50k items.
+   * Uses a WeakMap so entries are GC'd when items leave the store.
    */
   private warmSearchCache() {
-    if (this.warmingIdleHandle) return;
+    const currentItems = this.items;
+
+    // Already warming these exact items
+    if (this.warmingItems === currentItems && this.warmingIdleHandle) return;
+
+    // Cancel stale warming (e.g., namespace switch changed the items)
+    if (this.warmingIdleHandle) {
+      cancelIdleCallback(this.warmingIdleHandle);
+      this.warmingIdleHandle = undefined;
+    }
+
+    this.warmingItems = currentItems;
 
     const { searchFilters = [] } = this.props;
 
     if (!searchFilters.length) return;
 
-    const items = this.items;
+    const items = currentItems;
     let index = 0;
     const chunkSize = 500;
 
@@ -281,7 +295,7 @@ class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores extends bool
         this.warmingIdleHandle = requestIdleCallback(processChunk);
       } else {
         this.warmingIdleHandle = undefined;
-        console.debug(`[PERF] search cache warmed: ${items.length} items`);
+        if (PERF_DEBUG) console.debug(`[PERF] search cache warmed: ${items.length} items`);
       }
     };
 

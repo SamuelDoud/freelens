@@ -6,6 +6,7 @@
 
 import "./item-list-layout.scss";
 
+import { Spinner } from "@freelensapp/spinner";
 import { cssNames, isDefined } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
 import React from "react";
@@ -69,7 +70,12 @@ export class ItemListLayoutHeader<I extends ItemObject, PreLoadStores extends bo
       const countText = allItemsCount === 1 ? "1 item" : `${allItemsCount.toLocaleString()} items`;
 
       if (store.isLoading) {
-        return `Loading\u2026 ${countText}`;
+        return (
+          <>
+            {"Loading\u2026 "}
+            {countText} <Spinner singleColor={false} />
+          </>
+        );
       }
 
       return countText;
