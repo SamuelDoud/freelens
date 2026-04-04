@@ -7,6 +7,7 @@
 import { parseKubeApi } from "@freelensapp/kube-api";
 import { KubeStatus } from "@freelensapp/kube-object";
 import { object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
+import { PERF_DEBUG } from "../utils/perf-debug";
 
 /**
  * Global concurrency limiter for Kubernetes API list requests.
@@ -37,6 +38,29 @@ function releaseListSlot(): void {
   const next = listRequestQueue.shift();
 
   if (next) next();
+}
+
+/**
+ * Build a Map grouping items by their owner reference UIDs.
+ * Each item may have multiple owners, so it can appear in multiple groups.
+ */
+export function buildOwnerIndex<K extends KubeObject>(items: K[]): Map<string, K[]> {
+  const map = new Map<string, K[]>();
+
+  for (const item of items) {
+    for (const ref of item.metadata.ownerReferences ?? []) {
+      let list = map.get(ref.uid);
+
+      if (!list) {
+        list = [];
+        map.set(ref.uid, list);
+      }
+
+      list.push(item);
+    }
+  }
+
+  return map;
 }
 
 import assert from "assert";
@@ -103,8 +127,6 @@ export interface KubeObjectStoreSubscribeParams {
 export interface MergeItemsOptions {
   merge?: boolean;
   updateStore?: boolean;
-  sort?: boolean;
-  filter?: boolean;
   namespaces: string[];
 }
 
@@ -159,13 +181,21 @@ export class KubeObjectStore<
 
   // TODO: Circular dependency: KubeObjectStore -> ClusterFrameContext -> NamespaceStore -> KubeObjectStore
   @computed get contextItems(): K[] {
+    const start = PERF_DEBUG ? performance.now() : 0;
     const namespaces = new Set(this.dependencies.context.contextNamespaces);
 
-    return this.items.filter((item) => {
+    const result = this.items.filter((item) => {
       const itemNamespace = item.getNs();
 
       return !itemNamespace /* cluster-wide */ || namespaces.has(itemNamespace);
     });
+
+    if (PERF_DEBUG)
+      console.debug(
+        `[PERF] ${this.api.apiBase} contextItems: ${result.length}/${this.items.length} items in ${(performance.now() - start).toFixed(1)}ms`,
+      );
+
+    return result;
   }
 
   getTotalCount(): number {
@@ -284,22 +314,45 @@ export class KubeObjectStore<
         // Always render the first page so something appears immediately
         if (pageCount === 1 || pageCount % progressInterval === 0) {
           const snapshot = items.slice();
+          const page = pageCount;
+          const gen = loadGeneration;
 
           setTimeout(
             action(() => {
+              // Skip if a newer load has completed (mergeItems bumps generation)
+              if (gen !== loadGeneration) return;
+
+              const renderStart = PERF_DEBUG ? performance.now() : 0;
+
               this.items.replace(this.sortItems(this.filterItemsOnLoad(snapshot)));
+
+              if (PERF_DEBUG) {
+                console.debug(
+                  `[PERF] ${this.api.apiBase} onPage progressive render: page ${page}, ${snapshot.length} items, sort+replace in ${(performance.now() - renderStart).toFixed(0)}ms`,
+                );
+              }
             }),
             0,
           );
         }
       };
 
+      // Invalidate pending deferred renders when the final result arrives
+      const cancelDeferredRenders = () => {
+        loadGeneration++;
+      };
+
       const res = this.api.list({ reqInit, pageSize: effectivePageSize }, this.query, onPage);
 
       if (onLoadFailure) {
         try {
-          return (await res) ?? [];
+          const result = (await res) ?? [];
+
+          cancelDeferredRenders();
+
+          return result;
         } catch (error) {
+          cancelDeferredRenders();
           onLoadFailure(new Error(`Failed to load ${this.api.apiBase}`, { cause: error }));
 
           // reset the store because we are loading all, so that nothing is displayed
@@ -310,7 +363,11 @@ export class KubeObjectStore<
         }
       }
 
-      return (await res) ?? [];
+      const result = (await res) ?? [];
+
+      cancelDeferredRenders();
+
+      return result;
     }
 
     this.loadedNamespaces.set(namespaces);
@@ -362,18 +419,20 @@ export class KubeObjectStore<
         throw new DOMException("The operation was aborted", "AbortError");
       }
 
-      const isLoadingAll = this.dependencies.context.isLoadingAll(namespaces);
+      const loadStart = PERF_DEBUG ? performance.now() : 0;
       const items = await this.loadItems({ namespaces, reqInit, onLoadFailure });
+      const loadDuration = PERF_DEBUG ? performance.now() - loadStart : 0;
 
-      // When loading all (progressive rendering path), onPage already
-      // sorted, filtered, and replaced items incrementally — skip the
-      // expensive redundant sort/filter in mergeItems.
-      const skipSort = !this.api.isNamespaced || isLoadingAll;
+      const mergeStart = PERF_DEBUG ? performance.now() : 0;
 
-      this.mergeItems(items, { merge, namespaces, sort: !skipSort, filter: !skipSort });
+      this.mergeItems(items, { merge, namespaces });
+
+      if (PERF_DEBUG)
+        console.debug(
+          `[PERF] ${this.api.apiBase} loadAll: ${items.length} items fetched in ${loadDuration.toFixed(0)}ms, merged in ${(performance.now() - mergeStart).toFixed(0)}ms`,
+        );
 
       this.isLoaded = true;
-      this.failedLoading = false;
 
       return items;
     } catch (error) {
@@ -404,10 +463,7 @@ export class KubeObjectStore<
   }
 
   @action
-  protected mergeItems(
-    partialItems: K[],
-    { merge = true, updateStore = true, sort = true, filter = true, namespaces }: MergeItemsOptions,
-  ): K[] {
+  protected mergeItems(partialItems: K[], { merge = true, updateStore = true, namespaces }: MergeItemsOptions): K[] {
     let items = partialItems;
 
     // update existing items
@@ -417,8 +473,10 @@ export class KubeObjectStore<
       items = this.items.filter((item) => !ns.has(item.getNs() as string)).concat(partialItems);
     }
 
-    if (filter) items = this.filterItemsOnLoad(items);
-    if (sort) items = this.sortItems(items);
+    items = this.filterItemsOnLoad(items);
+    // sortItems has an O(n) early-exit when items are already sorted,
+    // so this is cheap on the progressive rendering path.
+    items = this.sortItems(items);
     if (updateStore) this.items.replace(items);
 
     return items;
@@ -641,7 +699,9 @@ export class KubeObjectStore<
         timedRetry = setTimeout(startNewWatch, 5000);
       } else if (error instanceof KubeStatus && error.code === 410) {
         clearTimeout(timedRetry);
-        // resourceVersion has gone, let's try to reload
+        // resourceVersion has gone — clear stale buffered events before
+        // reloading so they don't get applied on top of the fresh list.
+        this.eventsBuffer.clear();
         timedRetry = setTimeout(() => {
           void (
             namespace
@@ -666,6 +726,10 @@ export class KubeObjectStore<
 
   @action
   protected updateFromEventsBuffer() {
+    const bufferStart = PERF_DEBUG ? performance.now() : 0;
+    let eventCount = 0;
+    let skippedCount = 0;
+
     // Build an index for O(1) lookup instead of O(n) findIndex per event.
     const indexById = new Map<string, number>();
 
@@ -680,6 +744,8 @@ export class KubeObjectStore<
     const deletionIndices: number[] = [];
 
     for (const event of this.eventsBuffer.clear()) {
+      eventCount++;
+
       if (event.type === "ERROR") {
         continue;
       }
@@ -702,6 +768,7 @@ export class KubeObjectStore<
           case "MODIFIED": {
             // Skip reconstruction if the resource version hasn't changed
             if (index >= 0 && this.items[index].getResourceVersion() === object.metadata.resourceVersion) {
+              skippedCount++;
               break;
             }
 
@@ -722,6 +789,7 @@ export class KubeObjectStore<
             if (index >= 0) {
               deletionIndices.push(index);
               indexById.delete(uid);
+              this.selectedItemsIds.delete(this.items[index].getId());
             }
             break;
         }
@@ -737,6 +805,13 @@ export class KubeObjectStore<
       for (const index of deletionIndices) {
         this.items.splice(index, 1);
       }
+    }
+
+    if (eventCount > 0) {
+      if (PERF_DEBUG)
+        console.debug(
+          `[PERF] ${this.api.apiBase} eventsBuffer: ${eventCount} events (${skippedCount} skipped, ${deletionIndices.length} deleted) in ${(performance.now() - bufferStart).toFixed(1)}ms, ${this.items.length} items total`,
+        );
     }
 
     // Trim to buffer size if needed

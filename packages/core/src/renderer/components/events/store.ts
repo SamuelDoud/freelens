@@ -10,6 +10,7 @@ import compact from "lodash/compact";
 import groupBy from "lodash/groupBy";
 import { computed } from "mobx";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
+import { PERF_DEBUG } from "../../../common/utils/perf-debug";
 
 import type { KubeEventApi } from "@freelensapp/kube-api";
 import type { KubeEvent, KubeObject } from "@freelensapp/kube-object";
@@ -48,6 +49,7 @@ export class EventStore extends KubeObjectStore<KubeEvent, KubeEventApi> {
   }
 
   @computed private get eventsByObjectUid(): Map<string, KubeEvent[]> {
+    const start = PERF_DEBUG ? performance.now() : 0;
     const map = new Map<string, KubeEvent[]>();
 
     for (const evt of this.items) {
@@ -61,6 +63,11 @@ export class EventStore extends KubeObjectStore<KubeEvent, KubeEventApi> {
 
       events.push(evt);
     }
+
+    if (PERF_DEBUG)
+      console.debug(
+        `[PERF] eventsByObjectUid index: ${this.items.length} events → ${map.size} objects in ${(performance.now() - start).toFixed(1)}ms`,
+      );
 
     return map;
   }

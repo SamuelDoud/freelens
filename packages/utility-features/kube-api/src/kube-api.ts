@@ -6,6 +6,8 @@
 
 // Base class for building all kubernetes apis
 
+const PERF_DEBUG = process.env.NODE_ENV === "development";
+
 import { isJsonApiData, isKubeStatusData, KubeStatus } from "@freelensapp/kube-object";
 import { isDefined, noop, WrappedAbortController } from "@freelensapp/utilities";
 import assert from "assert";
@@ -637,7 +639,11 @@ export class KubeApi<
       typeof dataObj.metadata === "object" &&
       Array.isArray(dataObj.items)
     ) {
-      const { apiVersion, items, metadata } = data;
+      const { apiVersion, items, metadata } = dataObj as {
+        apiVersion: string;
+        items: any[];
+        metadata: { resourceVersion: string };
+      };
 
       this.setResourceVersion(namespace, metadata.resourceVersion);
       this.setResourceVersion("", metadata.resourceVersion);
@@ -649,10 +655,16 @@ export class KubeApi<
       for (const item of items) {
         if (!item.metadata) continue;
 
-        this.ensureMetadataSelfLink(item.metadata);
-        (item as Record<string, unknown>).kind = this.kind;
-        (item as Record<string, unknown>).apiVersion = apiVersion;
-        result.push(new KubeObjectConstructor(item as Data));
+        try {
+          this.ensureMetadataSelfLink(item.metadata);
+          (item as Record<string, unknown>).kind = this.kind;
+          (item as Record<string, unknown>).apiVersion = apiVersion;
+          result.push(new KubeObjectConstructor(item as Data));
+        } catch (error) {
+          // Skip malformed items rather than aborting the entire page.
+          // Log at debug level to aid diagnosis without spamming production logs.
+          console.debug(`[KUBE-API]: skipping malformed item in ${this.apiBase}`, error);
+        }
       }
 
       return result;
@@ -722,6 +734,8 @@ export class KubeApi<
     const pageSize = customPageSize ?? defaultKubeApiPageSize;
     const allItems: Object[] = [];
     let continueToken: string | undefined;
+    let pageNum = 0;
+    const listStart = PERF_DEBUG ? performance.now() : 0;
 
     do {
       // Check for abort between pages
@@ -735,13 +749,23 @@ export class KubeApi<
         ...(continueToken ? { continue: continueToken } : {}),
       };
 
+      const pageStart = PERF_DEBUG ? performance.now() : 0;
       const pageRes = await this.request.get(url, { query: paginatedQuery }, reqInit);
       const pageParsed = this.parseResponse(pageRes, namespace);
+      pageNum++;
 
       if (Array.isArray(pageParsed)) {
         allItems.push(...pageParsed);
+        if (PERF_DEBUG)
+          console.debug(
+            `[PERF] ${this.apiBase} page ${pageNum}: ${pageParsed.length} items in ${(performance.now() - pageStart).toFixed(0)}ms (${allItems.length} total)`,
+          );
         onPage?.(allItems);
       } else if (!pageParsed) {
+        if (PERF_DEBUG)
+          console.debug(
+            `[PERF] ${this.apiBase} list complete: ${allItems.length} items, ${pageNum} pages in ${(performance.now() - listStart).toFixed(0)}ms`,
+          );
         return allItems.length > 0 ? allItems : null;
       } else {
         throw new Error(`GET multiple request to ${url} returned not an array: ${JSON.stringify(pageParsed)}`);
@@ -749,6 +773,11 @@ export class KubeApi<
 
       continueToken = (pageRes?.metadata as Record<string, unknown>)?.continue as string | undefined;
     } while (continueToken);
+
+    if (PERF_DEBUG)
+      console.debug(
+        `[PERF] ${this.apiBase} list complete: ${allItems.length} items, ${pageNum} pages in ${(performance.now() - listStart).toFixed(0)}ms`,
+      );
 
     return allItems;
   }
