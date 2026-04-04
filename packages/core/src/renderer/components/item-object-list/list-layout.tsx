@@ -251,22 +251,90 @@ class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores extends bool
     return <PageFiltersList filters={filters} />;
   }
 
+  private searchTextCache = new WeakMap<I, string>();
+  private warmingIdleHandle?: number;
+
+  /**
+   * Proactively build search cache in background idle frames so the
+   * first keystroke doesn't block the UI for 500ms+ on 50k items.
+   */
+  private warmSearchCache() {
+    if (this.warmingIdleHandle) return;
+
+    const { searchFilters = [] } = this.props;
+
+    if (!searchFilters.length) return;
+
+    const items = this.items;
+    let index = 0;
+    const chunkSize = 500;
+
+    const processChunk = (deadline?: IdleDeadline) => {
+      const end = Math.min(index + chunkSize, items.length);
+
+      while (index < end && (!deadline || deadline.timeRemaining() > 0)) {
+        this.getSearchText(items[index], searchFilters);
+        index++;
+      }
+
+      if (index < items.length) {
+        this.warmingIdleHandle = requestIdleCallback(processChunk);
+      } else {
+        this.warmingIdleHandle = undefined;
+        console.debug(`[PERF] search cache warmed: ${items.length} items`);
+      }
+    };
+
+    this.warmingIdleHandle = requestIdleCallback(processChunk);
+  }
+
+  componentDidUpdate() {
+    // Re-warm cache when items change (store loaded, namespace switch)
+    if (this.props.store.isLoaded && this.props.searchFilters?.length) {
+      this.warmSearchCache();
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.warmingIdleHandle) {
+      cancelIdleCallback(this.warmingIdleHandle);
+    }
+  }
+
+  private getSearchText(item: I, searchFilters: ListLayoutSearchFilter<I>[]): string {
+    let cached = this.searchTextCache.get(item);
+
+    if (cached !== undefined) return cached;
+
+    const parts: string[] = [];
+
+    for (const getTexts of searchFilters) {
+      const result = getTexts(item);
+
+      if (Array.isArray(result)) {
+        for (const v of result) {
+          if (v != null) parts.push(String(v));
+        }
+      } else if (result != null) {
+        parts.push(String(result));
+      }
+    }
+
+    cached = parts.join("\0").toLowerCase();
+    this.searchTextCache.set(item, cached);
+
+    return cached;
+  }
+
   private filterCallbacks: ListLayoutItemsFilters<I> = {
     [FilterType.SEARCH]: (items) => {
       const { searchFilters = [] } = this.props;
       const search = this.props.pageFiltersStore.getValues(FilterType.SEARCH)[0] || "";
 
       if (search && searchFilters.length) {
-        const searchTexts = [search].map(normalizeText);
+        const normalizedSearch = normalizeText(search);
 
-        return items.filter((item) =>
-          searchFilters.some((getTexts) =>
-            [getTexts(item)]
-              .flat()
-              .map(normalizeText)
-              .some((source) => searchTexts.some((search) => source.includes(search))),
-          ),
-        );
+        return items.filter((item) => this.getSearchText(item, searchFilters).includes(normalizedSearch));
       }
 
       return items;
