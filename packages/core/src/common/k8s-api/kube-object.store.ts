@@ -6,7 +6,39 @@
 
 import { parseKubeApi } from "@freelensapp/kube-api";
 import { KubeStatus } from "@freelensapp/kube-object";
-import { includes, object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
+import { object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
+
+/**
+ * Global concurrency limiter for Kubernetes API list requests.
+ * Prevents thundering herd on cluster connect when 40+ stores
+ * fire loadAll() simultaneously.
+ */
+const MAX_CONCURRENT_LIST_REQUESTS = 8;
+let activeListRequests = 0;
+const listRequestQueue: (() => void)[] = [];
+
+function acquireListSlot(): Promise<void> {
+  if (activeListRequests < MAX_CONCURRENT_LIST_REQUESTS) {
+    activeListRequests++;
+
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    listRequestQueue.push(() => {
+      activeListRequests++;
+      resolve();
+    });
+  });
+}
+
+function releaseListSlot(): void {
+  activeListRequests--;
+  const next = listRequestQueue.shift();
+
+  if (next) next();
+}
+
 import assert from "assert";
 import autoBind from "auto-bind";
 import { action, computed, makeObservable, observable, reaction } from "mobx";
@@ -127,12 +159,12 @@ export class KubeObjectStore<
 
   // TODO: Circular dependency: KubeObjectStore -> ClusterFrameContext -> NamespaceStore -> KubeObjectStore
   @computed get contextItems(): K[] {
-    const namespaces = this.dependencies.context.contextNamespaces;
+    const namespaces = new Set(this.dependencies.context.contextNamespaces);
 
     return this.items.filter((item) => {
       const itemNamespace = item.getNs();
 
-      return !itemNamespace /* cluster-wide */ || namespaces.includes(itemNamespace);
+      return !itemNamespace /* cluster-wide */ || namespaces.has(itemNamespace);
     });
   }
 
@@ -151,10 +183,10 @@ export class KubeObjectStore<
   }
 
   getAllByNs(namespace: string | string[], strict = false): K[] {
-    const namespaces = [namespace].flat();
+    const namespaces = new Set([namespace].flat());
 
-    if (namespaces.length) {
-      return this.items.filter((item) => includes(namespaces, item.getNs()));
+    if (namespaces.size) {
+      return this.items.filter((item) => namespaces.has(item.getNs() as string));
     }
 
     if (!strict) {
@@ -164,8 +196,28 @@ export class KubeObjectStore<
     return [];
   }
 
+  @computed private get itemByIdIndex(): Map<string, K> {
+    const map = new Map<string, K>();
+
+    for (const item of this.items) {
+      map.set(item.getId(), item);
+    }
+
+    return map;
+  }
+
+  @computed private get itemBySelfLinkIndex(): Map<string, K> {
+    const map = new Map<string, K>();
+
+    for (const item of this.items) {
+      map.set(item.selfLink, item);
+    }
+
+    return map;
+  }
+
   getById(id: string): K | undefined {
-    return this.items.find((item) => item.getId() === id);
+    return this.itemByIdIndex.get(id);
   }
 
   getByName(name: string, namespace?: string): K | undefined {
@@ -178,15 +230,15 @@ export class KubeObjectStore<
       return (
         item.getNs() === namespace &&
         ownerRefs &&
-        ownerRefs.filter(
+        ownerRefs.some(
           (ref) => (!apiVersion || ref.apiVersion === apiVersion) && ref.kind === kind && ref.name === name,
-        ).length > 0
+        )
       );
     });
   }
 
   getByPath(path: string): K | undefined {
-    return this.items.find((item) => item.selfLink === path);
+    return this.itemBySelfLinkIndex.get(path);
   }
 
   getByLabel(labels: string[] | Partial<Record<string, string>>): K[] {
@@ -302,7 +354,14 @@ export class KubeObjectStore<
     this.isLoading = true;
     this.failedLoading = false;
 
+    await acquireListSlot();
+
     try {
+      // Check if aborted while waiting in the queue
+      if (reqInit?.signal?.aborted) {
+        throw new DOMException("The operation was aborted", "AbortError");
+      }
+
       const isLoadingAll = this.dependencies.context.isLoadingAll(namespaces);
       const items = await this.loadItems({ namespaces, reqInit, onLoadFailure });
 
@@ -326,6 +385,7 @@ export class KubeObjectStore<
         this.failedLoading = true;
       }
     } finally {
+      releaseListSlot();
       this.isLoading = false;
     }
 
