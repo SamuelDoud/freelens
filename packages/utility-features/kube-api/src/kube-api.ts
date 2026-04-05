@@ -22,6 +22,14 @@ import { makeObservable, observable } from "mobx";
 import { stringify } from "querystring";
 import { createKubeApiURL, parseKubeApi } from "./kube-api-parse";
 
+/**
+ * Module-level cache for API group discovery responses.
+ * Shared across all KubeApi instances so that e.g. DeploymentApi,
+ * ReplicaSetApi, and StatefulSetApi don't each independently fetch /apis/apps.
+ */
+const apiGroupDiscoveryCache = new Map<string, Promise<KubeApiResourceVersionList>>();
+const apiResourceCache = new Map<string, Promise<KubeApiResourceList>>();
+
 import type {
   KubeJsonApiData,
   KubeJsonApiDataFor,
@@ -453,13 +461,42 @@ export class KubeApi<
 
       try {
         const { apiPrefix, apiGroup, resource } = parsedApi;
-        const list = (await this.request.get(`${apiPrefix}/${apiGroup}`)) as KubeApiResourceVersionList;
+        const groupKey = `${apiPrefix}/${apiGroup}`;
+
+        // Cache discovery Promises so concurrent KubeApi instances sharing
+        // the same API group don't fire duplicate requests. On rejection,
+        // evict the entry so the next caller retries.
+        if (!apiGroupDiscoveryCache.has(groupKey)) {
+          const promise = this.request.get(groupKey) as Promise<KubeApiResourceVersionList>;
+
+          apiGroupDiscoveryCache.set(
+            groupKey,
+            promise.catch((err) => {
+              apiGroupDiscoveryCache.delete(groupKey);
+              throw err;
+            }),
+          );
+        }
+
+        const list = await apiGroupDiscoveryCache.get(groupKey)!;
         const resourceVersions = getOrderedVersions(list, this.allowedUsableVersions?.[apiGroup]);
 
         for (const resourceVersion of resourceVersions) {
-          const { resources } = (await this.request.get(
-            `${apiPrefix}/${resourceVersion.groupVersion}`,
-          )) as KubeApiResourceList;
+          const versionKey = `${apiPrefix}/${resourceVersion.groupVersion}`;
+
+          if (!apiResourceCache.has(versionKey)) {
+            const promise = this.request.get(versionKey) as Promise<KubeApiResourceList>;
+
+            apiResourceCache.set(
+              versionKey,
+              promise.catch((err) => {
+                apiResourceCache.delete(versionKey);
+                throw err;
+              }),
+            );
+          }
+
+          const { resources } = await apiResourceCache.get(versionKey)!;
 
           if (resources.some(({ name }) => name === resource)) {
             return {
