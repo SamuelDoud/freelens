@@ -12,6 +12,7 @@ import createStorageHelperInjectable from "./create-storage-helper.injectable";
 import { registerInjectables as registerResolveProxyInjectables } from "./resolve-proxy/register-injectables";
 import openSaveFileDialogInjectable from "./save-file.injectable";
 import { registerInjectables as registerSyncBoxInjectables } from "./sync-box/register-injectables";
+import windowActivityInjectable from "./window-activity.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
@@ -43,6 +44,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerSyncBoxInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(windowActivityInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

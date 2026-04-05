@@ -9,8 +9,10 @@ import "./pods.scss";
 import { podListLayoutColumnInjectionToken } from "@freelensapp/list-layout";
 import { interval } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
+import { autorun } from "mobx";
 import { observer } from "mobx-react";
 import React, { useEffect } from "react";
+import windowActivityInjectable, { INACTIVE_MULTIPLIER } from "../../utils/window-activity.injectable";
 import eventStoreInjectable from "../events/store.injectable";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
 import { SiblingsInTabLayout } from "../layout/siblings-in-tab-layout";
@@ -19,6 +21,8 @@ import podStoreInjectable from "./store.injectable";
 import type { Pod } from "@freelensapp/kube-object";
 import type { SpecificKubeListLayoutColumn } from "@freelensapp/list-layout";
 
+import type { IObservableValue } from "mobx";
+
 import type { EventStore } from "../events/store";
 import type { PodStore } from "./store";
 
@@ -26,20 +30,33 @@ interface Dependencies {
   eventStore: EventStore;
   podStore: PodStore;
   columns: SpecificKubeListLayoutColumn<Pod>[];
+  isWindowActive: IObservableValue<boolean>;
 }
 
 const REFRESH_METRICS_INTERVAL = 60;
 
 const NonInjectedPods = observer((props: Dependencies) => {
-  const { columns, eventStore, podStore } = props;
+  const { columns, eventStore, podStore, isWindowActive } = props;
 
   useEffect(() => {
-    const fetchPodsMetricsInterval = interval(REFRESH_METRICS_INTERVAL, () => podStore.loadKubeMetrics());
+    let metricsInterval: ReturnType<typeof interval> | undefined;
 
-    fetchPodsMetricsInterval.start(true);
+    // autorun fires immediately on creation and re-fires when
+    // isWindowActive changes, adjusting the polling interval.
+    const dispose = autorun(() => {
+      const multiplier = isWindowActive.get() ? 1 : INACTIVE_MULTIPLIER;
+      const seconds = REFRESH_METRICS_INTERVAL * multiplier;
 
-    return () => fetchPodsMetricsInterval.stop();
-  }, [podStore]);
+      metricsInterval?.stop();
+      metricsInterval = interval(seconds, () => podStore.loadKubeMetrics());
+      metricsInterval.start(true);
+    });
+
+    return () => {
+      dispose();
+      metricsInterval?.stop();
+    };
+  }, [podStore, isWindowActive]);
 
   return (
     <SiblingsInTabLayout>
@@ -71,5 +88,6 @@ export const Pods = withInjectables<Dependencies>(NonInjectedPods, {
     eventStore: di.inject(eventStoreInjectable),
     podStore: di.inject(podStoreInjectable),
     columns: di.injectMany(podListLayoutColumnInjectionToken),
+    isWindowActive: di.inject(windowActivityInjectable).isActive,
   }),
 });

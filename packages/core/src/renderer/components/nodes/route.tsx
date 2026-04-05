@@ -10,10 +10,11 @@ import { formatNodeTaint } from "@freelensapp/kube-object";
 import { Tooltip, TooltipPosition } from "@freelensapp/tooltip";
 import { bytesToUnits, interval } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { makeObservable, observable } from "mobx";
+import { autorun, makeObservable, observable } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import requestAllNodeMetricsInjectable from "../../../common/k8s-api/endpoints/metrics.api/request-metrics-for-all-nodes.injectable";
+import windowActivityInjectable, { INACTIVE_MULTIPLIER } from "../../utils/window-activity.injectable";
 import { BadgeBoolean } from "../badge";
 import eventStoreInjectable from "../events/store.injectable";
 import { KubeObjectAge } from "../kube-object/age";
@@ -25,6 +26,8 @@ import { WithTooltip } from "../with-tooltip";
 import nodeStoreInjectable from "./store.injectable";
 
 import type { Node } from "@freelensapp/kube-object";
+
+import type { IObservableValue } from "mobx";
 
 import type {
   NodeMetricData,
@@ -62,6 +65,7 @@ interface Dependencies {
   requestAllNodeMetrics: RequestAllNodeMetrics;
   nodeStore: NodeStore;
   eventStore: EventStore;
+  isWindowActive: IObservableValue<boolean>;
 }
 
 function bytesToUnitsAligned(bytes: number): string {
@@ -75,24 +79,38 @@ function bytesToUnitsAligned(bytes: number): string {
 class NonInjectedNodesRoute extends React.Component<Dependencies> {
   @observable metrics: NodeMetricData | null = null;
 
-  private metricsWatcher = interval(30, () => {
-    void (async () => {
-      await this.props.nodeStore.loadKubeMetrics();
-      this.metrics = await this.props.requestAllNodeMetrics();
-    })();
-  });
+  private metricsWatcher?: ReturnType<typeof interval>;
+  private disposeAutorun?: () => void;
+
+  private readonly BASE_INTERVAL = 30;
 
   constructor(props: Dependencies) {
     super(props);
     makeObservable(this);
   }
 
+  private loadMetrics = () => {
+    void (async () => {
+      await this.props.nodeStore.loadKubeMetrics();
+      this.metrics = await this.props.requestAllNodeMetrics();
+    })();
+  };
+
   componentDidMount() {
-    this.metricsWatcher.start(true);
+    // autorun fires immediately on creation and re-fires when
+    // isWindowActive changes, adjusting the polling interval.
+    this.disposeAutorun = autorun(() => {
+      const multiplier = this.props.isWindowActive.get() ? 1 : INACTIVE_MULTIPLIER;
+
+      this.metricsWatcher?.stop();
+      this.metricsWatcher = interval(this.BASE_INTERVAL * multiplier, this.loadMetrics);
+      this.metricsWatcher.start(true);
+    });
   }
 
   componentWillUnmount() {
-    this.metricsWatcher.stop();
+    this.metricsWatcher?.stop();
+    this.disposeAutorun?.();
   }
 
   getLastMetricValues(node: Node, metricNames: (keyof NodeMetricData)[]): number[] {
@@ -275,5 +293,6 @@ export const NodesRoute = withInjectables<Dependencies>(NonInjectedNodesRoute, {
     nodeStore: di.inject(nodeStoreInjectable),
     eventStore: di.inject(eventStoreInjectable),
     requestAllNodeMetrics: di.inject(requestAllNodeMetricsInjectable),
+    isWindowActive: di.inject(windowActivityInjectable).isActive,
   }),
 });
