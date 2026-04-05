@@ -61,12 +61,12 @@ export class ItemListLayoutHeader<I extends ItemObject, PreLoadStores extends bo
         return (
           <>
             <a onClick={toggleFilters}>Filtered</a>
-            {`: ${itemsCount} / ${allItemsCount}`}
+            {`: ${itemsCount.toLocaleString()} / ${allItemsCount.toLocaleString()}`}
           </>
         );
       }
 
-      const countText = allItemsCount === 1 ? "1 item" : `${allItemsCount} items`;
+      const countText = allItemsCount === 1 ? "1 item" : `${allItemsCount.toLocaleString()} items`;
 
       if (store.isLoading) {
         return `Loading\u2026 ${countText}`;

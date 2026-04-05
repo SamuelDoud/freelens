@@ -29,7 +29,7 @@ const NonInjectedOverviewStatuses = observer(({ workloads }: Dependencies & Over
       {workloads.get().map((workload) => (
         <div className="workload" key={formatKubeApiResource(workload.resource)}>
           <div className="title">
-            <a onClick={workload.open}>{`${workload.title} (${workload.amountOfItems.get()})`}</a>
+            <a onClick={workload.open}>{`${workload.title} (${workload.amountOfItems.get().toLocaleString()})`}</a>
           </div>
 
           <OverviewWorkloadStatus workload={workload} />
