@@ -6,6 +6,7 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import apiActivityStatusInjectable from "./api-activity-status.injectable";
 import statusBarCurrentStatusInjectable from "./current-status.injectable";
 import setStatusBarStatusInjectable from "./set-status-bar-status.injectable";
 import statusBarItemRegistratorInjectable from "./status-bar-item-registrator.injectable";
@@ -14,6 +15,11 @@ import statusBarItemsInjectable from "./status-bar-items.injectable";
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
+  try {
+    di.register(apiActivityStatusInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
   try {
     di.register(setStatusBarStatusInjectable);
   } catch (e) {
