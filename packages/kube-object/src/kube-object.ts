@@ -147,16 +147,23 @@ export class KubeObject<
     return this.metadata.namespace || undefined;
   }
 
+  private cachedCreationTimestamp?: number;
+
   /**
    * This function computes the number of milliseconds from the UNIX EPOCH to the
-   * creation timestamp of this object.
+   * creation timestamp of this object. The result is cached since the creation
+   * timestamp is immutable.
    */
   getCreationTimestamp() {
-    if (!this.metadata.creationTimestamp) {
-      return Date.now();
+    if (this.cachedCreationTimestamp !== undefined) {
+      return this.cachedCreationTimestamp;
     }
 
-    return new Date(this.metadata.creationTimestamp).getTime();
+    this.cachedCreationTimestamp = this.metadata.creationTimestamp
+      ? new Date(this.metadata.creationTimestamp).getTime()
+      : Date.now();
+
+    return this.cachedCreationTimestamp;
   }
 
   /**
@@ -192,8 +199,10 @@ export class KubeObject<
     return this.metadata.finalizers || [];
   }
 
+  private cachedLabels?: string[];
+
   getLabels(): string[] {
-    return KubeObject.stringifyLabels(this.metadata.labels);
+    return (this.cachedLabels ??= KubeObject.stringifyLabels(this.metadata.labels));
   }
 
   getAnnotations(filter = false): string[] {
