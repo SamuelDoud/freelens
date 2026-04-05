@@ -243,39 +243,36 @@ class ClusterConnection {
     const canI = this.dependencies.createCanI(api);
     const requestNamespaceListPermissions = this.dependencies.createRequestNamespaceListPermissions(api);
 
-    const isAdmin = await canI({
-      namespace: "kube-system",
-      resource: "*",
-      verb: "create",
-    });
-    const isGlobalWatchEnabled = await canI({
-      verb: "watch",
-      resource: "*",
-    });
-    const allowedNamespaces = await this.requestAllowedNamespaces(proxyConfig);
-    const knownResources = await (async () => {
-      const result = await this.dependencies.requestApiResources(this.cluster);
+    // Run independent permission checks and resource discovery in parallel.
+    // These are all separate API calls with no dependencies between them.
+    const [isAdmin, isGlobalWatchEnabled, allowedNamespaces, knownResources] = await Promise.all([
+      canI({ namespace: "kube-system", resource: "*", verb: "create" }),
+      canI({ verb: "watch", resource: "*" }),
+      this.requestAllowedNamespaces(proxyConfig),
+      (async () => {
+        const result = await this.dependencies.requestApiResources(this.cluster);
 
-      if (result.callWasSuccessful) {
-        return result.response;
-      }
+        if (result.callWasSuccessful) {
+          return result.response;
+        }
 
-      if (this.cluster.knownResources.length > 0) {
-        this.dependencies.logger.warn(`[CLUSTER]: failed to list KUBE resources, sticking with previous list`);
+        if (this.cluster.knownResources.length > 0) {
+          this.dependencies.logger.warn(`[CLUSTER]: failed to list KUBE resources, sticking with previous list`);
 
-        return this.cluster.knownResources;
-      }
+          return this.cluster.knownResources;
+        }
 
-      this.dependencies.logger.warn(
-        `[CLUSTER]: failed to list KUBE resources for the first time, blocking connection to cluster...`,
-      );
-      this.dependencies.broadcastConnectionUpdate({
-        level: "error",
-        message: "Failed to list kube API resources, please reconnect...",
-      });
+        this.dependencies.logger.warn(
+          `[CLUSTER]: failed to list KUBE resources for the first time, blocking connection to cluster...`,
+        );
+        this.dependencies.broadcastConnectionUpdate({
+          level: "error",
+          message: "Failed to list kube API resources, please reconnect...",
+        });
 
-      return [];
-    })();
+        return [];
+      })(),
+    ]);
     const resourcesToShow = await this.getResourcesToShow(
       allowedNamespaces,
       knownResources,
