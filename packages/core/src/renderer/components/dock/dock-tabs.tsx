@@ -81,7 +81,7 @@ export const DockTabs = ({ tabs, autoFocus, selectedTab, onChangeTab }: DockTabs
 
       minTabSize.current = cssVars.get("--min-tab-width").valueOf();
     }
-  });
+  }, []);
 
   useResizeObserver(elem.current, () => {
     scrollActiveTabIntoView();

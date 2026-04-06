@@ -130,7 +130,7 @@ class NonInjectedCronJobDetails extends React.Component<CronJobDetailsProps & De
               const condition = job.getCondition();
 
               return (
-                <div className="job" key={cronJob.getId()}>
+                <div className="job" key={job.getId()}>
                   <div className="title flex gaps">
                     <Icon small material="list" />
                     <span>

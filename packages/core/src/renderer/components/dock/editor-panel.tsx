@@ -9,7 +9,7 @@ import { withInjectables } from "@ogre-tools/injectable-react";
 import throttle from "lodash/throttle";
 import { reaction } from "mobx";
 import { observer } from "mobx-react";
-import React, { createRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { MonacoEditor } from "../monaco-editor";
 import dockStoreInjectable from "./dock/store.injectable";
 import styles from "./editor-panel.module.scss";
@@ -42,19 +42,21 @@ const NonInjectedEditorPanel = observer(
     onError,
     hidden,
   }: Dependencies & EditorPanelProps) => {
-    const editor = createRef<MonacoEditorRef>();
+    const editor = useRef<MonacoEditorRef>(null);
 
-    useEffect(() =>
-      disposer(
-        reaction(
-          () => dockStore.isOpen,
-          (isOpen) => isOpen && editor.current?.focus(),
-          {
-            fireImmediately: true,
-          },
+    useEffect(
+      () =>
+        disposer(
+          reaction(
+            () => dockStore.isOpen,
+            (isOpen) => isOpen && editor.current?.focus(),
+            {
+              fireImmediately: true,
+            },
+          ),
+          dockStore.onResize(throttle(() => editor.current?.focus(), 250)),
         ),
-        dockStore.onResize(throttle(() => editor.current?.focus(), 250)),
-      ),
+      [dockStore],
     );
 
     if (!tabId) {
