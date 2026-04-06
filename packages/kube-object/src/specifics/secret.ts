@@ -51,11 +51,11 @@ export class Secret extends KubeObject<NamespaceScopedMetadata, void, void> {
 
   data: Partial<Record<string, string>>;
 
-  constructor({ data = {}, type, ...rest }: SecretData) {
-    super(rest);
+  constructor(data: SecretData) {
+    super(data);
 
-    this.data = data;
-    this.type = type;
+    this.data = data.data ?? {};
+    this.type = data.type;
   }
 
   getKeys(): string[] {

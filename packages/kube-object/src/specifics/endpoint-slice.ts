@@ -56,10 +56,10 @@ export class EndpointSlice extends KubeObject<NamespaceScopedMetadata, void, voi
     );
   }
 
-  constructor({ addressType, endpoints, ports, ...rest }: EndpointSliceData) {
-    super(rest);
-    this.addressType = addressType;
-    this.endpoints = endpoints;
-    this.ports = ports;
+  constructor(data: EndpointSliceData) {
+    super(data);
+    this.addressType = data.addressType;
+    this.endpoints = data.endpoints;
+    this.ports = data.ports;
   }
 }

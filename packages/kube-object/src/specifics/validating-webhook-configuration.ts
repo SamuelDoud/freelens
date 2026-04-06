@@ -23,9 +23,9 @@ export class ValidatingWebhookConfiguration extends KubeObject<NamespaceScopedMe
 
   webhooks?: Webhook[];
 
-  constructor({ webhooks, ...rest }: ValidatingWebhookConfigurationData) {
-    super(rest);
-    this.webhooks = webhooks;
+  constructor(data: ValidatingWebhookConfigurationData) {
+    super(data);
+    this.webhooks = data.webhooks;
   }
 
   getWebhooks(): Webhook[] {

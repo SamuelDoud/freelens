@@ -169,9 +169,9 @@ export class MutatingWebhookConfiguration extends KubeObject<NamespaceScopedMeta
 
   webhooks?: Webhook[];
 
-  constructor({ webhooks, ...rest }: MutatingWebhookConfigurationData) {
-    super(rest);
-    this.webhooks = webhooks;
+  constructor(data: MutatingWebhookConfigurationData) {
+    super(data);
+    this.webhooks = data.webhooks;
   }
 
   getWebhooks(): Webhook[] {

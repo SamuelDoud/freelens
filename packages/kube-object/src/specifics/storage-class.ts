@@ -48,24 +48,15 @@ export class StorageClass extends KubeObject<ClusterScopedMetadata, void, void> 
 
   volumeBindingMode?: string;
 
-  constructor({
-    allowVolumeExpansion,
-    allowedTopologies = [],
-    mountOptions = [],
-    parameters = {},
-    provisioner,
-    reclaimPolicy = "Delete",
-    volumeBindingMode,
-    ...rest
-  }: StorageClassData) {
-    super(rest);
-    this.allowVolumeExpansion = allowVolumeExpansion;
-    this.allowedTopologies = allowedTopologies;
-    this.mountOptions = mountOptions;
-    this.parameters = parameters;
-    this.provisioner = provisioner;
-    this.reclaimPolicy = reclaimPolicy;
-    this.volumeBindingMode = volumeBindingMode;
+  constructor(data: StorageClassData) {
+    super(data);
+    this.allowVolumeExpansion = data.allowVolumeExpansion;
+    this.allowedTopologies = data.allowedTopologies ?? [];
+    this.mountOptions = data.mountOptions ?? [];
+    this.parameters = data.parameters ?? {};
+    this.provisioner = data.provisioner;
+    this.reclaimPolicy = data.reclaimPolicy ?? "Delete";
+    this.volumeBindingMode = data.volumeBindingMode;
   }
 
   isDefault() {

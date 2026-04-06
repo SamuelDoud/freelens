@@ -77,38 +77,22 @@ export class KubeEvent extends KubeObject<KubeObjectMetadata<KubeObjectScope.Nam
    */
   type?: string;
 
-  constructor({
-    action,
-    count,
-    eventTime,
-    firstTimestamp,
-    involvedObject,
-    lastTimestamp,
-    message,
-    reason,
-    related,
-    reportingComponent,
-    reportingInstance,
-    series,
-    source,
-    type,
-    ...rest
-  }: KubeEventData) {
-    super(rest);
-    this.action = action;
-    this.count = count;
-    this.eventTime = eventTime;
-    this.firstTimestamp = firstTimestamp;
-    this.involvedObject = involvedObject;
-    this.lastTimestamp = lastTimestamp;
-    this.message = message;
-    this.reason = reason;
-    this.related = related;
-    this.reportingComponent = reportingComponent;
-    this.reportingInstance = reportingInstance;
-    this.series = series;
-    this.source = source;
-    this.type = type;
+  constructor(data: KubeEventData) {
+    super(data);
+    this.action = data.action;
+    this.count = data.count;
+    this.eventTime = data.eventTime;
+    this.firstTimestamp = data.firstTimestamp;
+    this.involvedObject = data.involvedObject;
+    this.lastTimestamp = data.lastTimestamp;
+    this.message = data.message;
+    this.reason = data.reason;
+    this.related = data.related;
+    this.reportingComponent = data.reportingComponent;
+    this.reportingInstance = data.reportingInstance;
+    this.series = data.series;
+    this.source = data.source;
+    this.type = data.type;
   }
 
   isWarning() {

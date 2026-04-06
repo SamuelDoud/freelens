@@ -42,11 +42,11 @@ export class RuntimeClass extends KubeObject<ClusterScopedMetadata, void, void> 
 
   scheduling?: RuntimeClassScheduling;
 
-  constructor({ handler, overhead, scheduling, ...rest }: RuntimeClassData) {
-    super(rest);
-    this.handler = handler;
-    this.overhead = overhead;
-    this.scheduling = scheduling;
+  constructor(data: RuntimeClassData) {
+    super(data);
+    this.handler = data.handler;
+    this.overhead = data.overhead;
+    this.scheduling = data.scheduling;
   }
 
   getHandler() {

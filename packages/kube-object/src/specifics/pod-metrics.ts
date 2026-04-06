@@ -37,10 +37,10 @@ export class PodMetrics extends KubeObject<NamespaceScopedMetadata, void, void> 
 
   containers: PodMetricsContainer[];
 
-  constructor({ timestamp, window, containers, ...rest }: PodMetricsData) {
-    super(rest);
-    this.timestamp = timestamp;
-    this.window = window;
-    this.containers = containers;
+  constructor(data: PodMetricsData) {
+    super(data);
+    this.timestamp = data.timestamp;
+    this.window = data.window;
+    this.containers = data.containers;
   }
 }

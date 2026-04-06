@@ -26,10 +26,10 @@ export class RoleBinding extends KubeObject<NamespaceScopedMetadata, void, void>
 
   roleRef: RoleRef;
 
-  constructor({ subjects, roleRef, ...rest }: RoleBindingData) {
-    super(rest);
-    this.subjects = subjects;
-    this.roleRef = roleRef;
+  constructor(data: RoleBindingData) {
+    super(data);
+    this.subjects = data.subjects;
+    this.roleRef = data.roleRef;
   }
 
   getSubjects() {

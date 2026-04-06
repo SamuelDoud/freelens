@@ -27,10 +27,10 @@ export class ClusterRoleBinding extends KubeObject<ClusterScopedMetadata, void, 
 
   roleRef: RoleRef;
 
-  constructor({ subjects, roleRef, ...rest }: ClusterRoleBindingData) {
-    super(rest);
-    this.subjects = subjects;
-    this.roleRef = roleRef;
+  constructor(data: ClusterRoleBindingData) {
+    super(data);
+    this.subjects = data.subjects;
+    this.roleRef = data.roleRef;
   }
 
   getSubjects() {
