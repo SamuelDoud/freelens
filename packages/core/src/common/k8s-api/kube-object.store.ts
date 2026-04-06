@@ -214,10 +214,33 @@ export class KubeObjectStore<
         this.loadedNamespaces.set([]);
       }
 
-      // Progressively render items as each page arrives from the paginated API
-      const onPage = action((items: K[]) => {
-        this.items.replace(this.sortItems(this.filterItemsOnLoad(items)));
-      });
+      // Progressively render items as pages arrive from the paginated API.
+      // Throttle UI updates to every 10 pages to avoid hammering MobX with
+      // 100+ sort+replace cascades on large clusters.
+      // Renders are scheduled asynchronously via setTimeout(0) so they don't
+      // block the next page fetch.
+      let pageCount = 0;
+      let loadGeneration = 0;
+      // Show first page immediately so users see results fast,
+      // then throttle to avoid hammering MobX on subsequent pages.
+      // Scale the interval with page size: larger pages = fewer renders needed.
+      const pageSize = effectivePageSize ?? 500;
+      const progressInterval = Math.max(1, Math.ceil(5000 / pageSize));
+      const onPage = (items: K[]) => {
+        pageCount++;
+
+        // Always render the first page so something appears immediately
+        if (pageCount === 1 || pageCount % progressInterval === 0) {
+          const snapshot = items.slice();
+
+          setTimeout(
+            action(() => {
+              this.items.replace(this.sortItems(this.filterItemsOnLoad(snapshot)));
+            }),
+            0,
+          );
+        }
+      };
 
       const res = this.api.list({ reqInit, pageSize: effectivePageSize }, this.query, onPage);
 
