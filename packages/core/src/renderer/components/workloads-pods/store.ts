@@ -93,6 +93,40 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
     return this.podsByNodeIndex.get(node) ?? [];
   }
 
+  /**
+   * Index of pods by PVC claim name (key: "namespace/claimName").
+   * Used by PersistentVolumeClaim to avoid O(pods × volumes) scans.
+   */
+  @computed get podsByPvcIndex(): Map<string, Pod[]> {
+    const map = new Map<string, Pod[]>();
+
+    for (const pod of this.items) {
+      const ns = pod.getNs();
+
+      for (const volume of pod.getVolumes()) {
+        const claimName = volume.persistentVolumeClaim?.claimName;
+
+        if (claimName) {
+          const key = `${ns}/${claimName}`;
+          let list = map.get(key);
+
+          if (!list) {
+            list = [];
+            map.set(key, list);
+          }
+
+          list.push(pod);
+        }
+      }
+    }
+
+    return map;
+  }
+
+  getPodsByPvc(namespace: string, claimName: string): Pod[] {
+    return this.podsByPvcIndex.get(`${namespace}/${claimName}`) ?? [];
+  }
+
   getStatuses(pods: Pod[]) {
     return countBy(pods.map((pod) => pod.getStatus()));
   }
