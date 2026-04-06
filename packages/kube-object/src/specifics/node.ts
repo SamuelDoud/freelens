@@ -197,20 +197,27 @@ export class Node extends KubeObject<ClusterScopedMetadata, NodeStatus, NodeSpec
     return this.getRoleLabelItems().join(", ");
   }
 
+  private cachedCpuCapacity?: number;
+  private cachedMemoryCapacity?: number;
+
   getCpuCapacity() {
+    if (this.cachedCpuCapacity !== undefined) return this.cachedCpuCapacity;
+
     if (!this.status?.capacity || !this.status.capacity.cpu) {
-      return 0;
+      return (this.cachedCpuCapacity = 0);
     }
 
-    return cpuUnitsToNumber(this.status.capacity.cpu);
+    return (this.cachedCpuCapacity = cpuUnitsToNumber(this.status.capacity.cpu));
   }
 
   getMemoryCapacity() {
+    if (this.cachedMemoryCapacity !== undefined) return this.cachedMemoryCapacity;
+
     if (!this.status?.capacity || !this.status.capacity.memory) {
-      return 0;
+      return (this.cachedMemoryCapacity = 0);
     }
 
-    return unitsToBytes(this.status.capacity.memory);
+    return (this.cachedMemoryCapacity = unitsToBytes(this.status.capacity.memory));
   }
 
   getConditions(): NodeCondition[] {

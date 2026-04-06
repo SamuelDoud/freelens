@@ -205,14 +205,15 @@ export class KubeObject<
     return (this.cachedLabels ??= KubeObject.stringifyLabels(this.metadata.labels));
   }
 
-  getAnnotations(filter = false): string[] {
-    const labels = KubeObject.stringifyLabels(this.metadata.annotations);
+  private cachedAnnotations?: string[];
+  private cachedAnnotationsFiltered?: string[];
 
+  getAnnotations(filter = false): string[] {
     if (!filter) {
-      return labels;
+      return (this.cachedAnnotations ??= KubeObject.stringifyLabels(this.metadata.annotations));
     }
 
-    return labels.filter(filterOutResourceApplierAnnotations);
+    return (this.cachedAnnotationsFiltered ??= this.getAnnotations(false).filter(filterOutResourceApplierAnnotations));
   }
 
   getOwnerRefs() {
