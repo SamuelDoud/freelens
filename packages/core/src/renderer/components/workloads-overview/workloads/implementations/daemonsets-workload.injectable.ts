@@ -8,7 +8,6 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
 import navigateToDaemonsetsInjectable from "../../../../../common/front-end-routing/routes/cluster/workloads/daemonsets/navigate-to-daemonsets.injectable";
 import { ResourceNames } from "../../../../utils/rbac";
-import namespaceStoreInjectable from "../../../namespaces/store.injectable";
 import daemonsetsStoreInjectable from "../../../workloads-daemonsets/store.injectable";
 import { workloadInjectionToken } from "../workload-injection-token";
 
@@ -17,7 +16,6 @@ const daemonsetsWorkloadInjectable = getInjectable({
 
   instantiate: (di) => {
     const navigate = di.inject(navigateToDaemonsetsInjectable);
-    const namespaceStore = di.inject(namespaceStoreInjectable);
     const store = di.inject(daemonsetsStoreInjectable);
 
     return {
@@ -27,9 +25,9 @@ const daemonsetsWorkloadInjectable = getInjectable({
       },
       open: navigate,
 
-      amountOfItems: computed(() => store.getAllByNs(namespaceStore.contextNamespaces).length),
+      amountOfItems: computed(() => store.contextItems.length),
 
-      status: computed(() => store.getStatuses(store.getAllByNs(namespaceStore.contextNamespaces))),
+      status: computed(() => store.getStatuses(store.contextItems)),
 
       title: ResourceNames.daemonsets,
       orderNumber: 30,
