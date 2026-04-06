@@ -337,9 +337,13 @@ export abstract class ShellSession {
       this.dependencies.shellSessionEnvs.set(clusterId, env);
     } else {
       // refresh env in the background
-      this.getShellEnv().then((shellEnv: any) => {
-        this.dependencies.shellSessionEnvs.set(clusterId, shellEnv);
-      });
+      this.getShellEnv()
+        .then((shellEnv: any) => {
+          this.dependencies.shellSessionEnvs.set(clusterId, shellEnv);
+        })
+        .catch(() => {
+          // ignore background refresh failures
+        });
     }
 
     return env;
@@ -356,7 +360,7 @@ export abstract class ShellSession {
       return process.env;
     })();
 
-    const env = clearKubeconfigEnvVars(JSON.parse(JSON.stringify(rawEnv)));
+    const env = clearKubeconfigEnvVars({ ...rawEnv });
     const pathStr = [this.dependencies.directoryContainingKubectl, ...this.getPathEntries(), env.PATH].join(
       path.delimiter,
     );

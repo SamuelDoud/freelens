@@ -216,7 +216,7 @@ export class LensProxy {
           const retryCount = this.retryCounters.get(reqId) || 0;
           const timeoutMs = retryCount * 250;
 
-          if (retryCount < 20) {
+          if (retryCount < 20 && this.retryCounters.size < 1000) {
             this.dependencies.logger.debug(`Retrying proxy request to url: ${reqId}`);
             setTimeout(() => {
               this.retryCounters.set(reqId, retryCount + 1);
