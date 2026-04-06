@@ -39,12 +39,10 @@ const selectedMetricsTypeInjectable = getInjectable({
           return [];
       }
     });
-    const hasCPUMetrics = computed(
-      () => normalizeMetrics(overviewMetrics.value.get()?.cpuUsage).data.result[0].values.length > 0,
-    );
-    const hasMemoryMetrics = computed(
-      () => normalizeMetrics(overviewMetrics.value.get()?.memoryUsage).data.result[0].values.length > 0,
-    );
+    const normalizedCpu = computed(() => normalizeMetrics(overviewMetrics.value.get()?.cpuUsage));
+    const normalizedMemory = computed(() => normalizeMetrics(overviewMetrics.value.get()?.memoryUsage));
+    const hasCPUMetrics = computed(() => normalizedCpu.get().data.result[0].values.length > 0);
+    const hasMemoryMetrics = computed(() => normalizedMemory.get().data.result[0].values.length > 0);
 
     return {
       value,

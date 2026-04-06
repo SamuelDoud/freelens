@@ -186,43 +186,56 @@ export class NodeShellSession extends ShellSession {
   protected waitForRunningPod(kc: KubeConfig): Promise<void> {
     this.dependencies.logger.debug(`[NODE-SHELL]: waiting for ${this.podName} to be running`);
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
+      let settled = false;
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+
+      const settle = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+
+        if (timeout !== undefined) clearTimeout(timeout);
+        fn();
+      };
+
       new Watch(kc)
         .watch(
           `/api/v1/namespaces/kube-system/pods`,
-          {},
-          // callback is called for each received object.
+          { fieldSelector: `metadata.name=${this.podName}` },
           (type, { metadata: { name }, status }: Pod) => {
             if (name === this.podName) {
               switch (status?.phase) {
                 case "Running":
-                  return resolve();
+                  return settle(() => resolve());
                 case "Failed":
-                  return reject(
-                    `Failed to be created: ${(status as unknown as Record<string, string>).message || "unknown error"}`,
+                  return settle(() =>
+                    reject(
+                      `Failed to be created: ${(status as unknown as Record<string, string>).message || "unknown error"}`,
+                    ),
                   );
               }
             }
           },
-          // done callback is called if the watch terminates normally
           (err) => {
             this.dependencies.logger.error(`[NODE-SHELL]: ${this.podName} was not created in time`);
-            reject(err);
+            settle(() => reject(err));
           },
         )
         .then((req) => {
-          setTimeout(
+          if (settled) return; // already resolved before watch connection established
+
+          timeout = setTimeout(
             () => {
               this.dependencies.logger.error(`[NODE-SHELL]: aborting wait for ${this.podName}, timing out`);
               req.abort();
-              reject("Pod creation timed out");
+              settle(() => reject("Pod creation timed out"));
             },
             2 * 60 * 1000,
-          ); // 2 * 60 * 1000
+          );
         })
         .catch((error) => {
           this.dependencies.logger.error(`[NODE-SHELL]: waiting for ${this.podName} failed: ${String(error)}`);
-          reject(error);
+          settle(() => reject(error));
         });
     });
   }
