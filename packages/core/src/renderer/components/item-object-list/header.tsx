@@ -66,7 +66,13 @@ export class ItemListLayoutHeader<I extends ItemObject, PreLoadStores extends bo
         );
       }
 
-      return allItemsCount === 1 ? `${allItemsCount} item` : `${allItemsCount} items`;
+      const countText = allItemsCount === 1 ? "1 item" : `${allItemsCount} items`;
+
+      if (store.isLoading) {
+        return `Loading\u2026 ${countText}`;
+      }
+
+      return countText;
     };
 
     const customizeHeaderFunctions = [customizeHeader].flat().filter(isDefined);
