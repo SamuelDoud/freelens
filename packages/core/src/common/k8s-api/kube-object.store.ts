@@ -112,7 +112,7 @@ export class KubeObjectStore<
   ) {
     super();
     this.limit = opts?.limit;
-    this.bufferSize = opts?.bufferSize ?? 50_000;
+    this.bufferSize = opts?.bufferSize ?? Infinity;
 
     makeObservable(this);
     autoBind(this);
