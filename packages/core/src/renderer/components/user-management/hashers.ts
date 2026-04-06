@@ -4,17 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { MD5 } from "crypto-js";
-
 import type { Subject } from "@freelensapp/kube-object";
 
 export function hashSubject(subject: Subject): string {
-  return MD5(
-    JSON.stringify([
-      ["kind", subject.kind],
-      ["name", subject.name],
-      ["namespace", subject.namespace],
-      ["apiGroup", subject.apiGroup],
-    ]),
-  ).toString();
+  return `${subject.kind}\0${subject.name}\0${subject.namespace ?? ""}\0${subject.apiGroup ?? ""}`;
 }

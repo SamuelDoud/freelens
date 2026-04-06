@@ -10,8 +10,10 @@
  * @param name A kube object name
  * @returns The converted parts of the name
  */
+const nameSplitRegex = /[-_./\\]+/;
+
 export function getConvertedParts(name: string): (string | number)[] {
-  return name.split(/[-_./\\]+/).map((part) => {
+  return name.split(nameSplitRegex).map((part) => {
     const converted = +part;
 
     return isNaN(converted) ? part : converted;
