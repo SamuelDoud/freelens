@@ -84,7 +84,7 @@ export class HelmChartManager {
     const normalized = normalizeHelmCharts(this.repo.name, data.entries);
 
     return put(this.dependencies.cache, this.repo.name, {
-      data: JSON.stringify(normalized),
+      data: normalized,
       mtimeMs: cacheFileStats.mtimeMs,
     });
   }
@@ -102,7 +102,7 @@ export class HelmChartManager {
       }
     }
 
-    return JSON.parse(cacheEntry.data);
+    return cacheEntry.data;
   }
 }
 

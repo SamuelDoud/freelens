@@ -7,6 +7,7 @@
 import { compile } from "path-to-regexp";
 import { isDefined } from "./type-narrowing";
 
+import type { PathFunction } from "path-to-regexp";
 import type { RouteProps } from "react-router";
 
 export interface UrlRouteProps extends RouteProps {
@@ -19,11 +20,24 @@ export interface URLParams<P extends object = {}, Q extends object = {}> {
   fragment?: string;
 }
 
+const compiledPathCache = new Map<string, PathFunction>();
+
+function getCompiledPath(path: string): PathFunction {
+  let fn = compiledPathCache.get(path);
+
+  if (!fn) {
+    fn = compile(path);
+    compiledPathCache.set(path, fn);
+  }
+
+  return fn;
+}
+
 export function buildURL<P extends object = {}, Q extends object = {}>(
   path: string,
   { params, query, fragment }: URLParams<P, Q> = {},
 ) {
-  const pathBuilder = compile(String(path));
+  const pathBuilder = getCompiledPath(String(path));
 
   const queryParams = query ? new URLSearchParams(Object.entries(query)).toString() : "";
   const parts = [pathBuilder(params), queryParams && `?${queryParams}`, fragment && `#${fragment}`];

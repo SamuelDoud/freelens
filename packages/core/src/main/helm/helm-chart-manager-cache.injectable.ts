@@ -7,7 +7,7 @@
 import { getInjectable } from "@ogre-tools/injectable";
 
 export interface ChartCacheEntry {
-  data: string; // serialized JSON
+  data: Record<string, any>; // parsed chart data
   mtimeMs: number;
 }
 

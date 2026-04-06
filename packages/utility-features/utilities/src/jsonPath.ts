@@ -99,13 +99,26 @@ export function formatJSONValue(value: unknown): string {
 /**
  * This function is a safer version of `JSONPath.value(obj, path)` with untrusted jsonpath strings
  */
+const parsedPathCache = new Map<string, { parsed: any[]; isSlice: boolean; stringified: string }>();
+
+function getParsedPathInfo(path: string) {
+  let info = parsedPathCache.get(path);
+
+  if (!info) {
+    const parsed = JSONPath.parse(convertKubectlJsonPathToNodeJsonPath(path));
+    const isSlice = parsed.some((exp: any) => exp.expression.type === "slice" || exp.expression.type === "wildcard");
+
+    info = { parsed, isSlice, stringified: JSONPath.stringify(parsed) };
+    parsedPathCache.set(path, info);
+  }
+
+  return info;
+}
+
 export function safeJSONPathValue(obj: object, path: string): unknown {
   try {
-    const parsedPath = JSONPath.parse(convertKubectlJsonPathToNodeJsonPath(path));
-    const isSlice = parsedPath.some(
-      (exp: any) => exp.expression.type === "slice" || exp.expression.type === "wildcard",
-    );
-    const value = JSONPath.query(obj, JSONPath.stringify(parsedPath), isSlice ? Infinity : 1);
+    const { isSlice, stringified } = getParsedPathInfo(path);
+    const value = JSONPath.query(obj, stringified, isSlice ? Infinity : 1);
 
     if (isSlice) {
       return value;
