@@ -26,10 +26,10 @@ export class ClusterRole extends KubeObject<ClusterScopedMetadata, void, void> {
 
   aggregationRule?: AggregationRule;
 
-  constructor({ rules, aggregationRule, ...rest }: ClusterRoleData) {
-    super(rest);
-    this.rules = rules;
-    this.aggregationRule = aggregationRule;
+  constructor(data: ClusterRoleData) {
+    super(data);
+    this.rules = data.rules;
+    this.aggregationRule = data.aggregationRule;
   }
 
   getRules() {

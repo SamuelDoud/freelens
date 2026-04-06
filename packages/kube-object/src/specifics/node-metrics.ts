@@ -32,10 +32,10 @@ export class NodeMetrics extends KubeObject<NamespaceScopedMetadata, void, void>
 
   usage: NodeMetricsUsage;
 
-  constructor({ timestamp, window, usage, ...rest }: NodeMetricsData) {
-    super(rest);
-    this.timestamp = timestamp;
-    this.window = window;
-    this.usage = usage;
+  constructor(data: NodeMetricsData) {
+    super(data);
+    this.timestamp = data.timestamp;
+    this.window = data.window;
+    this.usage = data.usage;
   }
 }

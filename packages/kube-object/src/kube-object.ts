@@ -119,7 +119,17 @@ export class KubeObject<
       );
     }
 
-    Object.assign(this, data);
+    this.apiVersion = data.apiVersion;
+    this.kind = data.kind;
+    this.metadata = data.metadata;
+
+    if ((data as any).status !== undefined) {
+      (this as any).status = (data as any).status;
+    }
+
+    if ((data as any).spec !== undefined) {
+      (this as any).spec = (data as any).spec;
+    }
   }
 
   get selfLink(): string {

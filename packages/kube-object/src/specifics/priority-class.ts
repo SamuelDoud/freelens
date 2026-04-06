@@ -31,12 +31,12 @@ export class PriorityClass extends KubeObject<ClusterScopedMetadata, void, void>
 
   value?: number;
 
-  constructor({ description, globalDefault, preemptionPolicy, value, ...rest }: PriorityClassData) {
-    super(rest);
-    this.description = description;
-    this.globalDefault = globalDefault;
-    this.preemptionPolicy = preemptionPolicy;
-    this.value = value;
+  constructor(data: PriorityClassData) {
+    super(data);
+    this.description = data.description;
+    this.globalDefault = data.globalDefault;
+    this.preemptionPolicy = data.preemptionPolicy;
+    this.value = data.value;
   }
 
   getDescription() {

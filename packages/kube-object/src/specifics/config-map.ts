@@ -27,12 +27,12 @@ export class ConfigMap extends KubeObject<NamespaceScopedMetadata, void, void> {
 
   immutable?: boolean;
 
-  constructor({ data, binaryData, immutable, ...rest }: ConfigMapData) {
-    super(rest);
+  constructor(data: ConfigMapData) {
+    super(data);
 
-    this.data = data ?? {};
-    this.binaryData = binaryData ?? {};
-    this.immutable = immutable;
+    this.data = data.data ?? {};
+    this.binaryData = data.binaryData ?? {};
+    this.immutable = data.immutable;
   }
 
   getKeys(): string[] {

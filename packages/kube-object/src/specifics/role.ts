@@ -22,9 +22,9 @@ export class Role extends KubeObject<NamespaceScopedMetadata, void, void> {
 
   rules?: PolicyRule[];
 
-  constructor({ rules, ...rest }: RoleData) {
-    super(rest);
-    this.rules = rules;
+  constructor(data: RoleData) {
+    super(data);
+    this.rules = data.rules;
   }
 
   getRules() {

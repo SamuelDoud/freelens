@@ -81,9 +81,9 @@ export class Endpoints extends KubeObject<NamespaceScopedMetadata, void, void> {
 
   subsets?: EndpointSubset[];
 
-  constructor({ subsets, ...rest }: EndpointsData) {
-    super(rest);
-    this.subsets = subsets;
+  constructor(data: EndpointsData) {
+    super(data);
+    this.subsets = data.subsets;
   }
 
   getEndpointSubsets(): Required<EndpointSubset>[] {

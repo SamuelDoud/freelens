@@ -34,11 +34,11 @@ export class ServiceAccount extends KubeObject<NamespaceScopedMetadata, void, vo
 
   secrets?: ObjectReference[];
 
-  constructor({ automountServiceAccountToken, imagePullSecrets, secrets, ...rest }: ServiceAccountData) {
-    super(rest);
-    this.automountServiceAccountToken = automountServiceAccountToken;
-    this.imagePullSecrets = imagePullSecrets;
-    this.secrets = secrets;
+  constructor(data: ServiceAccountData) {
+    super(data);
+    this.automountServiceAccountToken = data.automountServiceAccountToken;
+    this.imagePullSecrets = data.imagePullSecrets;
+    this.secrets = data.secrets;
   }
 
   getSecrets() {
