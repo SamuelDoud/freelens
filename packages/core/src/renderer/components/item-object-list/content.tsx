@@ -474,7 +474,9 @@ export class NonInjectedItemListLayoutContent<
       return null;
     }
 
-    const enabledItems = this.props.getItems().filter((item) => !customizeTableRowProps?.(item).disabled);
+    const enabledItems = customizeTableRowProps
+      ? this.props.getItems().filter((item) => !customizeTableRowProps(item).disabled)
+      : this.props.getItems();
 
     return (
       <TableHead showTopLine nowrap>
