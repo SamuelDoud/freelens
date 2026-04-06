@@ -438,8 +438,12 @@ export class KubeApi<
     makeObservable(this);
   }
 
+  private cachedApiVersionWithGroup?: string;
+
   get apiVersionWithGroup() {
-    return [this.apiGroup, this.apiVersionPreferred ?? this.apiVersion].filter(Boolean).join("/");
+    return (this.cachedApiVersionWithGroup ??= [this.apiGroup, this.apiVersionPreferred ?? this.apiVersion]
+      .filter(Boolean)
+      .join("/"));
   }
 
   /**
@@ -540,6 +544,8 @@ export class KubeApi<
     this.apiPrefix = apiPrefix;
     this.apiGroup = apiGroup;
     this.apiVersionPreferred = apiVersionPreferred;
+    this.cachedApiVersionWithGroup = undefined;
+    this.selfLinkBase = undefined;
     this.apiBase = this.computeApiBase();
   }
 
