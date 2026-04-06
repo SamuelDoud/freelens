@@ -8,7 +8,6 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
 import navigateToReplicasetsInjectable from "../../../../../common/front-end-routing/routes/cluster/workloads/replicasets/navigate-to-replicasets.injectable";
 import { ResourceNames } from "../../../../utils/rbac";
-import namespaceStoreInjectable from "../../../namespaces/store.injectable";
 import replicasetsStoreInjectable from "../../../workloads-replicasets/store.injectable";
 import { workloadInjectionToken } from "../workload-injection-token";
 
@@ -17,7 +16,6 @@ const replicasetsWorkloadInjectable = getInjectable({
 
   instantiate: (di) => {
     const navigate = di.inject(navigateToReplicasetsInjectable);
-    const namespaceStore = di.inject(namespaceStoreInjectable);
     const store = di.inject(replicasetsStoreInjectable);
 
     return {
@@ -27,9 +25,9 @@ const replicasetsWorkloadInjectable = getInjectable({
       },
       open: navigate,
 
-      amountOfItems: computed(() => store.getAllByNs(namespaceStore.contextNamespaces).length),
+      amountOfItems: computed(() => store.contextItems.length),
 
-      status: computed(() => store.getStatuses(store.getAllByNs(namespaceStore.contextNamespaces))),
+      status: computed(() => store.getStatuses(store.contextItems)),
 
       title: ResourceNames.replicasets,
       orderNumber: 50,
