@@ -7,7 +7,7 @@
 import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
-import React, { createRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import subscribeStoresInjectable from "../../../kube-watch-api/subscribe-stores.injectable";
 import podStoreInjectable from "../../workloads-pods/store.injectable";
 import { InfoPanel } from "../info-panel";
@@ -36,7 +36,7 @@ interface Dependencies {
 
 const NonInjectedLogsDockTab = observer(
   ({ className, tab, model, subscribeStores, podStore }: Dependencies & LogsDockTabProps) => {
-    const logListElement = createRef<LogListRef>();
+    const logListElement = useRef<LogListRef>(null);
     const data = model.logTabData.get();
 
     useEffect(() => {

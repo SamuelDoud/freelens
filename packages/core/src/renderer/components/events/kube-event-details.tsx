@@ -42,8 +42,8 @@ function timeToUnix(dateStr?: string): number {
   return m.isValid() ? m.unix() : 0;
 }
 
-export function sortEvents(events: KubeEvent[]): KubeEvent[] | undefined {
-  return events?.sort((a, b) => timeToUnix(b.lastTimestamp) - timeToUnix(a.lastTimestamp));
+export function sortEvents(events: KubeEvent[]): KubeEvent[] {
+  return events.slice().sort((a, b) => timeToUnix(b.lastTimestamp) - timeToUnix(a.lastTimestamp));
 }
 
 @observer
