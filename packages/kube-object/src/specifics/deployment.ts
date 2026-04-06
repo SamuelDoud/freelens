@@ -45,16 +45,20 @@ export class Deployment extends KubeObject<NamespaceScopedMetadata, DeploymentSt
 
   static apiBase = "/apis/apps/v1/deployments";
 
+  private cachedSelectors?: string[];
+  private cachedNodeSelectors?: string[];
+  private cachedTemplateLabels?: string[];
+
   getSelectors(): string[] {
-    return KubeObject.stringifyLabels(this.spec.selector.matchLabels);
+    return (this.cachedSelectors ??= KubeObject.stringifyLabels(this.spec.selector.matchLabels));
   }
 
   getNodeSelectors(): string[] {
-    return KubeObject.stringifyLabels(this.spec.template.spec.nodeSelector);
+    return (this.cachedNodeSelectors ??= KubeObject.stringifyLabels(this.spec.template.spec.nodeSelector));
   }
 
   getTemplateLabels(): string[] {
-    return KubeObject.stringifyLabels(this.spec.template.metadata.labels);
+    return (this.cachedTemplateLabels ??= KubeObject.stringifyLabels(this.spec.template.metadata.labels));
   }
 
   getTolerations() {
