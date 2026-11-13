@@ -4,7 +4,7 @@
  */
 
 import { Pod } from "@freelensapp/kube-object";
-import { computed, observable } from "mobx";
+import { computed, observable, reaction } from "mobx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultMaxCombinedLogsPods } from "../../../../../features/user-preferences/common/preferences-helpers";
 import { maxCombinedLogLines, maxConcurrentLogRequests, podLogColors, stripAnsiColors } from "../merge-pod-logs";
@@ -253,6 +253,22 @@ describe("LogStore request lifecycle", () => {
 
     await vi.advanceTimersByTimeAsync(10_000);
     expect(store.getLogs(tabId)).toEqual([lastLog, sameSecondLog]);
+  });
+
+  it("keeps the lines and does not notify observers when a poll brings no new line", async () => {
+    callForLogs.mockResolvedValue(`${initialLog}\n${nextLog}`);
+    await store.load(tabId, computedPods, computedTabData);
+
+    const before = [...store.getLogs(tabId)];
+    const seen = vi.fn();
+    const dispose = reaction(() => store.getLogs(tabId), seen);
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
+    dispose();
+
+    expect(store.getLogs(tabId)).toEqual(before);
+    expect(seen).not.toHaveBeenCalled();
   });
 
   it("keeps two different lines that carry the same timestamp", async () => {

@@ -88,4 +88,32 @@ describe("search store tests", () => {
     searchStore.onSearch(logs, "Starting");
     expect(searchStore.totalFinds).toBe(2);
   });
+
+  describe("isActiveOverlay", () => {
+    it("matches the first-index lookup for present and absent lines", () => {
+      const lines = Array.from({ length: 200 }, (_, i) => (i % 7 === 0 || i % 11 === 0 ? "foo foo bar foo" : "x"));
+
+      searchStore.onSearch(lines, "foo");
+
+      const occurrences = [...searchStore.occurrences];
+
+      for (let active = -1; active < occurrences.length; active += 13) {
+        searchStore.activeOverlayIndex = active;
+
+        for (let line = -2; line < 205; line++) {
+          for (let occurrence = 0; occurrence < 4; occurrence++) {
+            const first = occurrences.findIndex((item) => item === line);
+
+            expect(searchStore.isActiveOverlay(line, occurrence)).toBe(first + occurrence === active);
+          }
+        }
+      }
+    });
+
+    it("keeps the -1 + occurrence arithmetic for a line without occurrences", () => {
+      searchStore.onSearch(["a", "b"], "zzz");
+      expect(searchStore.isActiveOverlay(0, 0)).toBe(true);
+      expect(searchStore.isActiveOverlay(0, 1)).toBe(false);
+    });
+  });
 });
