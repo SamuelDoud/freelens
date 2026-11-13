@@ -263,11 +263,15 @@ describe("KubeApi", () => {
 
       controller.abort();
 
+      // Attach the rejection expectation before the page resolves, so the
+      // rejection is never momentarily unhandled.
+      const expectation = expect(listing).rejects.toMatchObject({ name: "AbortError" });
+
       await fetchMock.resolve(
         createMockResponseFromString(firstUrl, listPage(["pod-1", "pod-2"], { continue: "next-page" })),
       );
 
-      await expect(listing).rejects.toMatchObject({ name: "AbortError" });
+      await expectation;
       expect(fetchMock.mock.calls).toHaveLength(1);
     });
   });
