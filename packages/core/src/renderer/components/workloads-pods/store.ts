@@ -59,14 +59,16 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
 
     for (const pod of this.items) {
       // metadata directly, not getOwnerRefs(): the index only needs the
-      // uids, without the namespace-enriched copies that returns.
-      for (const owner of pod.metadata.ownerReferences ?? []) {
-        const pods = map.get(owner.uid);
+      // uids, without the namespace-enriched copies that returns. The set
+      // keeps a pod with a repeated owner reference listed once per owner,
+      // as the filter this replaces did.
+      for (const uid of new Set((pod.metadata.ownerReferences ?? []).map((owner) => owner.uid))) {
+        const pods = map.get(uid);
 
         if (pods) {
           pods.push(pod);
         } else {
-          map.set(owner.uid, [pod]);
+          map.set(uid, [pod]);
         }
       }
     }
