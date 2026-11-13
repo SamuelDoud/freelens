@@ -8,7 +8,6 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
 import navigateToStatefulsetsInjectable from "../../../../../common/front-end-routing/routes/cluster/workloads/statefulsets/navigate-to-statefulsets.injectable";
 import { ResourceNames } from "../../../../utils/rbac";
-import namespaceStoreInjectable from "../../../namespaces/store.injectable";
 import statefulsetsStoreInjectable from "../../../workloads-statefulsets/store.injectable";
 import { workloadInjectionToken } from "../workload-injection-token";
 
@@ -17,7 +16,6 @@ const statefulsetsWorkloadInjectable = getInjectable({
 
   instantiate: (di) => {
     const navigate = di.inject(navigateToStatefulsetsInjectable);
-    const namespaceStore = di.inject(namespaceStoreInjectable);
     const store = di.inject(statefulsetsStoreInjectable);
 
     return {
@@ -27,9 +25,9 @@ const statefulsetsWorkloadInjectable = getInjectable({
       },
       open: navigate,
 
-      amountOfItems: computed(() => store.getAllByNs(namespaceStore.contextNamespaces).length),
+      amountOfItems: computed(() => store.contextItems.length),
 
-      status: computed(() => store.getStatuses(store.getAllByNs(namespaceStore.contextNamespaces))),
+      status: computed(() => store.getStatuses(store.contextItems)),
 
       title: ResourceNames.statefulsets,
       orderNumber: 40,
