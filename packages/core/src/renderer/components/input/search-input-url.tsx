@@ -29,6 +29,24 @@ interface Dependencies {
   namespaceStore?: ReturnType<typeof namespaceStoreInjectable.instantiate>;
 }
 
+/**
+ * The key a search is remembered under for the namespace selection. "All
+ * namespaces" is one key of its own: the namespaces it stands for change
+ * whenever one is created or deleted, and keying by them would swap the
+ * search for another one each time, clearing it or bringing back an old one.
+ */
+export const getNamespaceSearchKey = (namespaceStore: Dependencies["namespaceStore"]): string => {
+  if (!namespaceStore) {
+    return "global";
+  }
+
+  if (namespaceStore.areAllSelectedImplicitly) {
+    return "all-namespaces";
+  }
+
+  return Array.from(namespaceStore.contextNamespaces).sort().join(",");
+};
+
 @observer
 class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & Dependencies> {
   private readonly disposers: (() => void)[] = [];
@@ -45,15 +63,7 @@ class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & De
   }, 250);
 
   private getCurrentNamespaceKey(): string {
-    const { namespaceStore } = this.props;
-
-    if (!namespaceStore) {
-      return "global";
-    }
-
-    const namespaces = Array.from(namespaceStore.contextNamespaces).sort();
-
-    return namespaces.length > 0 ? namespaces.join(",") : "all-namespaces";
+    return getNamespaceSearchKey(this.props.namespaceStore);
   }
 
   private getStorageKey(): string {
@@ -76,15 +86,7 @@ class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & De
     // Capture props into local closures for the reactions below: mobx-react 9
     // forbids reading this.props inside a derivation, and the reaction data
     // functions call getStorageKey/getCurrentNamespaceKey (which read this.props).
-    const getCurrentNamespaceKey = (): string => {
-      if (!namespaceStore) {
-        return "global";
-      }
-
-      const namespaces = Array.from(namespaceStore.contextNamespaces).sort();
-
-      return namespaces.length > 0 ? namespaces.join(",") : "all-namespaces";
-    };
+    const getCurrentNamespaceKey = (): string => getNamespaceSearchKey(namespaceStore);
     const getStorageKey = (): string => {
       if (persistentSearchStore.isEnabled) {
         return "global:linked";
