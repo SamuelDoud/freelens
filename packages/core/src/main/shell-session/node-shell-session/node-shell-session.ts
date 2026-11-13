@@ -291,7 +291,7 @@ export class NodeShellSession extends ShellSession {
       new Watch(kc)
         .watch(
           `/api/v1/namespaces/kube-system/pods`,
-          {},
+          { fieldSelector: `metadata.name=${this.podName}` },
           // callback is called for each received object.
           (type, { metadata: { name }, status }: Pod) => {
             if (name === this.podName) {
