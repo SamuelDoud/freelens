@@ -5,7 +5,6 @@
  */
 
 import { cpuUnitsToNumber, unitsToBytes } from "@freelensapp/utilities";
-import { countBy } from "es-toolkit/compat";
 import { computed, observable } from "mobx";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { RetryBackoff } from "../../utils/retry-backoff";
@@ -187,12 +186,23 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
   }
 
   getStatuses(pods: Pod[]) {
-    return countBy(
-      pods
-        .map((pod) => pod.getStatus())
-        .sort()
-        .reverse(),
-    );
+    const counts = new Map<string, number>();
+
+    for (const pod of pods) {
+      const status = pod.getStatus();
+
+      counts.set(status, (counts.get(status) ?? 0) + 1);
+    }
+
+    // The key order of the result is the order of the pie chart segments:
+    // descending by status name. Only the distinct statuses are sorted.
+    const result: Record<string, number> = {};
+
+    for (const status of [...counts.keys()].sort().reverse()) {
+      result[status] = counts.get(status) as number;
+    }
+
+    return result;
   }
 
   getPodKubeMetrics(pod: Pod) {
