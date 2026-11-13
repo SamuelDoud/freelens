@@ -7,7 +7,7 @@
 import assert from "node:assert";
 import { parseKubeApi } from "@freelensapp/kube-api";
 import { KubeStatus } from "@freelensapp/kube-object";
-import { includes, isAbortError, noop, object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
+import { isAbortError, noop, object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
 import autoBind from "auto-bind";
 import { limitAsync } from "es-toolkit";
 import { action, computed, observable, reaction } from "mobx";
@@ -31,6 +31,58 @@ import type { Patch } from "rfc6902";
 import type { PartialDeep } from "type-fest";
 
 import type { ClusterContext } from "../../renderer/cluster-frame-context/cluster-frame-context";
+
+/**
+ * Answers `getById` and `getByPath` for one state of a store's items. The
+ * first call of each kind scans like `Array.prototype.find`, so a single call
+ * costs what it always did; from the second call on, a map is built once and
+ * every further call is a lookup. The map keeps the first of items that share
+ * a key, as `find` does.
+ */
+class ItemLookups<K extends KubeObject> {
+  private byId: Map<string, K> | undefined;
+  private byPath: Map<string, K> | undefined;
+  private idCalls = 0;
+  private pathCalls = 0;
+
+  constructor(private readonly snapshot: K[]) {}
+
+  getById(id: string): K | undefined {
+    if (!this.byId) {
+      if (this.idCalls++ === 0) {
+        return this.snapshot.find((item) => item.getId() === id);
+      }
+
+      this.byId = new Map();
+
+      for (const item of this.snapshot) {
+        const key = item.getId();
+
+        if (!this.byId.has(key)) this.byId.set(key, item);
+      }
+    }
+
+    return this.byId.get(id);
+  }
+
+  getByPath(path: string): K | undefined {
+    if (!this.byPath) {
+      if (this.pathCalls++ === 0) {
+        return this.snapshot.find((item) => item.selfLink === path);
+      }
+
+      this.byPath = new Map();
+
+      for (const item of this.snapshot) {
+        const key = item.selfLink;
+
+        if (!this.byPath.has(key)) this.byPath.set(key, item);
+      }
+    }
+
+    return this.byPath.get(path);
+  }
+}
 
 export type OnLoadFailure = (error: unknown) => void;
 
@@ -180,14 +232,19 @@ export class KubeObjectStore<
     this.bindWatchEventsUpdater();
   }
 
+  // Kept alive because getById and getByPath are also called outside
+  // reactions, where a plain computed would start over on every call. It is
+  // replaced whenever `items` changes in any way, so readers re-run as before.
+  private readonly itemLookups = computed(() => new ItemLookups<K>(this.items.slice()), { keepAlive: true });
+
   // TODO: Circular dependency: KubeObjectStore -> ClusterFrameContext -> NamespaceStore -> KubeObjectStore
   @computed get contextItems(): K[] {
-    const namespaces = this.dependencies.context.contextNamespaces;
+    const namespaces = new Set(this.dependencies.context.contextNamespaces);
 
     return this.items.filter((item) => {
       const itemNamespace = item.getNs();
 
-      return !itemNamespace /* cluster-wide */ || namespaces.includes(itemNamespace);
+      return !itemNamespace /* cluster-wide */ || namespaces.has(itemNamespace);
     });
   }
 
@@ -227,7 +284,13 @@ export class KubeObjectStore<
     const namespaces = [namespace].flat();
 
     if (namespaces.length) {
-      return this.items.filter((item) => includes(namespaces, item.getNs()));
+      const wanted = new Set(namespaces);
+
+      return this.items.filter((item) => {
+        const itemNamespace = item.getNs();
+
+        return itemNamespace != null && wanted.has(itemNamespace);
+      });
     }
 
     if (!strict) {
@@ -238,7 +301,7 @@ export class KubeObjectStore<
   }
 
   getById(id: string): K | undefined {
-    return this.items.find((item) => item.getId() === id);
+    return this.itemLookups.get().getById(id);
   }
 
   getByName(name: string, namespace?: string): K | undefined {
@@ -251,15 +314,15 @@ export class KubeObjectStore<
       return (
         item.getNs() === namespace &&
         ownerRefs &&
-        ownerRefs.filter(
+        ownerRefs.some(
           (ref) => (!apiVersion || ref.apiVersion === apiVersion) && ref.kind === kind && ref.name === name,
-        ).length > 0
+        )
       );
     });
   }
 
   getByPath(path: string): K | undefined {
-    return this.items.find((item) => item.selfLink === path);
+    return this.itemLookups.get().getByPath(path);
   }
 
   getByLabel(labels: string[] | Partial<Record<string, string>>): K[] {
