@@ -97,6 +97,8 @@ describe("NodeStore kube metrics", () => {
 
     expect(nodeStore.getNodeKubeMetrics(nodeNamed("some-node"))).toEqual({ cpu: 1, memory: 1024 ** 3 });
 
+    listMetrics.mockResolvedValue([metricsFor("some-node", "1", "1Gi")]);
+
     await nodeStore.loadKubeMetrics();
 
     expect(listMetrics).toHaveBeenCalledTimes(2);
