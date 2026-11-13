@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { Job, Pod } from "@freelensapp/kube-object";
+import { CronJob, Job, Pod } from "@freelensapp/kube-object";
 import { observable } from "mobx";
 import { beforeEach, describe, expect, it } from "vitest";
 import directoryForKubeConfigsInjectable from "../../../common/app-paths/directory-for-kube-configs/directory-for-kube-configs.injectable";
@@ -257,5 +257,54 @@ describe("Job Store tests", () => {
       ["failed", 0],
       ["pending", 1],
     ]);
+  });
+
+  it("gets jobs by their CronJob owner", () => {
+    const cronJob = new CronJob({
+      apiVersion: "foo",
+      kind: "CronJob",
+      metadata: {
+        name: "some-cronjob",
+        resourceVersion: "1",
+        uid: "some-cronjob",
+        namespace: "default",
+        selfLink: "/apis/batch/v1/cronjobs/default/some-cronjob",
+      },
+    } as ConstructorParameters<typeof CronJob>[0]);
+
+    const jobOfCronJob = (name: string, namespace: string, ownerName: string) =>
+      new Job({
+        apiVersion: "foo",
+        kind: "Job",
+        metadata: {
+          name,
+          resourceVersion: "1",
+          uid: name,
+          namespace,
+          selfLink: `/apis/batch/v1/jobs/${namespace}/${name}`,
+          ownerReferences: [
+            {
+              apiVersion: "batch/v1",
+              kind: "CronJob",
+              name: ownerName,
+              uid: ownerName,
+            },
+          ],
+        },
+      } as ConstructorParameters<typeof Job>[0]);
+
+    const ownedJob = jobOfCronJob("owned-job", "default", "some-cronjob");
+    const otherNamespaceJob = jobOfCronJob("other-namespace-job", "kube-system", "some-cronjob");
+    const otherCronJobJob = jobOfCronJob("other-cronjob-job", "default", "other-cronjob");
+
+    jobStore.items.replace([ownedJob, otherNamespaceJob, otherCronJobJob, runningJob]);
+
+    expect(jobStore.getJobsByOwner(cronJob)).toEqual([ownedJob]);
+
+    // Callers may sort the result (the CronJob details do); that must not
+    // leak into later lookups.
+    jobStore.getJobsByOwner(cronJob).length = 0;
+
+    expect(jobStore.getJobsByOwner(cronJob)).toEqual([ownedJob]);
   });
 });

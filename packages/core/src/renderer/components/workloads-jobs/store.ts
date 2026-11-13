@@ -5,6 +5,7 @@
  */
 
 import { PodStatusPhase } from "@freelensapp/kube-object";
+import { computed } from "mobx";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 
 import type { JobApi } from "@freelensapp/kube-api";
@@ -33,12 +34,34 @@ export class JobStore extends KubeObjectStore<Job, JobApi> {
     return this.dependencies.getPodsByOwnerId(job.getId());
   }
 
+  // Jobs by "namespace/kind/name" of an owner reference, so that
+  // getJobsByOwner stays O(1) instead of scanning every job. Rebuilt by
+  // MobX only when the items change; lookups return copies so that a
+  // caller sorting its result cannot corrupt the cached index.
+  @computed private get jobsByOwner(): Map<string, Job[]> {
+    const map = new Map<string, Job[]>();
+
+    for (const job of this.items) {
+      // The set keeps a job with a repeated owner reference listed once
+      // per owner, as the filter this replaces did.
+      const keys = new Set((job.metadata.ownerReferences ?? []).map((ref) => `${job.getNs()}/${ref.kind}/${ref.name}`));
+
+      for (const key of keys) {
+        const jobs = map.get(key);
+
+        if (jobs) {
+          jobs.push(job);
+        } else {
+          map.set(key, [job]);
+        }
+      }
+    }
+
+    return map;
+  }
+
   getJobsByOwner(cronJob: CronJob) {
-    return this.items.filter(
-      (job) =>
-        job.getNs() == cronJob.getNs() &&
-        job.getOwnerRefs().find((ref) => ref.name === cronJob.getName() && ref.kind === cronJob.kind),
-    );
+    return [...(this.jobsByOwner.get(`${cronJob.getNs()}/${cronJob.kind}/${cronJob.getName()}`) ?? [])];
   }
 
   getStatuses(jobs?: Job[]) {

@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { Pod, ReplicaSet } from "@freelensapp/kube-object";
+import { Deployment, Pod, ReplicaSet } from "@freelensapp/kube-object";
 import { observable } from "mobx";
 import { beforeEach, describe, expect, it } from "vitest";
 import directoryForKubeConfigsInjectable from "../../../common/app-paths/directory-for-kube-configs/directory-for-kube-configs.injectable";
@@ -205,5 +205,47 @@ describe("ReplicaSet Store tests", () => {
       ["failed", 0],
       ["pending", 1],
     ]);
+  });
+
+  it("gets replica sets by their Deployment owner", () => {
+    const deployment = new Deployment({
+      apiVersion: "foo",
+      kind: "Deployment",
+      metadata: {
+        name: "some-deployment",
+        resourceVersion: "1",
+        uid: "some-deployment",
+        namespace: "default",
+        selfLink: "/apis/apps/v1/deployments/default/some-deployment",
+      },
+    } as ConstructorParameters<typeof Deployment>[0]);
+
+    const ownedReplicaSet = new ReplicaSet({
+      apiVersion: "foo",
+      kind: "ReplicaSet",
+      metadata: {
+        name: "owned-replica-set",
+        resourceVersion: "1",
+        uid: "owned-replica-set",
+        namespace: "default",
+        selfLink: "/apis/apps/v1/replicasets/default/owned-replica-set",
+        ownerReferences: [
+          {
+            apiVersion: "apps/v1",
+            kind: "Deployment",
+            name: "some-deployment",
+            uid: "some-deployment",
+          },
+        ],
+      },
+    } as ConstructorParameters<typeof ReplicaSet>[0]);
+
+    replicaSetStore.items.replace([ownedReplicaSet, runningReplicaSet]);
+
+    expect(replicaSetStore.getReplicaSetsByOwner(deployment)).toEqual([ownedReplicaSet]);
+
+    replicaSetStore.getReplicaSetsByOwner(deployment).length = 0;
+
+    expect(replicaSetStore.getReplicaSetsByOwner(deployment)).toEqual([ownedReplicaSet]);
   });
 });

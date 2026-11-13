@@ -5,6 +5,7 @@
  */
 
 import { PodStatusPhase } from "@freelensapp/kube-object";
+import { computed } from "mobx";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 
 import type { ReplicaSetApi } from "@freelensapp/kube-api";
@@ -51,9 +52,31 @@ export class ReplicaSetStore extends KubeObjectStore<ReplicaSet, ReplicaSetApi> 
     return status;
   }
 
+  // Replica sets by owner uid, so that getReplicaSetsByOwner stays O(1)
+  // instead of scanning every replica set. Rebuilt by MobX only when the
+  // items change; lookups return copies so that a caller sorting its
+  // result cannot corrupt the cached index.
+  @computed private get replicaSetsByOwnerId(): Map<string, ReplicaSet[]> {
+    const map = new Map<string, ReplicaSet[]>();
+
+    for (const replicaSet of this.items) {
+      // The set keeps a replica set with a repeated owner reference listed
+      // once per owner, as the filter this replaces did.
+      for (const uid of new Set((replicaSet.metadata.ownerReferences ?? []).map((owner) => owner.uid))) {
+        const replicaSets = map.get(uid);
+
+        if (replicaSets) {
+          replicaSets.push(replicaSet);
+        } else {
+          map.set(uid, [replicaSet]);
+        }
+      }
+    }
+
+    return map;
+  }
+
   getReplicaSetsByOwner(deployment: Deployment) {
-    return this.items.filter(
-      (replicaSet) => !!replicaSet.getOwnerRefs().find((owner) => owner.uid === deployment.getId()),
-    );
+    return [...(this.replicaSetsByOwnerId.get(deployment.getId()) ?? [])];
   }
 }
