@@ -616,6 +616,18 @@ exports[`Showing correct entity settings > when navigating to local cluster enti
                     Node Shell
                   </div>
                 </div>
+                <div
+                  class="Tab flex gap-2 items-center"
+                  data-testid="performance-tab"
+                  role="tab"
+                  tabindex="0"
+                >
+                  <div
+                    class="label"
+                  >
+                    Performance
+                  </div>
+                </div>
               </div>
             </div>
           </nav>
@@ -1008,6 +1020,18 @@ exports[`Showing correct entity settings > when navigating to non-local cluster 
                     class="label"
                   >
                     Node Shell
+                  </div>
+                </div>
+                <div
+                  class="Tab flex gap-2 items-center"
+                  data-testid="performance-tab"
+                  role="tab"
+                  tabindex="0"
+                >
+                  <div
+                    class="label"
+                  >
+                    Performance
                   </div>
                 </div>
               </div>
