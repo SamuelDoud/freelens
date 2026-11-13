@@ -168,4 +168,93 @@ describe("Pod Store tests", () => {
       ["Failed", 2],
     ]);
   });
+
+  describe("owner, node and PVC lookups", () => {
+    const ownedPod = new Pod({
+      apiVersion: "foo",
+      kind: "Pod",
+      metadata: {
+        name: "owned-pod",
+        resourceVersion: "1",
+        uid: "owned-pod",
+        namespace: "default",
+        selfLink: "/api/v1/pods/default/owned-pod",
+        ownerReferences: [
+          {
+            apiVersion: "apps/v1",
+            kind: "ReplicaSet",
+            name: "some-replica-set",
+            uid: "some-owner",
+          },
+        ],
+      },
+      spec: {
+        nodeName: "some-node",
+        volumes: [
+          { name: "data", persistentVolumeClaim: { claimName: "some-claim" } },
+          // A second volume of the same pod mounting the same claim must
+          // not list the pod twice for that claim.
+          { name: "data-again", persistentVolumeClaim: { claimName: "some-claim" } },
+        ],
+      },
+    } as ConstructorParameters<typeof Pod>[0]);
+
+    const otherPod = new Pod({
+      apiVersion: "foo",
+      kind: "Pod",
+      metadata: {
+        name: "other-pod",
+        resourceVersion: "1",
+        uid: "other-pod",
+        namespace: "kube-system",
+        selfLink: "/api/v1/pods/kube-system/other-pod",
+        ownerReferences: [
+          {
+            apiVersion: "apps/v1",
+            kind: "DaemonSet",
+            name: "some-daemon-set",
+            uid: "other-owner",
+          },
+        ],
+      },
+      spec: {
+        nodeName: "other-node",
+        volumes: [{ name: "data", persistentVolumeClaim: { claimName: "some-claim" } }],
+      },
+    } as ConstructorParameters<typeof Pod>[0]);
+
+    beforeEach(() => {
+      podStore.items.replace([ownedPod, otherPod]);
+    });
+
+    it("gets pods by owner id", () => {
+      expect(podStore.getPodsByOwnerId("some-owner")).toEqual([ownedPod]);
+      expect(podStore.getPodsByOwnerId("other-owner")).toEqual([otherPod]);
+      expect(podStore.getPodsByOwnerId("no-such-owner")).toEqual([]);
+    });
+
+    it("gets pods by node only once loaded", () => {
+      expect(podStore.getPodsByNode("some-node")).toEqual([]);
+
+      podStore.isLoaded = true;
+
+      expect(podStore.getPodsByNode("some-node")).toEqual([ownedPod]);
+      expect(podStore.getPodsByNode("other-node")).toEqual([otherPod]);
+      expect(podStore.getPodsByNode("no-such-node")).toEqual([]);
+    });
+
+    it("gets pods by PVC claim within the claim's namespace, without duplicates", () => {
+      expect(podStore.getPodsByPvc("default", "some-claim")).toEqual([ownedPod]);
+      expect(podStore.getPodsByPvc("kube-system", "some-claim")).toEqual([otherPod]);
+      expect(podStore.getPodsByPvc("default", "no-such-claim")).toEqual([]);
+    });
+
+    it("does not let callers mutate the results of later lookups", () => {
+      podStore.getPodsByOwnerId("some-owner").length = 0;
+      podStore.getPodsByPvc("default", "some-claim").length = 0;
+
+      expect(podStore.getPodsByOwnerId("some-owner")).toEqual([ownedPod]);
+      expect(podStore.getPodsByPvc("default", "some-claim")).toEqual([ownedPod]);
+    });
+  });
 });
