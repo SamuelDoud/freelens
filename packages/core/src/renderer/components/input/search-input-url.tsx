@@ -35,7 +35,15 @@ interface Dependencies {
  * whenever one is created or deleted, and keying by them would swap the
  * search for another one each time, clearing it or bringing back an old one.
  */
-export const getNamespaceSearchKey = (namespaceStore: Dependencies["namespaceStore"]): string => {
+// The namespace store is typed by the two members read here rather than by
+// its injectable: this module is part of the extension API, and a type taken
+// from an injectable would make the published declaration import the DI
+// library.
+export const getNamespaceSearchKey = (
+  namespaceStore:
+    | { readonly areAllSelectedImplicitly: boolean; readonly contextNamespaces: Iterable<string> }
+    | undefined,
+): string => {
   if (!namespaceStore) {
     return "global";
   }
