@@ -39,6 +39,10 @@ describe("ClusterConnection activation", () => {
   let restartMock: Mock<() => Promise<void>>;
   let events: string[];
   let pendingRestarts: { resolve: () => void; reject: (error: Error) => void }[];
+  // When set, the accessibility calls (canI, namespace listing and API
+  // resource discovery) wait for the test to release them instead of
+  // resolving at once, so a test can observe which of them have started.
+  let accessibilityResolvers: (() => void)[] | undefined;
 
   const countOf = (event: string) => events.filter((each) => each === event).length;
 
@@ -98,13 +102,33 @@ describe("ClusterConnection activation", () => {
       record(update.message);
     });
 
-    di.override(createCanIInjectable, () => () => () => Promise.resolve(true));
+    di.override(createCanIInjectable, () => () => (attrs) => {
+      record(`canI:${attrs.verb}`);
+
+      return accessibilityResolvers
+        ? new Promise<boolean>((resolve) => accessibilityResolvers?.push(() => resolve(true)))
+        : Promise.resolve(true);
+    });
     di.override(createRequestNamespaceListPermissionsInjectable, () => () => async () => () => true);
-    di.override(createListNamespacesInjectable, () => () => () => Promise.resolve(["default"]));
-    di.override(requestApiResourcesInjectable, () => async () => ({
-      callWasSuccessful: true,
-      response: [{ apiName: "pods", kind: "Pod", group: "", version: "v1", namespaced: true }],
-    }));
+    di.override(createListNamespacesInjectable, () => () => () => {
+      record("listNamespaces");
+
+      return accessibilityResolvers
+        ? new Promise<string[]>((resolve) => accessibilityResolvers?.push(() => resolve(["default"])))
+        : Promise.resolve(["default"]);
+    });
+    di.override(requestApiResourcesInjectable, () => async () => {
+      record("requestApiResources");
+
+      if (accessibilityResolvers) {
+        await new Promise<void>((resolve) => accessibilityResolvers?.push(resolve));
+      }
+
+      return {
+        callWasSuccessful: true,
+        response: [{ apiName: "pods", kind: "Pod", group: "", version: "v1", namespaced: true }],
+      };
+    });
     di.override(prometheusHandlerInjectable, () => ({
       getPrometheusDetails: vi.fn(),
       setupPrometheus: vi.fn(),
@@ -287,6 +311,33 @@ describe("ClusterConnection activation", () => {
 
       expect(countOf("[CLUSTER]: activate")).toBe(2);
       expect(restartMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("accessibility refresh", () => {
+    it("starts the permission checks, namespace listing and API discovery in parallel", async () => {
+      accessibilityResolvers = [];
+      const activation = clusterConnection.activate();
+
+      await vi.advanceTimersByTimeAsync(0);
+      await settleRestart(0);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // None of the four calls has been released, so with sequential awaits
+      // only the first one would have started.
+      expect(countOf("canI:create")).toBe(1);
+      expect(countOf("canI:watch")).toBe(1);
+      expect(countOf("listNamespaces")).toBe(1);
+      expect(countOf("requestApiResources")).toBe(1);
+
+      for (const resolve of accessibilityResolvers) {
+        resolve();
+      }
+
+      await activation;
+
+      expect(countOf("Connected, waiting for view to load ...")).toBe(1);
+      expect(events.some((event) => event.startsWith("Failed to start connection"))).toBe(false);
     });
   });
 });
