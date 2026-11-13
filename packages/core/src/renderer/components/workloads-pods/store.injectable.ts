@@ -13,6 +13,7 @@ import {
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import { kubeObjectStoreInjectionToken } from "../../../common/k8s-api/api-manager/kube-object-store-token";
+import { shouldShowResourceInjectionToken } from "../../../features/cluster/showing-kube-resources/common/allowed-resources-injection-token";
 import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-frame-context/for-namespaced-resources.injectable";
 import { PodStore } from "./store";
 
@@ -26,6 +27,10 @@ const podStoreInjectable = getInjectable({
     return new PodStore(
       {
         podMetricsApi: di.inject(podMetricsApiInjectable),
+        isMetricsApiAvailable: di.inject(shouldShowResourceInjectionToken, {
+          apiName: "pods",
+          group: "metrics.k8s.io",
+        }),
         context: di.inject(clusterFrameContextForNamespacedResourcesInjectable),
         logger: di.inject(loggerInjectionToken),
       },

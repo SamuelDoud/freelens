@@ -9,14 +9,22 @@ import autoBind from "auto-bind";
 import { sum } from "es-toolkit";
 import { computed, observable } from "mobx";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
+import { RetryBackoff } from "../../utils/retry-backoff";
 
 import type { NodeApi, NodeMetricsApi } from "@freelensapp/kube-api";
 import type { Node, NodeMetrics } from "@freelensapp/kube-object";
+
+import type { IComputedValue } from "mobx";
 
 import type { KubeObjectStoreDependencies, KubeObjectStoreOptions } from "../../../common/k8s-api/kube-object.store";
 
 export interface NodeStoreDependencies extends KubeObjectStoreDependencies {
   readonly nodeMetricsApi: NodeMetricsApi;
+  /**
+   * Whether the cluster serves node metrics (metrics.k8s.io, from
+   * metrics-server). Without it the metrics are not requested at all.
+   */
+  readonly isMetricsApiAvailable?: IComputedValue<boolean>;
 }
 
 export class NodeStore extends KubeObjectStore<Node, NodeApi> {
@@ -43,8 +51,15 @@ export class NodeStore extends KubeObjectStore<Node, NodeApi> {
   }
 
   private kubeMetricsLoading: Promise<void> | undefined;
+  private readonly kubeMetricsBackoff = new RetryBackoff();
 
   loadKubeMetrics(): Promise<void> {
+    // Not requested on a cluster that does not serve the metrics, and less
+    // and less often while the request keeps failing.
+    if (this.dependencies.isMetricsApiAvailable?.get() === false || !this.kubeMetricsBackoff.canAttempt()) {
+      return this.kubeMetricsLoading ?? Promise.resolve();
+    }
+
     // The metrics are polled on an interval; share one request between
     // overlapping calls instead of piling up identical lists.
     this.kubeMetricsLoading ??= (async () => {
@@ -52,7 +67,9 @@ export class NodeStore extends KubeObjectStore<Node, NodeApi> {
         const metrics = await this.dependencies.nodeMetricsApi.list();
 
         this.kubeMetrics.replace(metrics ?? []);
+        this.kubeMetricsBackoff.succeeded();
       } catch (error) {
+        this.kubeMetricsBackoff.failed();
         console.warn("loadKubeMetrics failed", error);
       } finally {
         this.kubeMetricsLoading = undefined;

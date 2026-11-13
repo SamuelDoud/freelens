@@ -13,6 +13,7 @@ import {
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import { kubeObjectStoreInjectionToken } from "../../../common/k8s-api/api-manager/kube-object-store-token";
+import { shouldShowResourceInjectionToken } from "../../../features/cluster/showing-kube-resources/common/allowed-resources-injection-token";
 import clusterFrameContextForClusterScopedResourcesInjectable from "../../cluster-frame-context/for-cluster-scoped-resources.injectable";
 import { NodeStore } from "./store";
 
@@ -28,6 +29,10 @@ const nodeStoreInjectable = getInjectable({
         context: di.inject(clusterFrameContextForClusterScopedResourcesInjectable),
         logger: di.inject(loggerInjectionToken),
         nodeMetricsApi: di.inject(nodeMetricsApiInjectable),
+        isMetricsApiAvailable: di.inject(shouldShowResourceInjectionToken, {
+          apiName: "nodes",
+          group: "metrics.k8s.io",
+        }),
       },
       api,
     );

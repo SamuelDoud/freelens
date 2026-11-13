@@ -8,14 +8,22 @@ import { cpuUnitsToNumber, unitsToBytes } from "@freelensapp/utilities";
 import { countBy } from "es-toolkit/compat";
 import { computed, observable } from "mobx";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
+import { RetryBackoff } from "../../utils/retry-backoff";
 
 import type { PodApi, PodMetricsApi } from "@freelensapp/kube-api";
 import type { KubeObject, NamespaceScopedMetadata, Pod, PodMetrics } from "@freelensapp/kube-object";
+
+import type { IComputedValue } from "mobx";
 
 import type { KubeObjectStoreDependencies, KubeObjectStoreOptions } from "../../../common/k8s-api/kube-object.store";
 
 export interface PodStoreDependencies extends KubeObjectStoreDependencies {
   readonly podMetricsApi: PodMetricsApi;
+  /**
+   * Whether the cluster serves pod metrics (metrics.k8s.io, from
+   * metrics-server). Without it the metrics are not requested at all.
+   */
+  readonly isMetricsApiAvailable?: IComputedValue<boolean>;
 }
 
 export class PodStore extends KubeObjectStore<Pod, PodApi> {
@@ -39,12 +47,25 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
     return map;
   }
 
+  private readonly kubeMetricsBackoff = new RetryBackoff();
+
+  /**
+   * Loads pod metrics from metrics-server. The views poll it, so it is not
+   * requested on a cluster that does not serve it, and requested less and
+   * less often while it keeps failing.
+   */
   async loadKubeMetrics(namespace?: string) {
+    if (this.dependencies.isMetricsApiAvailable?.get() === false || !this.kubeMetricsBackoff.canAttempt()) {
+      return;
+    }
+
     try {
       const metrics = await this.dependencies.podMetricsApi.list({ namespace });
 
       this.kubeMetrics.replace(metrics ?? []);
+      this.kubeMetricsBackoff.succeeded();
     } catch (error) {
+      this.kubeMetricsBackoff.failed();
       console.warn("loadKubeMetrics failed", error);
     }
   }
