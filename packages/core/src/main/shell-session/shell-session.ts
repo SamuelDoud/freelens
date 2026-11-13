@@ -491,9 +491,13 @@ export abstract class ShellSession {
     } else {
       // refresh env in the background, silently: the shell is already running
       // and its prompt must not be written over
-      this.getShellEnv({ shell }).then((shellEnv: any) => {
-        this.dependencies.shellSessionEnvs.set(cacheKey, shellEnv);
-      });
+      this.getShellEnv({ shell })
+        .then((shellEnv: any) => {
+          this.dependencies.shellSessionEnvs.set(cacheKey, shellEnv);
+        })
+        .catch(() => {
+          // ignore background refresh failures: the cached env stays in use
+        });
     }
 
     return env;
