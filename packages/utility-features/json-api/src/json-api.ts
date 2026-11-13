@@ -116,6 +116,15 @@ export class JsonApiErrorParsed {
     return this.error.code === DOMException.ABORT_ERR;
   }
 
+  /**
+   * The code of the wrapped error: the HTTP status code of an API error
+   * response (e.g. 410 for an expired list continue token), or a
+   * DOMException code such as ABORT_ERR.
+   */
+  get code() {
+    return this.error.code;
+  }
+
   toString() {
     return this.messages.join("\n");
   }

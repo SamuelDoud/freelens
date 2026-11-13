@@ -122,9 +122,30 @@ export interface KubeApiQueryParams {
   fieldSelector?: string | string[]; // restrict list of objects by their fields, e.g. fieldSelector: "field=name"
 }
 
-export interface KubeApiListOptions {
+export interface KubeApiListPage<Object> {
+  /** The items of this page */
+  items: Object[];
+  /** Items received so far, including this page */
+  loaded: number;
+  /** Items not yet received, when the API server reports the count */
+  remainingItemCount?: number;
+}
+
+export interface KubeApiListOptions<Object = KubeObject> {
   namespace?: string;
   reqInit?: RequestInit;
+
+  /**
+   * Fetch the list in chunks of this many items (`limit` + `continue`)
+   * instead of in a single request, so that each chunk can be parsed and
+   * reported through `onPage` while the rest is still in flight. Ignored
+   * when the query carries an explicit `limit`: that is a caller asking
+   * for exactly one bounded request.
+   */
+  pageSize?: number;
+
+  /** Called with every page of a paginated list, in arrival order */
+  onPage?: (page: KubeApiListPage<Object>) => void;
 }
 
 export interface IKubePreferredVersion {
@@ -170,6 +191,14 @@ const not =
   <T>(fn: (val: T) => boolean) =>
   (val: T) =>
     !fn(val);
+
+/**
+ * Whether a failed list page request is the API server rejecting a
+ * continue token of an expired snapshot ("410 Gone", reason "Expired").
+ * Errors arrive either parsed, carrying the status code of the error
+ * response, or as the raw status body with its own `code`.
+ */
+const isExpiredContinueError = (error: unknown): boolean => (error as { code?: unknown } | null)?.code === 410;
 
 const getOrderedVersions = (
   list: KubeApiResourceVersionList,
@@ -627,12 +656,72 @@ export class KubeApi<
   }
 
   async list(
-    { namespace = "", reqInit }: KubeApiListOptions = {},
+    { namespace = "", reqInit, pageSize, onPage }: KubeApiListOptions<Object> = {},
     query?: KubeApiQueryParams,
   ): Promise<Object[] | null> {
     await this.checkPreferredVersion();
 
     const url = this.formatUrlForListing(namespace);
+
+    // No chunk size requested, or the caller bounded the request itself
+    // with an explicit limit (e.g. limit: 1 to refresh a resourceVersion):
+    // keep the historical single request.
+    if (pageSize === undefined || query?.limit !== undefined) {
+      return this.listOnce(url, query, reqInit, namespace);
+    }
+
+    const items: Object[] = [];
+    let continueToken: string | undefined;
+    let restartedAfterExpiry = false;
+
+    for (;;) {
+      reqInit?.signal?.throwIfAborted();
+
+      let page: Awaited<ReturnType<KubeApi<Object, Data>["listPage"]>>;
+
+      try {
+        page = await this.listPage(
+          url,
+          { ...query, limit: pageSize, ...(continueToken ? { continue: continueToken } : {}) },
+          reqInit,
+          namespace,
+        );
+      } catch (error) {
+        // A continue token is only valid for a short while (the API server
+        // keeps the snapshot briefly). If it expired mid-list, start over
+        // from the first page once rather than failing a list the
+        // unpaginated request would have completed.
+        if (!continueToken || restartedAfterExpiry || !isExpiredContinueError(error)) {
+          throw error;
+        }
+
+        restartedAfterExpiry = true;
+        continueToken = undefined;
+        items.length = 0;
+        continue;
+      }
+
+      if (page === null) {
+        return items.length ? items : null;
+      }
+
+      items.push(...page.items);
+      onPage?.({ items: page.items, loaded: items.length, remainingItemCount: page.remainingItemCount });
+
+      continueToken = page.continueToken;
+
+      if (!continueToken) {
+        return items;
+      }
+    }
+  }
+
+  private async listOnce(
+    url: string,
+    query: KubeApiQueryParams | undefined,
+    reqInit: RequestInit | undefined,
+    namespace: string,
+  ): Promise<Object[] | null> {
     const res = await this.request.get(url, { query }, reqInit);
     const parsed = this.parseResponse(res, namespace);
 
@@ -645,6 +734,34 @@ export class KubeApi<
     }
 
     throw new Error(`GET multiple request to ${url} returned not an array: ${JSON.stringify(parsed)}`);
+  }
+
+  private async listPage(
+    url: string,
+    query: KubeApiQueryParams,
+    reqInit: RequestInit | undefined,
+    namespace: string,
+  ): Promise<{ items: Object[]; continueToken?: string; remainingItemCount?: number } | null> {
+    const res = await this.request.get(url, { query }, reqInit);
+    const parsed = this.parseResponse(res, namespace);
+
+    if (!parsed) {
+      return null;
+    }
+
+    if (!Array.isArray(parsed)) {
+      throw new Error(`GET multiple request to ${url} returned not an array: ${JSON.stringify(parsed)}`);
+    }
+
+    // List responses carry the pagination state in their metadata; array
+    // responses of custom APIs have none and are complete as they are.
+    const metadata = (res as { metadata?: { continue?: unknown; remainingItemCount?: unknown } } | null)?.metadata;
+
+    return {
+      items: parsed,
+      continueToken: typeof metadata?.continue === "string" && metadata.continue ? metadata.continue : undefined,
+      remainingItemCount: typeof metadata?.remainingItemCount === "number" ? metadata.remainingItemCount : undefined,
+    };
   }
 
   async get(desc: ResourceDescriptor, query?: KubeApiQueryParams): Promise<Object | null> {

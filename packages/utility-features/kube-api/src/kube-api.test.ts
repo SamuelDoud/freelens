@@ -139,6 +139,139 @@ describe("KubeApi", () => {
     });
   });
 
+  describe("listing pods with pagination", () => {
+    let api: PodApi;
+
+    const podData = (name: string) => ({
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name,
+        namespace: "default",
+        uid: name,
+        resourceVersion: "10",
+        selfLink: `/api/v1/namespaces/default/pods/${name}`,
+      },
+    });
+
+    const listPage = (names: string[], metadata: Record<string, unknown> = {}) =>
+      JSON.stringify({
+        apiVersion: "v1",
+        kind: "PodList",
+        metadata: { resourceVersion: "10", ...metadata },
+        items: names.map(podData),
+      });
+
+    beforeEach(() => {
+      api = new PodApi({
+        logDebug: vi.fn(),
+        logError: vi.fn(),
+        logInfo: vi.fn(),
+        logWarn: vi.fn(),
+        maybeKubeApi: kubeJsonApi,
+      });
+    });
+
+    it("follows continue tokens and reports each page as it arrives", async () => {
+      const onPage = vi.fn();
+      const listing = api.list({ pageSize: 2, onPage });
+      await flushPromises();
+
+      const firstUrl = "http://127.0.0.1:9999/api-kube/api/v1/pods?limit=2";
+      expect(fetchMock.mock.lastCall?.[0]).toBe(firstUrl);
+
+      await fetchMock.resolve(
+        createMockResponseFromString(
+          firstUrl,
+          listPage(["pod-1", "pod-2"], { continue: "next-page", remainingItemCount: 1 }),
+        ),
+      );
+      await flushPromises();
+
+      const secondUrl = "http://127.0.0.1:9999/api-kube/api/v1/pods?limit=2&continue=next-page";
+      expect(fetchMock.mock.lastCall?.[0]).toBe(secondUrl);
+      expect(onPage).toHaveBeenCalledTimes(1);
+      expect(onPage.mock.lastCall?.[0]).toMatchObject({ loaded: 2, remainingItemCount: 1 });
+      expect(onPage.mock.lastCall?.[0].items.map((pod: Pod) => pod.getName())).toEqual(["pod-1", "pod-2"]);
+
+      await fetchMock.resolve(createMockResponseFromString(secondUrl, listPage(["pod-3"])));
+
+      const pods = (await listing) as Pod[];
+      expect(pods.map((pod) => pod.getName())).toEqual(["pod-1", "pod-2", "pod-3"]);
+      expect(onPage).toHaveBeenCalledTimes(2);
+      expect(onPage.mock.lastCall?.[0]).toMatchObject({ loaded: 3 });
+    });
+
+    it("does not paginate when the caller sets an explicit limit", async () => {
+      const listing = api.list({ pageSize: 2 }, { limit: 1 });
+      await flushPromises();
+
+      const url = "http://127.0.0.1:9999/api-kube/api/v1/pods?limit=1";
+      expect(fetchMock.mock.lastCall?.[0]).toBe(url);
+
+      await fetchMock.resolve(createMockResponseFromString(url, listPage(["pod-1"], { continue: "next-page" })));
+
+      const pods = (await listing) as Pod[];
+      expect(pods.map((pod) => pod.getName())).toEqual(["pod-1"]);
+      expect(fetchMock.mock.calls).toHaveLength(1);
+    });
+
+    it("restarts from the first page when a continue token has expired", async () => {
+      const listing = api.list({ pageSize: 2 });
+      await flushPromises();
+
+      const firstUrl = "http://127.0.0.1:9999/api-kube/api/v1/pods?limit=2";
+      await fetchMock.resolve(
+        createMockResponseFromString(firstUrl, listPage(["pod-1", "pod-2"], { continue: "stale-token" })),
+      );
+      await flushPromises();
+
+      const expiredUrl = "http://127.0.0.1:9999/api-kube/api/v1/pods?limit=2&continue=stale-token";
+      expect(fetchMock.mock.lastCall?.[0]).toBe(expiredUrl);
+
+      const expired = JSON.stringify({
+        apiVersion: "v1",
+        kind: "Status",
+        code: 410,
+        reason: "Expired",
+        message: "The provided continue parameter is too old",
+      });
+      await fetchMock.resolve(createMockResponseFromString(expiredUrl, expired, 410));
+      await flushPromises();
+
+      // Restarted without a continue token, discarding the first snapshot.
+      expect(fetchMock.mock.lastCall?.[0]).toBe(firstUrl);
+
+      await fetchMock.resolve(
+        createMockResponseFromString(firstUrl, listPage(["pod-1", "pod-2"], { continue: "fresh-token" })),
+      );
+      await flushPromises();
+
+      const freshUrl = "http://127.0.0.1:9999/api-kube/api/v1/pods?limit=2&continue=fresh-token";
+      await fetchMock.resolve(createMockResponseFromString(freshUrl, listPage(["pod-3"])));
+
+      const pods = (await listing) as Pod[];
+      expect(pods.map((pod) => pod.getName())).toEqual(["pod-1", "pod-2", "pod-3"]);
+    });
+
+    it("stops fetching pages when the request is aborted", async () => {
+      const controller = new AbortController();
+      const listing = api.list({ pageSize: 2, reqInit: { signal: controller.signal } });
+      await flushPromises();
+
+      const firstUrl = "http://127.0.0.1:9999/api-kube/api/v1/pods?limit=2";
+
+      controller.abort();
+
+      await fetchMock.resolve(
+        createMockResponseFromString(firstUrl, listPage(["pod-1", "pod-2"], { continue: "next-page" })),
+      );
+
+      await expect(listing).rejects.toMatchObject({ name: "AbortError" });
+      expect(fetchMock.mock.calls).toHaveLength(1);
+    });
+  });
+
   describe("patching deployments", () => {
     let api: DeploymentApi;
 

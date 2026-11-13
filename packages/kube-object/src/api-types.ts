@@ -12,6 +12,10 @@ import type { KubeObject } from "./kube-object";
 export interface KubeJsonApiListMetadata {
   resourceVersion: string;
   selfLink?: string;
+  /** Token for fetching the next chunk of a paginated list, when more remain */
+  continue?: string;
+  /** Items not yet returned by a paginated list, when the API server reports it */
+  remainingItemCount?: number;
 }
 
 export interface KubeJsonApiDataList<T = KubeJsonApiData> {
