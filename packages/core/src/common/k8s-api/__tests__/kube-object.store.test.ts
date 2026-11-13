@@ -620,6 +620,17 @@ describe("KubeObjectStore", () => {
       expect(store.items.map((item) => item.getId())).toEqual(["a", "c"]);
     });
 
+    it("does not cap the list by default", () => {
+      // No bufferSize option: clusters with more objects of one kind than
+      // any fixed cap must not silently lose the head of the sorted list.
+      expect(store.bufferSize).toBe(Infinity);
+
+      store["eventsBuffer"].push({ type: "ADDED", object: data("e") });
+      store["updateFromEventsBuffer"]();
+
+      expect(store.items.map((item) => item.getId())).toEqual(["a", "b", "c", "d", "e"]);
+    });
+
     it("handles deletion, reinsertion and repeated updates of a uid in one batch", () => {
       store["eventsBuffer"].push(
         { type: "DELETED", object: data("b") },
