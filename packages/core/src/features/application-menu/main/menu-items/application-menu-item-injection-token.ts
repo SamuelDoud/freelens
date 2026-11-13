@@ -15,6 +15,7 @@ import type {
   KeyboardEvent,
   MenuItemConstructorOptions,
 } from "electron";
+import type { IComputedValue } from "mobx";
 import type { SetOptional } from "type-fest";
 
 import type { Discriminable } from "../../../../common/utils/composable-responsibilities/discriminable/discriminable";
@@ -63,6 +64,18 @@ export type OsActionMenuItem = ApplicationMenuItemType<"os-action-menu-item"> &
   MaybeLabeled &
   TriggersElectronAction;
 
+/**
+ * One choice of a group of mutually exclusive ones, shown with a check mark
+ * when `isChecked` is true. The menu is rebuilt when `isChecked` changes, so
+ * the mark follows the state the item reflects however that state changes.
+ */
+export type RadioMenuItem = ApplicationMenuItemType<"radio-menu-item"> &
+  MenuItem &
+  Labeled & {
+    isChecked: IComputedValue<boolean>;
+    onClick: () => void;
+  };
+
 type MenuItem = ChildOfParentComposite & MayHaveKeyboardShortcut;
 
 interface TriggersElectronAction {
@@ -72,7 +85,13 @@ interface TriggersElectronAction {
 // Todo: SeparatorMenuItem
 export type Separator = ApplicationMenuItemType<"separator"> & ChildOfParentComposite;
 
-export type ApplicationMenuItemTypes = TopLevelMenu | SubMenu | OsActionMenuItem | ClickableMenuItem | Separator;
+export type ApplicationMenuItemTypes =
+  | TopLevelMenu
+  | SubMenu
+  | OsActionMenuItem
+  | ClickableMenuItem
+  | RadioMenuItem
+  | Separator;
 
 const applicationMenuItemInjectionToken = getInjectionToken<ApplicationMenuItemTypes>({
   id: "application-menu-item-injection-token",
