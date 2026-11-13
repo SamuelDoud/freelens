@@ -10,7 +10,7 @@ import { formatNodeTaint } from "@freelensapp/kube-object";
 import { Tooltip, TooltipPosition } from "@freelensapp/tooltip";
 import { bytesToUnits, cpuUnitsToNumber, interval, unitsToBytes } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { observable, observableRef } from "mobx";
+import { computed, observable, observableRef } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import requestAllNodeMetricsInjectable from "../../../common/k8s-api/endpoints/metrics.api/request-metrics-for-all-nodes.injectable";
@@ -205,10 +205,14 @@ class NonInjectedNodesRoute extends React.Component<Dependencies> {
     this.observableProps = this.props;
   }
 
-  // Plain getter (not @computed): reached from the row/cell renderers and
-  // sorting callbacks, which run in a foreign derivation, so it reads props
-  // from the observable snapshot instead of this.props (mobx-react 9).
-  get podsByNode(): Map<string, Pod[]> {
+  // Computed so that the cpu, memory and pods cells and the pods sort share one
+  // pass over the pods per change of the pods, instead of one pass per call.
+  // It reads props from the observable snapshot instead of this.props, because
+  // mobx-react 9 forbids reading this.props inside a derivation. It is not
+  // keepAlive: every reader runs inside the list layout's render or sort, which
+  // are reactions or computeds and so share the cached value, and a keepAlive
+  // computed would keep observing the pod store after the page is closed.
+  @computed get podsByNode(): Map<string, Pod[]> {
     const { podStore } = this.observableProps;
     const podsByNode = new Map<string, Pod[]>();
 
