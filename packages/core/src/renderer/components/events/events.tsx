@@ -11,7 +11,7 @@ import { Link } from "@freelensapp/routing";
 import { cssNames, stopPropagation } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { orderBy } from "es-toolkit/compat";
-import { observable, observableRef } from "mobx";
+import { computed, observable, observableRef } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import navigateToEventsInjectable from "../../../common/front-end-routing/routes/cluster/events/navigate-to-events.injectable";
@@ -125,13 +125,20 @@ class NonInjectedEvents extends React.Component<Dependencies & EventsProps> {
   // forbids inside a derivation. Read from the observable snapshot, reactivity
   // is preserved by the observer render reaction.
   get items(): KubeEvent[] {
+    return this.sortedItems.get();
+  }
+
+  // The header, the list and the compact slice all read the sorted items during one render.
+  // A computed sorts once for all of them while observed, and still re-sorts whenever the
+  // items, the sorting or a value a sorting callback reads changes.
+  private readonly sortedItems = computed((): KubeEvent[] => {
     const items = this.observableProps.eventStore.contextItems;
     const { sortBy, orderBy: order } = this.sorting;
 
     // we must sort items before passing to "KubeObjectListLayout -> Table"
     // to make it work with "compact=true" (proper table sorting actions + initial items)
     return orderBy(items, this.sortingCallbacks[sortBy], order);
-  }
+  });
 
   get visibleItems(): KubeEvent[] {
     const { compact, compactLimit } = this.observableProps;

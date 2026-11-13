@@ -6,6 +6,7 @@
 import type { Primitive } from "type-fest";
 
 const separators = /[-_]/g;
+const hasSeparator = /[-_]/;
 
 function normalizeText(value: Primitive) {
   return String(value).toLowerCase();
@@ -28,6 +29,11 @@ export function createSearchMatcher(search: string): (value: Primitive) => boole
   return (value) => {
     const text = normalizeText(value);
 
-    return text.includes(query) || stripSeparators(text).includes(query);
+    if (text.includes(query)) {
+      return true;
+    }
+
+    // Without a separator the stripped text is the text itself, which was just checked.
+    return hasSeparator.test(text) && stripSeparators(text).includes(query);
   };
 }

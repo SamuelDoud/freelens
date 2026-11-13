@@ -10,7 +10,7 @@ import { Spinner } from "@freelensapp/spinner";
 import { cssNames, isDefined, isReactNode, noop, prevDefault, stopPropagation } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
-import { action, observable, observableRef } from "mobx";
+import { action, isObservableArray, observable, observableRef } from "mobx";
 import { Observer, observer } from "mobx-react";
 import React from "react";
 import isTableColumnHiddenInjectable from "../../../features/user-preferences/common/is-table-column-hidden.injectable";
@@ -388,13 +388,57 @@ export class NonInjectedItemListLayoutContent<
     );
   }
 
+  // Resolving every row with a linear search makes a non-virtual list quadratic. The index is
+  // built once per items array; the first of several items with the same id wins, as with find().
+  private itemIndex?: { items: Item[]; length: number; byId: Map<string, number> };
+
+  private findItemById(items: Item[], uid: string): Item | undefined {
+    // An observable array can change in place, so it keeps the plain search.
+    if (isObservableArray(items)) {
+      return items.find((item) => item.getId() === uid);
+    }
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (this.itemIndex?.items !== items || this.itemIndex.length !== items.length) {
+        const byId = new Map<string, number>();
+
+        items.forEach((item, index) => {
+          const id = item.getId();
+
+          if (!byId.has(id)) {
+            byId.set(id, index);
+          }
+        });
+
+        this.itemIndex = { items, length: items.length, byId };
+      }
+
+      const index = this.itemIndex.byId.get(uid);
+
+      if (index === undefined) {
+        break;
+      }
+
+      const item = items[index];
+
+      // An array changed in place under the same length leaves the index stale: rebuild it.
+      if (item.getId() === uid) {
+        return item;
+      }
+
+      this.itemIndex = undefined;
+    }
+
+    return items.find((item) => item.getId() === uid);
+  }
+
   getRow(uid: string) {
     return (
       <div key={uid}>
         <Observer>
           {() => {
             // observableProps, not this.props: this <Observer> is its own derivation.
-            const item = this.observableProps.getItems().find((item) => item.getId() === uid);
+            const item = this.findItemById(this.observableProps.getItems(), uid);
 
             if (!item) return null;
 
@@ -494,7 +538,10 @@ export class NonInjectedItemListLayoutContent<
       return null;
     }
 
-    const enabledItems = this.props.getItems().filter((item) => !customizeTableRowProps?.(item).disabled);
+    // Only the select-all checkbox needs the enabled items.
+    const enabledItems = isSelectable
+      ? this.props.getItems().filter((item) => !customizeTableRowProps?.(item).disabled)
+      : [];
 
     return (
       <TableHead showTopLine nowrap>
