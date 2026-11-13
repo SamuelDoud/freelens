@@ -267,7 +267,19 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
       sortedItems = this.getSorted(sortedItems);
 
       if (rows.length) {
-        rows = sortedItems.map((item) => rows.find((row) => item == row.props.sortItem)).filter(isDefined);
+        // Index the rows once instead of scanning them for every item.
+        // First row wins for a repeated sortItem, as Array.find did.
+        const rowsBySortItem = new Map<Item, React.ReactElement<TableRowProps<Item>>>();
+
+        for (const row of rows) {
+          const { sortItem } = row.props;
+
+          if (sortItem && !rowsBySortItem.has(sortItem)) {
+            rowsBySortItem.set(sortItem, row);
+          }
+        }
+
+        rows = sortedItems.map((item) => rowsBySortItem.get(item)).filter(isDefined);
       }
     }
 
