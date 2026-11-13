@@ -31,6 +31,7 @@ import type { IClassName, SingleOrMany, StrictReactNode } from "@freelensapp/uti
 
 import type { IComputedValue } from "mobx";
 
+import type { LoadingProgress } from "../../../common/item.store";
 import type { SubscribableStore } from "../../kube-watch-api/kube-watch-api";
 import type { StorageLayer } from "../../utils/storage-helper";
 import type { AddRemoveButtonsProps } from "../add-remove-buttons";
@@ -56,6 +57,8 @@ export interface HeaderPlaceholders {
 export type ItemListStore<I extends ItemObject, PreLoadStores extends boolean> = {
   readonly isLoaded: boolean;
   readonly failedLoading: boolean;
+  /** Set while a paginated load is still streaming items in */
+  readonly loadingProgress?: LoadingProgress;
   getTotalCount: () => number;
   isSelected: (item: I) => boolean;
   toggleSelection: (item: I) => void;

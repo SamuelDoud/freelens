@@ -56,6 +56,13 @@ export class ItemListLayoutHeader<I extends ItemObject, PreLoadStores extends bo
     const renderInfo = () => {
       const allItemsCount = store.getTotalCount();
       const itemsCount = getItems().length;
+      const { loadingProgress } = store;
+
+      if (loadingProgress && getFilters().length === 0) {
+        return loadingProgress.total !== undefined
+          ? `Loading… ${loadingProgress.loaded.toLocaleString()} / ${loadingProgress.total.toLocaleString()} items`
+          : `Loading… ${loadingProgress.loaded.toLocaleString()} items`;
+      }
 
       if (getFilters().length > 0) {
         return (
