@@ -19,6 +19,7 @@ import type { Logger } from "@freelensapp/logger";
 
 import type { IComputedValue, IObservableValue, ObservableSet } from "mobx";
 
+import type { CatalogEntity } from "../../common/catalog";
 import type { Cluster } from "../../common/cluster/cluster";
 import type { ClusterId } from "../../common/cluster-types";
 import type { AddCluster } from "../../features/cluster/storage/common/add.injectable";
@@ -99,13 +100,45 @@ export class ClusterManager {
   protected updateCatalog(clusters: Cluster[]) {
     this.dependencies.logger.debug("[CLUSTER-MANAGER]: updating catalog from cluster store");
 
+    const indexOf = this.createEntityIndexLookup();
+
     for (const cluster of clusters) {
-      this.updateEntityFromCluster(cluster);
+      this.updateEntityFromCluster(cluster, indexOf);
     }
   }
 
-  protected updateEntityFromCluster(cluster: Cluster) {
-    const index = this.dependencies.catalogEntityRegistry.items.findIndex((entity) => entity.getId() === cluster.id);
+  /**
+   * Looks up the position of an entity in the registry items by id, the first
+   * one winning as with `findIndex`. The index is built once and only rebuilt
+   * if the registry hands out a different items array, so a pass over many
+   * clusters does not scan the items once per cluster.
+   */
+  protected createEntityIndexLookup() {
+    let indexedItems: CatalogEntity[] | undefined;
+    let indexById = new Map<string, number>();
+
+    return (id: string) => {
+      const items = this.dependencies.catalogEntityRegistry.items;
+
+      if (items !== indexedItems) {
+        indexedItems = items;
+        indexById = new Map();
+
+        items.forEach((entity, i) => {
+          const entityId = entity.getId();
+
+          if (!indexById.has(entityId)) {
+            indexById.set(entityId, i);
+          }
+        });
+      }
+
+      return indexById.get(id) ?? -1;
+    };
+  }
+
+  protected updateEntityFromCluster(cluster: Cluster, indexOf = this.createEntityIndexLookup()) {
+    const index = indexOf(cluster.id);
 
     if (index === -1) {
       return;
@@ -174,6 +207,8 @@ export class ClusterManager {
 
   @action
   protected syncClustersFromCatalog(entities: KubernetesCluster[]) {
+    const indexOf = this.createEntityIndexLookup();
+
     for (const entity of entities) {
       const cluster = this.dependencies.getClusterById(entity.getId());
 
@@ -208,7 +243,7 @@ export class ClusterManager {
           }
         }
 
-        this.updateEntityFromCluster(cluster);
+        this.updateEntityFromCluster(cluster, indexOf);
       }
     }
   }
