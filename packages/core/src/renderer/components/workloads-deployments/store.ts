@@ -8,7 +8,7 @@ import { PodStatusPhase } from "@freelensapp/kube-object";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 
 import type { DeploymentApi } from "@freelensapp/kube-api";
-import type { Deployment } from "@freelensapp/kube-object";
+import type { Deployment, Pod } from "@freelensapp/kube-object";
 
 import type { ItemSorting } from "../../../common/item.store";
 import type { KubeObjectStoreDependencies, KubeObjectStoreOptions } from "../../../common/k8s-api/kube-object.store";
@@ -47,8 +47,35 @@ export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> 
   getStatuses(deployments: Deployment[] = []) {
     const status = { running: 0, failed: 0, pending: 0 };
 
+    // Pods grouped by namespace once per call, built on the first deployment
+    // (an empty list reads no pods, as before), so that each deployment tests
+    // only the pods of its own namespace instead of every pod in the cluster.
+    // Each group keeps store order, like getChildPods.
+    let podsByNamespace: Map<string, Pod[]> | undefined;
+
     deployments.forEach((deployment) => {
-      const statuses = new Set(this.getChildPods(deployment).map((pod) => pod.getStatus()));
+      if (!podsByNamespace) {
+        podsByNamespace = new Map();
+
+        for (const pod of this.dependencies.podStore.items) {
+          const namespace = pod.getNs();
+          const pods = podsByNamespace.get(namespace);
+
+          if (pods) {
+            pods.push(pod);
+          } else {
+            podsByNamespace.set(namespace, [pod]);
+          }
+        }
+      }
+
+      const templateLabels = deployment.getTemplateLabels();
+      const childPods = (podsByNamespace.get(deployment.getNs()) ?? []).filter((pod) => {
+        const podLabels = pod.getLabels();
+
+        return templateLabels.every((label) => podLabels.includes(label));
+      });
+      const statuses = new Set(childPods.map((pod) => pod.getStatus()));
 
       if (statuses.has(PodStatusPhase.FAILED)) {
         status.failed++;

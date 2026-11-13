@@ -157,6 +157,40 @@ describe("Pod Store tests", () => {
     ]);
   });
 
+  it("keeps the key order of the sorted statuses, ties and unknown statuses included", () => {
+    const withReason = (reason: string) =>
+      new Pod({
+        apiVersion: "foo",
+        kind: "Pod",
+        metadata: { name: reason, resourceVersion: "1", uid: reason, namespace: "default", selfLink: reason },
+        status: { phase: "Running", reason, conditions: [] },
+      } as unknown as ConstructorParameters<typeof Pod>[0]);
+    const pods = [
+      runningPod,
+      withReason("Zeta"),
+      succeededPod,
+      withReason("alpha"),
+      runningPod,
+      withReason("Zeta"),
+      failedPod,
+      pendingPod,
+      withReason("alpha"),
+      succeededPod,
+    ];
+    const statuses = pods.map((pod) => pod.getStatus());
+    const expectedKeys = [...new Set(statuses)].sort().reverse();
+    const result = podStore.getStatuses(pods);
+
+    expect(Object.keys(result)).toEqual(expectedKeys);
+    expect(Object.entries(result)).toEqual(
+      expectedKeys.map((key) => [key, statuses.filter((status) => status === key).length]),
+    );
+  });
+
+  it("returns an empty object for no pods", () => {
+    expect(podStore.getStatuses([])).toEqual({});
+  });
+
   it("counts statuses properly", () => {
     const statuses = Object.entries(
       podStore.getStatuses([pendingPod, pendingPod, pendingPod, runningPod, failedPod, failedPod]),
