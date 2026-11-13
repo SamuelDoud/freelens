@@ -33,6 +33,7 @@ import type {
   NodeMetricData,
   RequestAllNodeMetrics,
 } from "../../../common/k8s-api/endpoints/metrics.api/request-metrics-for-all-nodes.injectable";
+import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 import type { EventStore } from "../events/store";
 import type { PodStore } from "../workloads-pods/store";
@@ -144,6 +145,14 @@ function getCapacityType(node: Node): string {
 
   return (labels["capacity-type"] ?? "").toLowerCase().replace(/_/g, "-");
 }
+
+const nodeSearchFields: SearchField<Node>[] = [
+  { id: "roles", title: "Roles", kind: "text", getValues: (node) => node.getRoleLabelItems() },
+  { id: "conditions", title: "Conditions", kind: "text", getValues: (node) => node.getNodeConditionText() },
+  { id: "version", title: "Kubelet version", kind: "text", getValues: (node) => node.getKubeletVersion() },
+  { id: "internalIP", title: "Internal IP", kind: "text", getValues: (node) => node.getInternalIP() },
+  { id: "instanceType", title: "Instance type", kind: "text", getValues: (node) => getInstanceType(node) },
+];
 
 function formatCores(cores: number): string {
   if (isNaN(cores)) {
@@ -470,6 +479,7 @@ class NonInjectedNodesRoute extends React.Component<Dependencies> {
             [columnId.schedulable]: (node) => (node.isUnschedulable() ? "False" : "True"),
             [columnId.conditions]: (node) => node.getNodeConditionText(),
           }}
+          searchFields={nodeSearchFields}
           searchFilters={[
             (node) => node.getSearchFields(),
             (node) => node.getRoleLabels(),

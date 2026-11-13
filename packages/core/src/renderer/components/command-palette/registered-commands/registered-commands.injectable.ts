@@ -7,6 +7,7 @@
 import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
 import rendererExtensionsInjectable from "../../../../extensions/renderer-extensions.injectable";
+import savedSearchCommandsInjectable from "../../../../features/advanced-search/renderer/saved-search-commands.injectable";
 import internalCommandsInjectable from "./internal-commands.injectable";
 import sidebarNavigationCommandsInjectable from "./sidebar-navigation-commands.injectable";
 
@@ -18,16 +19,23 @@ import type { CommandRegistration, RegisteredCommand } from "./commands";
 interface Dependencies {
   extensions: IComputedValue<LensRendererExtension[]>;
   sidebarNavigationCommands: IComputedValue<CommandRegistration[]>;
+  savedSearchCommands: IComputedValue<CommandRegistration[]>;
   internalCommands: CommandRegistration[];
 }
 
-const instantiateRegisteredCommands = ({ extensions, sidebarNavigationCommands, internalCommands }: Dependencies) =>
+const instantiateRegisteredCommands = ({
+  extensions,
+  sidebarNavigationCommands,
+  savedSearchCommands,
+  internalCommands,
+}: Dependencies) =>
   computed(() => {
     const result = new Map<string, RegisteredCommand>();
     const commands = [
       ...internalCommands,
       ...extensions.get().flatMap((e) => e.commands),
       ...sidebarNavigationCommands.get(),
+      ...savedSearchCommands.get(),
     ];
 
     for (const { scope, isActive = () => true, ...command } of commands) {
@@ -48,6 +56,7 @@ const registeredCommandsInjectable = getInjectable({
     instantiateRegisteredCommands({
       extensions: di.inject(rendererExtensionsInjectable),
       sidebarNavigationCommands: di.inject(sidebarNavigationCommandsInjectable),
+      savedSearchCommands: di.inject(savedSearchCommandsInjectable),
       internalCommands: di.inject(internalCommandsInjectable),
     }),
 });

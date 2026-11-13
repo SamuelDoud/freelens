@@ -30,6 +30,7 @@ import type { KubeEvent, KubeEventData } from "@freelensapp/kube-object";
 import type { IClassName } from "@freelensapp/utilities";
 
 import type { ApiManager } from "../../../common/k8s-api/api-manager";
+import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { HeaderCustomizer, ListLayoutItemsFilter } from "../item-object-list";
 import type { GetDetailsUrl } from "../kube-detail-params/get-details-url.injectable";
 import type { KubeObjectListLayoutProps } from "../kube-object-list-layout";
@@ -64,6 +65,27 @@ interface Dependencies {
   apiManager: ApiManager;
   getDetailsUrl: GetDetailsUrl;
 }
+
+const parseTime = (timestamp: string | undefined) => (timestamp ? new Date(timestamp).getTime() : undefined);
+
+const eventSearchFields: SearchField<KubeEvent>[] = [
+  { id: "type", title: "Type", kind: "text", getValues: (event) => event.type },
+  { id: "reason", title: "Reason", kind: "text", getValues: (event) => event.reason },
+  { id: "message", title: "Message", kind: "text", getValues: (event) => event.message },
+  {
+    id: "involvedObject",
+    title: "Involved object (Kind/name)",
+    kind: "text",
+    getValues: (event) => `${event.involvedObject.kind}/${event.involvedObject.name}`,
+  },
+  { id: "source", title: "Source", kind: "text", getValues: (event) => event.getSource() },
+  {
+    id: "lastSeen",
+    title: "Last seen",
+    kind: "time",
+    getTime: (event) => parseTime(event.lastTimestamp ?? event.eventTime),
+  },
+];
 
 @observer
 class NonInjectedEvents extends React.Component<Dependencies & EventsProps> {
@@ -179,6 +201,7 @@ class NonInjectedEvents extends React.Component<Dependencies & EventsProps> {
           onSort: (params) => Object.assign(this.sorting, params),
         }}
         sortingCallbacks={this.sortingCallbacks}
+        searchFields={eventSearchFields}
         searchFilters={[
           (event) => event.getSearchFields(),
           (event) => event.message,

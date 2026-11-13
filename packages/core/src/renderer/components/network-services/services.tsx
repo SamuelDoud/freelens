@@ -18,6 +18,7 @@ import serviceStoreInjectable from "./store.injectable";
 
 import type { Service } from "@freelensapp/kube-object";
 
+import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { ServiceStore } from "./store";
 
 enum columnId {
@@ -30,6 +31,19 @@ enum columnId {
   age = "age",
   status = "status",
 }
+
+const serviceSearchFields: SearchField<Service>[] = [
+  { id: "type", title: "Type", kind: "text", getValues: (service) => service.getType() },
+  { id: "clusterIP", title: "Cluster IP", kind: "text", getValues: (service) => service.getClusterIps() },
+  { id: "externalIP", title: "External IP", kind: "text", getValues: (service) => service.getExternalIps() },
+  {
+    id: "ports",
+    title: "Ports",
+    kind: "text",
+    getValues: (service) => service.getPorts().map((port) => port.toString()),
+  },
+  { id: "selector", title: "Selector (key=value)", kind: "text", getValues: (service) => service.getSelector() },
+];
 
 const formatExternalIps = (service: Service) => {
   const externalIps = service.getExternalIps();
@@ -68,6 +82,7 @@ class NonInjectedServices extends React.Component<Dependencies> {
             [columnId.age]: (service) => -service.getCreationTimestamp(),
             [columnId.status]: (service) => service.getStatus(),
           }}
+          searchFields={serviceSearchFields}
           searchFilters={[
             (service) => service.getSearchFields(),
             (service) => service.getSelector().join(" "),

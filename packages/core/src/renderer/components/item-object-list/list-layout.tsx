@@ -12,8 +12,13 @@ import autoBindReact from "auto-bind/react";
 import { groupBy } from "es-toolkit";
 import { computed, observableRef, untracked } from "mobx";
 import { observer } from "mobx-react";
+import { now } from "mobx-utils";
 import React from "react";
 import selectedFilterNamespacesInjectable from "../../../common/k8s-api/selected-filter-namespaces.injectable";
+import { anyFieldId } from "../../../features/advanced-search/common/conditions";
+import { createConditionMatcher } from "../../../features/advanced-search/common/create-condition-matcher";
+import { AdvancedSearchPanel } from "../../../features/advanced-search/renderer/advanced-search-panel";
+import advancedSearchStateInjectable from "../../../features/advanced-search/renderer/advanced-search-state.injectable";
 import userPreferencesStateInjectable, {
   type UserPreferencesState,
 } from "../../../features/user-preferences/common/state.injectable";
@@ -31,6 +36,9 @@ import type { IClassName, SingleOrMany, StrictReactNode } from "@freelensapp/uti
 
 import type { IComputedValue } from "mobx";
 
+import type { SearchField } from "../../../features/advanced-search/common/conditions";
+import type { AdvancedSearchView } from "../../../features/advanced-search/renderer/advanced-search-panel";
+import type { AdvancedSearchState } from "../../../features/advanced-search/renderer/advanced-search-state";
 import type { SubscribableStore } from "../../kube-watch-api/kube-watch-api";
 import type { StorageLayer } from "../../utils/storage-helper";
 import type { AddRemoveButtonsProps } from "../add-remove-buttons";
@@ -97,6 +105,12 @@ export type ItemListLayoutProps<Item extends ItemObject, PreLoadStores extends b
   hideFilters?: boolean;
   searchFilters?: ListLayoutSearchFilter<Item>[];
   filterItems?: ListLayoutItemsFilter<Item>[];
+
+  /**
+   * Turns on advanced search: per-field conditions and saved searches. The
+   * list also gets an "Any field" field, which reads what `searchFilters` read.
+   */
+  advancedSearch?: AdvancedSearchView<Item>;
 
   // header (title, filtering, searching, etc.)
   showHeader?: boolean;
@@ -173,6 +187,36 @@ interface Dependencies {
   itemListLayoutStorage: StorageLayer<ItemListLayoutStorage>;
   pageFiltersStore: PageFiltersStore;
   userPreferencesState: UserPreferencesState;
+  advancedSearchState: AdvancedSearchState;
+}
+
+const minuteMilliseconds = 60 * 1000;
+
+/**
+ * The advanced search of a list with its "Any field" field added, or
+ * `undefined` when the list has none.
+ */
+function getAdvancedSearchView<I extends ItemObject>(
+  advancedSearch: AdvancedSearchView<I> | undefined,
+  searchFilters: ListLayoutSearchFilter<I>[] = [],
+): AdvancedSearchView<I> | undefined {
+  if (!advancedSearch) {
+    return undefined;
+  }
+
+  const anyField: SearchField<I>[] =
+    searchFilters.length > 0
+      ? [
+          {
+            id: anyFieldId,
+            title: "Any field",
+            kind: "text",
+            getValues: (item) => searchFilters.flatMap((getTexts) => [getTexts(item)].flat()),
+          },
+        ]
+      : [];
+
+  return { ...advancedSearch, fields: [...advancedSearch.fields, ...anyField] };
 }
 
 @observer
@@ -276,6 +320,24 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
     },
   };
 
+  @computed get advancedSearchView() {
+    return getAdvancedSearchView(this.observableProps.advancedSearch, this.observableProps.searchFilters);
+  }
+
+  @computed get advancedSearchMatcher() {
+    const view = this.advancedSearchView;
+
+    if (!view) {
+      return undefined;
+    }
+
+    return createConditionMatcher(this.observableProps.advancedSearchState.getConditions(view.viewKey), view.fields);
+  }
+
+  get hasAdvancedSearchFilter() {
+    return this.advancedSearchMatcher !== undefined;
+  }
+
   // Computed: the content reads the items once for every row it renders, each
   // row in an observer of its own, so the filters run once for every change of
   // the items or of the filters instead of once for every row.
@@ -292,12 +354,23 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
     }
 
     const items = this.observableProps.getItems();
+    const filtered = applyFilters(filterItems.concat(this.observableProps.filterItems ?? []), items);
+    const matcher = this.advancedSearchMatcher;
 
-    return applyFilters(filterItems.concat(this.observableProps.filterItems ?? []), items);
+    if (!matcher) {
+      return filtered;
+    }
+
+    // Relative times ("older than 2h") move with the clock: reading the
+    // ticking clock makes the items follow it, a minute at a time.
+    const currentTime = matcher.usesClock ? now(minuteMilliseconds) : Date.now();
+
+    return filtered.filter((item) => matcher.matches(item, currentTime));
   }
 
   render() {
     const { renderHeaderTitle, "data-testid": dataTestId } = this.props;
+    const advancedSearchView = getAdvancedSearchView(this.props.advancedSearch, this.props.searchFilters);
 
     return untracked(() => (
       <div className={cssNames("ItemListLayout flex flex-col", this.props.className)} data-testid={dataTestId}>
@@ -307,6 +380,8 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
           toggleFilters={this.toggleFilters}
           store={this.props.store}
           searchFilters={this.props.searchFilters}
+          advancedSearch={advancedSearchView}
+          getHasAdvancedSearchFilter={() => this.hasAdvancedSearchFilter}
           showHeader={this.props.showHeader}
           headerClassName={this.props.headerClassName}
           renderHeaderTitle={
@@ -314,6 +389,8 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
           }
           customizeHeader={this.props.customizeHeader}
         />
+
+        {advancedSearchView && this.props.showHeader !== false && <AdvancedSearchPanel view={advancedSearchView} />}
 
         <ItemListLayoutFilters
           getIsReady={() => this.isReady}
@@ -363,6 +440,7 @@ export const ItemListLayout = withInjectables<Dependencies, ItemListLayoutProps<
       itemListLayoutStorage: di.inject(itemListLayoutStorageInjectable),
       pageFiltersStore: di.inject(pageFiltersStoreInjectable),
       userPreferencesState: di.inject(userPreferencesStateInjectable),
+      advancedSearchState: di.inject(advancedSearchStateInjectable),
     }),
   },
 ) as <I extends ItemObject, PreLoadStores extends boolean = true>(

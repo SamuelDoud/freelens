@@ -11,6 +11,7 @@ import kubeDirectoryPathInjectable from "../../../common/os/kube-directory-path.
 import { defaultColorThemePreference } from "../../../common/vars";
 import currentTimezoneInjectable from "../../../common/vars/current-timezone.injectable";
 import isDevelopmentInjectable from "../../../common/vars/is-development.injectable";
+import { readSavedSearches } from "../../advanced-search/common/saved-searches";
 import {
   ClusterPageMenuOrder,
   clampMaxCombinedLogsPods,
@@ -25,6 +26,7 @@ import {
 
 import type { ObservableMap } from "mobx";
 
+import type { SavedSearch } from "../../advanced-search/common/conditions";
 import type {
   EditorConfiguration,
   ExtensionRegistry,
@@ -59,6 +61,7 @@ export type PreferenceDescriptors = {
   readonly showTrayIcon: PreferenceDescription<boolean>;
   readonly hotbarAutoHide: PreferenceDescription<boolean>;
   readonly persistentSearch: PreferenceDescription<boolean>;
+  readonly savedSearches: PreferenceDescription<SavedSearch[], SavedSearch[]>;
   readonly logViewerPreferences: PreferenceDescription<Partial<LogViewerPreferences>, LogViewerPreferences>;
   readonly terminalCopyOnSelect: PreferenceDescription<boolean>;
   readonly hiddenTableColumns: PreferenceDescription<[string, string[]][], Map<string, Set<string>>>;
@@ -151,6 +154,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
       persistentSearch: getPreferenceDescriptor<boolean>({
         fromStore: (val) => val ?? false,
         toStore: (val) => (!val ? undefined : val),
+      }),
+      savedSearches: getPreferenceDescriptor<SavedSearch[], SavedSearch[]>({
+        fromStore: (val) => readSavedSearches(val),
+        toStore: (val) => (val.length ? [...val] : undefined),
       }),
       logViewerPreferences: getPreferenceDescriptor<Partial<LogViewerPreferences>, LogViewerPreferences>({
         fromStore: (val) => ({
