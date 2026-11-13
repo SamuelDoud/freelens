@@ -32,14 +32,34 @@ export class NodeStore extends KubeObjectStore<Node, NodeApi> {
 
   readonly kubeMetrics = observable.array<NodeMetrics>([]);
 
-  async loadKubeMetrics() {
-    try {
-      const metrics = await this.dependencies.nodeMetricsApi.list();
+  @computed get kubeMetricsByNode(): Map<string, NodeMetrics> {
+    const map = new Map<string, NodeMetrics>();
 
-      this.kubeMetrics.replace(metrics ?? []);
-    } catch (error) {
-      console.warn("loadKubeMetrics failed", error);
+    for (const metric of this.kubeMetrics) {
+      map.set(metric.getName(), metric);
     }
+
+    return map;
+  }
+
+  private kubeMetricsLoading: Promise<void> | undefined;
+
+  loadKubeMetrics(): Promise<void> {
+    // The metrics are polled on an interval; share one request between
+    // overlapping calls instead of piling up identical lists.
+    this.kubeMetricsLoading ??= (async () => {
+      try {
+        const metrics = await this.dependencies.nodeMetricsApi.list();
+
+        this.kubeMetrics.replace(metrics ?? []);
+      } catch (error) {
+        console.warn("loadKubeMetrics failed", error);
+      } finally {
+        this.kubeMetricsLoading = undefined;
+      }
+    })();
+
+    return this.kubeMetricsLoading;
   }
 
   @computed get masterNodes() {
@@ -55,9 +75,7 @@ export class NodeStore extends KubeObjectStore<Node, NodeApi> {
   }
 
   getNodeKubeMetrics(node: Node) {
-    const metrics = this.kubeMetrics.find((metric) => {
-      return [metric.getName() === node.getName()].every((v) => v);
-    });
+    const metrics = this.kubeMetricsByNode.get(node.getName());
 
     if (!metrics) return { cpu: NaN, memory: NaN };
 
