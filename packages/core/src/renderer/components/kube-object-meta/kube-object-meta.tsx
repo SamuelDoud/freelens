@@ -10,8 +10,10 @@ import { Link } from "@freelensapp/routing";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import * as yaml from "js-yaml";
 import { observer } from "mobx-react";
+import { useEffect, useState } from "react";
 import apiManagerInjectable from "../../../common/k8s-api/api-manager/manager.injectable";
 import { defaultYamlDumpOptions } from "../../../common/kube-helpers";
+import requestKubeResourceInjectable from "../dock/edit-resource/edit-resource-model/request-kube-resource.injectable";
 import { DrawerItem, DrawerItemLabels, DrawerParamToggler } from "../drawer";
 import { DurationAbsoluteTimestamp } from "../events";
 import getDetailsUrlInjectable from "../kube-detail-params/get-details-url.injectable";
@@ -25,6 +27,7 @@ import type { KubeMetaField } from "@freelensapp/kube-object";
 import type { Logger } from "@freelensapp/logger";
 
 import type { ApiManager } from "../../../common/k8s-api/api-manager";
+import type { RequestKubeResource } from "../dock/edit-resource/edit-resource-model/request-kube-resource.injectable";
 import type { GetDetailsUrl } from "../kube-detail-params/get-details-url.injectable";
 
 interface ManagedFieldsEntry {
@@ -46,6 +49,7 @@ interface Dependencies {
   getDetailsUrl: GetDetailsUrl;
   apiManager: ApiManager;
   logger: Logger;
+  requestKubeResource: RequestKubeResource;
 }
 
 const lastAppliedConfigurationAnnotation = "kubectl.kubernetes.io/last-applied-configuration";
@@ -73,8 +77,93 @@ function ManagedFieldEntryLabel({ entry }: { entry: ManagedFieldsEntry }) {
   );
 }
 
+const isManagedFieldsEntry = (entry: unknown): entry is ManagedFieldsEntry =>
+  typeof entry === "object" &&
+  entry !== null &&
+  "manager" in entry &&
+  typeof entry.manager === "string" &&
+  entry.manager.length > 0 &&
+  "operation" in entry &&
+  typeof entry.operation === "string" &&
+  entry.operation.length > 0;
+
+// The apiserver identifies a managed-fields entry by manager, operation,
+// apiVersion and subresource.
+const isSameManagedFieldsEntry = (left: ManagedFieldsEntry, right: ManagedFieldsEntry) =>
+  left.manager === right.manager &&
+  left.operation === right.operation &&
+  left.apiVersion === right.apiVersion &&
+  left.subresource === right.subresource;
+
+interface ManagedFieldSetProps {
+  entry: ManagedFieldsEntry;
+  selfLink: string;
+  requestKubeResource: RequestKubeResource;
+}
+
+/**
+ * The fields one manager owns. Lists and watches leave the field sets out of
+ * the objects they deliver, so an entry without one reads the object on its
+ * own, which keeps them, when it is first shown.
+ */
+function ManagedFieldSet({ entry, selfLink, requestKubeResource }: ManagedFieldSetProps) {
+  const hasFieldSet = "fieldsV1" in entry;
+  const [loaded, setLoaded] = useState<{ fieldsV1?: unknown; error?: string }>();
+
+  useEffect(() => {
+    if (hasFieldSet) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      const result = await requestKubeResource(selfLink);
+
+      if (cancelled) {
+        return;
+      }
+
+      if (!result.callWasSuccessful) {
+        setLoaded({ error: String(result.error) });
+
+        return;
+      }
+
+      const match = (result.response?.metadata.managedFields ?? [])
+        .filter(isManagedFieldsEntry)
+        .find((candidate) => isSameManagedFieldsEntry(candidate, entry));
+
+      setLoaded({ fieldsV1: match?.fieldsV1 });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasFieldSet, selfLink, entry, requestKubeResource]);
+
+  if (!hasFieldSet && !loaded) {
+    return <span>Loading…</span>;
+  }
+
+  if (loaded?.error !== undefined) {
+    return <span>{`The managed fields could not be loaded: ${loaded.error}`}</span>;
+  }
+
+  const fieldsV1 = hasFieldSet ? entry.fieldsV1 : loaded?.fieldsV1;
+
+  return <MonacoEditor readOnly style={{ height: 200 }} value={yaml.dump(fieldsV1 ?? {}, defaultYamlDumpOptions)} />;
+}
+
 const NonInjectedKubeObjectMeta = observer((props: Dependencies & KubeObjectMetaProps) => {
-  const { apiManager, getDetailsUrl, object, hideFields = ["uid", "resourceVersion", "selfLink"], logger } = props;
+  const {
+    apiManager,
+    getDetailsUrl,
+    object,
+    hideFields = ["uid", "resourceVersion", "selfLink"],
+    logger,
+    requestKubeResource,
+  } = props;
 
   if (!object) {
     return null;
@@ -87,19 +176,6 @@ const NonInjectedKubeObjectMeta = observer((props: Dependencies & KubeObjectMeta
   }
 
   const isHidden = (field: KubeMetaField) => hideFields.includes(field);
-
-  const isManagedFieldsEntry = (entry: unknown): entry is ManagedFieldsEntry => {
-    return (
-      typeof entry === "object" &&
-      entry !== null &&
-      "manager" in entry &&
-      typeof entry.manager === "string" &&
-      entry.manager.length > 0 &&
-      "operation" in entry &&
-      typeof entry.operation === "string" &&
-      entry.operation.length > 0
-    );
-  };
 
   const {
     selfLink,
@@ -175,11 +251,7 @@ const NonInjectedKubeObjectMeta = observer((props: Dependencies & KubeObjectMeta
               label={<ManagedFieldEntryLabel entry={entry} />}
               key={`${entry.manager}-${entry.operation}-${entry.apiVersion ?? ""}-${entry.subresource ?? ""}`}
             >
-              <MonacoEditor
-                readOnly
-                style={{ height: 200 }}
-                value={yaml.dump(entry.fieldsV1, defaultYamlDumpOptions)}
-              />
+              <ManagedFieldSet entry={entry} selfLink={selfLink} requestKubeResource={requestKubeResource} />
             </DrawerParamToggler>
           ))}
         </DrawerItem>
@@ -194,5 +266,8 @@ export const KubeObjectMeta = withInjectables<Dependencies, KubeObjectMetaProps>
     getDetailsUrl: di.inject(getDetailsUrlInjectable),
     apiManager: di.inject(apiManagerInjectable),
     logger: di.inject(loggerInjectionToken),
+    // Injected on first use: the request needs apiKube, which only a cluster
+    // frame has, and most uses of this component never read a field set.
+    requestKubeResource: (selfLink) => di.inject(requestKubeResourceInjectable)(selfLink),
   }),
 });

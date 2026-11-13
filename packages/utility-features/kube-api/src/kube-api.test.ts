@@ -276,6 +276,103 @@ describe("KubeApi", () => {
     });
   });
 
+  describe("managed field sets", () => {
+    let api: PodApi;
+
+    const managedFields = () => [
+      {
+        manager: "kubectl",
+        operation: "Apply",
+        apiVersion: "v1",
+        time: "2026-11-13T00:00:00Z",
+        fieldsType: "FieldsV1",
+        fieldsV1: { "f:spec": { "f:containers": {} } },
+      },
+      {
+        manager: "kubelet",
+        operation: "Update",
+        apiVersion: "v1",
+        subresource: "status",
+        fieldsType: "FieldsV1",
+        fieldsV1: { "f:status": {} },
+      },
+    ];
+
+    const podData = (name: string) => ({
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name,
+        namespace: "default",
+        uid: name,
+        resourceVersion: "10",
+        managedFields: managedFields(),
+      },
+    });
+
+    const withoutFieldSets = () => managedFields().map(({ fieldsV1: _fieldSet, ...rest }) => rest);
+
+    beforeEach(() => {
+      api = new PodApi({
+        logDebug: vi.fn(),
+        logError: vi.fn(),
+        logInfo: vi.fn(),
+        logWarn: vi.fn(),
+        maybeKubeApi: kubeJsonApi,
+      });
+    });
+
+    it("leaves them out of listed objects and keeps the rest of each entry", async () => {
+      const listing = api.list();
+      await flushPromises();
+
+      const url = "http://127.0.0.1:9999/api-kube/api/v1/pods";
+      await fetchMock.resolve(
+        createMockResponseFromString(
+          url,
+          JSON.stringify({
+            apiVersion: "v1",
+            kind: "PodList",
+            metadata: { resourceVersion: "10" },
+            items: [podData("pod-1")],
+          }),
+        ),
+      );
+
+      const [pod] = (await listing) as Pod[];
+      expect(pod.metadata.managedFields).toEqual(withoutFieldSets());
+    });
+
+    it("keeps them on an object read on its own", async () => {
+      const getting = api.get({ name: "pod-1", namespace: "default" });
+      await flushPromises();
+
+      const url = "http://127.0.0.1:9999/api-kube/api/v1/namespaces/default/pods/pod-1";
+      await fetchMock.resolve(createMockResponseFromString(url, JSON.stringify(podData("pod-1"))));
+
+      const pod = (await getting) as Pod;
+      expect(pod.metadata.managedFields).toEqual(managedFields());
+    });
+
+    it("leaves them out of watched objects", async () => {
+      const stream = new MockResponseStream();
+      const callback = vi.fn();
+      const stopWatch = api.watch({ namespace: "default", callback });
+      await flushPromises();
+
+      const url = "http://127.0.0.1:9999/api-kube/api/v1/namespaces/default/pods?watch=1&timeoutSeconds=600";
+      await fetchMock.resolve(createMockResponseFromStream(url, stream));
+      stream.push(`${JSON.stringify({ type: "MODIFIED", object: podData("pod-1") })}\n`);
+      await flushPromises();
+
+      expect(callback.mock.lastCall?.[0].object.metadata.managedFields).toEqual(withoutFieldSets());
+
+      stopWatch();
+      stream.end();
+      stream.destroy();
+    });
+  });
+
   describe("patching deployments", () => {
     let api: DeploymentApi;
 

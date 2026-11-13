@@ -7,11 +7,16 @@ import { ConfigMap } from "@freelensapp/kube-object";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDiForUnitTesting } from "../../../getDiForUnitTesting";
+import requestKubeResourceInjectable from "../../dock/edit-resource/edit-resource-model/request-kube-resource.injectable";
 import { renderFor } from "../../test-utils/renderFor";
 import { KubeObjectMeta } from "../kube-object-meta";
 
 import type { KubeMetaField } from "@freelensapp/kube-object";
 
+import type { DiContainer } from "@ogre-tools/injectable";
+import type { Mock } from "vitest";
+
+import type { RequestKubeResource } from "../../dock/edit-resource/edit-resource-model/request-kube-resource.injectable";
 import type { DiRender } from "../../test-utils/renderFor";
 
 // The namespace link needs a hosted cluster, which is beside the point here.
@@ -38,10 +43,12 @@ const createConfigMap = (annotations?: Record<string, string>) =>
   });
 
 describe("<KubeObjectMeta />", () => {
+  let di: DiContainer;
   let render: DiRender;
 
   beforeEach(() => {
-    render = renderFor(getDiForUnitTesting());
+    di = getDiForUnitTesting();
+    render = renderFor(di);
   });
 
   const renderMeta = (object: ConfigMap, hideFields?: KubeMetaField[]) =>
@@ -112,6 +119,97 @@ describe("<KubeObjectMeta />", () => {
 
       expect(screen.getByText("Annotations")).toBeInTheDocument();
       expect(lastAppliedConfigurationItem()).toBeFalsy();
+    });
+  });
+
+  describe("managed fields", () => {
+    const selfLink = "/api/v1/namespaces/default/configmaps/some-config-map";
+    const specFieldSet = { "f:data": { "f:key": {} } };
+    const statusFieldSet = { "f:metadata": { "f:labels": {} } };
+
+    const entries = (withFieldSets: boolean) => [
+      {
+        manager: "kubectl",
+        operation: "Update",
+        apiVersion: "v1",
+        ...(withFieldSets && { fieldsType: "FieldsV1", fieldsV1: specFieldSet }),
+      },
+      {
+        manager: "kubectl",
+        operation: "Update",
+        apiVersion: "v1",
+        subresource: "status",
+        ...(withFieldSets && { fieldsType: "FieldsV1", fieldsV1: statusFieldSet }),
+      },
+    ];
+
+    const createWithManagedFields = (managedFields: unknown[]) =>
+      new ConfigMap({
+        apiVersion: "v1",
+        kind: "ConfigMap",
+        metadata: {
+          name: "some-config-map",
+          namespace: "default",
+          resourceVersion: "1",
+          selfLink,
+          uid: "some-uid",
+          managedFields,
+        },
+        data: {},
+      });
+
+    let requestKubeResource: Mock<RequestKubeResource>;
+
+    beforeEach(() => {
+      requestKubeResource = vi.fn(async () => ({
+        callWasSuccessful: true as const,
+        response: createWithManagedFields(entries(true)),
+      }));
+      di.override(requestKubeResourceInjectable, () => requestKubeResource);
+    });
+
+    const openEntry = (index: number) => {
+      const item = screen.getByText("Managed Fields").closest(".DrawerItem") as HTMLElement;
+
+      fireEvent.click(within(item).getAllByTestId("drawer-param-toggler")[index]);
+
+      return item;
+    };
+
+    it("shows a field set the object carries without reading the object again", () => {
+      renderMeta(createWithManagedFields(entries(true)));
+
+      const item = openEntry(1);
+
+      expect((within(item).getByRole("textbox") as HTMLTextAreaElement).value).toBe("f:metadata:\n  f:labels: {}\n");
+      expect(requestKubeResource).not.toHaveBeenCalled();
+    });
+
+    it("reads the object for a field set a list left out, and shows the matching entry's", async () => {
+      renderMeta(createWithManagedFields(entries(false)));
+
+      const item = openEntry(1);
+
+      expect(within(item).getByText("Loading…")).toBeInTheDocument();
+      expect(((await within(item).findByRole("textbox")) as HTMLTextAreaElement).value).toBe(
+        "f:metadata:\n  f:labels: {}\n",
+      );
+      expect(requestKubeResource).toHaveBeenCalledWith(selfLink);
+    });
+
+    it("reads nothing until an entry is opened", () => {
+      renderMeta(createWithManagedFields(entries(false)));
+
+      expect(requestKubeResource).not.toHaveBeenCalled();
+    });
+
+    it("says so when the object cannot be read", async () => {
+      requestKubeResource.mockResolvedValue({ callWasSuccessful: false, error: "forbidden" });
+      renderMeta(createWithManagedFields(entries(false)));
+
+      const item = openEntry(0);
+
+      expect(await within(item).findByText("The managed fields could not be loaded: forbidden")).toBeInTheDocument();
     });
   });
 });

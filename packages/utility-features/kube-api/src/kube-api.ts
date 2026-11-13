@@ -202,6 +202,35 @@ const not =
  */
 const isExpiredContinueError = (error: unknown): boolean => (error as { code?: unknown } | null)?.code === 410;
 
+/**
+ * Leaves `fieldsV1`, the set of fields each manager owns, out of the
+ * managedFields entries of a listed or watched object. The field sets are
+ * about a third of a typical list response and nothing that renders a list
+ * reads them; who manages the object, with which operation and when, stays.
+ * A single object read with `get`, `patch` or `update` keeps them in full,
+ * and the details drawer reads them that way when it shows them.
+ *
+ * The entries are replaced rather than edited, because deleting a property
+ * turns an object into a slower dictionary-mode one in V8.
+ */
+const dropManagedFieldSets = (metadata: { managedFields?: unknown[] }): void => {
+  const { managedFields } = metadata;
+
+  if (!Array.isArray(managedFields)) {
+    return;
+  }
+
+  metadata.managedFields = managedFields.map((entry) => {
+    if (!entry || typeof entry !== "object" || !("fieldsV1" in entry)) {
+      return entry;
+    }
+
+    const { fieldsV1: _fieldSet, ...rest } = entry as Record<string, unknown>;
+
+    return rest;
+  });
+};
+
 const getOrderedVersions = (
   list: KubeApiResourceVersionList,
   allowedUsableVersions: string[] | undefined,
@@ -612,6 +641,7 @@ export class KubeApi<
         .map((item) => {
           if (item.metadata) {
             this.ensureMetadataSelfLink(item.metadata);
+            dropManagedFieldSets(item.metadata);
           } else {
             return undefined;
           }
@@ -639,10 +669,12 @@ export class KubeApi<
     }
 
     // custom apis might return array for list response, e.g. users, groups, etc.
-    return data
-      .filter(isJsonApiData)
-      .map((data) => (this.ensureMetadataSelfLink(data.metadata), data))
-      .map((data) => new KubeObjectConstructor(data as Data));
+    return data.filter(isJsonApiData).map((data) => {
+      this.ensureMetadataSelfLink(data.metadata);
+      dropManagedFieldSets(data.metadata);
+
+      return new KubeObjectConstructor(data as Data);
+    });
   }
 
   private ensureMetadataSelfLink<T extends { selfLink?: string; namespace?: string; name: string }>(
@@ -1125,6 +1157,7 @@ export class KubeApi<
     }
 
     this.ensureMetadataSelfLink(event.object.metadata);
+    dropManagedFieldSets(event.object.metadata);
 
     const { namespace, resourceVersion } = event.object.metadata;
 
