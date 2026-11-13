@@ -48,15 +48,17 @@ const NonInjectedTheme = observer(({ state, themes }: Dependencies) => {
         onChange={(value) => (state.colorTheme = value?.value ?? defaultColorThemePreference)}
         themeName="lens"
       />
-      <SubTitle title="Color palette" />
-      <Select
-        id="color-palette-input"
-        options={paletteOptions}
-        value={state.colorPalette}
-        onChange={(value) => (state.colorPalette = value?.value ?? defaultThemePaletteId)}
-        themeName="lens"
-      />
-      <small className="hint">{getThemePalette(state.colorPalette).description}</small>
+      <div className="mt-6">
+        <SubTitle title="Color palette" />
+        <Select
+          id="color-palette-input"
+          options={paletteOptions}
+          value={state.colorPalette}
+          onChange={(value) => (state.colorPalette = value?.value ?? defaultThemePaletteId)}
+          themeName="lens"
+        />
+        <small className="hint">{getThemePalette(state.colorPalette).description}</small>
+      </div>
     </section>
   );
 });
