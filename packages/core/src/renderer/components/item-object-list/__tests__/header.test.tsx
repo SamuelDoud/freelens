@@ -6,7 +6,6 @@
 import "@testing-library/jest-dom/vitest";
 
 import { render } from "@testing-library/react";
-import React from "react";
 import { describe, expect, it } from "vitest";
 import { ItemListLayoutHeader } from "../header";
 
