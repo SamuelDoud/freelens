@@ -120,7 +120,9 @@ function VirtualListInner<T extends { getId(): string } | string>({
     }
 
     setOverscanCount(readyOffset);
-  });
+    // listApi is a dependency so the initial scroll still fires once the
+    // List mounts and reports its imperative API.
+  }, [selectedItemId, items, listApi, readyOffset]);
 
   // react-window v2's List fills the height defined by its `style` and tracks
   // its own size via ResizeObserver. Give it a fixed pixel height when the

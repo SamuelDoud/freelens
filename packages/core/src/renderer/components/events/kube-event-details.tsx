@@ -42,8 +42,10 @@ function timeToUnix(dateStr?: string): number {
   return Number.isNaN(time) ? 0 : Math.floor(time / 1000);
 }
 
-export function sortEvents(events: KubeEvent[]): KubeEvent[] | undefined {
-  return events?.sort((a, b) => timeToUnix(b.lastTimestamp) - timeToUnix(a.lastTimestamp));
+export function sortEvents(events: KubeEvent[]): KubeEvent[] {
+  // Copy first: the given array is a bucket of EventStore's @computed
+  // eventsByObjectId, and sorting it in place would mutate that cache.
+  return [...events].sort((a, b) => timeToUnix(b.lastTimestamp) - timeToUnix(a.lastTimestamp));
 }
 
 @observer
@@ -80,7 +82,7 @@ class NonInjectedKubeEventDetails extends React.Component<KubeEventDetailsProps 
         </DrawerTitle>
         {events.length > 0 && (
           <div className={styles.KubeEventDetails}>
-            {sortEvents(events)?.map((event) => (
+            {sortEvents(events).map((event) => (
               <div className={styles.event} key={event.getId()}>
                 <div className={cssNames(styles.title, { [styles.warning]: event.isWarning() })}>{event.message}</div>
                 <DrawerItem name="Source">{event.getSource()}</DrawerItem>
