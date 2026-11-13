@@ -112,6 +112,42 @@ export interface KubeObjectStoreDependencies {
   readonly logger: Logger;
 }
 
+/**
+ * User Timing for one store load, for profiling: the DevTools Performance
+ * panel shows the measures, and `performance.getEntriesByType("measure")`
+ * returns them. `kos first-items <apiBase>` ends when the first items reach
+ * the store, `kos load <apiBase>` when the load is complete. Only the latest
+ * measure of each name is kept, so a long session does not accumulate them.
+ */
+function startLoadTiming(apiBase: string, generation: number) {
+  const perf = globalThis.performance;
+  const startMark = `kos:${apiBase}#${generation}:start`;
+  let firstItemsMeasured = false;
+
+  const measure = (name: string) => {
+    try {
+      perf.clearMeasures(name);
+      perf.measure(name, startMark);
+    } catch {
+      // The start mark is gone (cleared by a reset of the timeline); skip.
+    }
+  };
+
+  perf?.mark(startMark);
+
+  return {
+    firstItems: () => {
+      if (!perf || firstItemsMeasured) return;
+      firstItemsMeasured = true;
+      measure(`kos first-items ${apiBase}`);
+    },
+    complete: () => {
+      if (perf) measure(`kos load ${apiBase}`);
+    },
+    dispose: () => perf?.clearMarks(startMark),
+  };
+}
+
 export class KubeObjectStore<
   K extends KubeObject = KubeObject,
   A extends KubeApi<K, D> = KubeApi<K, KubeJsonApiDataFor<K>>,
@@ -475,6 +511,7 @@ export class KubeObjectStore<
     namespaces ??= this.dependencies.context.contextNamespaces;
     this.isLoading = true;
     const generation = ++this.loadGeneration;
+    const timing = startLoadTiming(this.api.apiBase, generation);
 
     try {
       const items = await this.loadItems({
@@ -483,10 +520,15 @@ export class KubeObjectStore<
         onLoadFailure,
         // Show the items received so far while the rest is still streaming
         // in; the merge of the completed load below remains authoritative.
-        onProgress: (snapshot) => this.mergeLoadedItems(snapshot, merge, namespaces),
+        onProgress: (snapshot) => {
+          this.mergeLoadedItems(snapshot, merge, namespaces);
+          timing.firstItems();
+        },
       });
 
       this.mergeLoadedItems(items, merge, namespaces);
+      timing.firstItems();
+      timing.complete();
 
       this.isLoaded = true;
       this.failedLoading = false;
@@ -507,6 +549,7 @@ export class KubeObjectStore<
       this.resetOnError(error);
       this.failedLoading = true;
     } finally {
+      timing.dispose();
       this.isLoading = false;
 
       if (generation === this.loadGeneration) {
