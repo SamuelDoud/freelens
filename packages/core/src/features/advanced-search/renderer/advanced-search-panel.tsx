@@ -214,9 +214,9 @@ const ConditionRow = observer(<I,>({ index, condition, fields, onChange, onRemov
         />
       </div>
       <Button
-        className={cssNames(styles.not, { [styles.notActive]: condition.negate })}
-        outlined
-        active={condition.negate}
+        className={styles.not}
+        outlined={!condition.negate}
+        accent={condition.negate}
         data-testid={`advanced-search-not-${index}`}
         label="NOT"
         onClick={() => onChange({ ...condition, negate: !condition.negate })}

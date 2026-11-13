@@ -49,10 +49,12 @@
   min-width: 52px;
 }
 
-.notActive {
-  background: var(--colorError);
-  border-color: var(--colorError);
-  color: var(--textColorAccent);
+// An outlined Button draws its border only while focused or active; the NOT
+// toggle shows one at rest so that it reads as a button. Turned on, it is an
+// accent Button instead.
+:global(.Button.outlined).not {
+  box-shadow: 0 0 0 1px var(--borderColor) inset;
+  color: var(--textColorSecondary);
 }
 
 .error {
