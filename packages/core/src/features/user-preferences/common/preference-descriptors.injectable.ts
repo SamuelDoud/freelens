@@ -11,6 +11,7 @@ import kubeDirectoryPathInjectable from "../../../common/os/kube-directory-path.
 import { defaultColorThemePreference } from "../../../common/vars";
 import currentTimezoneInjectable from "../../../common/vars/current-timezone.injectable";
 import isDevelopmentInjectable from "../../../common/vars/is-development.injectable";
+import { defaultThemePaletteId } from "../../theme/palettes/common/palettes";
 import {
   ClusterPageMenuOrder,
   clampMaxCombinedLogsPods,
@@ -44,6 +45,7 @@ export type PreferenceDescriptors = {
   readonly httpsProxy: PreferenceDescription<string | undefined>;
   readonly shell: PreferenceDescription<string | undefined>;
   readonly colorTheme: PreferenceDescription<string>;
+  readonly colorPalette: PreferenceDescription<string>;
   readonly terminalTheme: PreferenceDescription<string>;
   readonly localeTimezone: PreferenceDescription<string>;
   readonly allowUntrustedCAs: PreferenceDescription<boolean>;
@@ -91,6 +93,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
       colorTheme: getPreferenceDescriptor<string>({
         fromStore: (val) => val || defaultColorThemePreference,
         toStore: (val) => (!val || val === defaultColorThemePreference ? undefined : val),
+      }),
+      colorPalette: getPreferenceDescriptor<string>({
+        fromStore: (val) => val || defaultThemePaletteId,
+        toStore: (val) => (!val || val === defaultThemePaletteId ? undefined : val),
       }),
       terminalTheme: getPreferenceDescriptor<string>({
         fromStore: (val) => val || "",

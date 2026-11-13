@@ -10,6 +10,7 @@ import { defaultColorThemePreference } from "../../../../../../common/vars";
 import { SubTitle } from "../../../../../../renderer/components/layout/sub-title";
 import { Select } from "../../../../../../renderer/components/select";
 import { lensThemeDeclarationInjectionToken } from "../../../../../../renderer/themes/declaration";
+import { defaultThemePaletteId, getThemePalette, themePalettes } from "../../../../../theme/palettes/common/palettes";
 import userPreferencesStateInjectable from "../../../../../user-preferences/common/state.injectable";
 
 import type { LensTheme } from "../../../../../../renderer/themes/lens-theme";
@@ -20,11 +21,16 @@ interface Dependencies {
   themes: LensTheme[];
 }
 
+const paletteOptions = themePalettes.map((palette) => ({
+  value: palette.id,
+  label: palette.name,
+}));
+
 const NonInjectedTheme = observer(({ state, themes }: Dependencies) => {
   const themeOptions = [
     {
       value: defaultColorThemePreference,
-      label: "Sync with computer",
+      label: "Auto (sync with computer)",
     },
     ...themes.map((theme) => ({
       value: theme.name,
@@ -42,6 +48,15 @@ const NonInjectedTheme = observer(({ state, themes }: Dependencies) => {
         onChange={(value) => (state.colorTheme = value?.value ?? defaultColorThemePreference)}
         themeName="lens"
       />
+      <SubTitle title="Color palette" />
+      <Select
+        id="color-palette-input"
+        options={paletteOptions}
+        value={state.colorPalette}
+        onChange={(value) => (state.colorPalette = value?.value ?? defaultThemePaletteId)}
+        themeName="lens"
+      />
+      <small className="hint">{getThemePalette(state.colorPalette).description}</small>
     </section>
   );
 });

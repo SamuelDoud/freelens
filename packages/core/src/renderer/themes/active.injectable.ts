@@ -7,7 +7,10 @@
 import assert from "node:assert";
 import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
+import { getThemePalette } from "../../features/theme/palettes/common/palettes";
 import lensColorThemePreferenceInjectable from "../../features/user-preferences/common/lens-color-theme.injectable";
+import userPreferencesStateInjectable from "../../features/user-preferences/common/state.injectable";
+import { applyThemePalette } from "./apply-theme-palette";
 import { lensThemeDeclarationInjectionToken } from "./declaration";
 import defaultLensThemeInjectable from "./default-theme.injectable";
 import systemThemeConfigurationInjectable from "./system-theme.injectable";
@@ -29,7 +32,9 @@ const activeThemeInjectable: Injectable<IComputedValue<ReadonlyDeep<LensTheme>>>
     const systemThemeConfiguration = di.inject(systemThemeConfigurationInjectable);
     const defaultLensTheme = di.inject(defaultLensThemeInjectable);
 
-    return computed(() => {
+    const userPreferences = di.inject(userPreferencesStateInjectable);
+
+    const baseTheme = computed(() => {
       const pref = lensColorThemePreference.get();
 
       if (pref.useSystemTheme) {
@@ -43,6 +48,9 @@ const activeThemeInjectable: Injectable<IComputedValue<ReadonlyDeep<LensTheme>>>
 
       return lensThemes.get(pref.lensThemeId) ?? defaultLensTheme;
     });
+
+    // The color palette the user picked, laid over the light or dark theme.
+    return computed(() => applyThemePalette(baseTheme.get(), getThemePalette(userPreferences.colorPalette)));
   },
 });
 

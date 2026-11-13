@@ -82,6 +82,22 @@ const toHierarchicalElectronMenuItem = (composite: Composite<ApplicationMenuItem
       };
     }
 
+    case "radio-menu-item": {
+      const { id } = composite;
+      const { label, onClick, keyboardShortcut, isChecked } = value;
+
+      return {
+        ...(id ? { id } : {}),
+        ...(keyboardShortcut ? { accelerator: keyboardShortcut } : {}),
+        type: "radio",
+        label,
+        // Read while the template is built, which the menu reactivity tracks,
+        // so a change of the state rebuilds the menu with the new mark.
+        checked: isChecked.get(),
+        click: () => onClick(),
+      };
+    }
+
     case "os-action-menu-item": {
       const { label, keyboardShortcut, actionName } = value;
 

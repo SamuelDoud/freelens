@@ -13,6 +13,7 @@ import { registerInjectables as registerOpenCommandPaletteInjectables } from "./
 import { registerInjectables as registerOperationSystemActionsInjectables } from "./operation-system-actions/register-injectables";
 import { registerInjectables as registerReloadInjectables } from "./reload/register-injectables";
 import { registerInjectables as registerSeparatorsInjectables } from "./separators/register-injectables";
+import { registerInjectables as registerThemeInjectables } from "./theme/register-injectables";
 import viewMenuItemInjectable from "./view-menu-item.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
@@ -55,6 +56,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerSeparatorsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerThemeInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

@@ -424,7 +424,7 @@ export const getApplicationBuilder = () => {
 
         const clickableMenuItem = findComposite(...path)(composite).value;
 
-        if (clickableMenuItem.kind === "clickable-menu-item") {
+        if (clickableMenuItem.kind === "clickable-menu-item" || clickableMenuItem.kind === "radio-menu-item") {
           // Todo: prevent leaking of Electron
           // The click handler navigates through the async main-process route,
           // which delivers to the window over IPC on a microtask. Await it inside
