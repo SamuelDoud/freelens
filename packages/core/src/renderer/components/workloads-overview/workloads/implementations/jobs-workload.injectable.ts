@@ -8,7 +8,6 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
 import navigateToJobsInjectable from "../../../../../common/front-end-routing/routes/cluster/workloads/jobs/navigate-to-jobs.injectable";
 import { ResourceNames } from "../../../../utils/rbac";
-import namespaceStoreInjectable from "../../../namespaces/store.injectable";
 import jobStoreInjectable from "../../../workloads-jobs/store.injectable";
 import { workloadInjectionToken } from "../workload-injection-token";
 
@@ -17,7 +16,6 @@ const jobsWorkloadInjectable = getInjectable({
 
   instantiate: (di) => {
     const navigate = di.inject(navigateToJobsInjectable);
-    const namespaceStore = di.inject(namespaceStoreInjectable);
     const store = di.inject(jobStoreInjectable);
 
     return {
@@ -27,9 +25,9 @@ const jobsWorkloadInjectable = getInjectable({
       },
       open: navigate,
 
-      amountOfItems: computed(() => store.getAllByNs(namespaceStore.contextNamespaces).length),
+      amountOfItems: computed(() => store.contextItems.length),
 
-      status: computed(() => store.getStatuses(store.getAllByNs(namespaceStore.contextNamespaces))),
+      status: computed(() => store.getStatuses(store.contextItems)),
 
       title: ResourceNames.jobs,
       orderNumber: 60,
