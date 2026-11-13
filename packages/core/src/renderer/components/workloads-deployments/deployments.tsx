@@ -20,6 +20,7 @@ import deploymentStoreInjectable from "./store.injectable";
 
 import type { Deployment } from "@freelensapp/kube-object";
 
+import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { EventStore } from "../events/store";
 import type { DeploymentStore } from "./store";
 
@@ -45,6 +46,16 @@ function getReplicas(deployment: Deployment) {
   const availableReplicas = deployment.status?.availableReplicas || 0;
   return `${availableReplicas}/${replicas}`;
 }
+
+const deploymentSearchFields: SearchField<Deployment>[] = [
+  { id: "conditions", title: "Conditions", kind: "text", getValues: (deployment) => deployment.getConditionsText() },
+  {
+    id: "replicas",
+    title: "Replicas (available/desired)",
+    kind: "text",
+    getValues: (deployment) => getReplicas(deployment),
+  },
+];
 
 @observer
 class NonInjectedDeployments extends React.Component<Dependencies> {
@@ -72,6 +83,7 @@ class NonInjectedDeployments extends React.Component<Dependencies> {
             [columnId.condition]: (deployment) => deployment.getConditionsText(),
           }}
           searchFilters={[(deployment) => deployment.getSearchFields(), (deployment) => deployment.getConditionsText()]}
+          searchFields={deploymentSearchFields}
           renderHeaderTitle="Deployments"
           defaultHiddenTableColumns={[columnId.replicas]}
           renderTableHeader={[

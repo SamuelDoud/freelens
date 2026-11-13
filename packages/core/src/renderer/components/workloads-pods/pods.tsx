@@ -20,6 +20,7 @@ import podStoreInjectable from "./store.injectable";
 import type { Pod } from "@freelensapp/kube-object";
 import type { SpecificKubeListLayoutColumn } from "@freelensapp/list-layout";
 
+import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { EventStore } from "../events/store";
 import type { PodStore } from "./store";
 
@@ -30,6 +31,20 @@ interface Dependencies {
 }
 
 const REFRESH_METRICS_INTERVAL = 10;
+
+const podSearchFields: SearchField<Pod>[] = [
+  { id: "status", title: "Status", kind: "text", getValues: (pod) => pod.getStatusMessage() },
+  { id: "node", title: "Node", kind: "text", getValues: (pod) => pod.getNodeName() },
+  { id: "ip", title: "Pod IP", kind: "text", getValues: (pod) => pod.status?.podIP },
+  { id: "qos", title: "QoS", kind: "text", getValues: (pod) => pod.getQosClass() },
+  { id: "restarts", title: "Restarts", kind: "text", getValues: (pod) => pod.getRestartsCount() },
+  {
+    id: "image",
+    title: "Container image",
+    kind: "text",
+    getValues: (pod) => pod.getAllContainers().map((container) => container.image),
+  },
+];
 
 const NonInjectedPods = observer((props: Dependencies) => {
   const { columns, eventStore, podStore } = props;
@@ -58,6 +73,7 @@ const NonInjectedPods = observer((props: Dependencies) => {
           (pod) => pod.getNodeName(),
           (pod) => getPodContainerPorts(pod).flatMap((port) => [port.name, port.containerPort, port.protocol]),
         ]}
+        searchFields={podSearchFields}
         renderHeaderTitle="Pods"
         renderTableHeader={[]}
         renderTableContents={() => []}

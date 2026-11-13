@@ -101,6 +101,45 @@ exports[`kube-object-list-layout > given pod store > renders 1`] = `
               </div>
             </div>
           </div>
+          <div
+            class="flex items-center gap-1"
+          >
+            <i
+              class="Icon material interactive focusable"
+              data-testid="advanced-search-toggle"
+              tabindex="0"
+            >
+              <span
+                class="icon"
+                data-icon-name="tune"
+              >
+                tune
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-advanced-search-toggle"
+            >
+              Advanced search
+            </div>
+            <i
+              class="Icon material interactive focusable"
+              data-testid="icon-for-saved-searches-menu"
+              id="saved-searches-menu-v1-Pod"
+              tabindex="0"
+            >
+              <span
+                class="icon"
+                data-icon-name="star_border"
+              >
+                star_border
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-icon-for-saved-searches-menu"
+            >
+              Saved searches
+            </div>
+          </div>
         </div>
         <div
           class="items grow shrink-0 basis-0 flex flex-col"

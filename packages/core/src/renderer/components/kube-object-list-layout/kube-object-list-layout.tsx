@@ -15,6 +15,7 @@ import { sortBy } from "es-toolkit/compat";
 import { observable, reaction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
+import { getKubeObjectSearchFields } from "../../../features/advanced-search/renderer/kube-object-search-fields";
 import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-frame-context/for-namespaced-resources.injectable";
 import subscribeStoresInjectable from "../../kube-watch-api/subscribe-stores.injectable";
 import { ResourceKindMap, ResourceNames } from "../../utils/rbac";
@@ -30,6 +31,7 @@ import type { KubeJsonApiDataFor, KubeObject } from "@freelensapp/kube-object";
 import type { GeneralKubeObjectListLayoutColumn, SpecificKubeListLayoutColumn } from "@freelensapp/list-layout";
 import type { Disposer } from "@freelensapp/utilities";
 
+import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { ClusterContext } from "../../cluster-frame-context/cluster-frame-context";
 import type { SubscribableStore, SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 import type { PageParam } from "../../navigation/page-param";
@@ -59,6 +61,12 @@ export interface KubeObjectListLayoutProps<
    */
   resourceName?: string;
   columns?: SpecificKubeListLayoutColumn<K>[];
+
+  /**
+   * Fields of this kind that advanced search can put conditions on, besides the
+   * name, namespace, age, labels, annotations and owners every list has.
+   */
+  searchFields?: SearchField<K>[];
 }
 
 interface Dependencies {
@@ -184,9 +192,16 @@ class NonInjectedKubeObjectListLayout<
       generalColumns,
       sortingCallbacks = {},
       customizeTableRowProps,
+      searchFields = [],
+      advancedSearch,
       ...layoutProps
     } = this.props;
     const resourceName = this.props.resourceName || ResourceNames[ResourceKindMap[store.api.kind]] || store.api.kind;
+    const advancedSearchView = advancedSearch ?? {
+      viewKey: `${store.api.apiVersionWithGroup}/${store.api.kind}`,
+      viewTitle: resourceName,
+      fields: [...getKubeObjectSearchFields<K>(store.api.isNamespaced), ...searchFields],
+    };
     const targetColumns = [...(columns ?? []), ...generalColumns.filter(matchesApiFor(store.api))];
 
     void dependentStores;
@@ -290,6 +305,7 @@ class NonInjectedKubeObjectListLayout<
           ).map((value) => value.content)
         }
         spinnerTestId="kube-object-list-layout-spinner"
+        advancedSearch={advancedSearchView}
         {...layoutProps}
         customizeTableRowProps={getTableRowCustomizations}
       />

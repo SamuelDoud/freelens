@@ -1,0 +1,95 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+.panel {
+  margin: 0 var(--margin) var(--margin);
+  padding: var(--padding);
+  border: 1px solid var(--borderFaintColor);
+  border-radius: var(--border-radius);
+  background: var(--contentColor);
+  color: var(--textColorPrimary);
+}
+
+.title {
+  font-weight: bold;
+}
+
+.hint {
+  color: var(--textColorTertiary);
+  font-size: small;
+}
+
+.fieldSelect {
+  min-width: 170px;
+}
+
+.operatorSelect {
+  min-width: 150px;
+}
+
+.value {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+
+.dateInput {
+  width: 100%;
+  padding: calc(var(--padding) / 2) var(--padding);
+  border: 1px solid var(--inputControlBorder);
+  border-radius: var(--border-radius);
+  background: var(--inputControlBackground);
+  color: var(--textColorPrimary);
+  font: inherit;
+  color-scheme: light dark;
+}
+
+.not {
+  min-width: 52px;
+}
+
+.notActive {
+  background: var(--colorError);
+  border-color: var(--colorError);
+  color: var(--textColorAccent);
+}
+
+.error {
+  color: var(--colorError);
+  font-size: small;
+}
+
+.chips {
+  margin: 0 var(--margin) var(--margin);
+}
+
+.chip {
+  padding: 2px var(--padding);
+  border: 1px solid var(--borderColor);
+  border-radius: 12px;
+  background: var(--secondaryBackground);
+  color: var(--textColorPrimary);
+  font-size: small;
+  white-space: nowrap;
+}
+
+.link {
+  color: var(--primary);
+  cursor: pointer;
+  font-size: small;
+}
+
+.savedList {
+  border-top: 1px solid var(--borderFaintColor);
+  padding-top: var(--padding);
+}
+
+.savedName {
+  font-weight: bold;
+}
+
+.savedSummary {
+  color: var(--textColorSecondary);
+  font-size: small;
+}

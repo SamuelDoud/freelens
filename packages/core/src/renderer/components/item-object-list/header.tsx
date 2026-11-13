@@ -9,11 +9,13 @@ import "./item-list-layout.scss";
 import { cssNames, isDefined } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
 import React from "react";
+import { AdvancedSearchControls } from "../../../features/advanced-search/renderer/advanced-search-panel";
 import { SearchInputUrl } from "../input";
 
 import type { ItemObject } from "@freelensapp/list-layout";
 import type { IClassName, StrictReactNode } from "@freelensapp/utilities";
 
+import type { AdvancedSearchView } from "../../../features/advanced-search/renderer/advanced-search-panel";
 import type { HeaderCustomizer, HeaderPlaceholders, ItemListStore, ListLayoutSearchFilter } from "./list-layout";
 import type { Filter } from "./page-filters/store";
 
@@ -24,6 +26,8 @@ export interface ItemListLayoutHeaderProps<I extends ItemObject, PreLoadStores e
 
   store: ItemListStore<I, PreLoadStores>;
   searchFilters?: ListLayoutSearchFilter<I>[];
+  advancedSearch?: AdvancedSearchView<I>;
+  getHasAdvancedSearchFilter?: () => boolean;
 
   // header (title, filtering, searching, etc.)
   showHeader?: boolean;
@@ -43,6 +47,8 @@ export class ItemListLayoutHeader<I extends ItemObject, PreLoadStores extends bo
       renderHeaderTitle,
       headerClassName,
       searchFilters = [],
+      advancedSearch,
+      getHasAdvancedSearchFilter = () => false,
       getItems,
       store,
       getFilters,
@@ -64,7 +70,7 @@ export class ItemListLayoutHeader<I extends ItemObject, PreLoadStores extends bo
           : `Loading… ${loadingProgress.loaded.toLocaleString()} items`;
       }
 
-      if (getFilters().length > 0) {
+      if (getFilters().length > 0 || getHasAdvancedSearchFilter()) {
         return (
           <>
             <a onClick={toggleFilters}>Filtered</a>
@@ -94,6 +100,7 @@ export class ItemListLayoutHeader<I extends ItemObject, PreLoadStores extends bo
         {info && <div className="info-panel grow shrink-0 basis-0">{info}</div>}
         {filters}
         {searchFilters.length > 0 && searchProps && <SearchInputUrl {...searchProps} />}
+        {advancedSearch && advancedSearch.fields.length > 0 && <AdvancedSearchControls view={advancedSearch} />}
       </div>
     );
   }
