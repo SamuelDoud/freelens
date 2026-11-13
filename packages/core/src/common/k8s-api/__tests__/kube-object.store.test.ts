@@ -642,8 +642,8 @@ describe("KubeObjectStore", () => {
       expect(store["loadedNamespaces"].get()).toEqual([]);
     });
 
-    it("keeps at most eight namespace streams in flight at once", async () => {
-      const namespaces = Array.from({ length: 12 }, (_, index) => `ns-${index}`);
+    it("keeps at most 16 namespace streams in flight at once", async () => {
+      const namespaces = Array.from({ length: 20 }, (_, index) => `ns-${index}`);
       const gates = new Map(namespaces.map((namespace) => [namespace, deferred<KubeObject[]>()]));
       let inFlight = 0;
       let maxInFlight = 0;
@@ -667,8 +667,8 @@ describe("KubeObjectStore", () => {
       const loading = store.loadAll({ namespaces });
       await vi.advanceTimersByTimeAsync(0);
 
-      expect(list).toHaveBeenCalledTimes(8);
-      expect(maxInFlight).toBe(8);
+      expect(list).toHaveBeenCalledTimes(16);
+      expect(maxInFlight).toBe(16);
 
       for (const gate of gates.values()) {
         gate.resolve([]);
@@ -676,8 +676,8 @@ describe("KubeObjectStore", () => {
 
       await loading;
 
-      expect(list).toHaveBeenCalledTimes(12);
-      expect(maxInFlight).toBeLessThanOrEqual(8);
+      expect(list).toHaveBeenCalledTimes(20);
+      expect(maxInFlight).toBeLessThanOrEqual(16);
     });
 
     it("keeps a single cluster-wide stream when only one namespace is loaded", async () => {

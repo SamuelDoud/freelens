@@ -279,16 +279,16 @@ export class KubeObjectStore<
 
       // One paginated stream per namespace: every namespace pages in
       // independently and the tracker merges their pages into the
-      // progressive snapshots. At most eight streams are in flight at
-      // once, so that a load spanning hundreds of namespaces does not
-      // open hundreds of list requests per store.
+      // progressive snapshots. At most 16 streams are in flight at once,
+      // so that a load spanning hundreds of namespaces does not open
+      // hundreds of list requests per store.
       const listNamespace = limitAsync(
         async (namespace: string) =>
           this.api.list(
             { namespace, reqInit, pageSize: this.pageSize, onPage: tracker.onPageFor(namespace) },
             this.query,
           ),
-        8,
+        16,
       );
       const results = await Promise.allSettled(namespaces.map((namespace) => listNamespace(namespace)));
 
