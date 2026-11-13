@@ -62,7 +62,7 @@ class NonInjectedServices extends React.Component<Dependencies> {
           sortingCallbacks={{
             [columnId.name]: (service) => service.getName(),
             [columnId.namespace]: (service) => service.getNs(),
-            [columnId.ports]: (service) => (service.spec.ports || []).map(({ port }) => port)[0],
+            [columnId.ports]: (service) => service.spec.ports?.[0]?.port,
             [columnId.clusterIp]: (service) => service.getClusterIp(),
             [columnId.type]: (service) => service.getType(),
             [columnId.age]: (service) => -service.getCreationTimestamp(),
