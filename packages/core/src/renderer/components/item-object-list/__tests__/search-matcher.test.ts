@@ -62,4 +62,30 @@ describe("createSearchMatcher", () => {
   it("does not match a value missing the query", () => {
     expect(createSearchMatcher("nginx-ingress")("nginx-gateway")).toBe(false);
   });
+
+  it.each([
+    ["", ""],
+    ["", "abc"],
+    ["abc", "abc"],
+    ["abd", "abc"],
+    ["a-b", "a-b"],
+    ["ab", "a-b"],
+    ["ab", "a_b"],
+    ["ab", "a-_b"],
+    ["a_b", "a-b"],
+    ["abc", "xab-cx"],
+    ["", "-"],
+    ["-", ""],
+  ])("query %j against %j agrees with the stripped-text definition", (query, value) => {
+    const text = value.toLowerCase();
+    const expected = text.includes(query) || text.replace(/[-_]/g, "").includes(query);
+
+    expect(createSearchMatcher(query)(value)).toBe(expected);
+  });
+
+  it("matches numbers, booleans and bigints through their text", () => {
+    expect(createSearchMatcher("true")(true)).toBe(true);
+    expect(createSearchMatcher("12")(BigInt(1234))).toBe(true);
+    expect(createSearchMatcher("-1")(-1)).toBe(true);
+  });
 });
