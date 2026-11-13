@@ -44,7 +44,7 @@ describe("ItemListLayoutHeader", () => {
   it("shows the item count when not streaming", () => {
     const { container } = renderHeader(storeWith({ getTotalCount: () => 1234, isLoaded: true }));
 
-    expect(container.querySelector(".info-panel")).toHaveTextContent("1234 items");
+    expect(container.querySelector(".info-panel")).toHaveTextContent("1,234 items");
   });
 
   it("shows streaming progress with the expected total while loading", () => {
