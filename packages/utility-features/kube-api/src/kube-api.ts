@@ -330,6 +330,13 @@ export interface KubeApiWatchOptions<Object extends KubeObject, Data extends Kub
    * timeout in seconds
    */
   timeout?: number;
+
+  /**
+   * Narrows the watch the way the same query narrows a list, such as a
+   * `fieldSelector` or a `labelSelector`. An object that stops matching it
+   * arrives as a DELETED event.
+   */
+  query?: KubeApiQueryParams;
 }
 
 export type KubeApiPatchType = "merge" | "json" | "strategic";
@@ -983,11 +990,12 @@ export class KubeApi<
       retry = false,
       timeout = 600,
       watchId = `${this.kind.toLowerCase()}-${this.watchId++}`,
+      query,
     } = opts ?? {};
 
     // Create AbortController for this request
     const abortController = new WrappedAbortController(opts?.abortController);
-    const watchUrl = this.getWatchUrl(namespace);
+    const watchUrl = this.getWatchUrl(namespace, query);
 
     abortController.signal.addEventListener("abort", () => {
       this.dependencies.logDebug(`watch (${watchId}) aborted ${watchUrl}`);

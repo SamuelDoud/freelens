@@ -10,7 +10,7 @@ import { computed, observable } from "mobx";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { RetryBackoff } from "../../utils/retry-backoff";
 
-import type { PodApi, PodMetricsApi } from "@freelensapp/kube-api";
+import type { KubeApiQueryParams, PodApi, PodMetricsApi } from "@freelensapp/kube-api";
 import type { KubeObject, NamespaceScopedMetadata, Pod, PodMetrics } from "@freelensapp/kube-object";
 
 import type { IComputedValue } from "mobx";
@@ -24,6 +24,11 @@ export interface PodStoreDependencies extends KubeObjectStoreDependencies {
    * metrics-server). Without it the metrics are not requested at all.
    */
   readonly isMetricsApiAvailable?: IComputedValue<boolean>;
+  /**
+   * Whether pods that ran to completion are left out, as the cluster's
+   * `hideCompletedPods` preference says.
+   */
+  readonly hideCompletedPods?: () => boolean;
 }
 
 export class PodStore extends KubeObjectStore<Pod, PodApi> {
@@ -33,6 +38,21 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
     opts?: KubeObjectStoreOptions,
   ) {
     super(dependencies, api, opts);
+  }
+
+  /**
+   * Completed pods are left out on the API server, so that neither the list
+   * nor the watch carries them. A pod that completes while watched arrives
+   * as a DELETED event and leaves the store.
+   */
+  override get query(): KubeApiQueryParams {
+    const query = super.query;
+
+    if (!this.dependencies.hideCompletedPods?.()) {
+      return query;
+    }
+
+    return { ...query, fieldSelector: "status.phase!=Succeeded" };
   }
 
   readonly kubeMetrics = observable.array<PodMetrics>([]);

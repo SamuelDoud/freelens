@@ -77,6 +77,23 @@ describe("PodStore kube metrics", () => {
     expect(listMetrics).not.toHaveBeenCalled();
   });
 
+  describe("hiding completed pods", () => {
+    it("lists and watches every pod by default", () => {
+      expect(podStore.query).toEqual({});
+      expect(podStore["watchQuery"]).toEqual({});
+    });
+
+    it("leaves out Succeeded pods in the list and the watch when the cluster says so", () => {
+      const keyBefore = podStore.listQueryKey;
+
+      cluster.preferences.hideCompletedPods = true;
+
+      expect(podStore.query).toEqual({ fieldSelector: "status.phase!=Succeeded" });
+      expect(podStore["watchQuery"]).toEqual({ fieldSelector: "status.phase!=Succeeded" });
+      expect(podStore.listQueryKey).not.toBe(keyBefore);
+    });
+  });
+
   describe("when the request fails", () => {
     beforeEach(async () => {
       vi.useFakeTimers();

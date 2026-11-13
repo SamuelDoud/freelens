@@ -100,6 +100,11 @@ export interface SubscribableStore {
   };
   loadAll(opts?: KubeObjectStoreLoadAllParams): Promise<unknown>;
   subscribe(opts?: KubeObjectStoreSubscribeParams): Disposer;
+  /**
+   * Identifies the query the store lists and watches with. When it changes,
+   * the store is loaded and watched again.
+   */
+  readonly listQueryKey?: string;
 }
 
 export type SubscribeStores = (stores: SubscribableStore[], opts?: KubeWatchSubscribeStoreOptions) => Disposer;
@@ -169,6 +174,26 @@ export class KubeWatchApi {
      */
     loadThenSubscribe(namespaces ?? this.dependencies.clusterContext.contextNamespaces, childController).catch(noop);
 
+    const reload = (reloadNamespaces: string[] | undefined) => {
+      childController.abort();
+      unsubscribe();
+      childController = new WrappedAbortController(parent);
+      loadThenSubscribe(reloadNamespaces, childController).catch(noop);
+    };
+
+    // A store whose list query changes, such as the pods once completed ones
+    // are hidden, lists and watches again with the new query.
+    const cancelQueryReloading =
+      store.listQueryKey !== undefined
+        ? reaction(
+            () => store.listQueryKey,
+            () => {
+              console.log(`[KUBE-WATCH-API]: list query of ${store.api.apiBase} changed, reloading`);
+              reload(namespaces ?? this.dependencies.clusterContext.contextNamespaces);
+            },
+          )
+        : noop;
+
     const cancelReloading =
       followsSelection && store.api.isNamespaced
         ? reaction(
@@ -188,10 +213,7 @@ export class KubeWatchApi {
               }
 
               console.log(`[KUBE-WATCH-API]: changing watch ${store.api.apiBase}`, namespaces);
-              childController.abort();
-              unsubscribe();
-              childController = new WrappedAbortController(parent);
-              loadThenSubscribe(namespaces, childController).catch(noop);
+              reload(namespaces);
             },
             {
               equals: compareShallow,
@@ -200,6 +222,7 @@ export class KubeWatchApi {
         : noop; // don't watch namespaces if namespaces were provided
 
     return () => {
+      cancelQueryReloading();
       cancelReloading();
       childController.abort();
       unsubscribe();

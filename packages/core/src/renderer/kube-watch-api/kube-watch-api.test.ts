@@ -229,4 +229,55 @@ describe("KubeWatchApi", () => {
 
     expect(openWatches()).toBe(0);
   });
+
+  describe("given a store whose list query can change", () => {
+    const createStoreWithQuery = () => {
+      const created = createStore({ isNamespaced: true });
+      const listQuery = observable.box("{}");
+
+      Object.defineProperty(created.store, "listQueryKey", { get: () => listQuery.get() });
+
+      return {
+        ...created,
+        setListQuery: (key: string) => runInAction(() => listQuery.set(key)),
+      };
+    };
+
+    it("loads and watches it again, for the same namespaces, when the query changes", async () => {
+      const { kubeWatchApi } = createKubeWatchApi();
+      const { store, finishLoads, openWatches, setListQuery } = createStoreWithQuery();
+
+      const unsubscribe = kubeWatchApi.subscribeStores([store]);
+
+      await finishLoads();
+
+      setListQuery('{"fieldSelector":"status.phase!=Succeeded"}');
+
+      expect(openWatches()).toBe(0);
+      expect(store.loadAll).toHaveBeenCalledTimes(2);
+      expect(store.loadAll.mock.lastCall?.[0]).toMatchObject({ namespaces: ["default"] });
+
+      await finishLoads();
+
+      expect(store.subscribe).toHaveBeenCalledTimes(2);
+      expect(openWatches()).toBe(1);
+
+      unsubscribe();
+
+      expect(openWatches()).toBe(0);
+    });
+
+    it("stops following the query with the last subscription", async () => {
+      const { kubeWatchApi } = createKubeWatchApi();
+      const { store, finishLoads, setListQuery } = createStoreWithQuery();
+
+      const unsubscribe = kubeWatchApi.subscribeStores([store]);
+
+      await finishLoads();
+      unsubscribe();
+      setListQuery('{"fieldSelector":"status.phase!=Succeeded"}');
+
+      expect(store.loadAll).toHaveBeenCalledTimes(1);
+    });
+  });
 });

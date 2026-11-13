@@ -15,6 +15,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { kubeObjectStoreInjectionToken } from "../../../common/k8s-api/api-manager/kube-object-store-token";
 import { shouldShowResourceInjectionToken } from "../../../features/cluster/showing-kube-resources/common/allowed-resources-injection-token";
 import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-frame-context/for-namespaced-resources.injectable";
+import hostedClusterInjectable from "../../cluster-frame-context/hosted-cluster.injectable";
 import { PodStore } from "./store";
 
 const podStoreInjectable = getInjectable({
@@ -23,6 +24,7 @@ const podStoreInjectable = getInjectable({
     assert(di.inject(storesAndApisCanBeCreatedInjectionToken), "podStore is only available in certain environments");
 
     const api = di.inject(podApiInjectable);
+    const hostedCluster = di.inject(hostedClusterInjectable);
 
     return new PodStore(
       {
@@ -31,6 +33,7 @@ const podStoreInjectable = getInjectable({
           apiName: "pods",
           group: "metrics.k8s.io",
         }),
+        hideCompletedPods: () => hostedCluster?.preferences.hideCompletedPods ?? false,
         context: di.inject(clusterFrameContextForNamespacedResourcesInjectable),
         logger: di.inject(loggerInjectionToken),
       },

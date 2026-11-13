@@ -195,6 +195,24 @@ export class KubeObjectStore<
     return this.contextItems.length;
   }
 
+  /**
+   * Identifies the query the store lists and watches with, so that a
+   * subscription can load and watch again when it changes.
+   */
+  get listQueryKey(): string {
+    return JSON.stringify(this.query);
+  }
+
+  /**
+   * The query a watch of this store sends: the list query without `limit`,
+   * so that the watch delivers the same objects the list does.
+   */
+  protected get watchQuery(): KubeApiQueryParams {
+    const { limit: _limit, ...query } = this.query;
+
+    return query;
+  }
+
   get query(): KubeApiQueryParams {
     const { limit } = this;
 
@@ -833,6 +851,7 @@ export class KubeObjectStore<
         namespace,
         abortController,
         callback,
+        query: this.watchQuery,
       });
     };
 

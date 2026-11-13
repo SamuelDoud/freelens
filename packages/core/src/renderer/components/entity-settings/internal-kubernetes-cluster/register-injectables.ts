@@ -10,6 +10,7 @@ import generalKubernetesClusterEntitySettingsInjectable from "./general-settings
 import metricsKubernetesClusterEntitySettingsInjectable from "./metrics-settings.injectable";
 import namespaceKubernetesClusterEntitySettingsInjectable from "./namespace-settings.injectable";
 import nodeShellKubernetesClusterEntitySettingsInjectable from "./node-shell-settings.injectable";
+import performanceKubernetesClusterEntitySettingsInjectable from "./performance-settings.injectable";
 import proxyKubernetesClusterEntitySettingsInjectable from "./proxy-settings.injectable";
 import terminalKubernetesClusterEntitySettingsInjectable from "./terminal-settings.injectable";
 
@@ -33,6 +34,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(nodeShellKubernetesClusterEntitySettingsInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(performanceKubernetesClusterEntitySettingsInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

@@ -108,6 +108,11 @@ export interface ClusterPreferences extends ClusterPrometheusPreferences {
   imagePullSecret?: string;
   defaultNamespace?: string;
   skipNamespaceAuthorizationCheck?: boolean;
+  /**
+   * Leave pods that ran to completion (phase Succeeded) out of the pod list
+   * and its watch. Failed pods stay.
+   */
+  hideCompletedPods?: boolean;
 }
 
 /**

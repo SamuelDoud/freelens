@@ -373,6 +373,26 @@ describe("KubeApi", () => {
     });
   });
 
+  describe("watching with a query", () => {
+    it("narrows the watch with it", async () => {
+      const api = new PodApi({
+        logDebug: vi.fn(),
+        logError: vi.fn(),
+        logInfo: vi.fn(),
+        logWarn: vi.fn(),
+        maybeKubeApi: kubeJsonApi,
+      });
+      const stopWatch = api.watch({ namespace: "default", query: { fieldSelector: "status.phase!=Succeeded" } });
+      await flushPromises();
+
+      expect(fetchMock.mock.lastCall?.[0]).toBe(
+        "http://127.0.0.1:9999/api-kube/api/v1/namespaces/default/pods?watch=1&fieldSelector=status.phase!%3DSucceeded&timeoutSeconds=600",
+      );
+
+      stopWatch();
+    });
+  });
+
   describe("patching deployments", () => {
     let api: DeploymentApi;
 
