@@ -139,7 +139,23 @@ export class SearchStore {
    * @param occurrence Number of the overlay within one line
    */
   public isActiveOverlay(line: number, occurrence: number): boolean {
-    const firstLineIndex = this.occurrences.findIndex((item) => item === line);
+    // occurrences is ascending (built by findOccurrences in line order), so the
+    // first index of `line` is a lower bound; -1 when the line has no occurrence.
+    const occurrences = this.occurrences;
+    let low = 0;
+    let high = occurrences.length;
+
+    while (low < high) {
+      const mid = (low + high) >>> 1;
+
+      if (occurrences[mid] < line) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+
+    const firstLineIndex = low < occurrences.length && occurrences[low] === line ? low : -1;
 
     return firstLineIndex + occurrence === this.activeOverlayIndex;
   }
