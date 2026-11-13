@@ -36,6 +36,19 @@ describe("createCanListResource", () => {
     expect(createCanListResource([])(resource("", "pods"))).toBe(false);
   });
 
+  it("fails on a rule without verbs exactly where the previous implementation did", () => {
+    const rules = [
+      { apiGroups: [""], resources: ["pods"] },
+      { verbs: ["list"], apiGroups: ["apps"], resources: ["*"] },
+    ] as unknown as V1ResourceRule[];
+    const can = createCanListResource(rules);
+    const old = oldCanListResource(rules);
+
+    expect(can(resource("apps", "deployments"))).toBe(old(resource("apps", "deployments")));
+    expect(() => old(resource("", "pods"))).toThrow(TypeError);
+    expect(() => can(resource("", "pods"))).toThrow(TypeError);
+  });
+
   it("gives the same answer as the previous implementation for random rules", () => {
     let seed = 987654321;
     const rnd = (n: number) => {

@@ -27,6 +27,17 @@ export type CreateRequestNamespaceListPermissions = (api: AuthorizationV1Api) =>
  * when the predicate is used, as they always did.
  */
 export const createCanListResource = (resourceRules: V1ResourceRule[]): CanListResource => {
+  // The index reads every rule's verbs up front, where the scan below read them only for
+  // rules matching the resource. Rules without a verbs array fail differently between the
+  // two, so they keep the scan.
+  if (!resourceRules.every(({ verbs }) => Array.isArray(verbs))) {
+    return (resource) =>
+      resourceRules
+        .filter(({ apiGroups = ["*"] }) => apiGroups.includes("*") || apiGroups.includes(resource.group))
+        .filter(({ resources = ["*"] }) => resources.includes("*") || resources.includes(resource.apiName))
+        .some(({ verbs }) => verbs.includes("*") || verbs.includes("list"));
+  }
+
   let listRules: { anyGroup: boolean; groups: Set<string>; anyResource: boolean; resources: Set<string> }[] | undefined;
 
   return (resource) => {
