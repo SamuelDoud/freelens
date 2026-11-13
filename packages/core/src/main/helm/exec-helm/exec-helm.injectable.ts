@@ -56,7 +56,7 @@ const execHelmInjectable = getInjectable({
       const callEnv = { ...execHelmEnv.get(), ...env };
 
       return execFile(helmBinaryPath, args, {
-        maxBuffer: 32 * 1024 * 1024 * 1024, // 32 MiB
+        maxBuffer: 32 * 1024 * 1024, // 32 MiB
         env: throughProxy ? withFreelensProxyCredentialEnv(callEnv) : callEnv,
       });
     };
