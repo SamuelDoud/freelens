@@ -100,7 +100,7 @@ describe("remove helm repository from list of active repositories in preferences
             "some-helm-binary-path",
             ["repo", "remove", "some-active-repository"],
             {
-              maxBuffer: 34359738368,
+              maxBuffer: 33554432,
               env: {},
             },
           );
