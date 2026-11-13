@@ -134,7 +134,10 @@ export class KubeObjectStore<
   ) {
     super();
     this.limit = opts?.limit;
-    this.bufferSize = opts?.bufferSize ?? 50_000;
+    // No cap by default: a fixed cap silently drops the head of the sorted
+    // list on clusters with more objects of one kind than the cap. Stores
+    // that want a bound pass bufferSize explicitly.
+    this.bufferSize = opts?.bufferSize ?? Infinity;
     this.pageSize = opts?.pageSize ?? 500;
 
     autoBind(this);
