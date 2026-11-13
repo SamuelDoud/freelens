@@ -190,8 +190,22 @@ export class LogStore {
       (logsOfPods, tagged) => {
         const newLines = this.mergeNewLines(tabId, cursors, logsOfPods, tagged);
 
+        const current = this.podLogs.get(tabId);
+
+        if (current && newLines.length === 0) {
+          // Nothing arrived: publishing an equal copy would only make every
+          // observer of the logs (timestamps, search, the list) redo its work.
+          const limited = this.limitLines(current, tagged);
+
+          if (limited !== current) {
+            this.podLogs.set(tabId, limited);
+          }
+
+          return;
+        }
+
         // Add newly received logs to bottom.
-        this.podLogs.set(tabId, this.limitLines(mergeIntoLogs(this.podLogs.get(tabId) ?? oldLogs, newLines), tagged));
+        this.podLogs.set(tabId, this.limitLines(mergeIntoLogs(current ?? oldLogs, newLines), tagged));
       },
     );
   }
