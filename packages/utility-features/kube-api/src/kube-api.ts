@@ -129,6 +129,8 @@ export interface KubeApiListPage<Object> {
   loaded: number;
   /** Items not yet received, when the API server reports the count */
   remainingItemCount?: number;
+  /** The resourceVersion of the snapshot this page belongs to */
+  resourceVersion?: string;
 }
 
 export interface KubeApiListOptions<Object = KubeObject> {
@@ -706,7 +708,12 @@ export class KubeApi<
       }
 
       items.push(...page.items);
-      onPage?.({ items: page.items, loaded: items.length, remainingItemCount: page.remainingItemCount });
+      onPage?.({
+        items: page.items,
+        loaded: items.length,
+        remainingItemCount: page.remainingItemCount,
+        resourceVersion: page.resourceVersion,
+      });
 
       continueToken = page.continueToken;
 
@@ -741,7 +748,12 @@ export class KubeApi<
     query: KubeApiQueryParams,
     reqInit: RequestInit | undefined,
     namespace: string,
-  ): Promise<{ items: Object[]; continueToken?: string; remainingItemCount?: number } | null> {
+  ): Promise<{
+    items: Object[];
+    continueToken?: string;
+    remainingItemCount?: number;
+    resourceVersion?: string;
+  } | null> {
     const res = await this.request.get(url, { query }, reqInit);
     const parsed = this.parseResponse(res, namespace);
 
@@ -755,12 +767,15 @@ export class KubeApi<
 
     // List responses carry the pagination state in their metadata; array
     // responses of custom APIs have none and are complete as they are.
-    const metadata = (res as { metadata?: { continue?: unknown; remainingItemCount?: unknown } } | null)?.metadata;
+    const metadata = (
+      res as { metadata?: { continue?: unknown; remainingItemCount?: unknown; resourceVersion?: unknown } } | null
+    )?.metadata;
 
     return {
       items: parsed,
       continueToken: typeof metadata?.continue === "string" && metadata.continue ? metadata.continue : undefined,
       remainingItemCount: typeof metadata?.remainingItemCount === "number" ? metadata.remainingItemCount : undefined,
+      resourceVersion: typeof metadata?.resourceVersion === "string" ? metadata.resourceVersion : undefined,
     };
   }
 

@@ -9,6 +9,7 @@ import { parseKubeApi } from "@freelensapp/kube-api";
 import { KubeStatus } from "@freelensapp/kube-object";
 import { includes, isAbortError, noop, object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
 import autoBind from "auto-bind";
+import { limitAsync } from "es-toolkit";
 import { action, computed, observable, reaction } from "mobx";
 import { ItemStore } from "../item.store";
 
@@ -227,11 +228,17 @@ export class KubeObjectStore<
     onProgress,
   }: KubeObjectStoreLoadingParams<K>): Promise<K[]> {
     const isLoadingAll = this.dependencies.context.isLoadingAll(namespaces);
-    const streamCount = !this.api.isNamespaced || isLoadingAll ? 1 : namespaces.length;
+    // A namespaced load spanning several namespaces fans out into one
+    // paginated stream per namespace — including an all-namespaces load,
+    // whose namespaces the caller has already resolved. Only a
+    // cluster-scoped resource, or a load of at most one namespace, keeps
+    // the single cluster-wide list.
+    const loadClusterWide = !this.api.isNamespaced || (isLoadingAll && namespaces.length <= 1);
+    const streamCount = loadClusterWide ? 1 : namespaces.length;
     const tracker = this.createLoadProgressTracker(streamCount, this.loadGeneration, onProgress);
 
     try {
-      if (!this.api.isNamespaced || isLoadingAll) {
+      if (loadClusterWide) {
         if (this.api.isNamespaced) {
           this.loadedNamespaces.set([]);
         }
@@ -265,19 +272,38 @@ export class KubeObjectStore<
         return (await res) ?? [];
       }
 
-      this.loadedNamespaces.set(namespaces);
+      // Keep the all-namespaces marker empty so that subscribe() stays on
+      // its single cluster-wide watch; the fan-out below points that
+      // watch at the oldest namespace snapshot instead.
+      this.loadedNamespaces.set(isLoadingAll ? [] : namespaces);
 
-      // One paginated stream per namespace, all in flight at once: every
-      // namespace pages in independently and the tracker merges their
-      // pages into the progressive snapshots.
-      const results = await Promise.allSettled(
-        namespaces.map((namespace) =>
+      // One paginated stream per namespace: every namespace pages in
+      // independently and the tracker merges their pages into the
+      // progressive snapshots. At most eight streams are in flight at
+      // once, so that a load spanning hundreds of namespaces does not
+      // open hundreds of list requests per store.
+      const listNamespace = limitAsync(
+        async (namespace: string) =>
           this.api.list(
             { namespace, reqInit, pageSize: this.pageSize, onPage: tracker.onPageFor(namespace) },
             this.query,
           ),
-        ),
+        8,
       );
+      const results = await Promise.allSettled(namespaces.map((namespace) => listNamespace(namespace)));
+
+      if (isLoadingAll && results.every((result) => result.status === "fulfilled")) {
+        // The pages left the cluster-wide ("") resourceVersion at whichever
+        // namespace snapshot was parsed last. The cluster-wide watch must
+        // start from the oldest snapshot instead: anything newer could
+        // skip the events a lagging namespace has yet to tell it about,
+        // while older events are replayed and deduplicated by the store.
+        const oldestResourceVersion = tracker.oldestResourceVersion();
+
+        if (oldestResourceVersion !== undefined) {
+          this.api.setResourceVersion("", oldestResourceVersion);
+        }
+      }
       const res: K[] = [];
 
       for (const result of results) {
@@ -323,7 +349,10 @@ export class KubeObjectStore<
   ) {
     const publishIntervalMs = 250;
     const accumulated: K[] = [];
-    const streams = new Map<string, { loaded: number; remainingItemCount?: number; pages: number }>();
+    const streams = new Map<
+      string,
+      { loaded: number; remainingItemCount?: number; pages: number; resourceVersion?: string }
+    >();
     let publishTimer: ReturnType<typeof setTimeout> | undefined;
     let lastPublishedAt = 0;
 
@@ -384,10 +413,42 @@ export class KubeObjectStore<
             loaded: page.loaded,
             remainingItemCount: page.remainingItemCount,
             pages: (previous?.pages ?? 0) + 1,
+            resourceVersion: page.resourceVersion ?? previous?.resourceVersion,
           });
           reportProgress();
           schedulePublish();
         },
+      // The oldest snapshot among the streams, for pointing a cluster-wide
+      // watch at a version no namespace snapshot is behind. Only known
+      // once every stream reported a (numeric, as etcd versions are)
+      // resourceVersion; anything else keeps the version the pages set.
+      oldestResourceVersion: (): string | undefined => {
+        if (streams.size !== streamCount) {
+          return undefined;
+        }
+
+        let oldest: { raw: string; value: bigint } | undefined;
+
+        for (const stream of streams.values()) {
+          if (stream.resourceVersion === undefined) {
+            return undefined;
+          }
+
+          let value: bigint;
+
+          try {
+            value = BigInt(stream.resourceVersion);
+          } catch {
+            return undefined;
+          }
+
+          if (!oldest || value < oldest.value) {
+            oldest = { raw: stream.resourceVersion, value };
+          }
+        }
+
+        return oldest?.raw;
+      },
       dispose: () => {
         if (publishTimer !== undefined) {
           clearTimeout(publishTimer);

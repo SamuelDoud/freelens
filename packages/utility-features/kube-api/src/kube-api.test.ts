@@ -191,7 +191,7 @@ describe("KubeApi", () => {
       const secondUrl = "http://127.0.0.1:9999/api-kube/api/v1/pods?limit=2&continue=next-page";
       expect(fetchMock.mock.lastCall?.[0]).toBe(secondUrl);
       expect(onPage).toHaveBeenCalledTimes(1);
-      expect(onPage.mock.lastCall?.[0]).toMatchObject({ loaded: 2, remainingItemCount: 1 });
+      expect(onPage.mock.lastCall?.[0]).toMatchObject({ loaded: 2, remainingItemCount: 1, resourceVersion: "10" });
       expect(onPage.mock.lastCall?.[0].items.map((pod: Pod) => pod.getName())).toEqual(["pod-1", "pod-2"]);
 
       await fetchMock.resolve(createMockResponseFromString(secondUrl, listPage(["pod-3"])));
