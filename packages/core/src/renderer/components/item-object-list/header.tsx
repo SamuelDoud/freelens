@@ -68,12 +68,12 @@ export class ItemListLayoutHeader<I extends ItemObject, PreLoadStores extends bo
         return (
           <>
             <a onClick={toggleFilters}>Filtered</a>
-            {`: ${itemsCount} / ${allItemsCount}`}
+            {`: ${itemsCount.toLocaleString()} / ${allItemsCount.toLocaleString()}`}
           </>
         );
       }
 
-      return allItemsCount === 1 ? `${allItemsCount} item` : `${allItemsCount} items`;
+      return allItemsCount === 1 ? `${allItemsCount} item` : `${allItemsCount.toLocaleString()} items`;
     };
 
     const customizeHeaderFunctions = [customizeHeader].flat().filter(isDefined);
