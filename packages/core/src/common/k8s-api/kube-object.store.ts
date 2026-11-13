@@ -17,6 +17,7 @@ import type {
   DeleteOptions,
   IKubeWatchEvent,
   KubeApi,
+  KubeApiListPage,
   KubeApiPatchType,
   KubeApiQueryParams,
   KubeApiWatchCallback,
@@ -32,7 +33,7 @@ import type { ClusterContext } from "../../renderer/cluster-frame-context/cluste
 
 export type OnLoadFailure = (error: unknown) => void;
 
-export interface KubeObjectStoreLoadingParams {
+export interface KubeObjectStoreLoadingParams<K extends KubeObject = KubeObject> {
   namespaces: string[];
   reqInit?: RequestInit;
 
@@ -41,6 +42,13 @@ export interface KubeObjectStoreLoadingParams {
    * being rejected with
    */
   onLoadFailure?: OnLoadFailure;
+
+  /**
+   * Called with the items received so far while a paginated list is still
+   * streaming in, so that the caller can already show them. The items are
+   * a snapshot; the completed load remains authoritative.
+   */
+  onProgress?: (items: K[]) => void;
 }
 
 export interface KubeObjectStoreLoadAllParams {
@@ -83,6 +91,14 @@ export interface StatusProvider<K> {
 export interface KubeObjectStoreOptions {
   limit?: number;
   bufferSize?: number;
+
+  /**
+   * Chunk size for paginated list requests: items are fetched, parsed and
+   * shown this many at a time instead of in one response.
+   *
+   * @default 500
+   */
+  pageSize?: number;
 }
 
 export type KubeApiDataFrom<K extends KubeObject, A> =
@@ -102,9 +118,13 @@ export class KubeObjectStore<
 > extends ItemStore<K> {
   public readonly limit: number | undefined;
   public readonly bufferSize: number;
+  public readonly pageSize: number;
 
   private readonly loadedNamespaces = observable.box<string[]>();
   private readonly watchingController = new AbortController();
+  // Bumped by every loadAll and reset: a progressive publish scheduled by
+  // an older (or reset) load must not put its items back into the store.
+  private loadGeneration = 0;
 
   constructor(
     protected readonly dependencies: KubeObjectStoreDependencies,
@@ -114,6 +134,7 @@ export class KubeObjectStore<
     super();
     this.limit = opts?.limit;
     this.bufferSize = opts?.bufferSize ?? 50_000;
+    this.pageSize = opts?.pageSize ?? 500;
 
     autoBind(this);
     this.bindWatchEventsUpdater();
@@ -199,73 +220,181 @@ export class KubeObjectStore<
     }
   }
 
-  protected async loadItems({ namespaces, reqInit, onLoadFailure }: KubeObjectStoreLoadingParams): Promise<K[]> {
+  protected async loadItems({
+    namespaces,
+    reqInit,
+    onLoadFailure,
+    onProgress,
+  }: KubeObjectStoreLoadingParams<K>): Promise<K[]> {
     const isLoadingAll = this.dependencies.context.isLoadingAll(namespaces);
+    const streamCount = !this.api.isNamespaced || isLoadingAll ? 1 : namespaces.length;
+    const tracker = this.createLoadProgressTracker(streamCount, this.loadGeneration, onProgress);
 
-    if (!this.api.isNamespaced || isLoadingAll) {
-      if (this.api.isNamespaced) {
-        this.loadedNamespaces.set([]);
+    try {
+      if (!this.api.isNamespaced || isLoadingAll) {
+        if (this.api.isNamespaced) {
+          this.loadedNamespaces.set([]);
+        }
+
+        const res = this.api.list({ reqInit, pageSize: this.pageSize, onPage: tracker.onPageFor("") }, this.query);
+
+        if (onLoadFailure) {
+          try {
+            return (await res) ?? [];
+          } catch (error) {
+            // An aborted request (e.g. the view unmounted before the list
+            // arrived) is not a real failure -- let it propagate so the
+            // abort-aware catch in `loadAll` can no-op on it instead of
+            // surfacing a spurious "Failed to load" error and blanking the list.
+            // The signal is checked too, for an error raised after the abort
+            // that does not carry the AbortError name.
+            if (isAbortError(error) || reqInit?.signal?.aborted) {
+              throw error;
+            }
+
+            onLoadFailure(new Error(`Failed to load ${this.api.apiBase}`, { cause: error }));
+
+            // reset the store because we are loading all, so that nothing is displayed
+            this.items.clear();
+            this.selectedItemsIds.clear();
+
+            return [];
+          }
+        }
+
+        return (await res) ?? [];
       }
 
-      const res = this.api.list({ reqInit }, this.query);
+      this.loadedNamespaces.set(namespaces);
 
-      if (onLoadFailure) {
-        try {
-          return (await res) ?? [];
-        } catch (error) {
-          // An aborted request (e.g. the view unmounted before the list
-          // arrived) is not a real failure -- let it propagate so the
-          // abort-aware catch in `loadAll` can no-op on it instead of
-          // surfacing a spurious "Failed to load" error and blanking the list.
-          // The signal is checked too, for an error raised after the abort
-          // that does not carry the AbortError name.
-          if (isAbortError(error) || reqInit?.signal?.aborted) {
-            throw error;
-          }
+      // One paginated stream per namespace, all in flight at once: every
+      // namespace pages in independently and the tracker merges their
+      // pages into the progressive snapshots.
+      const results = await Promise.allSettled(
+        namespaces.map((namespace) =>
+          this.api.list(
+            { namespace, reqInit, pageSize: this.pageSize, onPage: tracker.onPageFor(namespace) },
+            this.query,
+          ),
+        ),
+      );
+      const res: K[] = [];
 
-          onLoadFailure(new Error(`Failed to load ${this.api.apiBase}`, { cause: error }));
+      for (const result of results) {
+        switch (result.status) {
+          case "fulfilled":
+            res.push(...(result.value ?? []));
+            break;
 
-          // reset the store because we are loading all, so that nothing is displayed
-          this.items.clear();
-          this.selectedItemsIds.clear();
+          case "rejected":
+            // See the cluster-scoped branch above: an aborted request must
+            // propagate, not be reported through onLoadFailure.
+            if (isAbortError(result.reason) || reqInit?.signal?.aborted) {
+              throw result.reason;
+            }
 
-          return [];
+            if (onLoadFailure) {
+              onLoadFailure(new Error(`Failed to load ${this.api.apiBase}`, { cause: result.reason }));
+            } else {
+              // if onLoadFailure is not provided then preserve old behaviour
+              throw result.reason;
+            }
         }
       }
 
-      return (await res) ?? [];
+      return res;
+    } finally {
+      tracker.dispose();
     }
+  }
 
-    this.loadedNamespaces.set(namespaces);
+  /**
+   * Tracks the pages of one paginated load: publishes snapshots of the
+   * items received so far (at most every 250ms, the first page at once) so
+   * views fill in while the rest streams in, and keeps `loadingProgress`
+   * current once the load is known to span more than one page. A snapshot
+   * is never published once a newer load (or a reset) has superseded this
+   * one.
+   */
+  private createLoadProgressTracker(
+    streamCount: number,
+    generation: number,
+    onProgress: KubeObjectStoreLoadingParams<K>["onProgress"],
+  ) {
+    const publishIntervalMs = 250;
+    const accumulated: K[] = [];
+    const streams = new Map<string, { loaded: number; remainingItemCount?: number; pages: number }>();
+    let publishTimer: ReturnType<typeof setTimeout> | undefined;
+    let lastPublishedAt = 0;
 
-    const results = await Promise.allSettled(
-      namespaces.map((namespace) => this.api.list({ namespace, reqInit }, this.query)),
-    );
-    const res: K[] = [];
+    const publish = () => {
+      publishTimer = undefined;
 
-    for (const result of results) {
-      switch (result.status) {
-        case "fulfilled":
-          res.push(...(result.value ?? []));
-          break;
-
-        case "rejected":
-          // See the cluster-scoped branch above: an aborted request must
-          // propagate, not be reported through onLoadFailure.
-          if (isAbortError(result.reason) || reqInit?.signal?.aborted) {
-            throw result.reason;
-          }
-
-          if (onLoadFailure) {
-            onLoadFailure(new Error(`Failed to load ${this.api.apiBase}`, { cause: result.reason }));
-          } else {
-            // if onLoadFailure is not provided then preserve old behaviour
-            throw result.reason;
-          }
+      if (generation !== this.loadGeneration) {
+        return;
       }
-    }
 
-    return res;
+      lastPublishedAt = Date.now();
+      onProgress?.([...accumulated]);
+    };
+
+    const schedulePublish = () => {
+      if (!onProgress || publishTimer !== undefined) {
+        return;
+      }
+
+      const sinceLastPublish = Date.now() - lastPublishedAt;
+
+      if (sinceLastPublish >= publishIntervalMs) {
+        publish();
+      } else {
+        publishTimer = setTimeout(publish, publishIntervalMs - sinceLastPublish);
+      }
+    };
+
+    const reportProgress = () => {
+      if (generation !== this.loadGeneration) {
+        return;
+      }
+
+      const reported = [...streams.values()];
+      const moreIsComing = reported.some((stream) => stream.pages > 1 || (stream.remainingItemCount ?? 0) > 0);
+
+      if (!moreIsComing) {
+        return;
+      }
+
+      const total =
+        reported.length === streamCount && reported.every((stream) => stream.remainingItemCount !== undefined)
+          ? reported.reduce((sum, stream) => sum + stream.loaded + (stream.remainingItemCount ?? 0), 0)
+          : undefined;
+
+      this.loadingProgress = { loaded: accumulated.length, total };
+    };
+
+    return {
+      onPageFor:
+        (stream: string) =>
+        (page: KubeApiListPage<K>): void => {
+          accumulated.push(...page.items);
+
+          const previous = streams.get(stream);
+
+          streams.set(stream, {
+            loaded: page.loaded,
+            remainingItemCount: page.remainingItemCount,
+            pages: (previous?.pages ?? 0) + 1,
+          });
+          reportProgress();
+          schedulePublish();
+        },
+      dispose: () => {
+        if (publishTimer !== undefined) {
+          clearTimeout(publishTimer);
+          publishTimer = undefined;
+        }
+      },
+    };
   }
 
   protected filterItemsOnLoad(items: K[]) {
@@ -281,11 +410,19 @@ export class KubeObjectStore<
   }: KubeObjectStoreLoadAllParams = {}): Promise<undefined | K[]> {
     namespaces ??= this.dependencies.context.contextNamespaces;
     this.isLoading = true;
+    const generation = ++this.loadGeneration;
 
     try {
-      const items = await this.loadItems({ namespaces, reqInit, onLoadFailure });
+      const items = await this.loadItems({
+        namespaces,
+        reqInit,
+        onLoadFailure,
+        // Show the items received so far while the rest is still streaming
+        // in; the merge of the completed load below remains authoritative.
+        onProgress: (snapshot) => this.mergeLoadedItems(snapshot, merge, namespaces),
+      });
 
-      this.mergeItems(items, { merge, namespaces });
+      this.mergeLoadedItems(items, merge, namespaces);
 
       this.isLoaded = true;
       this.failedLoading = false;
@@ -307,6 +444,10 @@ export class KubeObjectStore<
       this.failedLoading = true;
     } finally {
       this.isLoading = false;
+
+      if (generation === this.loadGeneration) {
+        this.loadingProgress = undefined;
+      }
     }
 
     return undefined;
@@ -321,6 +462,28 @@ export class KubeObjectStore<
     }
 
     return this.loadAll(loadingOptions);
+  }
+
+  /**
+   * Merges the result of a load, replacing the stored items of every
+   * namespace the load covered. The covered namespaces are the requested
+   * ones plus any the loaded items belong to: a cluster-wide load is
+   * requested without naming its namespaces, and merging its (cumulative,
+   * in the progressive case) items against only the requested list would
+   * keep the previously loaded copies next to the fresh ones.
+   */
+  private mergeLoadedItems(items: K[], merge: boolean, namespaces: string[]): K[] {
+    const loadedNamespaces = new Set(namespaces);
+
+    for (const item of items) {
+      const namespace = item.getNs();
+
+      if (namespace) {
+        loadedNamespaces.add(namespace);
+      }
+    }
+
+    return this.mergeItems(items, { merge, namespaces: [...loadedNamespaces] });
   }
 
   @action
@@ -342,6 +505,14 @@ export class KubeObjectStore<
     if (updateStore) this.items.replace(items);
 
     return items;
+  }
+
+  @action
+  override reset() {
+    // Invalidate progressive publishes of a load still in flight: what it
+    // already streamed in must not reappear after the reset.
+    this.loadGeneration++;
+    super.reset();
   }
 
   protected resetOnError(error: any) {

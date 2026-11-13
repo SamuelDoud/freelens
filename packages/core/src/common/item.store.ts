@@ -20,6 +20,18 @@ export interface ItemSorting<Item> {
   readonly order?: "asc" | "desc";
 }
 
+/**
+ * How far a streamed (paginated) load has gotten. Present on a store only
+ * while such a load is in flight and more items are known to be coming, so
+ * views can show that data is still streaming in.
+ */
+export interface LoadingProgress {
+  /** Items received so far */
+  loaded: number;
+  /** Items expected in total, when the source reports how many remain */
+  total?: number;
+}
+
 export abstract class ItemStore<Item extends ItemObject> {
   protected defaultSorting = (item: Item) => item.getName();
 
@@ -33,6 +45,7 @@ export abstract class ItemStore<Item extends ItemObject> {
   @observable accessor failedLoading = false;
   @observable accessor isLoading = false;
   @observable accessor isLoaded = false;
+  @observable accessor loadingProgress: LoadingProgress | undefined = undefined;
   @observable accessor items = observable.array<Item>([], { deep: false });
   @observable accessor selectedItemsIds = observable.set<string>();
 
@@ -244,6 +257,7 @@ export abstract class ItemStore<Item extends ItemObject> {
     this.selectedItemsIds.clear();
     this.isLoaded = false;
     this.isLoading = false;
+    this.loadingProgress = undefined;
   }
 
   async removeSelectedItems?(): Promise<any>;

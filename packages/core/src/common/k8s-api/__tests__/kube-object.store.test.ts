@@ -483,6 +483,155 @@ describe("KubeObjectStore", () => {
     expect(onLoadFailure.mock.calls[0][0].message).toContain("Failed to load");
   });
 
+  describe("paginated loading", () => {
+    const objectNamed = (name: string, namespace = "default") =>
+      new KubeObject({
+        apiVersion: "v1",
+        kind: "Foo",
+        metadata: {
+          name,
+          resourceVersion: "1",
+          uid: `uid-${namespace}-${name}`,
+          namespace,
+          selfLink: `/some/self/link/${namespace}/${name}`,
+        },
+      });
+
+    const deferred = <T>() => {
+      let resolve!: (value: T) => void;
+      let reject!: (error: unknown) => void;
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+
+      return { promise, resolve, reject };
+    };
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    });
+
+    it("publishes pages as they arrive and reports progress until the load completes", async () => {
+      const [a, b, c] = [objectNamed("a"), objectNamed("b"), objectNamed("c")];
+      const gate = deferred<KubeObject[]>();
+      const list = vi.fn(({ onPage }: { onPage?: (page: unknown) => void }) => {
+        onPage?.({ items: [a], loaded: 1, remainingItemCount: 2 });
+        onPage?.({ items: [b], loaded: 2, remainingItemCount: 1 });
+
+        return gate.promise;
+      });
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list });
+
+      const loading = store.loadAll({});
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(list.mock.calls[0][0]).toMatchObject({ pageSize: 500 });
+      expect(store.items.map((item) => item.getName())).toEqual(["a", "b"]);
+      expect(store.loadingProgress).toEqual({ loaded: 2, total: 3 });
+      expect(store.isLoaded).toBe(false);
+
+      gate.resolve([a, b, c]);
+      await loading;
+
+      expect(store.items.map((item) => item.getName())).toEqual(["a", "b", "c"]);
+      expect(store.loadingProgress).toBeUndefined();
+      expect(store.isLoaded).toBe(true);
+    });
+
+    it("streams every requested namespace and keeps items of namespaces not being loaded", async () => {
+      const keep = objectNamed("keep", "other");
+      const a1 = objectNamed("a1", "ns1");
+      const a2 = objectNamed("a2", "ns1");
+      const b1 = objectNamed("b1", "ns2");
+      const gates = { ns1: deferred<KubeObject[]>(), ns2: deferred<KubeObject[]>() };
+      const list = vi.fn(({ namespace, onPage }: { namespace?: string; onPage?: (page: unknown) => void }) => {
+        if (namespace === "ns1") {
+          onPage?.({ items: [a1], loaded: 1, remainingItemCount: 1 });
+
+          return gates.ns1.promise;
+        }
+
+        onPage?.({ items: [b1], loaded: 1, remainingItemCount: 0 });
+
+        return gates.ns2.promise;
+      });
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list }, () => false);
+
+      store.items.replace([keep]);
+
+      const loading = store.loadAll({ namespaces: ["ns1", "ns2"] });
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(store.items.map((item) => item.getName()).sort()).toEqual(["a1", "b1", "keep"]);
+      expect(store.loadingProgress).toEqual({ loaded: 2, total: 3 });
+
+      gates.ns1.resolve([a1, a2]);
+      gates.ns2.resolve([b1]);
+      await loading;
+
+      expect(store.items.map((item) => item.getName()).sort()).toEqual(["a1", "a2", "b1", "keep"]);
+      expect(store.loadingProgress).toBeUndefined();
+    });
+
+    it("does not publish a pending page after the store was reset, and clears progress on abort", async () => {
+      const [a, b] = [objectNamed("a"), objectNamed("b")];
+      const gate = deferred<KubeObject[]>();
+      const list = vi.fn(({ onPage }: { onPage?: (page: unknown) => void }) => {
+        onPage?.({ items: [a], loaded: 1, remainingItemCount: 1 });
+        onPage?.({ items: [b], loaded: 2, remainingItemCount: 0 });
+
+        return gate.promise;
+      });
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list });
+
+      const loading = store.loadAll({});
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(store.items.map((item) => item.getName())).toEqual(["a"]);
+
+      store.reset();
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(store.items).toHaveLength(0);
+
+      gate.reject(new DOMException("The operation was aborted.", "AbortError"));
+
+      await expect(loading).resolves.toBeUndefined();
+      expect(store.items).toHaveLength(0);
+      expect(store.loadingProgress).toBeUndefined();
+      expect(store.failedLoading).toBe(false);
+    });
+
+    it("shows no progress for a load that fits in a single page", async () => {
+      const a = objectNamed("a");
+      const gate = deferred<KubeObject[]>();
+      const list = vi.fn(({ onPage }: { onPage?: (page: unknown) => void }) => {
+        onPage?.({ items: [a], loaded: 1 });
+
+        return gate.promise;
+      });
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list });
+
+      const loading = store.loadAll({});
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(store.items.map((item) => item.getName())).toEqual(["a"]);
+      expect(store.loadingProgress).toBeUndefined();
+
+      gate.resolve([a]);
+      await loading;
+
+      expect(store.loadingProgress).toBeUndefined();
+      expect(store.isLoaded).toBe(true);
+    });
+  });
+
   describe("updateFromEventsBuffer", () => {
     const data = (uid: string, resourceVersion = "1", name = uid): KubeJsonApiDataFor<KubeObject> => ({
       apiVersion: "v1",
