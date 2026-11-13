@@ -124,11 +124,17 @@ export interface SplitConfigEntry {
  * Breaks kube config into several configs. Each context as it own KubeConfig object
  */
 export function splitConfig(kubeConfig: KubeConfig): SplitConfigEntry[] {
+  // The lookups of KubeConfig are linear scans that return the first match;
+  // index the lists once instead, keeping the first entry of each name.
+  const findCluster = indexFirstByName(kubeConfig.getClusters(), "cluster");
+  const findUser = indexFirstByName(kubeConfig.getUsers(), "user");
+  const findContext = indexFirstByName(kubeConfig.getContexts(), "context");
+
   return kubeConfig.getContexts().map((ctx) => {
     const config = new KubeConfig();
-    const cluster = kubeConfig.getCluster(ctx.cluster);
-    const user = kubeConfig.getUser(ctx.user);
-    const context = kubeConfig.getContextObject(ctx.name);
+    const cluster = findCluster(ctx.cluster);
+    const user = findUser(ctx.user);
+    const context = findContext(ctx.name);
 
     if (cluster) {
       config.addCluster(cluster);
@@ -149,6 +155,37 @@ export function splitConfig(kubeConfig: KubeConfig): SplitConfigEntry[] {
       validationResult: validateKubeConfig(config, ctx.name),
     };
   });
+}
+
+/**
+ * Same result as the lookups of KubeConfig (`getCluster`, `getUser`,
+ * `getContextObject`): the first entry with the name wins, and a nested object
+ * under `key` is returned instead of the entry itself, with its name set.
+ */
+function indexFirstByName<T extends { name: string }>(list: T[] | undefined | null, key: string) {
+  const entries = new Map<string, T>();
+
+  for (const entry of list ?? []) {
+    if (!entries.has(entry.name)) {
+      entries.set(entry.name, entry);
+    }
+  }
+
+  return (name: string): any => {
+    const entry = entries.get(name) as any;
+
+    if (!entry) {
+      return null;
+    }
+
+    if (entry[key]) {
+      entry[key].name = name;
+
+      return entry[key];
+    }
+
+    return entry;
+  };
 }
 
 export const defaultYamlDumpOptions: DumpOptions = {
