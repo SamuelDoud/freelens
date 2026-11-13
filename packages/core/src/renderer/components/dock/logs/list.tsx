@@ -68,6 +68,17 @@ class NonForwardedLogList extends React.Component<
   private virtualListRef = React.createRef<VirtualListRef>(); // A reference for VirtualList component
   private measuredRowHeights = new Map<number, number>();
   private formattedLogs: { source: string[]; timezone: string; logs: string[] } | undefined;
+  private estimatedRowHeights:
+    | {
+        logs: string[];
+        length: number;
+        charsPerLine: number;
+        lineHeight: number;
+        rowVerticalPadding: number;
+        wrappedRowSafetyPadding: number;
+        heights: number[];
+      }
+    | undefined;
   private pendingResetFromIndex: number | null = null;
   private pendingResetFrame: number | null = null;
   private lineHeight = 18;
@@ -335,15 +346,35 @@ class NonForwardedLogList extends React.Component<
     const usableWidth = Math.max(this.containerWidth - this.rowPadding, 1);
     const charsPerLine = Math.max(1, Math.floor(usableWidth / this.charWidth));
 
-    return this.logs.map((line, rowIndex) => {
-      // Prefer the real rendered height once the row has been measured; the estimate
-      // below is only a first approximation used until the row is laid out.
-      const measuredHeight = this.measuredRowHeights.get(rowIndex);
+    const estimates = this.getEstimatedRowHeights(this.logs, charsPerLine);
 
-      if (measuredHeight !== undefined) {
-        return measuredHeight;
-      }
+    // Prefer the real rendered height once the row has been measured; the estimate
+    // is only a first approximation used until the row is laid out.
+    return estimates.map((estimate, rowIndex) => this.measuredRowHeights.get(rowIndex) ?? estimate);
+  }
 
+  /**
+   * The estimate depends only on the lines and the metrics below, not on the
+   * measured heights, so it is kept until one of them changes instead of being
+   * recomputed (ANSI strip + split per line) each time a row is measured.
+   */
+  private getEstimatedRowHeights(logs: string[], charsPerLine: number): number[] {
+    const { lineHeight, rowVerticalPadding, wrappedRowSafetyPadding } = this;
+    const cached = this.estimatedRowHeights;
+
+    if (
+      cached &&
+      cached.logs === logs &&
+      cached.length === logs.length &&
+      cached.charsPerLine === charsPerLine &&
+      cached.lineHeight === lineHeight &&
+      cached.rowVerticalPadding === rowVerticalPadding &&
+      cached.wrappedRowSafetyPadding === wrappedRowSafetyPadding
+    ) {
+      return cached.heights;
+    }
+
+    const heights = logs.map((line) => {
       const visibleLine = line.replace(ansiEscapeSequenceRegex, "");
       const lineCount = visibleLine.split("\n").reduce((count, segment) => {
         const wrappedLineCount = Math.max(1, Math.ceil(segment.length / charsPerLine));
@@ -351,8 +382,20 @@ class NonForwardedLogList extends React.Component<
         return count + wrappedLineCount;
       }, 0);
 
-      return lineCount * this.lineHeight + this.rowVerticalPadding + this.wrappedRowSafetyPadding;
+      return lineCount * lineHeight + rowVerticalPadding + wrappedRowSafetyPadding;
     });
+
+    this.estimatedRowHeights = {
+      logs,
+      length: logs.length,
+      charsPerLine,
+      lineHeight,
+      rowVerticalPadding,
+      wrappedRowSafetyPadding,
+      heights,
+    };
+
+    return heights;
   }
 
   /**
