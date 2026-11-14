@@ -14,6 +14,7 @@ import { metricTabOptions } from "../chart/options";
 import selectedMetricsTimeRangeInjectable from "../cluster/overview/selected-metrics-time-range.injectable";
 import { ResourceMetricsContext } from "../resource-metrics";
 import { NoMetrics } from "../resource-metrics/no-metrics";
+import { MetricStatsTable } from "./metric-stats-table";
 import { getPodResources } from "./pod-resources";
 import { resourceReferenceLines } from "./resource-reference-lines";
 
@@ -123,14 +124,17 @@ const NonInjectedPodCharts = observer(({ selectedMetricsTimeRange }: Dependencie
   };
 
   return (
-    <BarChart
-      lines
-      name={`${object.getName()}-metric-${tab}`}
-      options={metricTabOptions[tab]}
-      data={{ datasets: datasets[tab] }}
-      minTime={minTime}
-      maxTime={maxTime}
-    />
+    <>
+      <BarChart
+        lines
+        name={`${object.getName()}-metric-${tab}`}
+        options={metricTabOptions[tab]}
+        data={{ datasets: datasets[tab] }}
+        minTime={minTime}
+        maxTime={maxTime}
+      />
+      <MetricStatsTable tab={tab} datasets={datasets[tab]} />
+    </>
   );
 });
 
