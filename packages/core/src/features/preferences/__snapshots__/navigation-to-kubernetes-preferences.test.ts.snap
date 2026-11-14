@@ -368,6 +368,191 @@ exports[`preferences - navigation to kubernetes preferences > given in preferenc
                 class="HorizontalLine size-xl"
               />
               <div
+                data-preference-item-test="appearance"
+              >
+                <section
+                  id="appearance"
+                >
+                  <div
+                    class="SubTitle"
+                  >
+                    Window transparency
+                     
+                  </div>
+                  <div
+                    class="flex flex-row items-center gap-3"
+                  >
+                    <input
+                      class="grow"
+                      data-testid="appearance-window-opacity"
+                      id="appearance-window-opacity"
+                      max="1"
+                      min="0.3"
+                      step="0.05"
+                      type="range"
+                      value="1"
+                    />
+                    <span
+                      class="w-12 text-right"
+                    >
+                      100%
+                    </span>
+                  </div>
+                  <small
+                    class="hint"
+                  >
+                    How opaque the windows of Freelens are.
+                  </small>
+                  <section
+                    class="mt-5"
+                  >
+                    <div
+                      class="SubTitle"
+                    >
+                      Font
+                       
+                    </div>
+                    <div
+                      class="Input theme round black"
+                    >
+                      <label
+                        class="input-area flex items-center gap-2"
+                        id=""
+                      >
+                        <input
+                          class="input grow"
+                          data-testid="appearance-font-family"
+                          list="appearance-font-families"
+                          placeholder="Default (Roboto)"
+                          spellcheck="false"
+                          type="text"
+                          value=""
+                        />
+                      </label>
+                      <div
+                        class="input-info flex gap-2"
+                      />
+                    </div>
+                    <datalist
+                      id="appearance-font-families"
+                    >
+                      <option
+                        value="Roboto"
+                      />
+                      <option
+                        value="Inter"
+                      />
+                      <option
+                        value="Helvetica"
+                      />
+                      <option
+                        value="Arial"
+                      />
+                      <option
+                        value="Segoe UI"
+                      />
+                      <option
+                        value="SF Pro Text"
+                      />
+                      <option
+                        value="Ubuntu"
+                      />
+                      <option
+                        value="Noto Sans"
+                      />
+                      <option
+                        value="Open Sans"
+                      />
+                      <option
+                        value="Source Sans 3"
+                      />
+                      <option
+                        value="Verdana"
+                      />
+                      <option
+                        value="Georgia"
+                      />
+                    </datalist>
+                    <small
+                      class="hint"
+                    >
+                      The font of the interface. Pick one of the installed fonts or type a name.
+                    </small>
+                  </section>
+                  <section
+                    class="mt-5"
+                  >
+                    <div
+                      class="SubTitle"
+                    >
+                      Font size
+                       
+                    </div>
+                    <div
+                      class="flex flex-row items-center gap-3"
+                    >
+                      <input
+                        class="grow"
+                        data-testid="appearance-font-size"
+                        id="appearance-font-size"
+                        max="22"
+                        min="10"
+                        step="1"
+                        type="range"
+                        value="14"
+                      />
+                      <span
+                        class="w-12 text-right"
+                      >
+                        14px
+                      </span>
+                    </div>
+                    <small
+                      class="hint"
+                    >
+                      The size of the interface's text, 14px by default. Zoom (View menu) scales everything instead.
+                    </small>
+                  </section>
+                  <section
+                    class="mt-5"
+                  >
+                    <div
+                      class="SubTitle"
+                    >
+                      Dropdown transparency
+                       
+                    </div>
+                    <div
+                      class="flex flex-row items-center gap-3"
+                    >
+                      <input
+                        class="grow"
+                        data-testid="appearance-dropdown-opacity"
+                        id="appearance-dropdown-opacity"
+                        max="1"
+                        min="0.3"
+                        step="0.05"
+                        type="range"
+                        value="1"
+                      />
+                      <span
+                        class="w-12 text-right"
+                      >
+                        100%
+                      </span>
+                    </div>
+                    <small
+                      class="hint"
+                    >
+                      How opaque the background of dropdowns and menus is; what is behind shows blurred.
+                    </small>
+                  </section>
+                </section>
+              </div>
+              <div
+                class="HorizontalLine size-xl"
+              />
+              <div
                 data-preference-item-test="extension-install-registry"
               >
                 <section

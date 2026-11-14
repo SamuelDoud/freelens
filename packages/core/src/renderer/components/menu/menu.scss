@@ -13,7 +13,9 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  background: var(--bgc);
+  // The dropdown transparency of the appearance preferences
+  background: color-mix(in srgb, var(--bgc) calc(var(--dropdown-opacity, 1) * 100%), transparent);
+  backdrop-filter: blur(calc((1 - var(--dropdown-opacity, 1)) * 16px));
   list-style: none;
   border: 1px solid var(--borderColor);
   z-index: 101;
