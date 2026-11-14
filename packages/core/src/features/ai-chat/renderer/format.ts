@@ -108,8 +108,23 @@ function statusColumns(kind: string, object: RawObject): Record<string, string |
       };
     case "Namespace":
       return { status: status.phase ?? "" };
-    default:
-      return {};
+    default: {
+      // Any other kind with status conditions (APIService, ServiceCIDR, FlowSchema, custom resources, ...):
+      // the conditions that hold, or which do not when none does.
+      const conditions: RawObject[] = Array.isArray(status.conditions) ? status.conditions : [];
+
+      if (conditions.length === 0) {
+        return {};
+      }
+
+      const holding = conditions.filter((condition) => condition.status === "True").map((condition) => condition.type);
+
+      return {
+        conditions: holding.length
+          ? holding.join(",")
+          : conditions.map((condition) => `${condition.type}=${condition.status}`).join(","),
+      };
+    }
   }
 }
 
