@@ -96,8 +96,9 @@ describe("<ItemListLayoutContent> row lookup", () => {
 });
 
 describe("<ItemListLayoutContent> select-all checkbox", () => {
+  // The select-all cell comes after the cell of the arrow that opens a row's details.
   const header = (component: NonInjectedItemListLayoutContent<ItemObject, boolean>) =>
-    (component.renderTableHeader() as any).props.children[0];
+    (component.renderTableHeader() as any).props.children[1];
 
   it("leaves out items that the row customization disables", () => {
     const items = [makeItem("a"), makeItem("b"), makeItem("c")];

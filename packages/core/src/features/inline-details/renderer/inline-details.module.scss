@@ -1,0 +1,67 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+// The details of a row, under it: they slide open by the height the list gives them.
+.expansion {
+  overflow: hidden;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--borderFaintColor);
+  background: var(--contentColor);
+  cursor: auto;
+  white-space: normal;
+}
+
+.panel {
+  padding: var(--padding) calc(var(--padding) * 2) calc(var(--padding) * 2) 36px;
+  border-left: 3px solid var(--primary);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+  margin-bottom: var(--padding);
+  color: var(--textColorAccent);
+  font-weight: bold;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// The cell with the arrow at the left of each row, and its header.
+.toggleCell {
+  flex: 0 0 28px !important;
+  padding-left: 4px !important;
+  padding-right: 0 !important;
+}
+
+.chevron {
+  transition: transform 180ms ease-out;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+// The cell with the button that opens the side panel, at the right of each row.
+.drawerCell {
+  flex: 0 0 28px !important;
+  padding-left: 0 !important;
+}
+
+.drawerIcon {
+  transform: scaleX(-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

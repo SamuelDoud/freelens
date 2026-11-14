@@ -32,16 +32,35 @@ export interface TableRowProps<Item> extends React.DOMAttributes<HTMLDivElement>
   searchItem?: Item;
   disabled?: boolean;
   testId?: string;
+  /**
+   * Content shown under the row's cells, such as the details of its object. The row's handlers stay
+   * on the cells: a click in the expansion is not a click on the row.
+   */
+  expansion?: React.ReactNode;
 }
 
 export class TableRow<Item> extends React.Component<TableRowProps<Item>> {
   render() {
-    const { className, nowrap, selected, disabled, children, sortItem, searchItem, testId, ...rowProps } = this.props;
+    const { className, nowrap, selected, disabled, children, sortItem, searchItem, testId, expansion, ...rowProps } =
+      this.props;
     const classNames = cssNames("TableRow", className, { selected, nowrap, disabled });
 
+    if (expansion === undefined || expansion === null || expansion === false) {
+      return (
+        <div className={classNames} data-testid={testId} {...rowProps}>
+          {children}
+        </div>
+      );
+    }
+
+    const { style, ...cellsProps } = rowProps;
+
     return (
-      <div className={classNames} data-testid={testId} {...rowProps}>
-        {children}
+      <div className="TableRowGroup" style={style}>
+        <div className={cssNames(classNames, "expanded")} data-testid={testId} {...cellsProps}>
+          {children}
+        </div>
+        {expansion}
       </div>
     );
   }

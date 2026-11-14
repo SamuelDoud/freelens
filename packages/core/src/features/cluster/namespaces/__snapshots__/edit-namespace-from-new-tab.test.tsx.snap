@@ -571,6 +571,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -695,6 +702,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -1448,6 +1462,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -1572,6 +1593,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -2330,6 +2358,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -2454,6 +2489,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -3311,6 +3353,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -3435,6 +3484,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -4240,6 +4296,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -4364,6 +4427,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -5271,6 +5341,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -5395,6 +5472,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -6304,6 +6388,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -6428,6 +6519,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -7299,6 +7397,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -7423,6 +7528,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -8289,6 +8401,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -8413,6 +8532,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -9270,6 +9396,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -9394,6 +9527,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -10251,6 +10391,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -10375,6 +10522,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -11232,6 +11386,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -11356,6 +11517,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -12018,6 +12186,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -12142,6 +12317,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -13008,6 +13190,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -13132,6 +13321,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -13989,6 +14185,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -14113,6 +14316,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -14970,6 +15180,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -15094,6 +15311,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div

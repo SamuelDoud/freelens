@@ -65,6 +65,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
         state.syncKubeconfigEntries = descriptors.syncKubeconfigEntries.fromStore(preferences.syncKubeconfigEntries);
         state.terminalConfig = descriptors.terminalConfig.fromStore(preferences.terminalConfig);
         state.terminalCopyOnSelect = descriptors.terminalCopyOnSelect.fromStore(preferences.terminalCopyOnSelect);
+        state.rowClickAction = descriptors.rowClickAction.fromStore(preferences.rowClickAction);
         state.terminalTheme = descriptors.terminalTheme.fromStore(preferences.terminalTheme);
         state.clusterPageMenuOrder = descriptors.clusterPageMenuOrder.fromStore(preferences.clusterPageMenuOrder);
       }),
@@ -98,6 +99,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
             syncKubeconfigEntries: descriptors.syncKubeconfigEntries.toStore(state.syncKubeconfigEntries),
             terminalConfig: descriptors.terminalConfig.toStore(state.terminalConfig),
             terminalCopyOnSelect: descriptors.terminalCopyOnSelect.toStore(state.terminalCopyOnSelect),
+            rowClickAction: descriptors.rowClickAction.toStore(state.rowClickAction),
             terminalTheme: descriptors.terminalTheme.toStore(state.terminalTheme),
             clusterPageMenuOrder: descriptors.clusterPageMenuOrder.toStore(state.clusterPageMenuOrder),
           },

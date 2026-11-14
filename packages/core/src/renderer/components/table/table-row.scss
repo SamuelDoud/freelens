@@ -18,3 +18,10 @@
     white-space: nowrap;
   }
 }
+
+// A row with content under its cells, such as the details of its object.
+.TableRowGroup {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}

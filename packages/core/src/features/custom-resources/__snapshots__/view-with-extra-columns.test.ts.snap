@@ -543,6 +543,13 @@ exports[`Viewing Custom Resources with extra columns > renders 1`] = `
                   class="TableHead sticky nowrap topLine"
                 >
                   <div
+                    class="TableCell toggleCell nowrap"
+                  >
+                    <div
+                      class="content"
+                    />
+                  </div>
+                  <div
                     class="TableCell checkbox"
                   >
                     <label
@@ -646,6 +653,13 @@ exports[`Viewing Custom Resources with extra columns > renders 1`] = `
                       </i>
                     </div>
                   </div>
+                  <div
+                    class="TableCell drawerCell nowrap"
+                  >
+                    <div
+                      class="content"
+                    />
+                  </div>
                 </div>
                 <div
                   class="VirtualList KubeObjectListLayout CustomResources grow shrink-0 basis-0 dark"
@@ -663,6 +677,22 @@ exports[`Viewing Custom Resources with extra columns > renders 1`] = `
                         class="TableRow nowrap"
                         id="menu-actions-for-kube-object-menu-for-some-uid-2"
                       >
+                        <div
+                          class="TableCell toggleCell"
+                        >
+                          <i
+                            aria-expanded="false"
+                            class="Icon chevron material focusable"
+                            data-testid="inline-details-toggle-some-uid-2"
+                          >
+                            <span
+                              class="icon"
+                              data-icon-name="chevron_right"
+                            >
+                              chevron_right
+                            </span>
+                          </i>
+                        </div>
                         <div
                           class="TableCell checkbox"
                         >
@@ -734,6 +764,27 @@ exports[`Viewing Custom Resources with extra columns > renders 1`] = `
                                 more_vert
                               </span>
                             </i>
+                          </div>
+                        </div>
+                        <div
+                          class="TableCell drawerCell"
+                        >
+                          <i
+                            class="Icon drawerIcon material interactive focusable"
+                            data-testid="open-side-panel-some-uid-2"
+                            tabindex="0"
+                          >
+                            <span
+                              class="icon"
+                              data-icon-name="input"
+                            >
+                              input
+                            </span>
+                          </i>
+                          <div
+                            data-testid="tooltip-content-for-open-side-panel-some-uid-2"
+                          >
+                            Open in side panel
                           </div>
                         </div>
                       </div>
