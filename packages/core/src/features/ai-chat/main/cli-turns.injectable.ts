@@ -11,6 +11,7 @@ import { aiCliEventChannel } from "../common/channels";
 import { AiCliTurns } from "./cli-turns";
 import aiMcpServerInjectable from "./mcp-server.injectable";
 
+// Creating it has no side effects: processes start only with a turn, through the spawn injectable.
 const aiCliTurnsInjectable = getInjectable({
   id: "ai-chat-cli-turns",
   instantiate: (di) => {
@@ -26,7 +27,6 @@ const aiCliTurnsInjectable = getInjectable({
       logInfo: (message) => logger.info(message),
     });
   },
-  causesSideEffects: true,
 });
 
 export default aiCliTurnsInjectable;

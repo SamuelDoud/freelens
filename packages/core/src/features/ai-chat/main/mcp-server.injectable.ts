@@ -9,6 +9,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { aiToolCallChannel } from "../common/channels";
 import { AiMcpServer } from "./mcp-server";
 
+// Creating it has no side effects: the server listens only when a chat first asks for its URL.
 const aiMcpServerInjectable = getInjectable({
   id: "ai-chat-mcp-server",
   instantiate: (di) => {
@@ -20,7 +21,6 @@ const aiMcpServerInjectable = getInjectable({
       logError: (message, error) => logger.error(message, error),
     });
   },
-  causesSideEffects: true,
 });
 
 export default aiMcpServerInjectable;
