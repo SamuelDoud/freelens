@@ -42,6 +42,10 @@ const mutatingAdmissionPolicyBinding: KubeJsonApiData<
     },
     matchResources: {
       matchPolicy: "Equivalent",
+      namespaceSelector: {
+        matchLabels: { "kubernetes.io/metadata.name": "team-a" },
+        matchExpressions: [{ key: "environment", operator: "In", values: ["dev", "test"] }],
+      },
       resourceRules: [
         {
           apiGroups: ["apps"],
