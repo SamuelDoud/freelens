@@ -10,7 +10,9 @@ import storesAndApisCanBeCreatedInjectable from "../../stores-apis-can-be-create
 import { renderFor } from "../test-utils/renderFor";
 import { CertificateSigningRequestDetails } from "./certificate-signing-request-details";
 
-const request = (conditions: { type: string; status: string }[]) =>
+import type { BaseKubeObjectCondition } from "@freelensapp/kube-object";
+
+const request = (conditions: BaseKubeObjectCondition[]) =>
   new CertificateSigningRequest({
     apiVersion: "certificates.k8s.io/v1",
     kind: "CertificateSigningRequest",

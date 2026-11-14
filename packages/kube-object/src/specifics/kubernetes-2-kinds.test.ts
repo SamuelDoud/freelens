@@ -14,22 +14,31 @@ import { PodTemplate } from "./pod-template";
 import { ResourceClaim } from "./resource-claim";
 import { VolumeAttributesClass } from "./volume-attributes-class";
 
-const metadata = (name: string, namespace?: string) => ({
+import type { BaseKubeObjectCondition, ClusterScopedMetadata, NamespaceScopedMetadata } from "../api-types";
+
+const clusterMetadata = (name: string): ClusterScopedMetadata => ({
   name,
-  ...(namespace ? { namespace } : {}),
   uid: `${name}-uid`,
   resourceVersion: "1",
   selfLink: `/x/${name}`,
 });
 
-const condition = (type: string, status = "True") => ({ type, status });
+const namespacedMetadata = (name: string, namespace: string): NamespaceScopedMetadata => ({
+  ...clusterMetadata(name),
+  namespace,
+});
+
+const condition = (type: string, status: BaseKubeObjectCondition["status"] = "True"): BaseKubeObjectCondition => ({
+  type,
+  status,
+});
 
 describe("CertificateSigningRequest", () => {
-  const csr = (conditions: { type: string; status: string }[], certificate?: string) =>
+  const csr = (conditions: BaseKubeObjectCondition[], certificate?: string) =>
     new CertificateSigningRequest({
       apiVersion: "certificates.k8s.io/v1",
       kind: "CertificateSigningRequest",
-      metadata: metadata("csr"),
+      metadata: clusterMetadata("csr"),
       spec: { signerName: "kubernetes.io/kube-apiserver-client", username: "alice" },
       status: { conditions, certificate },
     });
@@ -52,7 +61,7 @@ describe("ResourceClaim", () => {
     new ResourceClaim({
       apiVersion: "resource.k8s.io/v1",
       kind: "ResourceClaim",
-      metadata: metadata("gpu", "ml"),
+      metadata: namespacedMetadata("gpu", "ml"),
       spec: { devices: { requests: [{ name: "gpu", exactly: { deviceClassName: "gpu.nvidia.com" } }] } },
       status,
     });
@@ -76,14 +85,14 @@ describe("APIService", () => {
     const service = new APIService({
       apiVersion: "apiregistration.k8s.io/v1",
       kind: "APIService",
-      metadata: metadata("v1beta1.metrics.k8s.io"),
+      metadata: clusterMetadata("v1beta1.metrics.k8s.io"),
       spec: { service: { namespace: "kube-system", name: "metrics-server" } },
-      status: { conditions: [{ type: "Available", status: "False", reason: "MissingEndpoints" }] },
+      status: { conditions: [{ ...condition("Available", "False"), reason: "MissingEndpoints" }] },
     });
     const local = new APIService({
       apiVersion: "apiregistration.k8s.io/v1",
       kind: "APIService",
-      metadata: metadata("v1."),
+      metadata: clusterMetadata("v1."),
       spec: {},
       status: { conditions: [condition("Available")] },
     });
@@ -100,14 +109,14 @@ describe("the kinds with fields beside spec", () => {
     const template = new PodTemplate({
       apiVersion: "v1",
       kind: "PodTemplate",
-      metadata: metadata("t", "a"),
+      metadata: namespacedMetadata("t", "a"),
       template: { spec: { containers: [{ name: "app", image: "nginx" }] } },
     });
     const revision = new ControllerRevision({
       apiVersion: "apps/v1",
       kind: "ControllerRevision",
       metadata: {
-        ...metadata("web-5d8f", "a"),
+        ...namespacedMetadata("web-5d8f", "a"),
         ownerReferences: [{ apiVersion: "apps/v1", kind: "StatefulSet", name: "web", uid: "u", controller: true }],
       },
       revision: 3,
@@ -116,7 +125,7 @@ describe("the kinds with fields beside spec", () => {
     const attributes = new VolumeAttributesClass({
       apiVersion: "storage.k8s.io/v1",
       kind: "VolumeAttributesClass",
-      metadata: metadata("fast"),
+      metadata: clusterMetadata("fast"),
       driverName: "ebs.csi.aws.com",
       parameters: { iops: "3000" },
     });
@@ -134,19 +143,19 @@ describe("IPAddress, DeviceTaintRule and ClusterTrustBundle", () => {
     const address = new IPAddress({
       apiVersion: "networking.k8s.io/v1",
       kind: "IPAddress",
-      metadata: metadata("10.96.0.1"),
+      metadata: clusterMetadata("10.96.0.1"),
       spec: { parentRef: { group: "", resource: "services", namespace: "default", name: "kubernetes" } },
     });
     const rule = new DeviceTaintRule({
       apiVersion: "resource.k8s.io/v1",
       kind: "DeviceTaintRule",
-      metadata: metadata("maintenance"),
+      metadata: clusterMetadata("maintenance"),
       spec: { taint: { key: "maintenance", value: "true", effect: "NoSchedule" } },
     });
     const bundle = new ClusterTrustBundle({
       apiVersion: "certificates.k8s.io/v1",
       kind: "ClusterTrustBundle",
-      metadata: metadata("roots"),
+      metadata: clusterMetadata("roots"),
       spec: {
         trustBundle:
           "-----BEGIN CERTIFICATE-----\nA\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\nB\n-----END CERTIFICATE-----\n",
