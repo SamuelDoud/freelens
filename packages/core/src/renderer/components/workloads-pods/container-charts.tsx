@@ -15,6 +15,7 @@ import { type MetricsTab, metricTabOptions } from "../chart/options";
 import selectedMetricsTimeRangeInjectable from "../cluster/overview/selected-metrics-time-range.injectable";
 import { ResourceMetricsContext } from "../resource-metrics";
 import { NoMetrics } from "../resource-metrics/no-metrics";
+import { MetricStatsTable } from "./metric-stats-table";
 import { getContainerResources } from "./pod-resources";
 import { resourceReferenceLines } from "./resource-reference-lines";
 
@@ -107,14 +108,17 @@ const NonInjectedContainerCharts = observer(
     };
 
     return (
-      <BarChart
-        lines
-        name={`metrics-${tab}`}
-        options={metricTabOptions[tab]}
-        data={{ datasets: datasets[tab] }}
-        minTime={minTime}
-        maxTime={maxTime}
-      />
+      <>
+        <BarChart
+          lines
+          name={`metrics-${tab}`}
+          options={metricTabOptions[tab]}
+          data={{ datasets: datasets[tab] }}
+          minTime={minTime}
+          maxTime={maxTime}
+        />
+        <MetricStatsTable tab={tab} datasets={datasets[tab]} />
+      </>
     );
   },
 );
