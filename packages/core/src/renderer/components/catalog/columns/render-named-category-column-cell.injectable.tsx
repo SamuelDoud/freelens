@@ -42,6 +42,8 @@ const renderNamedCategoryColumnCellInjectable = getInjectable({
             colorHash={`${entity.getName()}-${entity.getSource()}`}
             src={entity.spec.icon?.src}
             background={entity.spec.icon?.background}
+            text={entity.metadata.shortName}
+            color={(entity.spec.icon as { textColor?: string } | undefined)?.textColor}
             className={styles.catalogAvatar}
             size={24}
           >

@@ -15,7 +15,8 @@
   grid-template-rows: auto 1fr min-content;
   grid-template-columns: min-content 1fr;
 
-  &.hotbarAutoHide {
+  &.hotbarAutoHide,
+  &.hotbarCollapsed {
     grid-template-areas:
       "topbar"
       "main"

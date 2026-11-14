@@ -101,6 +101,12 @@ export interface ClusterPreferences extends ClusterPrometheusPreferences {
    * cleared by preferences.
    */
   icon?: string | null;
+  /** The text of the cluster's icon, instead of the initials of its name */
+  iconText?: string;
+  /** The background colour of the cluster's icon, a CSS colour */
+  iconBackground?: string;
+  /** The colour of the text of the cluster's icon; by default it contrasts with the background */
+  iconTextColor?: string;
   httpsProxy?: string;
   hiddenMetrics?: string[];
   nodeShellImage?: string;

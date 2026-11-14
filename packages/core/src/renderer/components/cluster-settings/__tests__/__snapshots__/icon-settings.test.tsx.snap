@@ -19,7 +19,8 @@ exports[`Icon settings > given no external registrations for cluster settings me
             >
               <div
                 class="Avatar rounded"
-                style="width: 53px; height: 53px; background: rgb(110, 28, 69);"
+                data-testid="cluster-icon-preview"
+                style="width: 53px; height: 53px; background: rgb(110, 28, 69); color: rgb(255, 255, 255);"
               >
                 skc
               </div>
@@ -47,6 +48,74 @@ exports[`Icon settings > given no external registrations for cluster settings me
           </span>
         </i>
       </div>
+      <div
+        class="flex flex-col gap-3 mt-4"
+      >
+        <div>
+          <div
+            class="mb-1"
+          >
+            Icon text
+          </div>
+          <div
+            class="Input theme round black"
+          >
+            <label
+              class="input-area flex items-center gap-2"
+              id=""
+            >
+              <input
+                class="input grow"
+                data-testid="cluster-icon-text"
+                placeholder="skc"
+                spellcheck="false"
+                value=""
+              />
+            </label>
+            <div
+              class="input-info flex gap-2"
+            />
+          </div>
+          <small
+            class="hint"
+          >
+            Shown in the cluster bar instead of the initials. Long text wraps and shrinks to fit.
+          </small>
+        </div>
+        <div
+          class="flex flex-row gap-6"
+        >
+          <label
+            class="flex flex-row items-center gap-2"
+          >
+            <span>
+              Background
+            </span>
+            <input
+              data-testid="cluster-icon-background"
+              type="color"
+              value="#6E1C45"
+            />
+          </label>
+          <label
+            class="flex flex-row items-center gap-2"
+          >
+            <span>
+              Text color
+            </span>
+            <input
+              data-testid="cluster-icon-text-color"
+              type="color"
+              value="#FFFFFF"
+            />
+            <span
+              class="text-secondary"
+            >
+              Automatic
+            </span>
+          </label>
+        </div>
+      </div>
     </div>
   </div>
 </body>
@@ -71,7 +140,8 @@ exports[`Icon settings > given no registrations for cluster settings component i
             >
               <div
                 class="Avatar rounded"
-                style="width: 53px; height: 53px; background: rgb(110, 28, 69);"
+                data-testid="cluster-icon-preview"
+                style="width: 53px; height: 53px; background: rgb(110, 28, 69); color: rgb(255, 255, 255);"
               >
                 skc
               </div>
@@ -98,6 +168,74 @@ exports[`Icon settings > given no registrations for cluster settings component i
             more_horiz
           </span>
         </i>
+      </div>
+      <div
+        class="flex flex-col gap-3 mt-4"
+      >
+        <div>
+          <div
+            class="mb-1"
+          >
+            Icon text
+          </div>
+          <div
+            class="Input theme round black"
+          >
+            <label
+              class="input-area flex items-center gap-2"
+              id=""
+            >
+              <input
+                class="input grow"
+                data-testid="cluster-icon-text"
+                placeholder="skc"
+                spellcheck="false"
+                value=""
+              />
+            </label>
+            <div
+              class="input-info flex gap-2"
+            />
+          </div>
+          <small
+            class="hint"
+          >
+            Shown in the cluster bar instead of the initials. Long text wraps and shrinks to fit.
+          </small>
+        </div>
+        <div
+          class="flex flex-row gap-6"
+        >
+          <label
+            class="flex flex-row items-center gap-2"
+          >
+            <span>
+              Background
+            </span>
+            <input
+              data-testid="cluster-icon-background"
+              type="color"
+              value="#6E1C45"
+            />
+          </label>
+          <label
+            class="flex flex-row items-center gap-2"
+          >
+            <span>
+              Text color
+            </span>
+            <input
+              data-testid="cluster-icon-text-color"
+              type="color"
+              value="#FFFFFF"
+            />
+            <span
+              class="text-secondary"
+            >
+              Automatic
+            </span>
+          </label>
+        </div>
       </div>
     </div>
   </div>

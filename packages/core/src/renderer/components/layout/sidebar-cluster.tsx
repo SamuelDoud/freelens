@@ -105,6 +105,8 @@ const NonInjectedSidebarCluster = observer(
           size={40}
           src={clusterEntity.spec.icon?.src}
           background={clusterEntity.spec.icon?.background}
+          text={clusterEntity.metadata.shortName}
+          color={(clusterEntity.spec.icon as { textColor?: string } | undefined)?.textColor}
           className={styles.avatar}
         />
         <div className={styles.clusterName} id={tooltipId}>

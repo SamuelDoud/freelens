@@ -71,6 +71,7 @@ export type PreferenceDescriptors = {
   readonly openAtLogin: PreferenceDescription<boolean>;
   readonly showTrayIcon: PreferenceDescription<boolean>;
   readonly hotbarAutoHide: PreferenceDescription<boolean>;
+  readonly hotbarCollapsed: PreferenceDescription<boolean>;
   readonly persistentSearch: PreferenceDescription<boolean>;
   readonly savedSearches: PreferenceDescription<SavedSearch[], SavedSearch[]>;
   readonly aiChat: PreferenceDescription<unknown, AiChatPreferences>;
@@ -167,6 +168,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
         toStore: (val) => (val ? undefined : val),
       }),
       hotbarAutoHide: getPreferenceDescriptor<boolean>({
+        fromStore: (val) => val ?? false,
+        toStore: (val) => (!val ? undefined : val),
+      }),
+      hotbarCollapsed: getPreferenceDescriptor<boolean>({
         fromStore: (val) => val ?? false,
         toStore: (val) => (!val ? undefined : val),
       }),

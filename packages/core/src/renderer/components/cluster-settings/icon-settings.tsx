@@ -11,10 +11,14 @@ import {
 import { showErrorNotificationInjectable } from "@freelensapp/notifications";
 import { computedInjectManyInjectionToken } from "@ogre-tools/injectable-extension-for-mobx";
 import { withInjectables } from "@ogre-tools/injectable-react";
+import Color from "color";
 import { observer } from "mobx-react";
 import React from "react";
-import { Avatar } from "../avatar";
+import { computeDefaultShortName } from "../../../common/catalog/helpers";
+import { Avatar, contrastingTextColor } from "../avatar";
+import { seededColor } from "../avatar/seeded-color";
 import { FilePicker, OverSizeLimitStyle } from "../file-picker";
+import { Input } from "../input";
 import { MenuActions, MenuItem } from "../menu";
 
 import type { ClusterIconMenuItem, ClusterIconSettingsComponent } from "@freelensapp/cluster-settings";
@@ -55,6 +59,18 @@ const NonInjectedClusterIconSetting = observer((props: ClusterIconSettingProps &
     }
   };
 
+  const name = entity.getName();
+  const colorHash = `${name}-${entity.metadata.source}`;
+  const { iconText, iconBackground, iconTextColor } = cluster.preferences;
+  const background = iconBackground || entity.spec.icon?.background || seededColor(colorHash);
+  const asHex = (color: string) => {
+    try {
+      return Color(color).hex();
+    } catch {
+      return "#808080";
+    }
+  };
+
   const onUploadClick = () => {
     element.current?.querySelector<HTMLInputElement>("input[type=file]")?.click();
   };
@@ -67,11 +83,14 @@ const NonInjectedClusterIconSetting = observer((props: ClusterIconSettingProps &
             accept="image/*"
             label={
               <Avatar
-                colorHash={`${entity.getName()}-${entity.metadata.source}`}
-                title={entity.getName()}
+                colorHash={colorHash}
+                title={name}
                 src={entity.spec.icon?.src}
                 size={53}
-                background={entity.spec.icon?.background}
+                background={iconBackground || entity.spec.icon?.background}
+                text={iconText?.trim() || undefined}
+                color={iconTextColor}
+                data-testid="cluster-icon-preview"
               />
             }
             onOverSizeLimit={OverSizeLimitStyle.FILTER}
@@ -96,6 +115,60 @@ const NonInjectedClusterIconSetting = observer((props: ClusterIconSettingProps &
             </MenuItem>
           ))}
         </MenuActions>
+      </div>
+      <div className="flex flex-col gap-3 mt-4">
+        <div>
+          <div className="mb-1">Icon text</div>
+          <Input
+            theme="round-black"
+            data-testid="cluster-icon-text"
+            value={iconText ?? ""}
+            placeholder={computeDefaultShortName(name)}
+            maxLength={40}
+            onChange={(value) => {
+              cluster.preferences.iconText = value || undefined;
+            }}
+          />
+          <small className="hint">
+            Shown in the cluster bar instead of the initials. Long text wraps and shrinks to fit.
+          </small>
+        </div>
+        <div className="flex flex-row gap-6">
+          <label className="flex flex-row items-center gap-2">
+            <span>Background</span>
+            <input
+              type="color"
+              data-testid="cluster-icon-background"
+              value={asHex(background)}
+              onChange={(event) => {
+                cluster.preferences.iconBackground = event.target.value;
+              }}
+            />
+            {iconBackground && (
+              <a className="cursor-pointer" onClick={() => (cluster.preferences.iconBackground = undefined)}>
+                Reset
+              </a>
+            )}
+          </label>
+          <label className="flex flex-row items-center gap-2">
+            <span>Text color</span>
+            <input
+              type="color"
+              data-testid="cluster-icon-text-color"
+              value={asHex(iconTextColor || contrastingTextColor(background))}
+              onChange={(event) => {
+                cluster.preferences.iconTextColor = event.target.value;
+              }}
+            />
+            {iconTextColor ? (
+              <a className="cursor-pointer" onClick={() => (cluster.preferences.iconTextColor = undefined)}>
+                Automatic
+              </a>
+            ) : (
+              <span className="text-secondary">Automatic</span>
+            )}
+          </label>
+        </div>
       </div>
       {props.settingComponents.get().map((item) => {
         return <item.Component key={item.id} preferences={cluster.preferences} />;

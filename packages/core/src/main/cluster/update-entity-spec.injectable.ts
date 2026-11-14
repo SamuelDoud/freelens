@@ -39,6 +39,18 @@ const updateEntitySpecInjectable = getInjectable({
         entity.spec.icon = undefined;
         cluster.preferences.icon = undefined;
       }
+
+      const { iconText, iconBackground, iconTextColor, icon } = cluster.preferences;
+      // A colour stored in `icon` by older versions is the background too.
+      const background = iconBackground || (icon && !icon.startsWith("data:") ? icon : undefined);
+
+      if (background || iconTextColor || entity.spec.icon) {
+        entity.spec.icon ??= {};
+        entity.spec.icon.background = background;
+        entity.spec.icon.textColor = iconTextColor || undefined;
+      }
+
+      entity.metadata.shortName = iconText?.trim() || undefined;
     };
   },
 });

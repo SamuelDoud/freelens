@@ -71,14 +71,21 @@ class NonInjectedClusterManager extends React.Component<Dependencies> {
 
   render() {
     return (
-      <div className={cssNames("ClusterManager", { hotbarAutoHide: this.props.userPreferencesState.hotbarAutoHide })}>
+      <div
+        className={cssNames("ClusterManager", {
+          hotbarAutoHide: this.props.userPreferencesState.hotbarAutoHide,
+          hotbarCollapsed: this.props.userPreferencesState.hotbarCollapsed,
+        })}
+      >
         <TopBar />
         <main>
           <div id="lens-views" />
           {this.renderMainComponent()}
         </main>
-        <HotbarMenu />
-        {this.props.userPreferencesState.hotbarAutoHide && <div className="hotbar-trigger-zone" />}
+        {!this.props.userPreferencesState.hotbarCollapsed && <HotbarMenu />}
+        {this.props.userPreferencesState.hotbarAutoHide && !this.props.userPreferencesState.hotbarCollapsed && (
+          <div className="hotbar-trigger-zone" />
+        )}
         <StatusBar />
         <DeleteClusterDialog />
       </div>

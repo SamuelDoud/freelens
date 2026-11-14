@@ -46,6 +46,8 @@ export interface KubernetesClusterSpec extends CatalogEntitySpec {
     src?: string;
     material?: string;
     background?: string;
+    /** The colour of the icon's text */
+    textColor?: string;
   };
   accessibleNamespaces?: string[];
 }
