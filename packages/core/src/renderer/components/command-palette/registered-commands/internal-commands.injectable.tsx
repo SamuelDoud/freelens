@@ -9,6 +9,7 @@ import React from "react";
 import navigateToCatalogInjectable from "../../../../common/front-end-routing/routes/catalog/navigate-to-catalog.injectable";
 import navigateToEntitySettingsInjectable from "../../../../common/front-end-routing/routes/entity-settings/navigate-to-entity-settings.injectable";
 import navigateToTerminalInjectable from "../../../../common/front-end-routing/routes/terminal/navigate-to-terminal.injectable";
+import openAiChatInjectable from "../../../../features/ai-chat/renderer/open-ai-chat.injectable";
 // TODO: Importing from features is not OK. Make commands to comply with Open Closed Principle to allow moving implementation under a feature
 import navigateToPreferencesInjectable from "../../../../features/preferences/common/navigate-to-preferences.injectable";
 import { ClustersSearchCommand } from "../../clusters";
@@ -36,6 +37,7 @@ interface Dependencies {
   navigateToCatalog: () => void;
   navigateToEntitySettings: (entityId: string) => void;
   navigateToTerminal: () => void;
+  openAiChat: () => void;
 }
 
 function getInternalCommands(dependencies: Dependencies): CommandRegistration[] {
@@ -65,6 +67,12 @@ function getInternalCommands(dependencies: Dependencies): CommandRegistration[] 
       id: "cluster.openTerminal",
       title: "Cluster: Open terminal",
       action: () => dependencies.createTerminalTab(),
+      isActive: isKubernetesClusterActive,
+    },
+    {
+      id: "cluster.openAiChat",
+      title: "AI: Open chat",
+      action: () => dependencies.openAiChat(),
       isActive: isKubernetesClusterActive,
     },
     {
@@ -108,6 +116,8 @@ const internalCommandsInjectable = getInjectable({
       navigateToCatalog: di.inject(navigateToCatalogInjectable),
       navigateToEntitySettings: di.inject(navigateToEntitySettingsInjectable),
       navigateToTerminal: di.inject(navigateToTerminalInjectable),
+      // Injected on use: it needs the cluster frame's cluster.
+      openAiChat: () => void di.inject(openAiChatInjectable)(),
     }),
 });
 

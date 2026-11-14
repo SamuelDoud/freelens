@@ -4,8 +4,8 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { getAvailableAiTools } from "../common/tools";
 import { runOpenAiTurn } from "./openai-agent";
+import { getAvailableAiTools } from "./tools";
 
 import type { OpenAiMessage } from "./openai-agent";
 

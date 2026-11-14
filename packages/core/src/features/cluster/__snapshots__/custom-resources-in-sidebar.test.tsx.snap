@@ -650,6 +650,30 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -682,6 +706,9 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -1373,6 +1400,30 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -1405,6 +1456,9 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -2059,6 +2113,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -2091,6 +2169,9 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -2782,6 +2863,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -2814,6 +2919,9 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -3551,6 +3659,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -3583,6 +3715,9 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -4274,6 +4409,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -4306,6 +4465,9 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -5028,6 +5190,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -5060,6 +5246,9 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -5828,6 +6017,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -5860,6 +6073,9 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;

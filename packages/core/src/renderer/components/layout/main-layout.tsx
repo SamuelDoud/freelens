@@ -27,6 +27,8 @@ export interface MainLayoutProps {
   sidebar: StrictReactNode;
   className?: string;
   footer?: StrictReactNode;
+  /** A column at the right, beside the contents and the footer, such as the AI chat's panel. */
+  rightPanel?: StrictReactNode;
   children?: StrictReactNode;
   /** Clears a crash of the children when it changes, see `ErrorBoundaryProps.resetKey`. */
   resetKey?: string;
@@ -49,7 +51,7 @@ class NonInjectedMainLayout extends React.Component<MainLayoutProps & Dependenci
   };
 
   render() {
-    const { className, footer, children, sidebar, resetKey } = this.props;
+    const { className, footer, children, sidebar, resetKey, rightPanel } = this.props;
     const { width: sidebarWidth } = this.props.sidebarStorage.get();
     const style = { "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties;
 
@@ -74,6 +76,8 @@ class NonInjectedMainLayout extends React.Component<MainLayoutProps & Dependenci
         </div>
 
         <div className={styles.footer}>{footer}</div>
+
+        {rightPanel && <div className={styles.rightPanel}>{rightPanel}</div>}
       </div>
     );
   }

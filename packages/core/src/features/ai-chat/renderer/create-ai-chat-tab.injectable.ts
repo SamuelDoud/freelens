@@ -4,15 +4,15 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { TabKind } from "../../../renderer/components/dock/dock/store";
-import dockStoreInjectable from "../../../renderer/components/dock/dock/store.injectable";
+import openAiChatInjectable from "./open-ai-chat.injectable";
 
+/** The dock's + menu opens a chat in the dock, whatever the last placement was. */
 const createAiChatTabInjectable = getInjectable({
   id: "create-ai-chat-tab",
   instantiate: (di) => {
-    const dockStore = di.inject(dockStoreInjectable);
+    const openAiChat = di.inject(openAiChatInjectable);
 
-    return () => dockStore.createTab({ title: "AI chat", kind: TabKind.AI_CHAT });
+    return () => void openAiChat("bottom");
   },
 });
 

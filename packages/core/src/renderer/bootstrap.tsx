@@ -4,6 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { chatWindowChatId } from "../features/ai-chat/renderer/chat-window";
 import "./components/app.scss";
 
 import assert from "node:assert";
@@ -19,6 +20,12 @@ export async function bootstrap(di: DiContainerForInjection) {
   const rootElem = document.getElementById("app");
 
   assert(rootElem, "#app MUST exist");
+
+  // A chat's window shows only the chat: it loads no extensions and starts none of the application
+  // window's work (catalog, IPC listeners, protocol handlers).
+  if (chatWindowChatId()) {
+    return;
+  }
 
   await di.inject(extensionLoaderInjectable).init();
   await di.inject(extensionDiscoveryInjectable).init();

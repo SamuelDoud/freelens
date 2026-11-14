@@ -5,34 +5,39 @@
 
 /**
  * The backends the chat talks to:
- * - `claude` and `codex` run the user's own command-line agent, signed in as in a terminal, with
- *   Freelens's tools given to it over MCP and its own tools switched off;
- * - `openai` calls a server with the OpenAI chat completions API (llama.cpp, vLLM, Ollama, ...),
- *   reached through the cluster's service proxy or at a URL, and Freelens runs the tool loop.
+ * - `claude` (Anthropic's Claude Code), `codex` (OpenAI's Codex) and `muse` (Meta's Muse) are the
+ *   vendors' command-line agents, run as installed and signed in on the computer, with Freelens's
+ *   tools given to them over MCP and their own tools switched off;
+ * - `openai` is any server with the OpenAI chat completions API (llama.cpp, vLLM, Ollama, ...) that
+ *   the user configures, and Freelens runs the tool loop.
  */
-export type AiProviderId = "claude" | "codex" | "openai";
+export type AiProviderId = "claude" | "codex" | "muse" | "openai";
 
-export const aiProviderIds: readonly AiProviderId[] = ["claude", "codex", "openai"];
+export type AiCliProviderId = Exclude<AiProviderId, "openai">;
+
+export const aiProviderIds: readonly AiProviderId[] = ["claude", "codex", "muse", "openai"];
+
+export const aiCliProviderIds: readonly AiCliProviderId[] = ["claude", "codex", "muse"];
 
 export const isAiProviderId = (value: unknown): value is AiProviderId =>
   typeof value === "string" && (aiProviderIds as readonly string[]).includes(value);
 
-/** The efforts each backend accepts; the first entry is the one used when none is chosen. */
-export const aiProviderEfforts: Record<AiProviderId, readonly string[]> = {
-  claude: ["low", "medium", "high", "xhigh", "max"],
-  codex: ["minimal", "low", "medium", "high", "xhigh"],
-  openai: ["low", "medium", "high"],
-};
+export const isAiCliProviderId = (value: unknown): value is AiCliProviderId =>
+  typeof value === "string" && (aiCliProviderIds as readonly string[]).includes(value);
 
-/** The models offered until the user lists their own in the preferences. */
-export const defaultAiProviderModels: Record<AiProviderId, readonly string[]> = {
-  claude: ["opus", "sonnet", "haiku"],
-  codex: [],
-  openai: [],
-};
-
-export const defaultAiProviderLabels: Record<AiProviderId, string> = {
+export const aiProviderLabels: Record<AiProviderId, string> = {
   claude: "Claude Code",
   codex: "Codex",
-  openai: "Muse",
+  muse: "Muse",
+  openai: "OpenAI-compatible server",
 };
+
+/** The command each CLI is installed as. */
+export const aiCliCommands: Record<AiCliProviderId, string> = {
+  claude: "claude",
+  codex: "codex",
+  muse: "muse",
+};
+
+/** The efforts an OpenAI-compatible server takes as `reasoning_effort`; it cannot be asked for them. */
+export const openAiEfforts: readonly string[] = ["low", "medium", "high"];

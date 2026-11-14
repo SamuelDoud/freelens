@@ -13,42 +13,58 @@ import { Checkbox } from "../../../renderer/components/checkbox";
 import { MarkdownViewer } from "../../../renderer/components/markdown-viewer";
 import { Select } from "../../../renderer/components/select";
 import userPreferencesStateInjectable from "../../user-preferences/common/state.injectable";
-import { defaultAiChatPreferences } from "../common/preferences";
-import { aiProviderEfforts, aiProviderIds, defaultAiProviderLabels } from "../common/providers";
+import { modelsFor } from "../common/models";
+import { defaultAiChatPreferences, isOpenAiConfigured } from "../common/preferences";
+import { aiProviderIds, aiProviderLabels, isAiCliProviderId, openAiEfforts } from "../common/providers";
 import styles from "./ai-chat-view.module.scss";
-import aiChatTurnsInjectable from "./chat-turns.injectable";
-import aiChatsInjectable from "./chats.injectable";
-import aiOpenAiEndpointInjectable from "./openai-endpoint.injectable";
+import aiChatMirrorInjectable from "./chat-mirror.injectable";
+import aiDiscoveryMirrorInjectable from "./discovery.injectable";
 
 import type { UserPreferencesState } from "../../user-preferences/common/state.injectable";
+import type { AiChatItem, AiChatSnapshot } from "../common/chat-state";
+import type { AiChatPlacement } from "../common/preferences";
 import type { AiProviderId } from "../common/providers";
-import type { AiChat, AiChatItem } from "./chat";
-import type { AiChatTurns } from "./chat-turns";
-import type { AiChats } from "./chats.injectable";
-import type { AiOpenAiEndpointClient } from "./openai-endpoint.injectable";
+import type { AiChatMirror } from "./chat-mirror.injectable";
+import type { AiDiscoveryMirror } from "./discovery.injectable";
 
 export interface AiChatViewProps {
-  tabId: string;
+  chatId: string;
 }
 
 interface Dependencies {
-  chats: AiChats;
-  turns: AiChatTurns;
+  mirror: AiChatMirror;
+  discovery: AiDiscoveryMirror;
   preferencesState: UserPreferencesState;
-  openAi: AiOpenAiEndpointClient;
 }
 
 const defaultOption = "";
 
-const summarizeArgs = (args: unknown) => {
-  if (!args || typeof args !== "object") return "";
+const placements: { placement: AiChatPlacement; icon: string; tooltip: string }[] = [
+  { placement: "bottom", icon: "call_to_action", tooltip: "Show at the bottom" },
+  { placement: "right", icon: "vertical_split", tooltip: "Show at the right" },
+  { placement: "window", icon: "open_in_new", tooltip: "Open in its own window" },
+];
 
-  return Object.entries(args as Record<string, unknown>)
-    .map(([key, value]) => `${key}=${typeof value === "string" ? value : JSON.stringify(value)}`)
-    .join(" ");
-};
+/**
+ * The model choices: "default" (no model flag) unless the CLI lists a "default" model of its own,
+ * which then stands for it, the reported models, and a model typed in that is not among them.
+ */
+export const modelOptions = (models: readonly { id: string; name: string }[], current: string) => [
+  ...(models.some((model) => model.id === "default") ? [] : [{ value: defaultOption, label: "default" }]),
+  ...models.map((model) => ({ value: model.id, label: model.name })),
+  ...(current && current !== "default" && !models.some((model) => model.id === current)
+    ? [{ value: current, label: current }]
+    : []),
+];
 
-const ChatItemView = observer(({ chat, item }: { chat: AiChat; item: AiChatItem }) => {
+const summarizeArgs = (args: unknown) =>
+  args && typeof args === "object"
+    ? Object.entries(args as Record<string, unknown>)
+        .map(([key, value]) => `${key}=${typeof value === "string" ? value : JSON.stringify(value)}`)
+        .join(" ")
+    : "";
+
+const ChatItemView = ({ item, decide }: { item: AiChatItem; decide: (itemId: string, approved: boolean) => void }) => {
   switch (item.kind) {
     case "user":
       return <div className={cssNames(styles.message, styles.user)}>{item.text}</div>;
@@ -76,8 +92,8 @@ const ChatItemView = observer(({ chat, item }: { chat: AiChat; item: AiChatItem 
           </span>
           {item.state === "pending" ? (
             <>
-              <Button primary label="Approve" onClick={() => chat.resolveApproval(item.id, true)} />
-              <Button outlined label="Reject" onClick={() => chat.resolveApproval(item.id, false)} />
+              <Button primary label="Approve" onClick={() => decide(item.id, true)} />
+              <Button outlined label="Reject" onClick={() => decide(item.id, false)} />
             </>
           ) : (
             <span className={styles.approvalState}>{item.state}</span>
@@ -87,135 +103,165 @@ const ChatItemView = observer(({ chat, item }: { chat: AiChat; item: AiChatItem 
     case "notice":
       return <div className={cssNames(styles.notice, styles[item.tone])}>{item.text}</div>;
   }
-});
+};
 
 const NonInjectedAiChatView = observer(
-  ({ tabId, chats, turns, preferencesState, openAi }: AiChatViewProps & Dependencies) => {
-    const chat = chats.forTab(tabId);
+  ({ chatId, mirror, discovery, preferencesState }: AiChatViewProps & Dependencies) => {
+    const chat: AiChatSnapshot | undefined = mirror.get(chatId);
     const preferences = preferencesState.aiChat ?? defaultAiChatPreferences;
+    const discovered = discovery.get();
     const [draft, setDraft] = useState("");
-    const [serverModels, setServerModels] = useState<string[]>([]);
     const messagesEnd = useRef<HTMLDivElement>(null);
-
-    const providerLabel = (id: AiProviderId) =>
-      id === "openai" ? preferences.openAiLabel : defaultAiProviderLabels[id];
 
     useEffect(() => {
       messagesEnd.current?.scrollIntoView?.({ block: "end" });
-    }, [chat.items.length]);
+    }, [chat?.items.length]);
 
-    // The OpenAI-compatible server lists its own models.
-    useEffect(() => {
-      if (chat.provider !== "openai") return;
+    if (!chat) {
+      return <div className={styles.aiChat}>This chat was closed.</div>;
+    }
 
-      let cancelled = false;
+    const command = (change: Parameters<AiChatMirror["command"]>[0]) => void mirror.command(change);
+    const providerLabel = (id: AiProviderId) => (id === "openai" ? preferences.openAiLabel : aiProviderLabels[id]);
+    const reported = isAiCliProviderId(chat.provider) ? discovered[chat.provider].models : [];
+    const models = modelsFor(chat.provider, reported, preferences.providers[chat.provider].extraModels);
+    // The effort list of the chosen model, or of the backend's default model (its first).
+    const model = models.find((candidate) => candidate.id === chat.model) ?? models[0];
+    const efforts = chat.provider === "openai" ? openAiEfforts : (model?.efforts ?? []);
 
-      openAi
-        .listModels()
-        .then((models) => !cancelled && setServerModels(models))
-        .catch(() => !cancelled && setServerModels([]));
+    const providerOptions = aiProviderIds
+      .filter((id) => id !== "openai" || isOpenAiConfigured(preferences))
+      .map((id) => {
+        const status = isAiCliProviderId(id) ? discovered[id] : undefined;
+        const unavailable = status?.state === "missing" || status?.state === "error";
 
-      return () => {
-        cancelled = true;
-      };
-    }, [chat.provider, preferences.openAiEndpoint]);
-
-    const models = [
-      ...new Set([
-        ...preferences.providers[chat.provider].models,
-        ...(chat.provider === "openai" ? serverModels : []),
-        ...(chat.model ? [chat.model] : []),
-      ]),
-    ];
+        return {
+          value: id,
+          label: `${providerLabel(id)}${status?.state === "missing" ? " (not installed)" : status?.signedIn === false ? " (not signed in)" : ""}`,
+          isDisabled: unavailable,
+        };
+      });
 
     const send = () => {
-      const text = draft;
+      if (!draft.trim() || chat.running) return;
 
-      if (!text.trim() || chat.running) return;
-
+      command({ type: "send", chatId, text: draft });
       setDraft("");
-      void turns.send(chat, text);
     };
 
     return (
-      <div className={styles.aiChat} data-testid="ai-chat">
-        <div className={styles.toolbar}>
-          <Select
-            id={`ai-chat-provider-${tabId}`}
-            themeName="lens"
-            className={styles.select}
-            isDisabled={chat.running}
-            options={aiProviderIds.map((id) => ({ value: id, label: providerLabel(id) }))}
-            value={chat.provider}
-            onChange={(option) => {
-              const provider = aiProviderIds.find((id) => id === option?.value);
-
-              if (provider) {
-                chat.setSettings({
-                  provider,
-                  model: preferences.providers[provider].defaultModel,
-                  effort: preferences.providers[provider].defaultEffort,
-                });
-              }
-            }}
-          />
-          <Select
-            id={`ai-chat-model-${tabId}`}
-            themeName="lens"
-            className={styles.select}
-            isCreatable
-            isDisabled={chat.running}
-            options={[
-              { value: defaultOption, label: "Default model" },
-              ...models.map((model) => ({ value: model, label: model })),
-            ]}
-            value={chat.model}
-            onChange={(option) => chat.setSettings({ model: option?.value ?? defaultOption })}
-          />
-          <Select
-            id={`ai-chat-effort-${tabId}`}
-            themeName="lens"
-            className={styles.select}
-            isDisabled={chat.running}
-            options={[
-              { value: defaultOption, label: "Default effort" },
-              ...aiProviderEfforts[chat.provider].map((effort) => ({ value: effort, label: `Effort: ${effort}` })),
-            ]}
-            value={chat.effort}
-            onChange={(option) => chat.setSettings({ effort: option?.value ?? defaultOption })}
-          />
-          <div
-            className={cssNames(styles.allowChanges, { [styles.allowed]: chat.allowChanges })}
-            data-testid="ai-chat-allow-changes"
-          >
-            <Checkbox
-              label="Allow changes"
-              value={chat.allowChanges}
-              onChange={(value) => void turns.setAllowChanges(chat, value)}
-            />
-          </div>
+      <div className={styles.aiChat} data-testid="ai-chat" data-chat-id={chatId}>
+        <div className={styles.header}>
+          <Icon material="smart_toy" small />
+          <span className={styles.cluster} title="The cluster this chat reads and drives">
+            {chat.clusterName}
+          </span>
           <div className={styles.spacer} />
+          {placements.map(({ placement, icon, tooltip }) => (
+            <Icon
+              key={placement}
+              small
+              material={icon}
+              tooltip={tooltip}
+              className={cssNames(styles.placement, { [styles.current]: chat.placement === placement })}
+              data-testid={`ai-chat-place-${placement}`}
+              onClick={() => command({ type: "move", chatId, placement })}
+            />
+          ))}
           <Button
             plain
             label="New chat"
             disabled={chat.running}
             data-testid="ai-chat-new"
-            onClick={() => chat.clear()}
+            onClick={() => command({ type: "clear", chatId })}
           />
+        </div>
+        <div className={styles.toolbar}>
+          <Select
+            id={`ai-chat-provider-${chatId}`}
+            themeName="lens"
+            className={styles.select}
+            isDisabled={chat.running}
+            options={providerOptions}
+            value={chat.provider}
+            onChange={(option) => {
+              const provider = aiProviderIds.find((id) => id === option?.value);
+
+              if (provider) {
+                command({
+                  type: "settings",
+                  chatId,
+                  settings: {
+                    provider,
+                    model: preferences.providers[provider].defaultModel,
+                    effort: preferences.providers[provider].defaultEffort,
+                  },
+                });
+              }
+            }}
+          />
+          <Select
+            id={`ai-chat-model-${chatId}`}
+            themeName="lens"
+            className={styles.select}
+            isCreatable
+            isDisabled={chat.running}
+            options={modelOptions(models, chat.model)}
+            // A CLI that lists its own "default" model shows it for the default choice.
+            value={chat.model || (models.some((candidate) => candidate.id === "default") ? "default" : defaultOption)}
+            onChange={(option) =>
+              command({
+                type: "settings",
+                chatId,
+                settings: { model: option?.value === "default" ? defaultOption : (option?.value ?? defaultOption) },
+              })
+            }
+          />
+          <label className={styles.effort}>
+            <span>Effort</span>
+            <Select
+              id={`ai-chat-effort-${chatId}`}
+              themeName="lens"
+              className={styles.select}
+              isDisabled={chat.running || efforts.length === 0}
+              options={[
+                { value: defaultOption, label: "default" },
+                ...efforts.map((effort) => ({ value: effort, label: effort })),
+              ]}
+              value={efforts.includes(chat.effort) ? chat.effort : defaultOption}
+              onChange={(option) =>
+                command({ type: "settings", chatId, settings: { effort: option?.value ?? defaultOption } })
+              }
+            />
+          </label>
+          <div
+            className={cssNames(styles.allowChanges, { [styles.allowed]: chat.allowChanges })}
+            data-testid="ai-chat-allow-changes"
+          >
+            <Checkbox
+              label="🤡 Allow changes"
+              value={chat.allowChanges}
+              onChange={(allowChanges) => command({ type: "allow-changes", chatId, allowChanges })}
+            />
+          </div>
         </div>
 
         <div className={styles.messages} data-testid="ai-chat-messages">
           {chat.items.length === 0 && (
             <div className={styles.empty}>
-              Ask about this cluster, e.g. "which pods are failing and why?". The assistant reads the cluster and drives
-              this window through Freelens
+              Ask about {chat.clusterName}, e.g. &quot;which pods are failing and why?&quot;. The assistant reads the
+              cluster and drives the Freelens window
               {chat.allowChanges
                 ? ", and may change the cluster."
                 : ", and cannot change anything until you tick Allow changes."}
             </div>
           )}
           {chat.items.map((item) => (
-            <ChatItemView key={item.id} chat={chat} item={item} />
+            <ChatItemView
+              key={item.id}
+              item={item}
+              decide={(itemId, approved) => command({ type: "approval", chatId, itemId, approved })}
+            />
           ))}
           {chat.running && (
             <div className={styles.thinking}>
@@ -241,7 +287,12 @@ const NonInjectedAiChatView = observer(
             }}
           />
           {chat.running ? (
-            <Button outlined label="Stop" data-testid="ai-chat-stop" onClick={() => void turns.stop(chat)} />
+            <Button
+              outlined
+              label="Stop"
+              data-testid="ai-chat-stop"
+              onClick={() => command({ type: "stop", chatId })}
+            />
           ) : (
             <Button primary label="Send" data-testid="ai-chat-send" disabled={!draft.trim()} onClick={send} />
           )}
@@ -254,9 +305,8 @@ const NonInjectedAiChatView = observer(
 export const AiChatView = withInjectables<Dependencies, AiChatViewProps>(NonInjectedAiChatView, {
   getProps: (di, props) => ({
     ...props,
-    chats: di.inject(aiChatsInjectable),
-    turns: di.inject(aiChatTurnsInjectable),
+    mirror: di.inject(aiChatMirrorInjectable),
+    discovery: di.inject(aiDiscoveryMirrorInjectable),
     preferencesState: di.inject(userPreferencesStateInjectable),
-    openAi: di.inject(aiOpenAiEndpointInjectable),
   }),
 });

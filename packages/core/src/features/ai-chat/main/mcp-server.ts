@@ -11,8 +11,10 @@ import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import type { AiToolResult } from "../common/channels";
 
 export interface AiMcpServerDependencies {
-  /** Hands a tool call to the frame that holds the chat; the answer comes back through resolveToolCall. */
-  sendToolCall: (call: { callId: string; chatId: string; name: string; args: unknown }) => void;
+  /** Whether a chat allows changes: the change tools are listed only then. */
+  allowsChanges: (chatId: string) => boolean;
+  /** Runs a tool for a chat: the chat host checks the call, asks for approval and runs it in the cluster frame. */
+  callTool: (chatId: string, name: string, args: unknown) => Promise<AiToolResult>;
   logError: (message: string, error?: unknown) => void;
 }
 
@@ -23,8 +25,6 @@ interface JsonRpcRequest {
   params?: Record<string, unknown>;
 }
 
-// A change can wait on the user's approval in the chat.
-const toolCallTimeoutMs = 10 * 60 * 1000;
 const maxBodyBytes = 1024 * 1024;
 
 /**
@@ -38,12 +38,6 @@ export class AiMcpServer {
 
   private server?: Server;
   private listening?: Promise<number>;
-  private readonly allowChanges = new Map<string, boolean>();
-  private readonly pendingCalls = new Map<
-    string,
-    { resolve: (result: AiToolResult) => void; timer: ReturnType<typeof setTimeout> }
-  >();
-  private nextCallId = 0;
 
   constructor(private readonly dependencies: AiMcpServerDependencies) {}
 
@@ -52,20 +46,6 @@ export class AiMcpServer {
     const port = await this.listen();
 
     return `http://127.0.0.1:${port}/mcp/${encodeURIComponent(chatId)}`;
-  }
-
-  setAllowChanges(chatId: string, allowChanges: boolean) {
-    this.allowChanges.set(chatId, allowChanges);
-  }
-
-  resolveToolCall(callId: string, result: AiToolResult) {
-    const pending = this.pendingCalls.get(callId);
-
-    if (pending) {
-      clearTimeout(pending.timer);
-      this.pendingCalls.delete(callId);
-      pending.resolve(result);
-    }
   }
 
   close() {
@@ -167,7 +147,7 @@ export class AiMcpServer {
     }
 
     const respond = (result: unknown) => ({ jsonrpc: "2.0", id: request.id, result });
-    const allowChanges = this.allowChanges.get(chatId) ?? false;
+    const allowChanges = this.dependencies.allowsChanges(chatId);
 
     switch (request.method) {
       case "initialize":
@@ -194,27 +174,13 @@ export class AiMcpServer {
           ? { ok: false, text: `There is no tool ${name}.` }
           : tool.access === "change" && !allowChanges
             ? { ok: false, text: 'Changes are not allowed in this chat: the user has to tick "Allow changes".' }
-            : await this.callTool(chatId, name, request.params?.arguments ?? {});
+            : await this.dependencies.callTool(chatId, name, request.params?.arguments ?? {});
 
         return respond({ content: [{ type: "text", text: result.text }], isError: !result.ok });
       }
       default:
         return { jsonrpc: "2.0", id: request.id, error: { code: -32601, message: `Unknown method ${request.method}` } };
     }
-  }
-
-  private callTool(chatId: string, name: string, args: unknown) {
-    const callId = `${Date.now()}-${this.nextCallId++}`;
-
-    return new Promise<AiToolResult>((resolve) => {
-      const timer = setTimeout(() => {
-        this.pendingCalls.delete(callId);
-        resolve({ ok: false, text: "Freelens did not answer the tool call in time." });
-      }, toolCallTimeoutMs);
-
-      this.pendingCalls.set(callId, { resolve, timer });
-      this.dependencies.sendToolCall({ callId, chatId, name, args });
-    });
   }
 }
 

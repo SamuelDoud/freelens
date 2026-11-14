@@ -6,30 +6,45 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import aiChatCommandListenerInjectable from "./chat-command-listener.injectable";
+import aiChatHostInjectable from "./chat-host.injectable";
+import aiChatWindowInjectable from "./chat-window.injectable";
+import aiCliDiscoveryInjectable from "./cli-discovery.injectable";
 import aiCliTurnsInjectable from "./cli-turns.injectable";
-import aiHttpGetListenerInjectable from "./http-get-listener.injectable";
-import aiHttpPostListenerInjectable from "./http-post-listener.injectable";
+import createAiChatListenerInjectable from "./create-chat-listener.injectable";
+import discoverAiClisAfterLoadInjectable from "./discover-clis-after-load.injectable";
+import getAiDiscoveryListenerInjectable from "./get-discovery-listener.injectable";
+import listAiChatsListenerInjectable from "./list-chats-listener.injectable";
 import aiMcpServerInjectable from "./mcp-server.injectable";
-import setAiChatAllowChangesListenerInjectable from "./set-allow-changes-listener.injectable";
-import startAiCliTurnListenerInjectable from "./start-cli-turn-listener.injectable";
-import stopAiCliTurnListenerInjectable from "./stop-cli-turn-listener.injectable";
+import aiMuseSessionsInjectable from "./muse-sessions.injectable";
+import refreshAiDiscoveryListenerInjectable from "./refresh-discovery-listener.injectable";
 import aiToolResultListenerInjectable from "./tool-result-listener.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
+    di.register(aiChatCommandListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(aiChatHostInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(aiChatWindowInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(aiCliDiscoveryInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(aiCliTurnsInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(aiHttpGetListenerInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(aiHttpPostListenerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -39,22 +54,37 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(aiMuseSessionsInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(aiToolResultListenerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(setAiChatAllowChangesListenerInjectable);
+    di.register(createAiChatListenerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(startAiCliTurnListenerInjectable);
+    di.register(discoverAiClisAfterLoadInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(stopAiCliTurnListenerInjectable);
+    di.register(getAiDiscoveryListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(listAiChatsListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(refreshAiDiscoveryListenerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

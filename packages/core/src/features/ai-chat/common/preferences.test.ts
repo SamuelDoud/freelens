@@ -4,45 +4,61 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { defaultAiChatPreferences, readAiChatPreferences } from "./preferences";
+import { defaultAiChatPreferences, isOpenAiConfigured, readAiChatPreferences } from "./preferences";
 
 describe("readAiChatPreferences", () => {
-  it("gives the defaults for nothing stored, with approval of each change off", () => {
-    expect(readAiChatPreferences(undefined)).toEqual(defaultAiChatPreferences);
-    expect(defaultAiChatPreferences.askBeforeEachChange).toBe(false);
+  it("gives defaults that assume nothing about the user's setup", () => {
+    const preferences = readAiChatPreferences(undefined);
+
+    expect(preferences).toEqual(defaultAiChatPreferences);
+    expect(preferences.askBeforeEachChange).toBe(false);
+    expect(preferences.openAiEndpoint).toEqual({ kind: "none" });
+    expect(preferences.openAiLabel).toBe("OpenAI-compatible server");
+    expect(isOpenAiConfigured(preferences)).toBe(false);
+    expect(preferences.placement).toBe("bottom");
+    expect(preferences.discovered).toBe(false);
   });
 
-  it("keeps valid values and drops malformed ones", () => {
+  it("drops the defaults 2.2 shipped for its author's own model server", () => {
     const preferences = readAiChatPreferences({
-      systemPrompt: "Be brief.",
-      askBeforeEachChange: true,
-      defaultProvider: "codex",
-      claudePath: " /opt/claude ",
-      openAiEndpoint: { kind: "url", url: "http://muse:8000" },
-      providers: {
-        claude: { models: ["opus", " opus ", "", 3, "sonnet"], defaultModel: "opus", defaultEffort: "max" },
-        codex: { models: "not a list", defaultEffort: "ultra" },
-      },
+      openAiLabel: "Muse",
+      openAiEndpoint: { kind: "service", namespace: "llm", service: "muse-glimmer-llamacpp", port: "8000" },
+      providers: { claude: { models: ["opus", "sonnet", "haiku"], defaultModel: "opus" } },
     });
 
-    expect(preferences.systemPrompt).toBe("Be brief.");
-    expect(preferences.askBeforeEachChange).toBe(true);
-    expect(preferences.defaultProvider).toBe("codex");
-    expect(preferences.claudePath).toBe("/opt/claude");
-    expect(preferences.openAiEndpoint).toEqual({ kind: "url", url: "http://muse:8000" });
-    expect(preferences.providers.claude).toEqual({
-      models: ["opus", "sonnet"],
-      defaultModel: "opus",
-      defaultEffort: "max",
-    });
-    expect(preferences.providers.codex).toEqual({ models: [], defaultModel: "", defaultEffort: "" });
-    expect(preferences.providers.openai).toEqual(defaultAiChatPreferences.providers.openai);
+    expect(preferences.openAiLabel).toBe("OpenAI-compatible server");
+    expect(preferences.openAiEndpoint).toEqual({ kind: "none" });
+    expect(preferences.providers.claude).toEqual({ defaultModel: "opus", defaultEffort: "", extraModels: [] });
   });
 
-  it("falls back on an unknown provider and endpoint", () => {
-    const preferences = readAiChatPreferences({ defaultProvider: "gpt", openAiEndpoint: { kind: "ftp" } });
+  it("keeps a server the user set up", () => {
+    const preferences = readAiChatPreferences({
+      openAiLabel: "Team vLLM",
+      openAiEndpoint: { kind: "service", namespace: "ai", service: "vllm", port: "8000" },
+      providers: { openai: { extraModels: ["qwen", " qwen ", "llama"] } },
+    });
 
-    expect(preferences.defaultProvider).toBe("claude");
-    expect(preferences.openAiEndpoint).toEqual(defaultAiChatPreferences.openAiEndpoint);
+    expect(preferences.openAiLabel).toBe("Team vLLM");
+    expect(preferences.openAiEndpoint).toEqual({ kind: "service", namespace: "ai", service: "vllm", port: "8000" });
+    expect(isOpenAiConfigured(preferences)).toBe(true);
+    expect(preferences.providers.openai.extraModels).toEqual(["qwen", "llama"]);
+  });
+
+  it("keeps valid choices and drops malformed ones", () => {
+    const preferences = readAiChatPreferences({
+      defaultProvider: "muse",
+      musePath: " /usr/local/bin/muse ",
+      placement: "window",
+      discovered: true,
+      rightPanelWidth: 99999,
+    });
+
+    expect(preferences.defaultProvider).toBe("muse");
+    expect(preferences.musePath).toBe("/usr/local/bin/muse");
+    expect(preferences.placement).toBe("window");
+    expect(preferences.discovered).toBe(true);
+    expect(preferences.rightPanelWidth).toBe(1600);
+    expect(readAiChatPreferences({ defaultProvider: "gpt", placement: "left" }).defaultProvider).toBe("claude");
+    expect(readAiChatPreferences({ placement: "left" }).placement).toBe("bottom");
   });
 });

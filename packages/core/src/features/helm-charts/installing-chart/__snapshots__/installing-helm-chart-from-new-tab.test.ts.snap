@@ -598,10 +598,37 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -1472,10 +1499,37 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
   <div
@@ -2611,6 +2665,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -2653,6 +2731,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -3576,6 +3657,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -3842,6 +3947,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
   <div
@@ -4800,6 +4908,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -5070,6 +5202,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -5993,6 +6128,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -6258,6 +6417,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -7181,6 +7343,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -7446,6 +7632,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -8369,6 +8558,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -8656,6 +8869,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -9579,6 +9795,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -9845,6 +10085,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
   <div
@@ -10803,6 +11046,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -11068,6 +11335,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -11991,6 +12261,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -12264,6 +12558,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -13234,6 +13531,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -13309,6 +13630,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -14237,10 +14561,37 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
   <div
@@ -15272,6 +15623,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -15347,6 +15722,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
   <div
@@ -16330,6 +16708,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -16595,6 +16997,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
   <div
@@ -17782,6 +18187,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -17824,6 +18253,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -18799,6 +19231,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -19066,6 +19522,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -20041,6 +20500,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -20306,6 +20789,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -21229,6 +21715,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -21494,6 +22004,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -22417,6 +22930,30 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -22682,6 +23219,9 @@ exports[`installing helm chart from new tab > given tab for installing chart was
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -23552,10 +24092,37 @@ exports[`installing helm chart from new tab > given tab for installing chart was
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>

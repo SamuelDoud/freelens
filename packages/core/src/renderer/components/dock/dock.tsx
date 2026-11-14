@@ -13,8 +13,11 @@ import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import React from "react";
+import { AiChatButton } from "../../../features/ai-chat/renderer/ai-chat-button";
+import { chatIdOfTab } from "../../../features/ai-chat/renderer/ai-chat-dock-tab";
 import { AiChatView } from "../../../features/ai-chat/renderer/ai-chat-view";
 import createAiChatTabInjectable from "../../../features/ai-chat/renderer/create-ai-chat-tab.injectable";
+import openAiChatInjectable from "../../../features/ai-chat/renderer/open-ai-chat.injectable";
 import { MenuItem } from "../menu";
 import { MenuActions } from "../menu/menu-actions";
 import createResourceTabInjectable from "./create-resource/create-resource-tab.injectable";
@@ -39,6 +42,7 @@ interface Dependencies {
   createResourceTab: () => void;
   createTerminalTab: () => void;
   createAiChatTab: () => void;
+  openAiChat: () => void;
   dockStore: DockStore;
 }
 
@@ -131,7 +135,7 @@ class NonInjectedDock extends React.Component<DockProps & Dependencies> {
         return <TerminalWindow tab={tab} />;
       // Each tab is its own conversation.
       case TabKind.AI_CHAT:
-        return <AiChatView key={tab.id} tabId={tab.id} />;
+        return <AiChatView key={tab.id} chatId={chatIdOfTab(tab.id) ?? tab.id} />;
     }
   }
 
@@ -194,6 +198,7 @@ class NonInjectedDock extends React.Component<DockProps & Dependencies> {
                 </MenuItem>
               </MenuActions>
             </div>
+            <AiChatButton data-testid="dock-ai-chat-button" onClick={() => this.props.openAiChat()} />
             {hasTabs() && (
               <>
                 <Icon
@@ -225,6 +230,7 @@ export const Dock = withInjectables<Dependencies, DockProps>(
       dockStore: di.inject(dockStoreInjectable),
       createTerminalTab: di.inject(createTerminalTabInjectable),
       createAiChatTab: di.inject(createAiChatTabInjectable),
+      openAiChat: () => void di.inject(openAiChatInjectable)(),
       ...props,
     }),
   },

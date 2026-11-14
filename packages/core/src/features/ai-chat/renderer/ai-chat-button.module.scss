@@ -1,0 +1,51 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+.aiChatButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--borderColor);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--textColorPrimary);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+}
+
+.label {
+  font-size: var(--font-size-small);
+}
+
+// A soft aura in the theme's primary color until the chat is first opened.
+.glowing {
+  border-color: var(--primary);
+  color: var(--primary);
+  animation: aiChatGlow 1.8s ease-in-out infinite;
+}
+
+@keyframes aiChatGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 2px 1px color-mix(in srgb, var(--primary) 45%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 10px 4px color-mix(in srgb, var(--primary) 70%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glowing {
+    animation: none;
+    box-shadow: 0 0 6px 2px color-mix(in srgb, var(--primary) 60%, transparent);
+  }
+}

@@ -12,6 +12,37 @@
   color: var(--textColorPrimary);
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--borderFaintColor);
+}
+
+.cluster {
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placement {
+  color: var(--textColorSecondary);
+  cursor: pointer;
+
+  &.current {
+    color: var(--primary);
+  }
+}
+
+.effort {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--textColorSecondary);
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
