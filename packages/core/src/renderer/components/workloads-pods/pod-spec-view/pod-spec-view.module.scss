@@ -1,0 +1,73 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--margin);
+  margin-top: var(--margin);
+}
+
+.modes {
+  display: flex;
+  align-items: center;
+  gap: var(--margin);
+}
+
+.mode {
+  padding: 2px 10px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--textColorPrimary);
+  cursor: pointer;
+
+  &.active {
+    border-color: var(--primary);
+    color: var(--textColorAccent);
+  }
+}
+
+.origin {
+  color: var(--textColorSecondary);
+}
+
+.legend {
+  color: var(--textColorSecondary);
+  font-size: smaller;
+}
+
+.added {
+  color: var(--colorSuccess);
+}
+
+.removed {
+  color: var(--colorError);
+}
+
+.diff {
+  max-height: 400px;
+  overflow: auto;
+  margin: 0;
+  padding: var(--padding);
+  border: 1px solid var(--borderFaintColor);
+  border-radius: 4px;
+  background: var(--secondaryBackground);
+  font-family: var(--font-monospace, monospace);
+  font-size: smaller;
+  line-height: 1.5;
+
+  > div {
+    white-space: pre;
+  }
+
+  .added {
+    background: color-mix(in srgb, var(--colorSuccess) 15%, transparent);
+  }
+
+  .removed {
+    background: color-mix(in srgb, var(--colorError) 15%, transparent);
+  }
+}
