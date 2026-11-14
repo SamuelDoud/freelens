@@ -332,6 +332,98 @@ exports[`kube-object-list-layout > given pod store > renders 1`] = `
                 />
               </div>
               <div
+                class="TableCell cpuRequest nowrap sorting"
+                id="cpuRequest"
+              >
+                <div
+                  class="content"
+                >
+                  CPU request
+                </div>
+                <i
+                  class="Icon sortIcon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="arrow_drop_down"
+                  >
+                    arrow_drop_down
+                  </span>
+                </i>
+                <div
+                  class="resize-handle"
+                />
+              </div>
+              <div
+                class="TableCell cpuLimit nowrap sorting"
+                id="cpuLimit"
+              >
+                <div
+                  class="content"
+                >
+                  CPU limit
+                </div>
+                <i
+                  class="Icon sortIcon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="arrow_drop_down"
+                  >
+                    arrow_drop_down
+                  </span>
+                </i>
+                <div
+                  class="resize-handle"
+                />
+              </div>
+              <div
+                class="TableCell memoryRequest nowrap sorting"
+                id="memoryRequest"
+              >
+                <div
+                  class="content"
+                >
+                  Memory request
+                </div>
+                <i
+                  class="Icon sortIcon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="arrow_drop_down"
+                  >
+                    arrow_drop_down
+                  </span>
+                </i>
+                <div
+                  class="resize-handle"
+                />
+              </div>
+              <div
+                class="TableCell memoryLimit nowrap sorting"
+                id="memoryLimit"
+              >
+                <div
+                  class="content"
+                >
+                  Memory limit
+                </div>
+                <i
+                  class="Icon sortIcon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="arrow_drop_down"
+                  >
+                    arrow_drop_down
+                  </span>
+                </i>
+                <div
+                  class="resize-handle"
+                />
+              </div>
+              <div
                 class="TableCell restarts nowrap sorting"
                 id="restarts"
               >

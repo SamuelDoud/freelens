@@ -22,7 +22,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -929,7 +929,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -1979,7 +1979,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -3083,7 +3083,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -4223,7 +4223,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -5520,7 +5520,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -6819,7 +6819,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>

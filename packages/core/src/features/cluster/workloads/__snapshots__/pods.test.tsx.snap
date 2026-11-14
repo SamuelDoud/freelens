@@ -22,7 +22,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -1370,7 +1370,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -2523,7 +2523,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>

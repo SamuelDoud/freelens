@@ -21,7 +21,7 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>
@@ -729,7 +729,7 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>
@@ -1444,7 +1444,7 @@ exports[`<ClusterFrame /> > given cluster without list nodes, but with namespace
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>

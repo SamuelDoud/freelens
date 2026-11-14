@@ -22,7 +22,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -940,7 +940,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -1863,7 +1863,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -2885,7 +2885,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -3855,7 +3855,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -4927,7 +4927,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -6001,7 +6001,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -7037,7 +7037,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -8068,7 +8068,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -9090,7 +9090,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -10112,7 +10112,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -11134,7 +11134,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -11961,7 +11961,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -12992,7 +12992,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -14014,7 +14014,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -15036,7 +15036,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>

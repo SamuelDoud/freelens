@@ -22,7 +22,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -1010,7 +1010,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -2273,7 +2273,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -3597,7 +3597,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -4921,7 +4921,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -6491,7 +6491,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -8061,7 +8061,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -9631,7 +9631,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -10926,7 +10926,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -12223,7 +12223,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -13793,7 +13793,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -15117,7 +15117,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -16443,7 +16443,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -17706,7 +17706,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -19030,7 +19030,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -20354,7 +20354,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -21678,7 +21678,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -23248,7 +23248,7 @@ exports[`showing details for helm release > given application is started > when 
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>

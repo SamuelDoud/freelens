@@ -22,7 +22,7 @@ exports[`disable-cluster-pages-when-cluster-is-not-relevant > given extension sh
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -613,7 +613,7 @@ exports[`disable-cluster-pages-when-cluster-is-not-relevant > given extension sh
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>
@@ -1328,7 +1328,7 @@ exports[`disable-cluster-pages-when-cluster-is-not-relevant > given not yet know
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray);"
+              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
             >
               ??
             </div>

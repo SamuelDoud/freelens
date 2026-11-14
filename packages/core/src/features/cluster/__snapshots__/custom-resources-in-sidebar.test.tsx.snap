@@ -21,7 +21,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>
@@ -734,7 +734,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>
@@ -1484,7 +1484,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>
@@ -2197,7 +2197,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>
@@ -2947,7 +2947,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>
@@ -3743,7 +3743,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>
@@ -4493,7 +4493,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>
@@ -5274,7 +5274,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray);"
+            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
           >
             ??
           </div>

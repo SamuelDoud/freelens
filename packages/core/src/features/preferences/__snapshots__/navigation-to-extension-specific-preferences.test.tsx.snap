@@ -20,6 +20,30 @@ exports[`preferences - navigation to extension specific preferences > given in p
           >
             <i
               class="Icon material interactive focusable"
+              data-testid="hotbar-toggle"
+              tabindex="0"
+            >
+              <span
+                class="icon"
+                data-icon-name="keyboard_double_arrow_left"
+              >
+                keyboard_double_arrow_left
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-hotbar-toggle"
+            >
+              Hide the cluster bar
+            </div>
+          </div>
+          <div
+            class="size-sm"
+          />
+          <div
+            class="preventedDragging"
+          >
+            <i
+              class="Icon material interactive focusable"
               data-testid="home-button"
               tabindex="0"
             >
@@ -37,17 +61,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
           <div
             class="preventedDragging"
           >
-            <i
-              class="Icon material interactive disabled focusable"
-              data-testid="history-back"
+            <span
+              id="history-steps-back"
             >
-              <span
-                class="icon"
-                data-icon-name="arrow_back"
+              <i
+                class="Icon material interactive disabled focusable"
+                data-testid="history-back"
               >
-                arrow_back
-              </span>
-            </i>
+                <span
+                  class="icon"
+                  data-icon-name="arrow_back"
+                >
+                  arrow_back
+                </span>
+              </i>
+              <div
+                data-testid="tooltip-content-for-history-back"
+              >
+                Back (right-click or hold for the list)
+              </div>
+            </span>
           </div>
           <div
             class="size-sm"
@@ -55,17 +88,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
           <div
             class="preventedDragging"
           >
-            <i
-              class="Icon material interactive disabled focusable"
-              data-testid="history-forward"
+            <span
+              id="history-steps-forward"
             >
-              <span
-                class="icon"
-                data-icon-name="arrow_forward"
+              <i
+                class="Icon material interactive disabled focusable"
+                data-testid="history-forward"
               >
-                arrow_forward
-              </span>
-            </i>
+                <span
+                  class="icon"
+                  data-icon-name="arrow_forward"
+                >
+                  arrow_forward
+                </span>
+              </i>
+              <div
+                data-testid="tooltip-content-for-history-forward"
+              >
+                Forward (right-click or hold for the list)
+              </div>
+            </span>
           </div>
           <div
             class="separator"
@@ -384,7 +426,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
                   data-preference-item-test="appearance"
                 >
                   <section
-                    id="appearance"
+                    id="appearance-settings"
                   >
                     <div
                       class="SubTitle"
@@ -1040,7 +1082,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
                 >
                   WP
                 </div>
@@ -1065,7 +1107,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
                 >
                   Ca
                 </div>
@@ -1205,6 +1247,30 @@ exports[`preferences - navigation to extension specific preferences > given in p
         >
           <i
             class="Icon material interactive focusable"
+            data-testid="hotbar-toggle"
+            tabindex="0"
+          >
+            <span
+              class="icon"
+              data-icon-name="keyboard_double_arrow_left"
+            >
+              keyboard_double_arrow_left
+            </span>
+          </i>
+          <div
+            data-testid="tooltip-content-for-hotbar-toggle"
+          >
+            Hide the cluster bar
+          </div>
+        </div>
+        <div
+          class="size-sm"
+        />
+        <div
+          class="preventedDragging"
+        >
+          <i
+            class="Icon material interactive focusable"
             data-testid="home-button"
             tabindex="0"
           >
@@ -1222,17 +1288,27 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-back"
+          <span
+            id="history-steps-back"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_back"
+            <i
+              class="Icon material interactive focusable"
+              data-testid="history-back"
+              tabindex="0"
             >
-              arrow_back
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_back"
+              >
+                arrow_back
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-back"
+            >
+              Back (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="size-sm"
@@ -1240,17 +1316,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-forward"
+          <span
+            id="history-steps-forward"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_forward"
+            <i
+              class="Icon material interactive disabled focusable"
+              data-testid="history-forward"
             >
-              arrow_forward
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_forward"
+              >
+                arrow_forward
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-forward"
+            >
+              Forward (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="separator"
@@ -1476,7 +1561,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
+                style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
               >
                 WP
               </div>
@@ -1501,7 +1586,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-catalog-entity"
-                style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
+                style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
               >
                 Ca
               </div>
@@ -1640,6 +1725,30 @@ exports[`preferences - navigation to extension specific preferences > given in p
         >
           <i
             class="Icon material interactive focusable"
+            data-testid="hotbar-toggle"
+            tabindex="0"
+          >
+            <span
+              class="icon"
+              data-icon-name="keyboard_double_arrow_left"
+            >
+              keyboard_double_arrow_left
+            </span>
+          </i>
+          <div
+            data-testid="tooltip-content-for-hotbar-toggle"
+          >
+            Hide the cluster bar
+          </div>
+        </div>
+        <div
+          class="size-sm"
+        />
+        <div
+          class="preventedDragging"
+        >
+          <i
+            class="Icon material interactive focusable"
             data-testid="home-button"
             tabindex="0"
           >
@@ -1657,17 +1766,27 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-back"
+          <span
+            id="history-steps-back"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_back"
+            <i
+              class="Icon material interactive focusable"
+              data-testid="history-back"
+              tabindex="0"
             >
-              arrow_back
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_back"
+              >
+                arrow_back
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-back"
+            >
+              Back (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="size-sm"
@@ -1675,17 +1794,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-forward"
+          <span
+            id="history-steps-forward"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_forward"
+            <i
+              class="Icon material interactive disabled focusable"
+              data-testid="history-forward"
             >
-              arrow_forward
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_forward"
+              >
+                arrow_forward
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-forward"
+            >
+              Forward (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="separator"
@@ -1923,7 +2051,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
+                style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
               >
                 WP
               </div>
@@ -1948,7 +2076,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-catalog-entity"
-                style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
+                style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
               >
                 Ca
               </div>
@@ -2087,6 +2215,30 @@ exports[`preferences - navigation to extension specific preferences > given in p
         >
           <i
             class="Icon material interactive focusable"
+            data-testid="hotbar-toggle"
+            tabindex="0"
+          >
+            <span
+              class="icon"
+              data-icon-name="keyboard_double_arrow_left"
+            >
+              keyboard_double_arrow_left
+            </span>
+          </i>
+          <div
+            data-testid="tooltip-content-for-hotbar-toggle"
+          >
+            Hide the cluster bar
+          </div>
+        </div>
+        <div
+          class="size-sm"
+        />
+        <div
+          class="preventedDragging"
+        >
+          <i
+            class="Icon material interactive focusable"
             data-testid="home-button"
             tabindex="0"
           >
@@ -2104,17 +2256,27 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-back"
+          <span
+            id="history-steps-back"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_back"
+            <i
+              class="Icon material interactive focusable"
+              data-testid="history-back"
+              tabindex="0"
             >
-              arrow_back
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_back"
+              >
+                arrow_back
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-back"
+            >
+              Back (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="size-sm"
@@ -2122,17 +2284,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-forward"
+          <span
+            id="history-steps-forward"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_forward"
+            <i
+              class="Icon material interactive disabled focusable"
+              data-testid="history-forward"
             >
-              arrow_forward
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_forward"
+              >
+                arrow_forward
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-forward"
+            >
+              Forward (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="separator"
@@ -2370,7 +2541,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
+                style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
               >
                 WP
               </div>
@@ -2395,7 +2566,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-catalog-entity"
-                style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
+                style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
               >
                 Ca
               </div>
@@ -2534,6 +2705,30 @@ exports[`preferences - navigation to extension specific preferences > given in p
         >
           <i
             class="Icon material interactive focusable"
+            data-testid="hotbar-toggle"
+            tabindex="0"
+          >
+            <span
+              class="icon"
+              data-icon-name="keyboard_double_arrow_left"
+            >
+              keyboard_double_arrow_left
+            </span>
+          </i>
+          <div
+            data-testid="tooltip-content-for-hotbar-toggle"
+          >
+            Hide the cluster bar
+          </div>
+        </div>
+        <div
+          class="size-sm"
+        />
+        <div
+          class="preventedDragging"
+        >
+          <i
+            class="Icon material interactive focusable"
             data-testid="home-button"
             tabindex="0"
           >
@@ -2551,17 +2746,27 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-back"
+          <span
+            id="history-steps-back"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_back"
+            <i
+              class="Icon material interactive focusable"
+              data-testid="history-back"
+              tabindex="0"
             >
-              arrow_back
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_back"
+              >
+                arrow_back
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-back"
+            >
+              Back (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="size-sm"
@@ -2569,17 +2774,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-forward"
+          <span
+            id="history-steps-forward"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_forward"
+            <i
+              class="Icon material interactive disabled focusable"
+              data-testid="history-forward"
             >
-              arrow_forward
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_forward"
+              >
+                arrow_forward
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-forward"
+            >
+              Forward (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="separator"
@@ -2843,7 +3057,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
+                style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
               >
                 WP
               </div>
@@ -2868,7 +3082,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-catalog-entity"
-                style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
+                style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
               >
                 Ca
               </div>
@@ -3007,6 +3221,30 @@ exports[`preferences - navigation to extension specific preferences > given in p
         >
           <i
             class="Icon material interactive focusable"
+            data-testid="hotbar-toggle"
+            tabindex="0"
+          >
+            <span
+              class="icon"
+              data-icon-name="keyboard_double_arrow_left"
+            >
+              keyboard_double_arrow_left
+            </span>
+          </i>
+          <div
+            data-testid="tooltip-content-for-hotbar-toggle"
+          >
+            Hide the cluster bar
+          </div>
+        </div>
+        <div
+          class="size-sm"
+        />
+        <div
+          class="preventedDragging"
+        >
+          <i
+            class="Icon material interactive focusable"
             data-testid="home-button"
             tabindex="0"
           >
@@ -3024,17 +3262,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-back"
+          <span
+            id="history-steps-back"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_back"
+            <i
+              class="Icon material interactive disabled focusable"
+              data-testid="history-back"
             >
-              arrow_back
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_back"
+              >
+                arrow_back
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-back"
+            >
+              Back (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="size-sm"
@@ -3042,17 +3289,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-forward"
+          <span
+            id="history-steps-forward"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_forward"
+            <i
+              class="Icon material interactive disabled focusable"
+              data-testid="history-forward"
             >
-              arrow_forward
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_forward"
+              >
+                arrow_forward
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-forward"
+            >
+              Forward (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="separator"
@@ -3359,7 +3615,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
                 data-preference-item-test="appearance"
               >
                 <section
-                  id="appearance"
+                  id="appearance-settings"
                 >
                   <div
                     class="SubTitle"
@@ -4015,7 +4271,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
+                style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
               >
                 WP
               </div>
@@ -4040,7 +4296,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-catalog-entity"
-                style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
+                style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
               >
                 Ca
               </div>
@@ -4179,6 +4435,30 @@ exports[`preferences - navigation to extension specific preferences > given in p
         >
           <i
             class="Icon material interactive focusable"
+            data-testid="hotbar-toggle"
+            tabindex="0"
+          >
+            <span
+              class="icon"
+              data-icon-name="keyboard_double_arrow_left"
+            >
+              keyboard_double_arrow_left
+            </span>
+          </i>
+          <div
+            data-testid="tooltip-content-for-hotbar-toggle"
+          >
+            Hide the cluster bar
+          </div>
+        </div>
+        <div
+          class="size-sm"
+        />
+        <div
+          class="preventedDragging"
+        >
+          <i
+            class="Icon material interactive focusable"
             data-testid="home-button"
             tabindex="0"
           >
@@ -4196,17 +4476,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-back"
+          <span
+            id="history-steps-back"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_back"
+            <i
+              class="Icon material interactive disabled focusable"
+              data-testid="history-back"
             >
-              arrow_back
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_back"
+              >
+                arrow_back
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-back"
+            >
+              Back (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="size-sm"
@@ -4214,17 +4503,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-forward"
+          <span
+            id="history-steps-forward"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_forward"
+            <i
+              class="Icon material interactive disabled focusable"
+              data-testid="history-forward"
             >
-              arrow_forward
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_forward"
+              >
+                arrow_forward
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-forward"
+            >
+              Forward (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="separator"
@@ -4569,7 +4867,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
                 data-preference-item-test="appearance"
               >
                 <section
-                  id="appearance"
+                  id="appearance-settings"
                 >
                   <div
                     class="SubTitle"
@@ -5225,7 +5523,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
+                style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
               >
                 WP
               </div>
@@ -5250,7 +5548,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-catalog-entity"
-                style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
+                style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
               >
                 Ca
               </div>
@@ -5389,6 +5687,30 @@ exports[`preferences - navigation to extension specific preferences > given in p
         >
           <i
             class="Icon material interactive focusable"
+            data-testid="hotbar-toggle"
+            tabindex="0"
+          >
+            <span
+              class="icon"
+              data-icon-name="keyboard_double_arrow_left"
+            >
+              keyboard_double_arrow_left
+            </span>
+          </i>
+          <div
+            data-testid="tooltip-content-for-hotbar-toggle"
+          >
+            Hide the cluster bar
+          </div>
+        </div>
+        <div
+          class="size-sm"
+        />
+        <div
+          class="preventedDragging"
+        >
+          <i
+            class="Icon material interactive focusable"
             data-testid="home-button"
             tabindex="0"
           >
@@ -5406,17 +5728,27 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-back"
+          <span
+            id="history-steps-back"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_back"
+            <i
+              class="Icon material interactive focusable"
+              data-testid="history-back"
+              tabindex="0"
             >
-              arrow_back
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_back"
+              >
+                arrow_back
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-back"
+            >
+              Back (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="size-sm"
@@ -5424,17 +5756,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
         <div
           class="preventedDragging"
         >
-          <i
-            class="Icon material interactive disabled focusable"
-            data-testid="history-forward"
+          <span
+            id="history-steps-forward"
           >
-            <span
-              class="icon"
-              data-icon-name="arrow_forward"
+            <i
+              class="Icon material interactive disabled focusable"
+              data-testid="history-forward"
             >
-              arrow_forward
-            </span>
-          </i>
+              <span
+                class="icon"
+                data-icon-name="arrow_forward"
+              >
+                arrow_forward
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-history-forward"
+            >
+              Forward (right-click or hold for the list)
+            </div>
+          </span>
         </div>
         <div
           class="separator"
@@ -5686,7 +6027,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
+                style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
               >
                 WP
               </div>
@@ -5711,7 +6052,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-catalog-entity"
-                style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
+                style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
               >
                 Ca
               </div>
@@ -5851,6 +6192,30 @@ exports[`preferences - navigation to extension specific preferences > given in p
           >
             <i
               class="Icon material interactive focusable"
+              data-testid="hotbar-toggle"
+              tabindex="0"
+            >
+              <span
+                class="icon"
+                data-icon-name="keyboard_double_arrow_left"
+              >
+                keyboard_double_arrow_left
+              </span>
+            </i>
+            <div
+              data-testid="tooltip-content-for-hotbar-toggle"
+            >
+              Hide the cluster bar
+            </div>
+          </div>
+          <div
+            class="size-sm"
+          />
+          <div
+            class="preventedDragging"
+          >
+            <i
+              class="Icon material interactive focusable"
               data-testid="home-button"
               tabindex="0"
             >
@@ -5868,17 +6233,27 @@ exports[`preferences - navigation to extension specific preferences > given in p
           <div
             class="preventedDragging"
           >
-            <i
-              class="Icon material interactive disabled focusable"
-              data-testid="history-back"
+            <span
+              id="history-steps-back"
             >
-              <span
-                class="icon"
-                data-icon-name="arrow_back"
+              <i
+                class="Icon material interactive focusable"
+                data-testid="history-back"
+                tabindex="0"
               >
-                arrow_back
-              </span>
-            </i>
+                <span
+                  class="icon"
+                  data-icon-name="arrow_back"
+                >
+                  arrow_back
+                </span>
+              </i>
+              <div
+                data-testid="tooltip-content-for-history-back"
+              >
+                Back (right-click or hold for the list)
+              </div>
+            </span>
           </div>
           <div
             class="size-sm"
@@ -5886,17 +6261,26 @@ exports[`preferences - navigation to extension specific preferences > given in p
           <div
             class="preventedDragging"
           >
-            <i
-              class="Icon material interactive disabled focusable"
-              data-testid="history-forward"
+            <span
+              id="history-steps-forward"
             >
-              <span
-                class="icon"
-                data-icon-name="arrow_forward"
+              <i
+                class="Icon material interactive disabled focusable"
+                data-testid="history-forward"
               >
-                arrow_forward
-              </span>
-            </i>
+                <span
+                  class="icon"
+                  data-icon-name="arrow_forward"
+                >
+                  arrow_forward
+                </span>
+              </i>
+              <div
+                data-testid="tooltip-content-for-history-forward"
+              >
+                Forward (right-click or hold for the list)
+              </div>
+            </span>
           </div>
           <div
             class="separator"
@@ -6078,7 +6462,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
                 >
                   WP
                 </div>
@@ -6103,7 +6487,7 @@ exports[`preferences - navigation to extension specific preferences > given in p
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
                 >
                   Ca
                 </div>
