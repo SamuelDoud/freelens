@@ -71,7 +71,7 @@ describe("LogStore request lifecycle", () => {
     pod.set(dockerPod);
     observableTabData.set(tabData);
     callForLogs = vi.fn<CallForLogs>().mockResolvedValue(initialLog);
-    store = new LogStore({ callForLogs });
+    store = new LogStore({ callForLogs, isTabSeen: () => true });
   });
 
   afterEach(() => {
@@ -304,7 +304,7 @@ describe("LogStore combined logs", () => {
       ["pod-b", "2026-01-01T00:00:03.200000000Z b1"],
     ]);
     callForLogs = vi.fn<CallForLogs>(async ({ name }) => logsOfPods.get(name) ?? "");
-    store = new LogStore({ callForLogs });
+    store = new LogStore({ callForLogs, isTabSeen: () => true });
   });
 
   afterEach(() => {

@@ -4,11 +4,13 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import frameActivityInjectable from "../../../features/frame-activity/renderer/frame-activity.injectable";
+import { pollWhileActive } from "../../../features/frame-activity/renderer/poll-while-active";
 import "./nodes.scss";
 
 import { formatNodeTaint } from "@freelensapp/kube-object";
 import { Tooltip, TooltipPosition } from "@freelensapp/tooltip";
-import { bytesToUnits, cpuUnitsToNumber, interval, unitsToBytes } from "@freelensapp/utilities";
+import { bytesToUnits, cpuUnitsToNumber, unitsToBytes } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { computed, observable, observableRef } from "mobx";
 import { observer } from "mobx-react";
@@ -34,6 +36,7 @@ import type {
   RequestAllNodeMetrics,
 } from "../../../common/k8s-api/endpoints/metrics.api/request-metrics-for-all-nodes.injectable";
 import type { SearchField } from "../../../features/advanced-search/common/conditions";
+import type { FrameActivity } from "../../../features/frame-activity/renderer/frame-activity.injectable";
 import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 import type { EventStore } from "../events/store";
 import type { PodStore } from "../workloads-pods/store";
@@ -76,6 +79,7 @@ interface Dependencies {
   podStore: PodStore;
   subscribeStores: SubscribeStores;
   loadPodsFromAllNamespaces: () => void;
+  frameActivity: FrameActivity;
 }
 
 function bytesToUnitsAligned(bytes: number): string {
@@ -176,12 +180,7 @@ class NonInjectedNodesRoute extends React.Component<Dependencies> {
   // refreshed on every update, instead of this.props.
   @observableRef private accessor observableProps: Readonly<Dependencies>;
 
-  private metricsWatcher = interval(30, () => {
-    void (async () => {
-      await this.props.nodeStore.loadKubeMetrics();
-      this.metrics = await this.props.requestAllNodeMetrics();
-    })();
-  });
+  private stopMetricsPolling?: () => void;
 
   constructor(props: Dependencies) {
     super(props);
@@ -189,7 +188,12 @@ class NonInjectedNodesRoute extends React.Component<Dependencies> {
   }
 
   componentDidMount() {
-    this.metricsWatcher.start(true);
+    this.stopMetricsPolling = pollWhileActive(this.props.frameActivity, 30, () => {
+      void (async () => {
+        await this.props.nodeStore.loadKubeMetrics();
+        this.metrics = await this.props.requestAllNodeMetrics();
+      })();
+    });
 
     this.disposers.push(this.props.subscribeStores([this.props.podStore]));
 
@@ -197,7 +201,7 @@ class NonInjectedNodesRoute extends React.Component<Dependencies> {
   }
 
   componentWillUnmount() {
-    this.metricsWatcher.stop();
+    this.stopMetricsPolling?.();
     this.disposers.forEach((dispose) => dispose());
   }
 
@@ -583,5 +587,6 @@ export const NodesRoute = withInjectables<Dependencies>(NonInjectedNodesRoute, {
     podStore: di.inject(podStoreInjectable),
     subscribeStores: di.inject(subscribeStoresInjectable),
     loadPodsFromAllNamespaces: di.inject(loadPodsFromAllNamespacesInjectable),
+    frameActivity: di.inject(frameActivityInjectable),
   }),
 });

@@ -4,10 +4,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import frameActivityInjectable from "../../../features/frame-activity/renderer/frame-activity.injectable";
+import { pollWhileActive } from "../../../features/frame-activity/renderer/poll-while-active";
 import "./pod-details-list.scss";
 
 import { Spinner } from "@freelensapp/spinner";
-import { bytesToUnits, cssNames, interval, prevDefault } from "@freelensapp/utilities";
+import { bytesToUnits, cssNames, prevDefault } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
 import { kebabCase } from "es-toolkit";
@@ -25,6 +27,7 @@ import podStoreInjectable from "./store.injectable";
 
 import type { KubeObject, Pod } from "@freelensapp/kube-object";
 
+import type { FrameActivity } from "../../../features/frame-activity/renderer/frame-activity.injectable";
 import type { ShowDetails } from "../kube-detail-params/show-details.injectable";
 import type { PodStore } from "./store";
 
@@ -46,6 +49,7 @@ export interface PodDetailsListProps {
 interface Dependencies {
   podStore: PodStore;
   showDetails: ShowDetails;
+  frameActivity: FrameActivity;
 }
 
 @observer
@@ -55,12 +59,17 @@ class NonInjectedPodDetailsList extends React.Component<PodDetailsListProps & De
     autoBindReact(this);
   }
 
-  private metricsWatcher = interval(120, () => {
-    this.props.podStore.loadKubeMetrics(this.props.owner.getNs());
-  });
+  private stopMetricsPolling?: () => void;
+
+  private startMetricsPolling() {
+    this.stopMetricsPolling?.();
+    this.stopMetricsPolling = pollWhileActive(this.props.frameActivity, 120, () => {
+      void this.props.podStore.loadKubeMetrics(this.props.owner.getNs());
+    });
+  }
 
   componentDidMount() {
-    this.metricsWatcher.start(true);
+    this.startMetricsPolling();
   }
 
   componentDidUpdate(prevProps: PodDetailsListProps & Dependencies) {
@@ -68,12 +77,12 @@ class NonInjectedPodDetailsList extends React.Component<PodDetailsListProps & De
     // reaction on this.props.owner did this; mobx-react 9 no longer makes
     // this.props observable, so react to the prop change in the lifecycle instead.
     if (prevProps.owner !== this.props.owner) {
-      this.metricsWatcher.restart(true);
+      this.startMetricsPolling();
     }
   }
 
   componentWillUnmount() {
-    this.metricsWatcher.stop();
+    this.stopMetricsPolling?.();
   }
 
   renderCpuUsage(id: string, usage: number) {
@@ -244,5 +253,6 @@ export const PodDetailsList = withInjectables<Dependencies, PodDetailsListProps>
     ...props,
     podStore: di.inject(podStoreInjectable),
     showDetails: di.inject(showDetailsInjectable),
+    frameActivity: di.inject(frameActivityInjectable),
   }),
 });

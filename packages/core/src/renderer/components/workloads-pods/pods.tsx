@@ -7,10 +7,13 @@
 import "./pods.scss";
 
 import { podListLayoutColumnInjectionToken } from "@freelensapp/list-layout";
-import { interval } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
+import { computed } from "mobx";
 import { observer } from "mobx-react";
 import { useEffect } from "react";
+import frameActivityInjectable from "../../../features/frame-activity/renderer/frame-activity.injectable";
+import { pollWhileActive } from "../../../features/frame-activity/renderer/poll-while-active";
+import isTableColumnHiddenInjectable from "../../../features/user-preferences/common/is-table-column-hidden.injectable";
 import eventStoreInjectable from "../events/store.injectable";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
 import { SiblingsInTabLayout } from "../layout/siblings-in-tab-layout";
@@ -23,6 +26,8 @@ import podStoreInjectable from "./store.injectable";
 import type { Pod } from "@freelensapp/kube-object";
 import type { SpecificKubeListLayoutColumn } from "@freelensapp/list-layout";
 
+import type { IComputedValue } from "mobx";
+
 import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { EventStore } from "../events/store";
 import type { PodStore } from "./store";
@@ -31,6 +36,8 @@ interface Dependencies {
   eventStore: EventStore;
   podStore: PodStore;
   columns: SpecificKubeListLayoutColumn<Pod>[];
+  /** Whether the pods' CPU and memory usage can be seen: the frame is active and a usage column shown */
+  usageVisible: IComputedValue<boolean>;
 }
 
 const REFRESH_METRICS_INTERVAL = 10;
@@ -65,15 +72,14 @@ const podSearchFields: SearchField<Pod>[] = [
 ];
 
 const NonInjectedPods = observer((props: Dependencies) => {
-  const { columns, eventStore, podStore } = props;
+  const { columns, eventStore, podStore, usageVisible } = props;
 
-  useEffect(() => {
-    const fetchPodsMetricsInterval = interval(REFRESH_METRICS_INTERVAL, () => podStore.loadKubeMetrics());
-
-    fetchPodsMetricsInterval.start(true);
-
-    return () => fetchPodsMetricsInterval.stop();
-  }, [podStore]);
+  // The usage metrics of every pod, only for the CPU and memory columns:
+  // nothing to fetch while neither can be seen.
+  useEffect(
+    () => pollWhileActive(usageVisible, REFRESH_METRICS_INTERVAL, () => void podStore.loadKubeMetrics()),
+    [podStore, usageVisible],
+  );
 
   return (
     <SiblingsInTabLayout>
@@ -108,5 +114,15 @@ export const Pods = withInjectables<Dependencies>(NonInjectedPods, {
     eventStore: di.inject(eventStoreInjectable),
     podStore: di.inject(podStoreInjectable),
     columns: di.injectMany(podListLayoutColumnInjectionToken),
+    usageVisible: (() => {
+      const activity = di.inject(frameActivityInjectable);
+      const isTableColumnHidden = di.inject(isTableColumnHiddenInjectable);
+
+      return computed(
+        () =>
+          activity.get() &&
+          !(isTableColumnHidden("workloads_pods", "cpuUsage") && isTableColumnHidden("workloads_pods", "memoryUsage")),
+      );
+    })(),
   }),
 });

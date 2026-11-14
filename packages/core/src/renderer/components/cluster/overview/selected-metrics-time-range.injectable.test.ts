@@ -3,8 +3,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { action, observable } from "mobx";
+import { action, computed, observable } from "mobx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import frameActivityInjectable from "../../../../features/frame-activity/renderer/frame-activity.injectable";
 import metricsTimeRangeStorageInjectable from "./metrics-time-range-storage.injectable";
 import selectedMetricsTimeRangeInjectable from "./selected-metrics-time-range.injectable";
 
@@ -103,6 +104,10 @@ function instantiateWithStorage(initialValue: RawMetricsTimeRange) {
     inject: (injectable: unknown) => {
       if (injectable === metricsTimeRangeStorageInjectable) {
         return storage;
+      }
+
+      if (injectable === frameActivityInjectable) {
+        return computed(() => true);
       }
 
       throw new Error(`Unexpected injectable: ${String(injectable)}`);

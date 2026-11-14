@@ -18,15 +18,19 @@ const refreshAccessibilityOnCrdChangesInjectable = getInjectable({
       let debounceTimer: NodeJS.Timeout | undefined;
 
       reaction(
+        // Nothing until the CRDs have loaded: the load itself is not a change,
+        // and the cluster's connection has just refreshed its accessibility.
         () =>
-          crdStore
-            .getItems()
-            .map((crd) => crd.getId())
-            .sort()
-            .join(","),
+          crdStore.isLoaded
+            ? crdStore
+                .getItems()
+                .map((crd) => crd.getId())
+                .sort()
+                .join(",")
+            : undefined,
         (currentIds, previousIds) => {
-          // Skip initial run and only react to actual changes
-          if (!hostedClusterId || previousIds === undefined) return;
+          // Only react to actual changes of the loaded CRDs
+          if (!hostedClusterId || currentIds === undefined || previousIds === undefined) return;
 
           clearTimeout(debounceTimer);
           debounceTimer = setTimeout(() => {

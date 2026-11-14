@@ -21,6 +21,7 @@ import broadcastMessageInjectable from "../../common/ipc/broadcast-message.injec
 import { clusterListNamespaceForbiddenChannel } from "../../common/ipc/cluster";
 import { formatKubeApiResource } from "../../common/rbac";
 import { replaceObservableObject } from "../../common/utils/replace-observable-object";
+import shellEnvironmentReadyInjectable from "../../features/shell-sync/main/shell-environment-ready.injectable";
 import clusterVersionDetectorInjectable from "../cluster-detectors/cluster-version-detector.injectable";
 import detectClusterMetadataInjectable from "../cluster-detectors/detect-cluster-metadata.injectable";
 import broadcastConnectionUpdateInjectable from "./broadcast-connection-update.injectable";
@@ -53,8 +54,12 @@ import type { ClusterPrometheusHandler } from "./prometheus-handler/prometheus-h
 import type { RemoveProxyKubeconfig } from "./remove-proxy-kubeconfig.injectable";
 import type { RequestApiResources } from "./request-api-resources.injectable";
 
+const lastSeenPrecisionMs = 5 * 60_000;
+
 interface Dependencies {
   readonly logger: Logger;
+  /** Settles once the login shell's environment, which credential plugins need, is synced */
+  waitForShellEnvironment: () => Promise<void>;
   readonly prometheusHandler: ClusterPrometheusHandler;
   readonly freelensK8sProxyManager: FreelensK8sProxyManager;
   readonly clusterVersionDetector: FallibleOnlyClusterMetadataDetector;
@@ -303,6 +308,9 @@ class ClusterConnection {
 
   private async runActivation() {
     this.dependencies.logger.info(`[CLUSTER]: activate`, this.cluster.getMeta());
+    // The proxy and the credential plugins of a kubeconfig are found on the
+    // login shell's PATH, which may still be syncing.
+    await this.dependencies.waitForShellEnvironment();
 
     if (!this.eventsDisposer.length) {
       this.bindEvents();
@@ -518,7 +526,14 @@ class ClusterConnection {
 
       runInAction(() => {
         this.cluster.metadata.version = versionData.value;
-        this.cluster.metadata[ClusterMetadataKey.LAST_SEEN] = new Date().toJSON();
+        // Last seen only orders the cluster switcher, so a few minutes of
+        // precision do: stamping it on every status check rewrote the
+        // cluster store and synced it to every window twice a minute.
+        const lastSeen = Date.parse(String(this.cluster.metadata[ClusterMetadataKey.LAST_SEEN] ?? ""));
+
+        if (!(Date.now() - lastSeen < lastSeenPrecisionMs)) {
+          this.cluster.metadata[ClusterMetadataKey.LAST_SEEN] = new Date().toJSON();
+        }
       });
 
       this.onAuthSuccess();
@@ -656,6 +671,7 @@ const clusterConnectionInjectable = getInjectable({
         clusterVersionDetector: di.inject(clusterVersionDetectorInjectable),
         freelensK8sProxyManager: di.inject(freelensK8sProxyManagerInjectable, cluster),
         logger: di.inject(loggerInjectionToken),
+        waitForShellEnvironment: di.inject(shellEnvironmentReadyInjectable).wait,
         prometheusHandler: di.inject(prometheusHandlerInjectable, cluster),
         broadcastConnectionUpdate: di.inject(broadcastConnectionUpdateInjectable, cluster),
         broadcastMessage: di.inject(broadcastMessageInjectable),

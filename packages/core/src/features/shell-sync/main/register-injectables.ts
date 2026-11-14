@@ -13,6 +13,7 @@ import emitShellSyncStartupFailureInjectable from "./emit-startup-failure.inject
 import processEnvInjectable from "./env.injectable";
 import processExecPathInjectable from "./execPath.injectable";
 import setupShellInjectable from "./setup-shell.injectable";
+import shellEnvironmentReadyInjectable from "./shell-environment-ready.injectable";
 import shellSyncStartupFailureInjectable from "./startup-failure.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
@@ -50,6 +51,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(setupShellInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(shellEnvironmentReadyInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

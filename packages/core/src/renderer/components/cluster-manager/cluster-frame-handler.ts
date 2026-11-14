@@ -25,6 +25,8 @@ interface Dependencies {
   readonly logger: Logger;
   getClusterById: GetClusterById;
   emitClusterVisibility: (clusterId: ClusterId | null) => void;
+  /** Tells the frames which clusters are shown, for those not shown to pause the work done for the eye */
+  emitShownClusters: (clusterIds: ClusterId[]) => void;
 }
 
 export class ClusterFrameHandler {
@@ -135,6 +137,7 @@ export class ClusterFrameHandler {
   public setVisibleClusters(panes: { clusterId: ClusterId; rect: PaneRect }[], titleHeight: number): void {
     this.prevVisibleClusterChange?.();
     this.resetPanes();
+    this.dependencies.emitShownClusters(panes.map(({ clusterId }) => clusterId));
     document.getElementById("lens-views")?.classList.add("multiview");
 
     for (const { frame: view } of this.views.values()) {
@@ -174,6 +177,7 @@ export class ClusterFrameHandler {
     // Clear the previous when ASAP
     this.prevVisibleClusterChange?.();
     this.resetPanes();
+    this.dependencies.emitShownClusters(clusterId ? [clusterId] : []);
 
     this.dependencies.logger.info(`[LENS-VIEW]: refreshing iframe views, visible cluster id=${clusterId}`);
     this.dependencies.emitClusterVisibility(null);

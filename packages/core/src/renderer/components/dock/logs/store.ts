@@ -31,6 +31,8 @@ type PodLogLine = string;
 const logLinesToLoad = 500;
 
 interface Dependencies {
+  /** Whether a logs tab can be seen: the frame is active, the dock open and the tab selected */
+  isTabSeen: (tabId: TabId) => boolean;
   callForLogs: CallForLogs;
 }
 
@@ -138,7 +140,9 @@ export class LogStore {
   ): IntervalFn {
     return getOrInsertWith(this.refreshers, tabId, () =>
       interval(10, () => {
-        if (this.podLogs.has(tabId)) {
+        // New lines are fetched for the tab in view only; a tab shown again
+        // catches up at the next tick.
+        if (this.podLogs.has(tabId) && this.dependencies.isTabSeen(tabId)) {
           this.loadMore(tabId, computedPods, logTabData);
         }
       }),

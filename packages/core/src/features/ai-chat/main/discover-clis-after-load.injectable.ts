@@ -6,6 +6,7 @@
 import { afterApplicationIsLoadedInjectionToken } from "@freelensapp/application";
 import { getInjectable } from "@ogre-tools/injectable";
 import { reaction } from "mobx";
+import shellEnvironmentReadyInjectable from "../../shell-sync/main/shell-environment-ready.injectable";
 import userPreferencesStateInjectable from "../../user-preferences/common/state.injectable";
 import aiCliDiscoveryInjectable from "./cli-discovery.injectable";
 
@@ -18,7 +19,11 @@ const discoverAiClisAfterLoadInjectable = getInjectable({
       const discovery = di.inject(aiCliDiscoveryInjectable);
       const state = di.inject(userPreferencesStateInjectable);
 
-      void discovery.refresh();
+      // The CLIs are found on the login shell's PATH, which syncs in the background.
+      void di
+        .inject(shellEnvironmentReadyInjectable)
+        .wait()
+        .then(() => discovery.refresh());
       reaction(
         () => [state.aiChat?.claudePath, state.aiChat?.codexPath, state.aiChat?.musePath].join("\0"),
         () => void discovery.refresh(),

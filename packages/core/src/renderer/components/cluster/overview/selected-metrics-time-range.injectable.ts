@@ -7,6 +7,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { action, computed } from "mobx";
 import { now } from "mobx-utils";
 import { getSecondsFromUnixEpoch } from "../../../../common/utils/date/get-current-date-time";
+import frameActivityInjectable from "../../../../features/frame-activity/renderer/frame-activity.injectable";
 import metricsTimeRangeStorageInjectable, { defaultMetricsTimeRange } from "./metrics-time-range-storage.injectable";
 
 import type { MetricsTimeRange } from "./metrics-time-range-storage.injectable";
@@ -30,6 +31,7 @@ const everyMinute = 60 * 1000;
 const selectedMetricsTimeRangeInjectable = getInjectable({
   id: "selected-metrics-time-range",
   instantiate: (di) => {
+    const frameActivity = di.inject(frameActivityInjectable);
     const storage = di.inject(metricsTimeRangeStorageInjectable);
     const normalizeTimeRange = action(
       (timeRange: { duration: number | null; customStart?: number; customEnd?: number }): MetricsTimeRange => {
@@ -76,7 +78,13 @@ const selectedMetricsTimeRangeInjectable = getInjectable({
       const timeRange = value.get();
 
       if (timeRange.duration !== null) {
-        now(everyMinute);
+        // The range follows the clock only while it can be seen: a hidden
+        // cluster or a minimized window does not refetch its charts every
+        // minute, and catches up when shown again.
+        if (frameActivity.get()) {
+          now(everyMinute);
+        }
+
         const currentTime = getSecondsFromUnixEpoch();
 
         // Predefined duration
