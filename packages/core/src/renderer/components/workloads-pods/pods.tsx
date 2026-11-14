@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import eventStoreInjectable from "../events/store.injectable";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
 import { SiblingsInTabLayout } from "../layout/siblings-in-tab-layout";
+import { getPodControllerKinds } from "./pod-controller-kinds";
 import { getPodContainerPorts } from "./pod-ports-cell";
 import podStoreInjectable from "./store.injectable";
 
@@ -34,6 +35,7 @@ const REFRESH_METRICS_INTERVAL = 10;
 
 const podSearchFields: SearchField<Pod>[] = [
   { id: "status", title: "Status", kind: "text", getValues: (pod) => pod.getStatusMessage() },
+  { id: "controlledBy", title: "Controlled by (kind)", kind: "text", getValues: getPodControllerKinds },
   { id: "node", title: "Node", kind: "text", getValues: (pod) => pod.getNodeName() },
   { id: "ip", title: "Pod IP", kind: "text", getValues: (pod) => pod.status?.podIP },
   { id: "qos", title: "QoS", kind: "text", getValues: (pod) => pod.getQosClass() },
