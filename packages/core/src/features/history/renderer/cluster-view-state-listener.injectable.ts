@@ -27,12 +27,23 @@ const clusterViewStateListenerInjectable = getMessageChannelListenerInjectable({
 
       controller.lastKnown.set(clusterId, state);
 
-      if (current?.clusterId !== clusterId) {
+      if (!current) {
+        return;
+      }
+
+      // A multiview shows several clusters: a step in any of its panes is a
+      // step of the multiview, which going back restores in that pane.
+      const inMultiView = current.rootPath.startsWith("/multiview/");
+
+      if (current.clusterId !== clusterId && !inMultiView) {
         return;
       }
 
       // The first report of a page that was just opened completes its step.
-      timeline.record({ ...current, cluster: state }, { replace: !current.cluster || controller.isRestoring() });
+      timeline.record(
+        { ...current, clusterId, cluster: state },
+        { replace: !current.cluster || controller.isRestoring() },
+      );
     };
   },
 });
