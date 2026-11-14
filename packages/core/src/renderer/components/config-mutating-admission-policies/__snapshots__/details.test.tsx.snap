@@ -131,7 +131,9 @@ exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
           <span
             class="value"
           >
-            <pre>
+            <pre
+              class="expression"
+            >
               Object{ spec: Object.spec{ replicas: 1 } }
             </pre>
           </span>
@@ -163,7 +165,9 @@ exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
           <span
             class="value"
           >
-            <pre>
+            <pre
+              class="expression"
+            >
               [JSONPatch{ op: 'add', path: '/metadata/labels/mutated', value: 'true' }]
             </pre>
           </span>
