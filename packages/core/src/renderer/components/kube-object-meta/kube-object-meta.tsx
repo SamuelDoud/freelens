@@ -4,7 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeObject } from "@freelensapp/kube-object";
+import { Icon } from "@freelensapp/icon";
+import { KubeObject, Pod } from "@freelensapp/kube-object";
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { Link } from "@freelensapp/routing";
 import { withInjectables } from "@ogre-tools/injectable-react";
@@ -22,6 +23,7 @@ import { LinkToNamespace } from "../kube-object-link";
 import { LocaleDate } from "../locale-date";
 import { MonacoEditor } from "../monaco-editor";
 import { WithTooltip } from "../with-tooltip";
+import { PodSpecView } from "../workloads-pods/pod-spec-view/pod-spec-view";
 
 import type { KubeMetaField } from "@freelensapp/kube-object";
 import type { Logger } from "@freelensapp/logger";
@@ -165,6 +167,8 @@ const NonInjectedKubeObjectMeta = observer((props: Dependencies & KubeObjectMeta
     requestKubeResource,
   } = props;
 
+  const [showPodSpec, setShowPodSpec] = useState(false);
+
   if (!object) {
     return null;
   }
@@ -176,6 +180,17 @@ const NonInjectedKubeObjectMeta = observer((props: Dependencies & KubeObjectMeta
   }
 
   const isHidden = (field: KubeMetaField) => hideFields.includes(field);
+  const podSpecToggle = object instanceof Pod && (
+    <Icon
+      material="description"
+      small
+      interactive
+      className="pod-spec-toggle ml-1"
+      data-testid="pod-spec-toggle"
+      tooltip={showPodSpec ? "Hide the pod spec" : "Show how the pod was created"}
+      onClick={() => setShowPodSpec(!showPodSpec)}
+    />
+  );
 
   const {
     selfLink,
@@ -184,6 +199,14 @@ const NonInjectedKubeObjectMeta = observer((props: Dependencies & KubeObjectMeta
   const lastAppliedConfiguration = annotations?.[lastAppliedConfigurationAnnotation];
   const ownerRefs = object.getOwnerRefs();
   const namespace = object.getNs();
+  const controller = ownerRefs.find((ref) => ref.controller) ?? ownerRefs[0];
+  const podSpecView = object instanceof Pod && showPodSpec && (
+    <PodSpecView
+      pod={object}
+      owner={controller && { ref: controller, apiPath: apiManager.lookupApiLink(controller, object) }}
+      requestKubeResource={requestKubeResource}
+    />
+  );
 
   return (
     <>
@@ -236,8 +259,18 @@ const NonInjectedKubeObjectMeta = observer((props: Dependencies & KubeObjectMeta
             <p key={ref.name}>
               {`${ref.kind} `}
               <Link to={getDetailsUrl(apiManager.lookupApiLink(ref, object))}>{ref.name}</Link>
+              {ref === controller && podSpecToggle}
             </p>
           ))}
+          {podSpecView}
+        </DrawerItem>
+      )}
+      {object instanceof Pod && !ownerRefs.length && (
+        <DrawerItem name="Pod spec">
+          <div className="w-full">
+            <p>{podSpecToggle}</p>
+            {podSpecView}
+          </div>
         </DrawerItem>
       )}
       {managedFields && managedFields.length > 0 && (
