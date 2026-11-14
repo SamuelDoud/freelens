@@ -176,7 +176,8 @@ export class Chart extends React.Component<ChartProps> {
       const index = datasets.findIndex((set) => set.id === next.id);
 
       if (index !== -1) {
-        const data = (datasets[index].data = (datasets[index].data ?? []).slice()); // "Clean" mobx observables data to use in ChartJS
+        const dataset = datasets[index];
+        const data = (dataset.data = (dataset.data ?? []).slice()); // "Clean" mobx observables data to use in ChartJS
         const nextData = (next.data ??= []);
 
         data.splice(next.data.length);
@@ -185,13 +186,13 @@ export class Chart extends React.Component<ChartProps> {
           data[dataIndex] = nextData[dataIndex];
         }
 
-        // Merge other fields
+        // Merge the other fields into the same object. Chart.js keeps a
+        // dataset's controller and elements keyed by the dataset object, so a
+        // replaced object counts as a new dataset and animates from zero
+        // instead of from its previous values.
         const { data: _data, ...props } = next;
 
-        datasets[index] = {
-          ...datasets[index],
-          ...props,
-        };
+        Object.assign(dataset, props);
       } else {
         datasets[datasetIndex] = next;
       }
