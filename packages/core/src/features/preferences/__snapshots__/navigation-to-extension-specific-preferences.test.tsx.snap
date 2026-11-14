@@ -158,6 +158,18 @@ exports[`preferences - navigation to extension specific preferences > given in p
                   </div>
                   <div
                     class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
+                    </div>
+                  </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="extension-registered-tab-page-id-metrics-extension-tab"
                     role="tab"
                     tabindex="0"
@@ -1049,6 +1061,18 @@ exports[`preferences - navigation to extension specific preferences > given in p
                   </div>
                 </div>
                 <div
+                  class="Tab flex gap-2 items-center"
+                  data-preference-tab-link-test="ai"
+                  role="tab"
+                  tabindex="0"
+                >
+                  <div
+                    class="label"
+                  >
+                    AI
+                  </div>
+                </div>
+                <div
                   class="Tab flex gap-2 items-center active"
                   data-preference-tab-link-test="extension-registered-tab-page-id-metrics-extension-tab"
                   role="tab"
@@ -1469,6 +1493,18 @@ exports[`preferences - navigation to extension specific preferences > given in p
                     class="label"
                   >
                     Terminal
+                  </div>
+                </div>
+                <div
+                  class="Tab flex gap-2 items-center"
+                  data-preference-tab-link-test="ai"
+                  role="tab"
+                  tabindex="0"
+                >
+                  <div
+                    class="label"
+                  >
+                    AI
                   </div>
                 </div>
                 <div
@@ -1908,6 +1944,18 @@ exports[`preferences - navigation to extension specific preferences > given in p
                 </div>
                 <div
                   class="Tab flex gap-2 items-center"
+                  data-preference-tab-link-test="ai"
+                  role="tab"
+                  tabindex="0"
+                >
+                  <div
+                    class="label"
+                  >
+                    AI
+                  </div>
+                </div>
+                <div
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="extension-registered-tab-page-id-metrics-extension-tab"
                   role="tab"
                   tabindex="0"
@@ -2339,6 +2387,18 @@ exports[`preferences - navigation to extension specific preferences > given in p
                     class="label"
                   >
                     Terminal
+                  </div>
+                </div>
+                <div
+                  class="Tab flex gap-2 items-center"
+                  data-preference-tab-link-test="ai"
+                  role="tab"
+                  tabindex="0"
+                >
+                  <div
+                    class="label"
+                  >
+                    AI
                   </div>
                 </div>
               </div>
@@ -2800,6 +2860,18 @@ exports[`preferences - navigation to extension specific preferences > given in p
                     class="label"
                   >
                     Terminal
+                  </div>
+                </div>
+                <div
+                  class="Tab flex gap-2 items-center"
+                  data-preference-tab-link-test="ai"
+                  role="tab"
+                  tabindex="0"
+                >
+                  <div
+                    class="label"
+                  >
+                    AI
                   </div>
                 </div>
               </div>
@@ -3679,6 +3751,18 @@ exports[`preferences - navigation to extension specific preferences > given in p
                     class="label"
                   >
                     Terminal
+                  </div>
+                </div>
+                <div
+                  class="Tab flex gap-2 items-center"
+                  data-preference-tab-link-test="ai"
+                  role="tab"
+                  tabindex="0"
+                >
+                  <div
+                    class="label"
+                  >
+                    AI
                   </div>
                 </div>
               </div>
@@ -4598,6 +4682,18 @@ exports[`preferences - navigation to extension specific preferences > given in p
                     Terminal
                   </div>
                 </div>
+                <div
+                  class="Tab flex gap-2 items-center"
+                  data-preference-tab-link-test="ai"
+                  role="tab"
+                  tabindex="0"
+                >
+                  <div
+                    class="label"
+                  >
+                    AI
+                  </div>
+                </div>
               </div>
               <div
                 class="TabSeparator"
@@ -5046,6 +5142,18 @@ exports[`preferences - navigation to extension specific preferences > given in p
                       class="label"
                     >
                       Terminal
+                    </div>
+                  </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
                     </div>
                   </div>
                 </div>

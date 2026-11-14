@@ -156,6 +156,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       Terminal
                     </div>
                   </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1038,6 +1050,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       class="label"
                     >
                       Terminal
+                    </div>
+                  </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
                     </div>
                   </div>
                 </div>
@@ -1960,6 +1984,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       class="label"
                     >
                       Terminal
+                    </div>
+                  </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
                     </div>
                   </div>
                 </div>
@@ -2942,6 +2978,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       Terminal
                     </div>
                   </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3862,6 +3910,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       class="label"
                     >
                       Terminal
+                    </div>
+                  </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
                     </div>
                   </div>
                 </div>
@@ -4786,6 +4846,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       Terminal
                     </div>
                   </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -5696,6 +5768,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       class="label"
                     >
                       Terminal
+                    </div>
+                  </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
                     </div>
                   </div>
                 </div>
@@ -6652,6 +6736,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       class="label"
                     >
                       Terminal
+                    </div>
+                  </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
                     </div>
                   </div>
                 </div>
@@ -7678,6 +7774,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       Terminal
                     </div>
                   </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -8632,6 +8740,18 @@ exports[`add helm repository from list in preferences > when navigating to prefe
                       class="label"
                     >
                       Terminal
+                    </div>
+                  </div>
+                  <div
+                    class="Tab flex gap-2 items-center"
+                    data-preference-tab-link-test="ai"
+                    role="tab"
+                    tabindex="0"
+                  >
+                    <div
+                      class="label"
+                    >
+                      AI
                     </div>
                   </div>
                 </div>

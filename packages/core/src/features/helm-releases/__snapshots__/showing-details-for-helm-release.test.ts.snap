@@ -277,6 +277,14 @@ exports[`showing details for helm release > given application is started > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            />
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             >
               <div
                 class="SidebarItem"
@@ -1199,6 +1207,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
@@ -2427,6 +2443,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-6"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-6"
               aria-disabled="false"
@@ -3747,6 +3771,14 @@ exports[`showing details for helm release > given application is started > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            />
+            <div
+              aria-describedby="DndDescribedBy-26"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             >
               <div
                 class="SidebarItem"
@@ -5005,6 +5037,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-28"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
@@ -6571,6 +6611,14 @@ exports[`showing details for helm release > given application is started > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            />
+            <div
+              aria-describedby="DndDescribedBy-33"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             >
               <div
                 class="SidebarItem"
@@ -8075,6 +8123,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-40"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-40"
               aria-disabled="false"
@@ -9641,6 +9697,14 @@ exports[`showing details for helm release > given application is started > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            />
+            <div
+              aria-describedby="DndDescribedBy-48"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             >
               <div
                 class="SidebarItem"
@@ -10870,6 +10934,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-43"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-43"
               aria-disabled="false"
@@ -12132,6 +12204,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-37"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
@@ -13698,6 +13778,14 @@ exports[`showing details for helm release > given application is started > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            />
+            <div
+              aria-describedby="DndDescribedBy-30"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             >
               <div
                 class="SidebarItem"
@@ -14956,6 +15044,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-22"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-22"
               aria-disabled="false"
@@ -16278,6 +16374,14 @@ exports[`showing details for helm release > given application is started > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            />
+            <div
+              aria-describedby="DndDescribedBy-18"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             >
               <div
                 class="SidebarItem"
@@ -17475,6 +17579,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-20"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-20"
               aria-disabled="false"
@@ -18795,6 +18907,14 @@ exports[`showing details for helm release > given application is started > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            />
+            <div
+              aria-describedby="DndDescribedBy-10"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             >
               <div
                 class="SidebarItem"
@@ -20084,6 +20204,14 @@ exports[`showing details for helm release > given application is started > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            />
+            <div
+              aria-describedby="DndDescribedBy-15"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             >
               <div
                 class="SidebarItem"
@@ -21342,6 +21470,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-17"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-17"
               aria-disabled="false"
@@ -22877,6 +23013,14 @@ exports[`showing details for helm release > given application is started > when 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-3"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-3"
               aria-disabled="false"

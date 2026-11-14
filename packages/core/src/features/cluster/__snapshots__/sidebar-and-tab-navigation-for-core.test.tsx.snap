@@ -315,6 +315,14 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          />
+          <div
+            aria-describedby="DndDescribedBy-9"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           >
             <div
               class="SidebarItem"
@@ -1000,6 +1008,14 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-11"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-11"
             aria-disabled="false"
@@ -1762,6 +1778,14 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-14"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-14"
             aria-disabled="false"
@@ -2556,6 +2580,14 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          />
+          <div
+            aria-describedby="DndDescribedBy-17"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           >
             <div
               class="SidebarItem"
@@ -3116,6 +3148,14 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-0"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
@@ -3753,6 +3793,14 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-4"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-4"
             aria-disabled="false"
@@ -4469,6 +4517,14 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-7"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-7"
             aria-disabled="false"
