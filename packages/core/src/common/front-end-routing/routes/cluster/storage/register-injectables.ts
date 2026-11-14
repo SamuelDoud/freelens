@@ -6,13 +6,33 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import { registerInjectables as registerCsiDriversInjectables } from "./csi-drivers/register-injectables";
+import { registerInjectables as registerCsiNodesInjectables } from "./csi-nodes/register-injectables";
+import { registerInjectables as registerCsiStorageCapacitiesInjectables } from "./csi-storage-capacities/register-injectables";
 import { registerInjectables as registerPersistentVolumeClaimsInjectables } from "./persistent-volume-claims/register-injectables";
 import { registerInjectables as registerPersistentVolumesInjectables } from "./persistent-volumes/register-injectables";
 import { registerInjectables as registerStorageClassesInjectables } from "./storage-classes/register-injectables";
+import { registerInjectables as registerVolumeAttachmentsInjectables } from "./volume-attachments/register-injectables";
+import { registerInjectables as registerVolumeAttributesClassesInjectables } from "./volume-attributes-classes/register-injectables";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
+  try {
+    registerCsiDriversInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerCsiNodesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerCsiStorageCapacitiesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
   try {
     registerPersistentVolumeClaimsInjectables(di);
   } catch (e) {
@@ -25,6 +45,16 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerStorageClassesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerVolumeAttachmentsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerVolumeAttributesClassesInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

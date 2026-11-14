@@ -6,16 +6,20 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import { registerInjectables as registerApiServicesInjectables } from "./api-services/register-injectables";
 import { registerInjectables as registerConfigMapsInjectables } from "./config-maps/register-injectables";
+import { registerInjectables as registerFlowSchemasInjectables } from "./flow-schemas/register-injectables";
 import { registerInjectables as registerHorizontalPodAutoscalersInjectables } from "./horizontal-pod-autoscalers/register-injectables";
 import { registerInjectables as registerLeasesInjectables } from "./leases/register-injectables";
 import { registerInjectables as registerLimitRangesInjectables } from "./limit-ranges/register-injectables";
 import { registerInjectables as registerMutatingWebhookConfigurationsInjectables } from "./mutating-webhook-configurations/register-injectables";
 import { registerInjectables as registerPodDisruptionBudgetsInjectables } from "./pod-disruption-budgets/register-injectables";
 import { registerInjectables as registerPriorityClassesInjectables } from "./priority-classes/register-injectables";
+import { registerInjectables as registerPriorityLevelConfigurationsInjectables } from "./priority-level-configurations/register-injectables";
 import { registerInjectables as registerResourceQuotasInjectables } from "./resource-quotas/register-injectables";
 import { registerInjectables as registerRuntimeClassesInjectables } from "./runtime-classes/register-injectables";
 import { registerInjectables as registerSecretsInjectables } from "./secrets/register-injectables";
+import { registerInjectables as registerStorageVersionMigrationsInjectables } from "./storage-version-migrations/register-injectables";
 import { registerInjectables as registerValidatingAdmissionPoliciesInjectables } from "./validating-admission-policies/register-injectables";
 import { registerInjectables as registerValidatingAdmissionPolicyBindingsInjectables } from "./validating-admission-policy-bindings/register-injectables";
 import { registerInjectables as registerValidatingWebhookConfigurationsInjectables } from "./validating-webhook-configurations/register-injectables";
@@ -25,7 +29,17 @@ import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
+    registerApiServicesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     registerConfigMapsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerFlowSchemasInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -60,6 +74,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    registerPriorityLevelConfigurationsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     registerResourceQuotasInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
@@ -71,6 +90,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerSecretsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerStorageVersionMigrationsInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

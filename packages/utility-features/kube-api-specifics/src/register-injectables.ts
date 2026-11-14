@@ -6,21 +6,32 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import { apiServiceApiInjectable } from "./specifics/api-service-api.injectable";
+import { certificateSigningRequestApiInjectable } from "./specifics/certificate-signing-request-api.injectable";
 import { clusterApiInjectable } from "./specifics/cluster.api.injectable";
 import { clusterRoleApiInjectable } from "./specifics/cluster-role.api.injectable";
 import { clusterRoleBindingApiInjectable } from "./specifics/cluster-role-binding.api.injectable";
+import { clusterTrustBundleApiInjectable } from "./specifics/cluster-trust-bundle-api.injectable";
 import { componentStatusApiInjectable } from "./specifics/component-status.api.injectable";
 import { configMapApiInjectable } from "./specifics/config-map.api.injectable";
+import { controllerRevisionApiInjectable } from "./specifics/controller-revision-api.injectable";
 import { cronJobApiInjectable } from "./specifics/cron-job.api.injectable";
+import { csiDriverApiInjectable } from "./specifics/csi-driver-api.injectable";
+import { csiNodeApiInjectable } from "./specifics/csi-node-api.injectable";
+import { csiStorageCapacityApiInjectable } from "./specifics/csi-storage-capacity-api.injectable";
 import { customResourceDefinitionApiInjectable } from "./specifics/custom-resource-definition.api.injectable";
 import { daemonSetApiInjectable } from "./specifics/daemon-set.api.injectable";
 import { deploymentApiInjectable } from "./specifics/deployment.api.injectable";
+import { deviceClassApiInjectable } from "./specifics/device-class-api.injectable";
+import { deviceTaintRuleApiInjectable } from "./specifics/device-taint-rule-api.injectable";
 import { endpointsApiInjectable } from "./specifics/endpoint.api.injectable";
 import { endpointSliceApiInjectable } from "./specifics/endpoint-slice.api.injectable";
 import { kubeEventApiInjectable } from "./specifics/event.api.injectable";
+import { flowSchemaApiInjectable } from "./specifics/flow-schema-api.injectable";
 import { horizontalPodAutoscalerApiInjectable } from "./specifics/horizontal-pod-autoscaler.api.injectable";
 import { ingressApiInjectable } from "./specifics/ingress.api.injectable";
 import { ingressClassApiInjectable } from "./specifics/ingress-class.api.injectable";
+import { ipAddressApiInjectable } from "./specifics/ip-address-api.injectable";
 import { jobApiInjectable } from "./specifics/job.api.injectable";
 import { leaseApiInjectable } from "./specifics/lease.api.injectable";
 import { limitRangeApiInjectable } from "./specifics/limit-range.api.injectable";
@@ -33,13 +44,19 @@ import { nodeMetricsApiInjectable } from "./specifics/node-metrics.api.injectabl
 import { persistentVolumeApiInjectable } from "./specifics/persistent-volume.api.injectable";
 import { persistentVolumeClaimApiInjectable } from "./specifics/persistent-volume-claim.api.injectable";
 import { podApiInjectable } from "./specifics/pod.api.injectable";
+import { podCertificateRequestApiInjectable } from "./specifics/pod-certificate-request-api.injectable";
 import { podDisruptionBudgetApiInjectable } from "./specifics/pod-disruption-budget.api.injectable";
 import { podMetricsApiInjectable } from "./specifics/pod-metrics.api.injectable";
 import { podSecurityPolicyApiInjectable } from "./specifics/pod-security-policy.api.injectable";
+import { podTemplateApiInjectable } from "./specifics/pod-template-api.injectable";
 import { priorityClassApiInjectable } from "./specifics/priority-class.api.injectable";
+import { priorityLevelConfigurationApiInjectable } from "./specifics/priority-level-configuration-api.injectable";
 import { replicaSetApiInjectable } from "./specifics/replica-set.api.injectable";
 import { replicationControllerApiInjectable } from "./specifics/replication-controller.api.injectable";
+import { resourceClaimApiInjectable } from "./specifics/resource-claim-api.injectable";
+import { resourceClaimTemplateApiInjectable } from "./specifics/resource-claim-template-api.injectable";
 import { resourceQuotaApiInjectable } from "./specifics/resource-quota.api.injectable";
+import { resourceSliceApiInjectable } from "./specifics/resource-slice-api.injectable";
 import { roleApiInjectable } from "./specifics/role.api.injectable";
 import { roleBindingApiInjectable } from "./specifics/role-binding.api.injectable";
 import { runtimeClassApiInjectable } from "./specifics/runtime-class.api.injectable";
@@ -47,16 +64,30 @@ import { secretApiInjectable } from "./specifics/secret.api.injectable";
 import { selfSubjectRulesReviewApiInjectable } from "./specifics/self-subject-rules-reviews.api.injectable";
 import { serviceApiInjectable } from "./specifics/service.api.injectable";
 import { serviceAccountApiInjectable } from "./specifics/service-account.api.injectable";
+import { serviceCidrApiInjectable } from "./specifics/service-cidr-api.injectable";
 import { statefulSetApiInjectable } from "./specifics/stateful-set.api.injectable";
 import { storageClassApiInjectable } from "./specifics/storage-class.api.injectable";
+import { storageVersionMigrationApiInjectable } from "./specifics/storage-version-migration-api.injectable";
 import { validatingAdmissionPolicyApiInjectable } from "./specifics/validating-admission-policy-api.injectable";
 import { validatingAdmissionPolicyBindingApiInjectable } from "./specifics/validating-admission-policy-binding-api.injectable";
 import { validatingWebhookConfigurationApiInjectable } from "./specifics/validating-webhook-configuration-api.injectable";
 import { verticalPodAutoscalerApiInjectable } from "./specifics/vertical-pod-autoscaler.api.injectable";
+import { volumeAttachmentApiInjectable } from "./specifics/volume-attachment-api.injectable";
+import { volumeAttributesClassApiInjectable } from "./specifics/volume-attributes-class-api.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
+  try {
+    di.register(apiServiceApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(certificateSigningRequestApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
   try {
     di.register(clusterApiInjectable);
   } catch (e) {
@@ -73,6 +104,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(clusterTrustBundleApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(componentStatusApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
@@ -83,7 +119,27 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(controllerRevisionApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(cronJobApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(csiDriverApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(csiNodeApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(csiStorageCapacityApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -103,12 +159,27 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(deviceClassApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(deviceTaintRuleApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(endpointSliceApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
     di.register(endpointsApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(flowSchemaApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -124,6 +195,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(ingressClassApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(ipAddressApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -193,6 +269,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(podCertificateRequestApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(podDisruptionBudgetApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
@@ -208,7 +289,17 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(podTemplateApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(priorityClassApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(priorityLevelConfigurationApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -223,7 +314,22 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(resourceClaimApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(resourceClaimTemplateApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(resourceQuotaApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(resourceSliceApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -263,12 +369,22 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(serviceCidrApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(statefulSetApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
     di.register(storageClassApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(storageVersionMigrationApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -289,6 +405,16 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(verticalPodAutoscalerApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(volumeAttachmentApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(volumeAttributesClassApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

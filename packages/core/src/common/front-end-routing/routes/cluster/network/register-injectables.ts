@@ -10,8 +10,10 @@ import { registerInjectables as registerEndpointSlicesInjectables } from "./endp
 import { registerInjectables as registerEndpointsInjectables } from "./endpoints/register-injectables";
 import { registerInjectables as registerIngressClassInjectables } from "./ingress-class/register-injectables";
 import { registerInjectables as registerIngressesInjectables } from "./ingresses/register-injectables";
+import { registerInjectables as registerIpAddressesInjectables } from "./ip-addresses/register-injectables";
 import { registerInjectables as registerNetworkPoliciesInjectables } from "./network-policies/register-injectables";
 import { registerInjectables as registerPortForwardsInjectables } from "./port-forwards/register-injectables";
+import { registerInjectables as registerServiceCidrsInjectables } from "./service-cidrs/register-injectables";
 import { registerInjectables as registerServicesInjectables } from "./services/register-injectables";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
@@ -38,12 +40,22 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    registerIpAddressesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     registerNetworkPoliciesInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
     registerPortForwardsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerServiceCidrsInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

@@ -14,6 +14,8 @@ import { registerInjectables as registerClusterManagerInjectables } from "./clus
 import { registerInjectables as registerClusterSettingsInjectables } from "./cluster-settings/register-injectables";
 import { registerInjectables as registerCommandPaletteInjectables } from "./command-palette/register-injectables";
 import { registerInjectables as registerConfigInjectables } from "./config/register-injectables";
+import { registerInjectables as registerConfigApiServicesInjectables } from "./config-api-services/register-injectables";
+import { registerInjectables as registerConfigFlowSchemasInjectables } from "./config-flow-schemas/register-injectables";
 import { registerInjectables as registerConfigHorizontalPodAutoscalersInjectables } from "./config-horizontal-pod-autoscalers/register-injectables";
 import { registerInjectables as registerConfigLeasesInjectables } from "./config-leases/register-injectables";
 import { registerInjectables as registerConfigLimitRangesInjectables } from "./config-limit-ranges/register-injectables";
@@ -21,9 +23,11 @@ import { registerInjectables as registerConfigMapsInjectables } from "./config-m
 import { registerInjectables as registerConfigMutatingWebhookConfigurationsInjectables } from "./config-mutating-webhook-configurations/register-injectables";
 import { registerInjectables as registerConfigPodDisruptionBudgetsInjectables } from "./config-pod-disruption-budgets/register-injectables";
 import { registerInjectables as registerConfigPriorityClassesInjectables } from "./config-priority-classes/register-injectables";
+import { registerInjectables as registerConfigPriorityLevelConfigurationsInjectables } from "./config-priority-level-configurations/register-injectables";
 import { registerInjectables as registerConfigResourceQuotasInjectables } from "./config-resource-quotas/register-injectables";
 import { registerInjectables as registerConfigRuntimeClassesInjectables } from "./config-runtime-classes/register-injectables";
 import { registerInjectables as registerConfigSecretsInjectables } from "./config-secrets/register-injectables";
+import { registerInjectables as registerConfigStorageVersionMigrationsInjectables } from "./config-storage-version-migrations/register-injectables";
 import { registerInjectables as registerConfigValidatingAdmissionPoliciesInjectables } from "./config-validating-admission-policies/register-injectables";
 import { registerInjectables as registerConfigValidatingAdmissionPolicyBindingsInjectables } from "./config-validating-admission-policy-bindings/register-injectables";
 import { registerInjectables as registerConfigValidatingWebhookConfigurationsInjectables } from "./config-validating-webhook-configurations/register-injectables";
@@ -33,6 +37,12 @@ import { registerInjectables as registerCountdownInjectables } from "./countdown
 import { registerInjectables as registerCustomResourceDefinitionsInjectables } from "./custom-resource-definitions/register-injectables";
 import { registerInjectables as registerCustomResourcesInjectables } from "./custom-resources/register-injectables";
 import { registerInjectables as registerDeleteClusterDialogInjectables } from "./delete-cluster-dialog/register-injectables";
+import { registerInjectables as registerDevicesInjectables } from "./devices/register-injectables";
+import { registerInjectables as registerDevicesDeviceClassesInjectables } from "./devices-device-classes/register-injectables";
+import { registerInjectables as registerDevicesDeviceTaintRulesInjectables } from "./devices-device-taint-rules/register-injectables";
+import { registerInjectables as registerDevicesResourceClaimTemplatesInjectables } from "./devices-resource-claim-templates/register-injectables";
+import { registerInjectables as registerDevicesResourceClaimsInjectables } from "./devices-resource-claims/register-injectables";
+import { registerInjectables as registerDevicesResourceSlicesInjectables } from "./devices-resource-slices/register-injectables";
 import { registerInjectables as registerDockInjectables } from "./dock/register-injectables";
 import { registerInjectables as registerDrawerInjectables } from "./drawer/register-injectables";
 import { registerInjectables as registerEntitySettingsInjectables } from "./entity-settings/register-injectables";
@@ -55,8 +65,10 @@ import { registerInjectables as registerNetworkInjectables } from "./network/reg
 import { registerInjectables as registerNetworkEndpointSlicesInjectables } from "./network-endpoint-slices/register-injectables";
 import { registerInjectables as registerNetworkEndpointsInjectables } from "./network-endpoints/register-injectables";
 import { registerInjectables as registerNetworkIngressesInjectables } from "./network-ingresses/register-injectables";
+import { registerInjectables as registerNetworkIpAddressesInjectables } from "./network-ip-addresses/register-injectables";
 import { registerInjectables as registerNetworkPoliciesInjectables } from "./network-policies/register-injectables";
 import { registerInjectables as registerNetworkPortForwardsInjectables } from "./network-port-forwards/register-injectables";
+import { registerInjectables as registerNetworkServiceCidrsInjectables } from "./network-service-cidrs/register-injectables";
 import { registerInjectables as registerNetworkServicesInjectables } from "./network-services/register-injectables";
 import { registerInjectables as registerNodePodMenuInjectables } from "./node-pod-menu/register-injectables";
 import { registerInjectables as registerNodesInjectables } from "./nodes/register-injectables";
@@ -65,17 +77,27 @@ import { registerInjectables as registerRenderDelayInjectables } from "./render-
 import { registerInjectables as registerStatusBarInjectables } from "./status-bar/register-injectables";
 import { registerInjectables as registerStorageInjectables } from "./storage/register-injectables";
 import { registerInjectables as registerStorageClassesInjectables } from "./storage-classes/register-injectables";
+import { registerInjectables as registerStorageCsiDriversInjectables } from "./storage-csi-drivers/register-injectables";
+import { registerInjectables as registerStorageCsiNodesInjectables } from "./storage-csi-nodes/register-injectables";
+import { registerInjectables as registerStorageCsiStorageCapacitiesInjectables } from "./storage-csi-storage-capacities/register-injectables";
+import { registerInjectables as registerStorageVolumeAttachmentsInjectables } from "./storage-volume-attachments/register-injectables";
+import { registerInjectables as registerStorageVolumeAttributesClassesInjectables } from "./storage-volume-attributes-classes/register-injectables";
 import { registerInjectables as registerStorageVolumeClaimsInjectables } from "./storage-volume-claims/register-injectables";
 import { registerInjectables as registerStorageVolumesInjectables } from "./storage-volumes/register-injectables";
 import { registerInjectables as registerTableInjectables } from "./table/register-injectables";
 import { registerInjectables as registerUserManagementInjectables } from "./user-management/register-injectables";
+import { registerInjectables as registerUserManagementCertificateSigningRequestsInjectables } from "./user-management-certificate-signing-requests/register-injectables";
+import { registerInjectables as registerUserManagementClusterTrustBundlesInjectables } from "./user-management-cluster-trust-bundles/register-injectables";
+import { registerInjectables as registerUserManagementPodCertificateRequestsInjectables } from "./user-management-pod-certificate-requests/register-injectables";
 import { registerInjectables as registerWelcomeInjectables } from "./welcome/register-injectables";
 import { registerInjectables as registerWorkloadsInjectables } from "./workloads/register-injectables";
+import { registerInjectables as registerWorkloadsControllerRevisionsInjectables } from "./workloads-controller-revisions/register-injectables";
 import { registerInjectables as registerWorkloadsCronjobsInjectables } from "./workloads-cronjobs/register-injectables";
 import { registerInjectables as registerWorkloadsDaemonsetsInjectables } from "./workloads-daemonsets/register-injectables";
 import { registerInjectables as registerWorkloadsDeploymentsInjectables } from "./workloads-deployments/register-injectables";
 import { registerInjectables as registerWorkloadsJobsInjectables } from "./workloads-jobs/register-injectables";
 import { registerInjectables as registerWorkloadsOverviewInjectables } from "./workloads-overview/register-injectables";
+import { registerInjectables as registerWorkloadsPodTemplatesInjectables } from "./workloads-pod-templates/register-injectables";
 import { registerInjectables as registerWorkloadsPodsInjectables } from "./workloads-pods/register-injectables";
 import { registerInjectables as registerWorkloadsReplicasetsInjectables } from "./workloads-replicasets/register-injectables";
 import { registerInjectables as registerWorkloadsReplicationControllersInjectables } from "./workloads-replication-controllers/register-injectables";
@@ -125,6 +147,16 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    registerConfigApiServicesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerConfigFlowSchemasInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     registerConfigHorizontalPodAutoscalersInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
@@ -160,6 +192,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    registerConfigPriorityLevelConfigurationsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     registerConfigResourceQuotasInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
@@ -171,6 +208,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerConfigSecretsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerConfigStorageVersionMigrationsInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -216,6 +258,36 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerDeleteClusterDialogInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerDevicesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerDevicesDeviceClassesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerDevicesDeviceTaintRulesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerDevicesResourceClaimTemplatesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerDevicesResourceClaimsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerDevicesResourceSlicesInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -330,12 +402,22 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    registerNetworkIpAddressesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     registerNetworkPoliciesInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
     registerNetworkPortForwardsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerNetworkServiceCidrsInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -380,6 +462,31 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    registerStorageCsiDriversInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerStorageCsiNodesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerStorageCsiStorageCapacitiesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerStorageVolumeAttachmentsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerStorageVolumeAttributesClassesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     registerStorageVolumeClaimsInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
@@ -400,12 +507,32 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    registerUserManagementCertificateSigningRequestsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerUserManagementClusterTrustBundlesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerUserManagementPodCertificateRequestsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     registerWelcomeInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
     registerWorkloadsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerWorkloadsControllerRevisionsInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -431,6 +558,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerWorkloadsOverviewInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerWorkloadsPodTemplatesInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

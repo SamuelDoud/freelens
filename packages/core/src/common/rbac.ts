@@ -45,7 +45,28 @@ export type KubeResource =
   | "mutatingwebhookconfigurations"
   | "validatingadmissionpolicies"
   | "validatingadmissionpolicybindings"
-  | "validatingwebhookconfigurations";
+  | "validatingwebhookconfigurations"
+  | "podtemplates"
+  | "controllerrevisions"
+  | "flowschemas"
+  | "prioritylevelconfigurations"
+  | "apiservices"
+  | "storageversionmigrations"
+  | "servicecidrs"
+  | "ipaddresses"
+  | "volumeattributesclasses"
+  | "volumeattachments"
+  | "csidrivers"
+  | "csinodes"
+  | "csistoragecapacities"
+  | "certificatesigningrequests"
+  | "clustertrustbundles"
+  | "podcertificaterequests"
+  | "deviceclasses"
+  | "resourceslices"
+  | "resourceclaims"
+  | "resourceclaimtemplates"
+  | "devicetaintrules";
 
 export interface KubeApiResource {
   kind: string;
@@ -274,5 +295,110 @@ export const apiResourceRecord: Record<KubeResource, KubeApiResourceData> = {
     kind: "VerticalPodAutoscaler",
     group: "autoscaling.k8s.io",
     namespaced: true,
+  },
+  podtemplates: {
+    kind: "PodTemplate",
+    group: "",
+    namespaced: true,
+  },
+  controllerrevisions: {
+    kind: "ControllerRevision",
+    group: "apps",
+    namespaced: true,
+  },
+  flowschemas: {
+    kind: "FlowSchema",
+    group: "flowcontrol.apiserver.k8s.io",
+    namespaced: false,
+  },
+  prioritylevelconfigurations: {
+    kind: "PriorityLevelConfiguration",
+    group: "flowcontrol.apiserver.k8s.io",
+    namespaced: false,
+  },
+  apiservices: {
+    kind: "APIService",
+    group: "apiregistration.k8s.io",
+    namespaced: false,
+  },
+  storageversionmigrations: {
+    kind: "StorageVersionMigration",
+    group: "storagemigration.k8s.io",
+    namespaced: false,
+  },
+  servicecidrs: {
+    kind: "ServiceCIDR",
+    group: "networking.k8s.io",
+    namespaced: false,
+  },
+  ipaddresses: {
+    kind: "IPAddress",
+    group: "networking.k8s.io",
+    namespaced: false,
+  },
+  volumeattributesclasses: {
+    kind: "VolumeAttributesClass",
+    group: "storage.k8s.io",
+    namespaced: false,
+  },
+  volumeattachments: {
+    kind: "VolumeAttachment",
+    group: "storage.k8s.io",
+    namespaced: false,
+  },
+  csidrivers: {
+    kind: "CSIDriver",
+    group: "storage.k8s.io",
+    namespaced: false,
+  },
+  csinodes: {
+    kind: "CSINode",
+    group: "storage.k8s.io",
+    namespaced: false,
+  },
+  csistoragecapacities: {
+    kind: "CSIStorageCapacity",
+    group: "storage.k8s.io",
+    namespaced: true,
+  },
+  certificatesigningrequests: {
+    kind: "CertificateSigningRequest",
+    group: "certificates.k8s.io",
+    namespaced: false,
+  },
+  clustertrustbundles: {
+    kind: "ClusterTrustBundle",
+    group: "certificates.k8s.io",
+    namespaced: false,
+  },
+  podcertificaterequests: {
+    kind: "PodCertificateRequest",
+    group: "certificates.k8s.io",
+    namespaced: true,
+  },
+  deviceclasses: {
+    kind: "DeviceClass",
+    group: "resource.k8s.io",
+    namespaced: false,
+  },
+  resourceslices: {
+    kind: "ResourceSlice",
+    group: "resource.k8s.io",
+    namespaced: false,
+  },
+  resourceclaims: {
+    kind: "ResourceClaim",
+    group: "resource.k8s.io",
+    namespaced: true,
+  },
+  resourceclaimtemplates: {
+    kind: "ResourceClaimTemplate",
+    group: "resource.k8s.io",
+    namespaced: true,
+  },
+  devicetaintrules: {
+    kind: "DeviceTaintRule",
+    group: "resource.k8s.io",
+    namespaced: false,
   },
 };
