@@ -8,7 +8,7 @@ import { Icon } from "@freelensapp/icon";
 import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import openConfirmDialogInjectable from "../../../renderer/components/confirm-dialog/open.injectable";
 import { Input } from "../../../renderer/components/input";
 import persistentSearchStoreInjectable from "../../../renderer/components/input/persistent-search-store.injectable";
@@ -61,12 +61,18 @@ interface Dependencies {
   };
 }
 
-const describeConditions = <I,>(conditions: readonly SearchCondition[], fields: readonly SearchField<I>[]) => {
-  const titles = new Map([[anyFieldId, "Any field"], ...fields.map((field) => [field.id, field.title] as const)]);
+const fieldTitles = <I,>(fields: readonly SearchField<I>[]) =>
+  new Map([[anyFieldId, "Any field"], ...fields.map((field) => [field.id, field.title] as const)]);
 
-  return conditions
-    .filter(isConditionInEffect)
-    .map((condition) => describeCondition(condition, titles.get(condition.field) ?? condition.field));
+/** A chip's label: the condition in a line, with an ellipsis for a value still to fill in. */
+const chipLabel = (condition: SearchCondition, titles: Map<string, string>) => {
+  const title = titles.get(condition.field) ?? condition.field;
+
+  if (!condition.value.trim()) {
+    return `${describeCondition({ ...condition, value: "" }, title).replace(/\s*("")?$/, "")} …`;
+  }
+
+  return describeCondition(condition, title);
 };
 
 const injectDependencies = (di: DiContainerForInjection): Dependencies => {
@@ -109,22 +115,85 @@ interface AdvancedSearchControlsProps<I> {
   view: AdvancedSearchView<I>;
 }
 
+/** Adds a condition, open for editing, at the end of the list's conditions. */
+const addOpenCondition = <I,>(view: AdvancedSearchView<I>, state: AdvancedSearchState) => {
+  const condition = createCondition(view.fields[0], Date.now());
+
+  state.addCondition(view.viewKey, condition);
+  state.setOpenCondition(view.viewKey, condition.id);
+};
+
+/** The name field of the rename dialog, which tells the dialog the name as it is typed. */
+const RenameInput = ({ initial, onChange }: { initial: string; onChange: (name: string) => void }) => {
+  const [name, setName] = useState(initial);
+
+  return (
+    <Input
+      autoFocus
+      data-testid="saved-search-rename-input"
+      value={name}
+      onChange={(value) => {
+        setName(value);
+        onChange(value);
+      }}
+    />
+  );
+};
+
+const renameSavedSearch = (search: SavedSearch, { savedSearches, openConfirmDialog }: Dependencies) => {
+  let name = search.name;
+
+  openConfirmDialog({
+    message: (
+      <div className="flex flex-col gap-2">
+        <span>Rename the saved search</span>
+        <RenameInput
+          initial={search.name}
+          onChange={(value) => {
+            name = value;
+          }}
+        />
+      </div>
+    ),
+    labelOk: "Rename",
+    ok: () => {
+      if (name.trim()) {
+        savedSearches.rename(search.id, name);
+      }
+    },
+  });
+};
+
+const deleteSavedSearch = (search: SavedSearch, { savedSearches, openConfirmDialog }: Dependencies) =>
+  openConfirmDialog({
+    message: (
+      <p>
+        Delete the saved search <b>{search.name}</b>?
+      </p>
+    ),
+    labelOk: "Delete",
+    ok: () => savedSearches.remove(search.id),
+  });
+
 const NonInjectedAdvancedSearchControls = observer(
-  <I,>({ view, state, savedSearches, quickSearch }: AdvancedSearchControlsProps<I> & Dependencies) => {
+  <I,>({ view, ...dependencies }: AdvancedSearchControlsProps<I> & Dependencies) => {
+    const { state, savedSearches, quickSearch } = dependencies;
     const { viewKey } = view;
     const activeCount = state.getConditions(viewKey).filter(isConditionInEffect).length;
     const saved = savedSearches.forView(viewKey);
-    const isOpen = state.isPanelOpen(viewKey);
+
+    if (view.fields.length === 0) {
+      return null;
+    }
 
     return (
       <div className="flex items-center gap-1">
         <Icon
           material="tune"
           interactive
-          active={isOpen}
           data-testid="advanced-search-toggle"
-          tooltip={activeCount > 0 ? `Advanced search (${activeCount} active)` : "Advanced search"}
-          onClick={() => state.setPanelOpen(viewKey, !isOpen)}
+          tooltip={activeCount > 0 ? `Add a condition (${activeCount} active)` : "Advanced search: add a condition"}
+          onClick={() => addOpenCondition(view, state)}
         />
         {activeCount > 0 && <span data-testid="advanced-search-active-count">{activeCount}</span>}
         <MenuActions
@@ -140,13 +209,38 @@ const NonInjectedAdvancedSearchControls = observer(
               data-testid={`saved-search-menu-item-${search.name}`}
               onClick={() => applySavedSearch(search, { state, quickSearch })}
             >
-              {search.name}
+              <span className={styles.savedName} title={search.conditions.length ? undefined : "No conditions"}>
+                {search.name}
+              </span>
+              <Icon
+                material="edit"
+                small
+                interactive
+                tooltip="Rename"
+                data-testid={`saved-search-rename-${search.name}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  renameSavedSearch(search, dependencies);
+                }}
+              />
+              <Icon
+                material="delete"
+                small
+                interactive
+                tooltip="Delete"
+                data-testid={`saved-search-delete-${search.name}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  deleteSavedSearch(search, dependencies);
+                }}
+              />
             </MenuItem>
           ))}
-          {saved.length === 0 && <MenuItem disabled>No saved searches for this list</MenuItem>}
-          <MenuItem data-testid="saved-searches-manage" onClick={() => state.setPanelOpen(viewKey, true)}>
-            Save or manage searches…
-          </MenuItem>
+          {saved.length === 0 && (
+            <MenuItem disabled>
+              No saved searches for this list. Save one from the conditions under the header.
+            </MenuItem>
+          )}
         </MenuActions>
       </div>
     );
@@ -159,121 +253,210 @@ export const AdvancedSearchControls = withInjectables<Dependencies, AdvancedSear
 ) as <I>(props: AdvancedSearchControlsProps<I>) => React.ReactElement;
 
 // ---------------------------------------------------------------------------
-// One condition
+// Closing a popup on a click outside it or on Escape
 
-interface ConditionRowProps<I> {
+const useDismiss = (open: boolean, ref: React.RefObject<HTMLElement | null>, dismiss: () => void) => {
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+
+      // The dropdowns of a Select can render their menus elsewhere in the page.
+      if (target && !ref.current?.contains(target) && !(target as Element).closest?.(".Select__menu")) {
+        dismiss();
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        dismiss();
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown, true);
+    document.addEventListener("keydown", onKeyDown, true);
+
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown, true);
+      document.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [open, ref, dismiss]);
+};
+
+// ---------------------------------------------------------------------------
+// One condition: a chip, or open as its controls
+
+interface ConditionChipProps<I> {
   index: number;
   condition: SearchCondition;
   fields: readonly SearchField<I>[];
+  titles: Map<string, string>;
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
   onChange: (condition: SearchCondition) => void;
   onRemove: () => void;
 }
 
-const ConditionRow = observer(<I,>({ index, condition, fields, onChange, onRemove }: ConditionRowProps<I>) => {
-  const error = getConditionError(condition);
-  const operators = condition.kind === "text" ? textSearchOperators : timeSearchOperators;
+const ConditionChip = observer(
+  <I,>({ index, condition, fields, titles, isOpen, onOpen, onClose, onChange, onRemove }: ConditionChipProps<I>) => {
+    const error = getConditionError(condition);
+    const operators = condition.kind === "text" ? textSearchOperators : timeSearchOperators;
+    const ref = useRef<HTMLDivElement>(null);
 
-  const renderValue = () => {
-    if (condition.kind === "time" && !isRelativeTimeOperator(condition.operator)) {
+    useDismiss(isOpen, ref, onClose);
+
+    if (!isOpen) {
       return (
-        <input
-          type="datetime-local"
-          className={styles.dateInput}
-          data-testid={`advanced-search-value-${index}`}
-          value={condition.value}
-          onChange={(event) => onChange({ ...condition, value: event.target.value })}
-        />
+        <div
+          className={cssNames(styles.chip, { [styles.chipInvalid]: Boolean(error) })}
+          data-testid={`advanced-search-chip-${index}`}
+          title={error}
+          role="button"
+          tabIndex={0}
+          onClick={onOpen}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onOpen();
+            }
+          }}
+        >
+          <span className={styles.chipLabel}>{chipLabel(condition, titles)}</span>
+          <Icon
+            material="close"
+            small
+            interactive
+            className={styles.chipRemove}
+            data-testid={`advanced-search-remove-${index}`}
+            tooltip="Remove condition"
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemove();
+            }}
+          />
+        </div>
       );
     }
 
+    const renderValue = () => {
+      if (condition.kind === "time" && !isRelativeTimeOperator(condition.operator)) {
+        return (
+          <input
+            type="datetime-local"
+            className={styles.dateInput}
+            data-testid={`advanced-search-value-${index}`}
+            value={condition.value}
+            onChange={(event) => onChange({ ...condition, value: event.target.value })}
+            onKeyDown={(event) => event.key === "Enter" && onClose()}
+          />
+        );
+      }
+
+      return (
+        <Input
+          autoFocus
+          data-testid={`advanced-search-value-${index}`}
+          value={condition.value}
+          placeholder={condition.kind === "time" ? "Duration, e.g. 30m, 2h, 3d, 1w" : "Value"}
+          onChange={(value) => onChange({ ...condition, value })}
+          onSubmit={onClose}
+        />
+      );
+    };
+
     return (
-      <Input
-        data-testid={`advanced-search-value-${index}`}
-        value={condition.value}
-        placeholder={condition.kind === "time" ? "Duration, e.g. 30m, 2h, 3d, 1w" : "Value"}
-        onChange={(value) => onChange({ ...condition, value })}
-      />
+      <div ref={ref} className={styles.chipOpen} data-testid={`advanced-search-condition-${index}`}>
+        <Button
+          className={styles.not}
+          outlined={!condition.negate}
+          accent={condition.negate}
+          data-testid={`advanced-search-not-${index}`}
+          label="NOT"
+          onClick={() => onChange({ ...condition, negate: !condition.negate })}
+        />
+        <div className={styles.fieldSelect}>
+          <Select
+            id={`advanced-search-field-${index}`}
+            themeName="lens"
+            options={fields.map((field) => ({ value: field.id, label: field.title }))}
+            value={condition.field}
+            onChange={(option) => {
+              const field = fields.find(({ id }) => id === option?.value);
+
+              if (field) {
+                onChange(withField(condition, field, Date.now()));
+              }
+            }}
+          />
+        </div>
+        <div className={styles.operatorSelect}>
+          <Select
+            id={`advanced-search-operator-${index}`}
+            themeName="lens"
+            options={operators.map(({ id, label }) => ({ value: id, label }))}
+            value={condition.operator}
+            onChange={(option) => {
+              if (!option) {
+                return;
+              }
+
+              onChange(
+                condition.kind === "text"
+                  ? withTextOperator(condition, option.value as (typeof textSearchOperators)[number]["id"])
+                  : withTimeOperator(condition, option.value as (typeof timeSearchOperators)[number]["id"], Date.now()),
+              );
+            }}
+          />
+        </div>
+        <div className={styles.value}>
+          {renderValue()}
+          {error && (
+            <div className={styles.error} data-testid={`advanced-search-error-${index}`}>
+              {error}
+            </div>
+          )}
+        </div>
+        <Icon
+          material="check"
+          interactive
+          tooltip="Done"
+          data-testid={`advanced-search-done-${index}`}
+          onClick={onClose}
+        />
+        <Icon
+          material="close"
+          interactive
+          data-testid={`advanced-search-remove-${index}`}
+          tooltip="Remove condition"
+          onClick={onRemove}
+        />
+      </div>
     );
-  };
-
-  return (
-    <div className="flex flex-wrap items-start gap-2" data-testid={`advanced-search-condition-${index}`}>
-      <div className={styles.fieldSelect}>
-        <Select
-          id={`advanced-search-field-${index}`}
-          themeName="lens"
-          options={fields.map((field) => ({ value: field.id, label: field.title }))}
-          value={condition.field}
-          onChange={(option) => {
-            const field = fields.find(({ id }) => id === option?.value);
-
-            if (field) {
-              onChange(withField(condition, field, Date.now()));
-            }
-          }}
-        />
-      </div>
-      <Button
-        className={styles.not}
-        outlined={!condition.negate}
-        accent={condition.negate}
-        data-testid={`advanced-search-not-${index}`}
-        label="NOT"
-        onClick={() => onChange({ ...condition, negate: !condition.negate })}
-      />
-      <div className={styles.operatorSelect}>
-        <Select
-          id={`advanced-search-operator-${index}`}
-          themeName="lens"
-          options={operators.map(({ id, label }) => ({ value: id, label }))}
-          value={condition.operator}
-          onChange={(option) => {
-            if (!option) {
-              return;
-            }
-
-            onChange(
-              condition.kind === "text"
-                ? withTextOperator(condition, option.value as (typeof textSearchOperators)[number]["id"])
-                : withTimeOperator(condition, option.value as (typeof timeSearchOperators)[number]["id"], Date.now()),
-            );
-          }}
-        />
-      </div>
-      <div className={styles.value}>
-        {renderValue()}
-        {error && (
-          <div className={styles.error} data-testid={`advanced-search-error-${index}`}>
-            {error}
-          </div>
-        )}
-      </div>
-      <Icon
-        material="close"
-        interactive
-        data-testid={`advanced-search-remove-${index}`}
-        tooltip="Remove condition"
-        onClick={onRemove}
-      />
-    </div>
-  );
-});
+  },
+);
 
 // ---------------------------------------------------------------------------
-// Saving
+// Saving: a dropdown at the end of the conditions
 
-interface SaveSearchFormProps<I> {
+interface SaveSearchDropdownProps<I> {
   view: AdvancedSearchView<I>;
   dependencies: Dependencies;
 }
 
-const SaveSearchForm = observer(<I,>({ view, dependencies }: SaveSearchFormProps<I>) => {
+const SaveSearchDropdown = observer(<I,>({ view, dependencies }: SaveSearchDropdownProps<I>) => {
   const { state, savedSearches, currentPath, quickSearch } = dependencies;
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
   const conditions = state.getConditions(view.viewKey).filter(isConditionInEffect);
   const quickSearchText = quickSearch.get().trim();
   const existing = name.trim() ? savedSearches.findByName(view.viewKey, name) : undefined;
   const canSave = Boolean(name.trim()) && (conditions.length > 0 || Boolean(quickSearchText));
+
+  useDismiss(open, ref, () => setOpen(false));
 
   const save = () => {
     if (!canSave) {
@@ -297,117 +480,46 @@ const SaveSearchForm = observer(<I,>({ view, dependencies }: SaveSearchFormProps
       conditions: savedConditions,
     });
     setName("");
+    setOpen(false);
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="grow">
-        <Input
-          data-testid="advanced-search-save-name"
-          placeholder="Name this search to save it"
-          value={name}
-          onChange={setName}
-          onSubmit={save}
-        />
-      </div>
-      <Button
-        primary
-        data-testid="advanced-search-save"
-        disabled={!canSave}
-        label={existing ? "Replace saved search" : "Save search"}
-        onClick={save}
-      />
-      {quickSearchText && (
-        <span className={styles.hint}>
-          The quick search &quot;{quickSearchText}&quot; is saved as an Any field condition.
-        </span>
+    <div ref={ref} className={styles.saveDropdown}>
+      <a className={styles.link} data-testid="advanced-search-save-toggle" onClick={() => setOpen(!open)}>
+        Save
+        <Icon material={open ? "arrow_drop_up" : "arrow_drop_down"} small />
+      </a>
+      {open && (
+        <div className={styles.savePopover} data-testid="advanced-search-save-popover">
+          <Input
+            autoFocus
+            data-testid="advanced-search-save-name"
+            placeholder="Name this search"
+            value={name}
+            onChange={setName}
+            onSubmit={save}
+          />
+          <Button
+            primary
+            data-testid="advanced-search-save"
+            disabled={!canSave}
+            label={existing ? "Replace" : "Save"}
+            onClick={save}
+          />
+          {quickSearchText && (
+            <span className={styles.hint}>
+              The quick search &quot;{quickSearchText}&quot; is saved as an Any field condition.
+            </span>
+          )}
+          <span className={styles.hint}>Saved searches are in the ★ menu of the header.</span>
+        </div>
       )}
     </div>
   );
 });
 
 // ---------------------------------------------------------------------------
-// Saved searches of the list
-
-interface SavedSearchRowProps<I> {
-  search: SavedSearch;
-  view: AdvancedSearchView<I>;
-  dependencies: Dependencies;
-}
-
-const SavedSearchRow = observer(<I,>({ search, view, dependencies }: SavedSearchRowProps<I>) => {
-  const { savedSearches, openConfirmDialog } = dependencies;
-  const [newName, setNewName] = useState<string | undefined>(undefined);
-  const summary = describeConditions(search.conditions, view.fields).join(" · ");
-
-  if (newName !== undefined) {
-    const rename = () => {
-      if (newName.trim()) {
-        savedSearches.rename(search.id, newName);
-      }
-
-      setNewName(undefined);
-    };
-
-    return (
-      <div className="flex items-center gap-2" data-testid={`saved-search-${search.name}`}>
-        <div className="grow">
-          <Input
-            autoFocus
-            data-testid={`saved-search-rename-input-${search.name}`}
-            value={newName}
-            onChange={setNewName}
-            onSubmit={rename}
-          />
-        </div>
-        <Button primary label="Rename" data-testid={`saved-search-rename-confirm-${search.name}`} onClick={rename} />
-        <Button plain label="Cancel" onClick={() => setNewName(undefined)} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-2" data-testid={`saved-search-${search.name}`}>
-      <div className="grow min-w-0">
-        <div className={styles.savedName}>{search.name}</div>
-        <div className={styles.savedSummary}>{summary || "No conditions"}</div>
-      </div>
-      <Button
-        outlined
-        label="Apply"
-        data-testid={`saved-search-apply-${search.name}`}
-        onClick={() => applySavedSearch(search, dependencies)}
-      />
-      <Icon
-        material="edit"
-        interactive
-        tooltip="Rename"
-        data-testid={`saved-search-rename-${search.name}`}
-        onClick={() => setNewName(search.name)}
-      />
-      <Icon
-        material="delete"
-        interactive
-        tooltip="Delete"
-        data-testid={`saved-search-delete-${search.name}`}
-        onClick={() =>
-          openConfirmDialog({
-            message: (
-              <p>
-                Delete the saved search <b>{search.name}</b>?
-              </p>
-            ),
-            labelOk: "Delete",
-            ok: () => savedSearches.remove(search.id),
-          })
-        }
-      />
-    </div>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// The panel under the header
+// The conditions under the header
 
 interface AdvancedSearchPanelProps<I> {
   view: AdvancedSearchView<I>;
@@ -415,93 +527,50 @@ interface AdvancedSearchPanelProps<I> {
 
 const NonInjectedAdvancedSearchPanel = observer(
   <I,>({ view, ...dependencies }: AdvancedSearchPanelProps<I> & Dependencies) => {
-    const { state, savedSearches } = dependencies;
+    const { state } = dependencies;
     const { viewKey, fields } = view;
     const conditions = state.getConditions(viewKey);
+    const openId = state.getOpenCondition(viewKey);
 
-    if (fields.length === 0) {
+    if (fields.length === 0 || conditions.length === 0) {
       return null;
     }
 
-    if (!state.isPanelOpen(viewKey)) {
-      const descriptions = describeConditions(conditions, fields);
-
-      if (descriptions.length === 0) {
-        return null;
-      }
-
-      return (
-        <div
-          className={cssNames(styles.chips, "flex flex-wrap items-center gap-2")}
-          data-testid="advanced-search-chips"
-        >
-          {descriptions.map((description) => (
-            <span key={description} className={styles.chip}>
-              {description}
-            </span>
-          ))}
-          <a
-            className={styles.link}
-            data-testid="advanced-search-edit"
-            onClick={() => state.setPanelOpen(viewKey, true)}
-          >
-            Edit
-          </a>
-          <a className={styles.link} data-testid="advanced-search-clear-chips" onClick={() => state.clear(viewKey)}>
-            Clear
-          </a>
-        </div>
-      );
-    }
-
-    const saved = savedSearches.forView(viewKey);
+    const titles = fieldTitles(fields);
 
     return (
-      <div className={cssNames(styles.panel, "flex flex-col gap-3")} data-testid="advanced-search-panel">
-        <div className="flex items-center gap-2">
-          <span className={styles.title}>Advanced search</span>
-          <span className={cssNames(styles.hint, "grow")}>
-            Conditions on the same field match if any of them does; different fields must all match; NOT conditions must
-            always hold.
-          </span>
-          <Icon
-            material="expand_less"
-            interactive
-            tooltip="Hide"
-            data-testid="advanced-search-hide"
-            onClick={() => state.setPanelOpen(viewKey, false)}
-          />
-        </div>
+      <div className={cssNames(styles.strip, "flex flex-wrap items-center gap-2")} data-testid="advanced-search-strip">
         {conditions.map((condition, index) => (
-          <ConditionRow
+          <ConditionChip
             key={condition.id}
             index={index}
             condition={condition}
             fields={fields}
+            titles={titles}
+            isOpen={condition.id === openId}
+            onOpen={() => state.setOpenCondition(viewKey, condition.id)}
+            onClose={() => {
+              if (state.getOpenCondition(viewKey) === condition.id) {
+                state.setOpenCondition(viewKey, undefined);
+              }
+            }}
             onChange={(changed) => state.replaceCondition(viewKey, changed)}
             onRemove={() => state.removeCondition(viewKey, condition.id)}
           />
         ))}
-        <div className="flex items-center gap-2">
-          <Button
-            outlined
-            label="Add condition"
-            data-testid="advanced-search-add"
-            onClick={() => state.addCondition(viewKey, createCondition(fields[0], Date.now()))}
-          />
-          {conditions.length > 0 && (
-            <Button plain label="Clear all" data-testid="advanced-search-clear" onClick={() => state.clear(viewKey)} />
-          )}
-        </div>
-        <SaveSearchForm view={view} dependencies={dependencies} />
-        {saved.length > 0 && (
-          <div className={cssNames(styles.savedList, "flex flex-col gap-2")} data-testid="saved-searches">
-            <span className={styles.title}>Saved searches for {view.viewTitle}</span>
-            {saved.map((search) => (
-              <SavedSearchRow key={search.id} search={search} view={view} dependencies={dependencies} />
-            ))}
-          </div>
-        )}
+        <Icon
+          material="add"
+          small
+          interactive
+          className={styles.addChip}
+          tooltip="Add a condition. Conditions on the same field match if any of them does, different fields must all match, and NOT conditions must always hold."
+          data-testid="advanced-search-add"
+          onClick={() => addOpenCondition(view, state)}
+        />
+        <a className={styles.link} data-testid="advanced-search-clear" onClick={() => state.clear(viewKey)}>
+          Clear all
+        </a>
+        <SaveSearchDropdown view={view} dependencies={dependencies} />
       </div>
     );
   },

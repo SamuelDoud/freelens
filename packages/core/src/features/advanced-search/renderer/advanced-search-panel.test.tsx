@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { fireEvent } from "@testing-library/react";
+import { act, fireEvent } from "@testing-library/react";
 import { computed, runInAction } from "mobx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import openConfirmDialogInjectable from "../../../renderer/components/confirm-dialog/open.injectable";
@@ -70,14 +70,13 @@ describe("advanced search panel", () => {
     savedSearches = di.inject(savedSearchesInjectable);
   });
 
-  it("renders nothing while closed without conditions", () => {
+  it("renders nothing without conditions", () => {
     const { queryByTestId } = render(<AdvancedSearchPanel view={view} />);
 
-    expect(queryByTestId("advanced-search-panel")).toBeNull();
-    expect(queryByTestId("advanced-search-chips")).toBeNull();
+    expect(queryByTestId("advanced-search-strip")).toBeNull();
   });
 
-  it("opens from the header toggle and adds, edits, negates and removes conditions", () => {
+  it("adds a condition open from the header, edits, negates and removes it", () => {
     const { getByTestId, queryByTestId } = render(
       <>
         <AdvancedSearchControls view={view} />
@@ -86,11 +85,11 @@ describe("advanced search panel", () => {
     );
 
     fireEvent.click(getByTestId("advanced-search-toggle"));
-    fireEvent.click(getByTestId("advanced-search-add"));
 
     expect(state.getConditions("v1/Pod")).toMatchObject([
       { field: "name", kind: "text", operator: "contains", value: "", negate: false },
     ]);
+    expect(getByTestId("advanced-search-condition-0")).toBeTruthy();
 
     fireEvent.change(getByTestId("advanced-search-value-0"), { target: { value: "api" } });
     fireEvent.click(getByTestId("advanced-search-not-0"));
@@ -102,39 +101,80 @@ describe("advanced search panel", () => {
 
     expect(state.getConditions("v1/Pod")).toEqual([]);
     expect(queryByTestId("advanced-search-active-count")).toBeNull();
+    expect(queryByTestId("advanced-search-strip")).toBeNull();
   });
 
-  it("shows why a condition is not in effect", () => {
+  it("shows each condition as a chip that opens in place, one at a time, and closes on Escape", () => {
+    state.setConditions("v1/Pod", [condition("api"), condition("web", { id: "c-2", field: "name" })]);
+
+    const { getByTestId, queryByTestId } = render(<AdvancedSearchPanel view={view} />);
+
+    expect(getByTestId("advanced-search-chip-0").textContent).toContain('Name starts with "api"');
+    expect(getByTestId("advanced-search-chip-1").textContent).toContain('Name starts with "web"');
+
+    fireEvent.click(getByTestId("advanced-search-chip-0"));
+
+    expect(getByTestId("advanced-search-condition-0")).toBeTruthy();
+    expect(queryByTestId("advanced-search-chip-0")).toBeNull();
+
+    fireEvent.click(getByTestId("advanced-search-chip-1"));
+
+    expect(getByTestId("advanced-search-chip-0")).toBeTruthy();
+    expect(getByTestId("advanced-search-condition-1")).toBeTruthy();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(getByTestId("advanced-search-chip-1")).toBeTruthy();
+  });
+
+  it("removes a condition with the ✕ of its chip, without opening it", () => {
+    state.setConditions("v1/Pod", [condition("api"), condition("web", { id: "c-2" })]);
+
+    const { getByTestId, queryByTestId } = render(<AdvancedSearchPanel view={view} />);
+
+    fireEvent.click(getByTestId("advanced-search-remove-0"));
+
+    expect(state.getConditions("v1/Pod").map(({ value }) => value)).toEqual(["web"]);
+    expect(queryByTestId("advanced-search-condition-0")).toBeNull();
+  });
+
+  it("marks a chip whose condition is not in effect, and says why once it is open", () => {
     state.setConditions("v1/Pod", [condition("(", { operator: "regex" })]);
-    state.setPanelOpen("v1/Pod", true);
 
     const { getByTestId } = render(<AdvancedSearchPanel view={view} />);
+
+    expect(getByTestId("advanced-search-chip-0").getAttribute("title")).not.toBe("");
+
+    fireEvent.click(getByTestId("advanced-search-chip-0"));
 
     expect(getByTestId("advanced-search-error-0").textContent).not.toBe("");
   });
 
-  it("shows the conditions in effect as chips while closed, and clears them", () => {
-    state.setConditions("v1/Pod", [condition("api"), condition("", { id: "empty" })]);
+  it("clears every condition", () => {
+    state.setConditions("v1/Pod", [condition("api")]);
 
     const { getByTestId, queryByTestId } = render(<AdvancedSearchPanel view={view} />);
 
-    expect(getByTestId("advanced-search-chips").textContent).toContain('Name starts with "api"');
-
-    fireEvent.click(getByTestId("advanced-search-clear-chips"));
+    fireEvent.click(getByTestId("advanced-search-clear"));
 
     expect(state.getConditions("v1/Pod")).toEqual([]);
-    expect(queryByTestId("advanced-search-chips")).toBeNull();
+    expect(queryByTestId("advanced-search-strip")).toBeNull();
   });
 
-  it("saves the search with the quick search as an Any field condition, then applies it again", () => {
+  it("saves the search from its dropdown, with the quick search as an Any field condition, and applies it from the ★ menu", () => {
     const searchUrlParam = di.inject(searchUrlPageParamInjectable);
 
     searchUrlParam.set("backend");
     state.setConditions("v1/Pod", [condition("api")]);
-    state.setPanelOpen("v1/Pod", true);
 
-    const { getByTestId } = render(<AdvancedSearchPanel view={view} />);
+    const { getByTestId, queryByTestId } = render(
+      <>
+        <AdvancedSearchControls view={view} />
+        <AdvancedSearchPanel view={view} />
+      </>,
+    );
 
+    fireEvent.click(getByTestId("advanced-search-save-toggle"));
     fireEvent.change(getByTestId("advanced-search-save-name"), { target: { value: "Backend APIs" } });
     fireEvent.click(getByTestId("advanced-search-save"));
 
@@ -146,11 +186,12 @@ describe("advanced search panel", () => {
       { field: "any", operator: "contains", value: "backend" },
     ]);
     expect(searchUrlParam.get()).toBe("");
-    expect(getByTestId("saved-search-Backend APIs").textContent).toContain('Any field contains "backend"');
+    expect(queryByTestId("advanced-search-save-popover")).toBeNull();
 
     state.clear("v1/Pod");
     searchUrlParam.set("other");
-    fireEvent.click(getByTestId("saved-search-apply-Backend APIs"));
+    fireEvent.click(getByTestId("icon-for-saved-searches-menu"));
+    fireEvent.click(getByTestId("saved-search-menu-item-Backend APIs"));
 
     expect(state.getConditions("v1/Pod")).toEqual(saved.conditions);
     expect(searchUrlParam.get()).toBe("");
@@ -159,16 +200,16 @@ describe("advanced search panel", () => {
   it("offers to replace a saved search of the same name", () => {
     savedSearches.save({ name: "APIs", viewKey: "v1/Pod", viewTitle: "Pods", routePath: "/pods", conditions: [] });
     state.setConditions("v1/Pod", [condition("api")]);
-    state.setPanelOpen("v1/Pod", true);
 
     const { getByTestId } = render(<AdvancedSearchPanel view={view} />);
 
+    fireEvent.click(getByTestId("advanced-search-save-toggle"));
     fireEvent.change(getByTestId("advanced-search-save-name"), { target: { value: "apis" } });
 
-    expect(getByTestId("advanced-search-save").textContent).toBe("Replace saved search");
+    expect(getByTestId("advanced-search-save").textContent).toBe("Replace");
   });
 
-  it("renames and, once confirmed, deletes a saved search", () => {
+  it("renames and, once confirmed, deletes a saved search from the ★ menu", () => {
     savedSearches.save({
       name: "APIs",
       viewKey: "v1/Pod",
@@ -176,22 +217,33 @@ describe("advanced search panel", () => {
       routePath: "/pods",
       conditions: [condition("api")],
     });
-    state.setPanelOpen("v1/Pod", true);
 
-    const { getByTestId } = render(<AdvancedSearchPanel view={view} />);
+    const { getByTestId, queryByTestId } = render(<AdvancedSearchControls view={view} />);
 
+    fireEvent.click(getByTestId("icon-for-saved-searches-menu"));
     fireEvent.click(getByTestId("saved-search-rename-APIs"));
-    fireEvent.change(getByTestId("saved-search-rename-input-APIs"), { target: { value: "Gateways" } });
-    fireEvent.click(getByTestId("saved-search-rename-confirm-APIs"));
+
+    expect(confirmations).toHaveLength(1);
+
+    const rename = render(<>{confirmations[0].message}</>);
+
+    fireEvent.change(rename.getByTestId("saved-search-rename-input"), { target: { value: "Gateways" } });
+    act(() => confirmations[0].ok?.());
 
     expect(savedSearches.all.map(({ name }) => name)).toEqual(["Gateways"]);
+    // Renaming applies nothing.
+    expect(state.getConditions("v1/Pod")).toEqual([]);
+
+    if (!queryByTestId("saved-search-delete-Gateways")) {
+      fireEvent.click(getByTestId("icon-for-saved-searches-menu"));
+    }
 
     fireEvent.click(getByTestId("saved-search-delete-Gateways"));
 
     expect(savedSearches.all).toHaveLength(1);
-    expect(confirmations).toHaveLength(1);
+    expect(confirmations).toHaveLength(2);
 
-    confirmations[0].ok?.();
+    confirmations[1].ok?.();
 
     expect(savedSearches.all).toEqual([]);
   });

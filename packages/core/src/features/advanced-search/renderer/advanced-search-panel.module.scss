@@ -3,22 +3,70 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-.panel {
+// The conditions of a list, under its header: chips side by side that wrap when the line is full.
+.strip {
   margin: 0 var(--margin) var(--margin);
-  padding: var(--padding);
-  border: 1px solid var(--borderFaintColor);
-  border-radius: var(--border-radius);
-  background: var(--contentColor);
   color: var(--textColorPrimary);
-}
-
-.title {
-  font-weight: bold;
 }
 
 .hint {
   color: var(--textColorTertiary);
   font-size: small;
+}
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 360px;
+  padding: 2px var(--padding);
+  border: 1px solid var(--borderColor);
+  border-radius: 12px;
+  background: var(--secondaryBackground);
+  color: var(--textColorPrimary);
+  font-size: small;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--primary);
+  }
+}
+
+.chipInvalid {
+  border-color: var(--colorError);
+}
+
+.chipLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// The ✕ of a chip shows at its right while the pointer is over it. It keeps its room at rest, so
+// that the chip does not change width under the pointer.
+.chipRemove {
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+
+  .chip:hover &,
+  .chip:focus-within & {
+    opacity: 1;
+  }
+}
+
+// A chip opened in place into its controls.
+.chipOpen {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--padding);
+  padding: var(--padding);
+  border: 1px solid var(--primary);
+  border-radius: var(--border-radius);
+  background: var(--contentColor);
 }
 
 .fieldSelect {
@@ -62,36 +110,41 @@
   font-size: small;
 }
 
-.chips {
-  margin: 0 var(--margin) var(--margin);
-}
-
-.chip {
-  padding: 2px var(--padding);
-  border: 1px solid var(--borderColor);
+.addChip {
+  border: 1px dashed var(--borderColor);
   border-radius: 12px;
-  background: var(--secondaryBackground);
-  color: var(--textColorPrimary);
-  font-size: small;
-  white-space: nowrap;
 }
 
 .link {
+  display: inline-flex;
+  align-items: center;
   color: var(--primary);
   cursor: pointer;
   font-size: small;
 }
 
-.savedList {
-  border-top: 1px solid var(--borderFaintColor);
-  padding-top: var(--padding);
+.saveDropdown {
+  position: relative;
+}
+
+.savePopover {
+  position: absolute;
+  z-index: 10;
+  top: 100%;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding);
+  width: 280px;
+  margin-top: 4px;
+  padding: var(--padding);
+  border: 1px solid var(--borderColor);
+  border-radius: var(--border-radius);
+  background: var(--contentColor);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
 }
 
 .savedName {
-  font-weight: bold;
-}
-
-.savedSummary {
-  color: var(--textColorSecondary);
-  font-size: small;
+  flex: 1;
+  margin-right: var(--padding);
 }

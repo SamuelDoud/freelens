@@ -10,13 +10,13 @@ import type { SearchCondition } from "../common/conditions";
 const noConditions: readonly SearchCondition[] = [];
 
 /**
- * The conditions of the advanced search of each list, and whether its panel is
- * open, by view key. They last for the session of the frame, so a search stays
+ * The conditions of the advanced search of each list, and which of them is open
+ * for editing, by view key. They last for the session of the frame, so a search stays
  * in place while the user visits other lists; saved searches are what persists.
  */
 export class AdvancedSearchState {
   private readonly conditionsByView = observable.map<string, readonly SearchCondition[]>({}, { deep: false });
-  private readonly openPanels = observable.set<string>();
+  private readonly openConditions = observable.map<string, string>();
 
   getConditions(viewKey: string): readonly SearchCondition[] {
     return this.conditionsByView.get(viewKey) ?? noConditions;
@@ -57,16 +57,17 @@ export class AdvancedSearchState {
     this.conditionsByView.delete(viewKey);
   }
 
-  isPanelOpen(viewKey: string): boolean {
-    return this.openPanels.has(viewKey);
+  /** The condition shown open, as its controls, in place of its chip. */
+  getOpenCondition(viewKey: string): string | undefined {
+    return this.openConditions.get(viewKey);
   }
 
   @action
-  setPanelOpen(viewKey: string, open: boolean) {
-    if (open) {
-      this.openPanels.add(viewKey);
+  setOpenCondition(viewKey: string, conditionId: string | undefined) {
+    if (conditionId) {
+      this.openConditions.set(viewKey, conditionId);
     } else {
-      this.openPanels.delete(viewKey);
+      this.openConditions.delete(viewKey);
     }
   }
 }

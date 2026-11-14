@@ -69,7 +69,6 @@ const aiToolExecutorInjectable = getInjectable({
         set: (viewKey, conditions) =>
           runInAction(() => {
             advancedSearchState.setConditions(viewKey, conditions);
-            advancedSearchState.setPanelOpen(viewKey, conditions.length > 0);
           }),
       },
       now: () => Date.now(),
