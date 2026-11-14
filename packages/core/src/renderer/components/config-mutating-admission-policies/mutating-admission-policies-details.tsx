@@ -7,6 +7,7 @@ import { observer } from "mobx-react";
 import React from "react";
 import { DrawerItem, DrawerTitle } from "../drawer";
 import { MatchResourcesDetails } from "./match-resources-details";
+import styles from "./mutating-admission-policies-details.module.scss";
 
 import type { MutatingAdmissionPolicy } from "@freelensapp/kube-object";
 
@@ -65,12 +66,12 @@ export class MutatingAdmissionPolicyDetails extends React.Component<MutatingAdmi
             <DrawerItem name="Patch Type">{mutation.patchType}</DrawerItem>
             {mutation.applyConfiguration?.expression && (
               <DrawerItem name="Apply Configuration">
-                <pre>{mutation.applyConfiguration.expression}</pre>
+                <pre className={styles.expression}>{mutation.applyConfiguration.expression}</pre>
               </DrawerItem>
             )}
             {mutation.jsonPatch?.expression && (
               <DrawerItem name="JSON Patch">
-                <pre>{mutation.jsonPatch.expression}</pre>
+                <pre className={styles.expression}>{mutation.jsonPatch.expression}</pre>
               </DrawerItem>
             )}
           </div>
