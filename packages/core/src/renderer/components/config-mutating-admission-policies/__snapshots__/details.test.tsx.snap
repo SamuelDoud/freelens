@@ -1,0 +1,390 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
+<body>
+  <div>
+    <div
+      class="MutatingAdmissionPolicyDetails"
+    >
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          API version
+        </span>
+        <span
+          class="value"
+        >
+          admissionregistration.k8s.io/v1
+        </span>
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Failure Policy
+        </span>
+        <span
+          class="value"
+        >
+          Fail
+        </span>
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Reinvocation Policy
+        </span>
+        <span
+          class="value"
+        >
+          IfNeeded
+        </span>
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Param Kind
+        </span>
+        <span
+          class="value"
+        >
+          rules.example.com/v1/SidecarConfig
+        </span>
+      </div>
+      <div
+        class="DrawerTitle title"
+      >
+        Match Conditions
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          exclude-leases
+        </span>
+        <span
+          class="value"
+        >
+          !(request.resource.group == 'coordination.k8s.io' && request.resource.resource == 'leases')
+        </span>
+      </div>
+      <div
+        class="DrawerTitle title"
+      >
+        Variables
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          hasSidecar
+        </span>
+        <span
+          class="value"
+        >
+          object.spec.initContainers.exists(c, c.name == 'mesh-proxy')
+        </span>
+      </div>
+      <div
+        class="DrawerTitle title"
+      >
+        Mutations
+      </div>
+      <div>
+        <div
+          class="DrawerItem"
+        >
+          <span
+            class="name"
+          >
+            Patch Type
+          </span>
+          <span
+            class="value"
+          >
+            ApplyConfiguration
+          </span>
+        </div>
+        <div
+          class="DrawerItem"
+        >
+          <span
+            class="name"
+          >
+            Apply Configuration
+          </span>
+          <span
+            class="value"
+          >
+            <pre>
+              Object{ spec: Object.spec{ replicas: 1 } }
+            </pre>
+          </span>
+        </div>
+      </div>
+      <div>
+        <div
+          class="DrawerItem"
+        >
+          <span
+            class="name"
+          >
+            Patch Type
+          </span>
+          <span
+            class="value"
+          >
+            JSONPatch
+          </span>
+        </div>
+        <div
+          class="DrawerItem"
+        >
+          <span
+            class="name"
+          >
+            JSON Patch
+          </span>
+          <span
+            class="value"
+          >
+            <pre>
+              [JSONPatch{ op: 'add', path: '/metadata/labels/mutated', value: 'true' }]
+            </pre>
+          </span>
+        </div>
+      </div>
+      <div
+        class="DrawerTitle title"
+      >
+        Match Constraints
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Match Policy
+        </span>
+        <span
+          class="value"
+        >
+          Equivalent
+        </span>
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Resource Rules
+        </span>
+        <span
+          class="value"
+        >
+          <div>
+            <div>
+              API Groups: 
+              apps
+            </div>
+            <div>
+              API Versions: 
+              v1
+            </div>
+            <div>
+              Operations: 
+              CREATE, UPDATE
+            </div>
+            <div>
+              Resources: 
+              deployments
+            </div>
+          </div>
+        </span>
+      </div>
+    </div>
+  </div>
+</body>
+`;
+
+exports[`MutatingAdmissionPolicyDetails > renders with no mutations 1`] = `
+<body>
+  <div>
+    <div
+      class="MutatingAdmissionPolicyDetails"
+    >
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          API version
+        </span>
+        <span
+          class="value"
+        >
+          admissionregistration.k8s.io/v1
+        </span>
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Failure Policy
+        </span>
+        <span
+          class="value"
+        >
+          Fail
+        </span>
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Reinvocation Policy
+        </span>
+        <span
+          class="value"
+        >
+          IfNeeded
+        </span>
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Param Kind
+        </span>
+        <span
+          class="value"
+        >
+          rules.example.com/v1/SidecarConfig
+        </span>
+      </div>
+      <div
+        class="DrawerTitle title"
+      >
+        Match Conditions
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          exclude-leases
+        </span>
+        <span
+          class="value"
+        >
+          !(request.resource.group == 'coordination.k8s.io' && request.resource.resource == 'leases')
+        </span>
+      </div>
+      <div
+        class="DrawerTitle title"
+      >
+        Variables
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          hasSidecar
+        </span>
+        <span
+          class="value"
+        >
+          object.spec.initContainers.exists(c, c.name == 'mesh-proxy')
+        </span>
+      </div>
+      <div
+        class="DrawerTitle title"
+      >
+        Mutations
+      </div>
+      <div
+        style="opacity: 0.6;"
+      >
+        No mutations set
+      </div>
+      <div
+        class="DrawerTitle title"
+      >
+        Match Constraints
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Match Policy
+        </span>
+        <span
+          class="value"
+        >
+          Equivalent
+        </span>
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
+          Resource Rules
+        </span>
+        <span
+          class="value"
+        >
+          <div>
+            <div>
+              API Groups: 
+              apps
+            </div>
+            <div>
+              API Versions: 
+              v1
+            </div>
+            <div>
+              Operations: 
+              CREATE, UPDATE
+            </div>
+            <div>
+              Resources: 
+              deployments
+            </div>
+          </div>
+        </span>
+      </div>
+    </div>
+  </div>
+</body>
+`;
