@@ -1,0 +1,12 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+// CEL expressions keep their line breaks but wrap inside the drawer instead of widening it.
+.expression {
+  margin: 0;
+  font-family: var(--font-monospace);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
