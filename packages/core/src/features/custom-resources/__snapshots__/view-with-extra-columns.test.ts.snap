@@ -511,7 +511,7 @@ exports[`Viewing Custom Resources with extra columns > renders 1`] = `
                 <div
                   data-testid="tooltip-content-for-advanced-search-toggle"
                 >
-                  Advanced search
+                  Advanced search: add a condition
                 </div>
                 <i
                   class="Icon material interactive focusable"

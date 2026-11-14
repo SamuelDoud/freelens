@@ -624,7 +624,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
                   <div
                     data-testid="tooltip-content-for-advanced-search-toggle"
                   >
-                    Advanced search
+                    Advanced search: add a condition
                   </div>
                   <i
                     class="Icon material interactive focusable"
@@ -1972,7 +1972,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
                   <div
                     data-testid="tooltip-content-for-advanced-search-toggle"
                   >
-                    Advanced search
+                    Advanced search: add a condition
                   </div>
                   <i
                     class="Icon material interactive focusable"
@@ -3125,7 +3125,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
                   <div
                     data-testid="tooltip-content-for-advanced-search-toggle"
                   >
-                    Advanced search
+                    Advanced search: add a condition
                   </div>
                   <i
                     class="Icon material interactive focusable"

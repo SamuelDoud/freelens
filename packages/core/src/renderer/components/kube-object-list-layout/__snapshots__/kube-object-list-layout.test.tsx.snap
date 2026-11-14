@@ -119,7 +119,7 @@ exports[`kube-object-list-layout > given pod store > renders 1`] = `
             <div
               data-testid="tooltip-content-for-advanced-search-toggle"
             >
-              Advanced search
+              Advanced search: add a condition
             </div>
             <i
               class="Icon material interactive focusable"
