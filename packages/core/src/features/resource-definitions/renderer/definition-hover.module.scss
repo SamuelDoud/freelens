@@ -1,0 +1,30 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+.definition {
+  position: fixed;
+  z-index: 100000;
+  max-width: 340px;
+  padding: calc(var(--padding) * 1.5);
+  border-radius: 4px;
+  background: var(--mainBackground);
+  color: var(--textColorPrimary);
+  font-size: small;
+  line-height: 1.45;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
+  pointer-events: none;
+  white-space: normal;
+}
+
+.title {
+  margin-bottom: calc(var(--padding) / 2);
+  color: var(--textColorAccent);
+  font-weight: bold;
+}
+
+.facts {
+  margin-top: var(--padding);
+  color: var(--textColorSecondary);
+}
