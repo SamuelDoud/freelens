@@ -57,6 +57,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
         state.openAtLogin = descriptors.openAtLogin.fromStore(preferences.openAtLogin);
         state.showTrayIcon = descriptors.showTrayIcon.fromStore(preferences.showTrayIcon);
         state.hotbarAutoHide = descriptors.hotbarAutoHide.fromStore(preferences.hotbarAutoHide);
+        state.hotbarCollapsed = descriptors.hotbarCollapsed.fromStore(preferences.hotbarCollapsed);
         state.persistentSearch = descriptors.persistentSearch.fromStore(preferences.persistentSearch);
         state.savedSearches = descriptors.savedSearches.fromStore(preferences.savedSearches);
         state.aiChat = descriptors.aiChat.fromStore(preferences.aiChat);
@@ -91,6 +92,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
             openAtLogin: descriptors.openAtLogin.toStore(state.openAtLogin),
             showTrayIcon: descriptors.showTrayIcon.toStore(state.showTrayIcon),
             hotbarAutoHide: descriptors.hotbarAutoHide.toStore(state.hotbarAutoHide),
+            hotbarCollapsed: descriptors.hotbarCollapsed.toStore(state.hotbarCollapsed),
             persistentSearch: descriptors.persistentSearch.toStore(state.persistentSearch),
             savedSearches: descriptors.savedSearches.toStore(state.savedSearches),
             aiChat: descriptors.aiChat.toStore(state.aiChat),

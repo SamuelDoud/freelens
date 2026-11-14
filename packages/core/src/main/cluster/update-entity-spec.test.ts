@@ -71,6 +71,23 @@ describe("update-entity-spec", () => {
     expect(entity.spec.icon?.src).toBeUndefined();
   });
 
+  it("given an icon text and colours, puts them on the entity, and takes them off when cleared", () => {
+    cluster.preferences.iconText = " prod-east-1 ";
+    cluster.preferences.iconBackground = "#123456";
+    cluster.preferences.iconTextColor = "#ffcc00";
+    updateEntitySpec(entity, cluster);
+    expect(entity.metadata.shortName).toBe("prod-east-1");
+    expect(entity.spec.icon).toMatchObject({ background: "#123456", textColor: "#ffcc00" });
+
+    cluster.preferences.iconText = undefined;
+    cluster.preferences.iconBackground = undefined;
+    cluster.preferences.iconTextColor = undefined;
+    updateEntitySpec(entity, cluster);
+    expect(entity.metadata.shortName).toBeUndefined();
+    expect(entity.spec.icon?.background).toBeUndefined();
+    expect(entity.spec.icon?.textColor).toBeUndefined();
+  });
+
   it("given cluster icon is null, deletes icon from both", () => {
     cluster.preferences.icon = null;
     entity.spec.icon = { src: "some-icon" };

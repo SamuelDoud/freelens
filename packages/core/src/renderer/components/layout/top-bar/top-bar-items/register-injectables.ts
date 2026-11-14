@@ -7,6 +7,7 @@
  */
 
 import { registerInjectables as registerContextMenuInjectables } from "./context-menu/register-injectables";
+import { registerInjectables as registerHotbarToggleInjectables } from "./hotbar-toggle/register-injectables";
 import { registerInjectables as registerNavigationToBackInjectables } from "./navigation-to-back/register-injectables";
 import { registerInjectables as registerNavigationToForwardInjectables } from "./navigation-to-forward/register-injectables";
 import { registerInjectables as registerNavigationToHomeInjectables } from "./navigation-to-home/register-injectables";
@@ -29,6 +30,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerContextMenuInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerHotbarToggleInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

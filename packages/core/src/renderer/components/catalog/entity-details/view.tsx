@@ -62,6 +62,8 @@ class NonInjectedCatalogEntityDetails<Entity extends CatalogEntity> extends Comp
               src={entity.spec.icon?.src}
               data-testid="detail-panel-hot-bar-icon"
               background={entity.spec.icon?.background}
+              text={entity.metadata.shortName}
+              color={(entity.spec.icon as { textColor?: string } | undefined)?.textColor}
               onClick={onRun}
               className={styles.avatar}
             >
