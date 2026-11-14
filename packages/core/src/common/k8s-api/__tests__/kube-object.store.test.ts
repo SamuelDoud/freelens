@@ -8,7 +8,7 @@ import { KubeObject } from "@freelensapp/kube-object";
 import { noop, WrappedAbortController } from "@freelensapp/utilities";
 import { observe } from "mobx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { KubeObjectStore } from "../kube-object.store";
+import { KubeObjectStore, slowLoadMs } from "../kube-object.store";
 
 import type { FetchRequestInit as RequestInit } from "@freelensapp/json-api";
 import type { KubeApi, KubeApiWatchOptions } from "@freelensapp/kube-api";
@@ -557,7 +557,7 @@ describe("KubeObjectStore", () => {
           return gates.ns1.promise;
         }
 
-        onPage?.({ items: [b1], loaded: 1, remainingItemCount: 0 });
+        onPage?.({ items: [b1], loaded: 1, remainingItemCount: 0, done: true });
 
         return gates.ns2.promise;
       });
@@ -569,7 +569,11 @@ describe("KubeObjectStore", () => {
       await vi.advanceTimersByTimeAsync(1000);
 
       expect(store.items.map((item) => item.getName()).sort()).toEqual(["a1", "b1", "keep"]);
-      expect(store.loadingProgress).toEqual({ loaded: 2, total: 3 });
+      expect(store.loadingProgress).toEqual({
+        loaded: 2,
+        total: 3,
+        namespaces: { done: 1, total: 2, waitingOn: [] },
+      });
 
       gates.ns1.resolve([a1, a2]);
       gates.ns2.resolve([b1]);
@@ -608,7 +612,7 @@ describe("KubeObjectStore", () => {
       expect(store.failedLoading).toBe(false);
     });
 
-    it("loads all namespaces through per-namespace streams and watches from the oldest snapshot", async () => {
+    it("without an early watch, loads all namespaces through per-namespace streams and watches from the oldest snapshot", async () => {
       const resourceVersions = new Map<string, string>();
       const a1 = objectNamed("a1", "ns1");
       const b1 = objectNamed("b1", "ns2");
@@ -633,7 +637,12 @@ describe("KubeObjectStore", () => {
       await store.loadAll({ namespaces: ["ns1", "ns2"] });
 
       // One paginated stream per namespace instead of one cluster-wide list.
-      expect(list.mock.calls.map(([options]) => options.namespace).sort()).toEqual(["ns1", "ns2"]);
+      expect(
+        list.mock.calls
+          .filter(([options]) => options.onPage)
+          .map(([options]) => options.namespace)
+          .sort(),
+      ).toEqual(["ns1", "ns2"]);
       expect(store.items.map((item) => item.getName()).sort()).toEqual(["a1", "b1"]);
       // The single cluster-wide watch must start from the oldest namespace
       // snapshot: anything newer could skip events of the lagging namespace.
@@ -648,6 +657,10 @@ describe("KubeObjectStore", () => {
       let inFlight = 0;
       let maxInFlight = 0;
       const list = vi.fn(async ({ namespace }: { namespace?: string }) => {
+        if (namespace === undefined) {
+          return [];
+        }
+
         inFlight++;
         maxInFlight = Math.max(maxInFlight, inFlight);
 
@@ -664,10 +677,11 @@ describe("KubeObjectStore", () => {
         getResourceVersion: () => undefined,
       } as Partial<KubeApi<KubeObject>>);
 
+      const namespaceLists = () => list.mock.calls.filter(([options]) => options.namespace !== undefined).length;
       const loading = store.loadAll({ namespaces });
       await vi.advanceTimersByTimeAsync(0);
 
-      expect(list).toHaveBeenCalledTimes(16);
+      expect(namespaceLists()).toBe(16);
       expect(maxInFlight).toBe(16);
 
       for (const gate of gates.values()) {
@@ -676,8 +690,131 @@ describe("KubeObjectStore", () => {
 
       await loading;
 
-      expect(list).toHaveBeenCalledTimes(20);
+      expect(namespaceLists()).toBe(20);
       expect(maxInFlight).toBeLessThanOrEqual(16);
+    });
+
+    describe("watching all namespaces from before they are listed", () => {
+      const json = (name: string, namespace: string, resourceVersion: string, status?: object) => ({
+        apiVersion: "v1",
+        kind: "Foo",
+        metadata: {
+          name,
+          namespace,
+          resourceVersion,
+          uid: `uid-${namespace}-${name}`,
+          selfLink: `/some/self/link/${namespace}/${name}`,
+        },
+        ...(status ? { status } : {}),
+      });
+
+      const setup = ({ failWatch = false } = {}) => {
+        const versions = new Map<string, string>();
+        const a1 = objectNamed("a1", "ns1");
+        const b1 = objectNamed("b1", "ns2");
+        let watchOptions: any;
+        const emit = (event: unknown) => watchOptions?.callback(event, null);
+        const list = vi.fn(
+          (options: { namespace?: string; onPage?: (page: unknown) => void }, query?: { limit?: number }) => {
+            if (query?.limit === 1) {
+              versions.set("", "100");
+
+              return Promise.resolve([]);
+            }
+
+            if (options.namespace === "ns1") {
+              // Older than ns1's snapshot: already in its list.
+              emit({ type: "MODIFIED", object: json("a1", "ns1", "105", { phase: "stale" }) });
+              options.onPage?.({ items: [a1], loaded: 1, resourceVersion: "110", done: true });
+
+              return Promise.resolve([a1]);
+            }
+
+            options.onPage?.({ items: [b1], loaded: 1, resourceVersion: "115", done: true });
+            // Newer than ns2's snapshot, and a namespace created meanwhile.
+            emit({ type: "MODIFIED", object: json("b1", "ns2", "120", { phase: "new" }) });
+            emit({ type: "ADDED", object: json("c1", "ns3", "125") });
+            watchOptions?.onBookmark("130");
+
+            return Promise.resolve([b1]);
+          },
+        );
+        const watch = vi.fn((options: any) => {
+          watchOptions = options;
+
+          if (failWatch) {
+            options.callback(null, new Response(null, { status: 500 }));
+          }
+
+          return noop;
+        });
+        const store = new RealLoadItemsKubeObjectStore({
+          isNamespaced: true,
+          list,
+          watch,
+          objectConstructor: KubeObject,
+          setResourceVersion: (namespace: string, version: string) => versions.set(namespace, version),
+          getResourceVersion: (namespace = "") => versions.get(namespace),
+        } as Partial<KubeApi<KubeObject>>);
+
+        return { store, versions, watch, getWatchOptions: () => watchOptions };
+      };
+
+      it("applies what changed after each namespace's snapshot and hands the watch on from there", async () => {
+        const { store, versions, watch, getWatchOptions } = setup();
+
+        await store.loadAll({ namespaces: ["ns1", "ns2"] });
+
+        expect(watch).toHaveBeenCalledTimes(1);
+        expect(getWatchOptions()).toMatchObject({ namespace: "", timeout: 0, query: { resourceVersion: "100" } });
+        expect(getWatchOptions().abortController.signal.aborted).toBe(true);
+        expect(store.items.map((item) => item.getName()).sort()).toEqual(["a1", "b1", "c1"]);
+        expect(store.items.find((item) => item.getName() === "a1")?.status).toBeUndefined();
+        expect(store.items.find((item) => item.getName() === "b1")?.status).toEqual({ phase: "new" });
+        expect(versions.get("")).toBe("130");
+      });
+
+      it("falls back to the oldest snapshot when the early watch fails", async () => {
+        const { store, versions } = setup({ failWatch: true });
+
+        await store.loadAll({ namespaces: ["ns1", "ns2"] });
+
+        expect(store.items.map((item) => item.getName()).sort()).toEqual(["a1", "b1"]);
+        expect(versions.get("")).toBe("110");
+      });
+    });
+
+    it("names the namespaces a slow load still waits on once only a few are left", async () => {
+      const namespaces = ["ns1", "ns2", "ns3", "ns4", "ns5"];
+      const gates = new Map(namespaces.map((namespace) => [namespace, deferred<KubeObject[]>()]));
+      const list = vi.fn(({ namespace, onPage }: { namespace?: string; onPage?: (page: unknown) => void }) => {
+        if (namespace === undefined) {
+          return Promise.resolve([]);
+        }
+
+        if (namespace === "ns1" || namespace === "ns2") {
+          onPage?.({ items: [objectNamed("a", namespace)], loaded: 1, done: true });
+
+          return Promise.resolve([objectNamed("a", namespace)]);
+        }
+
+        return gates.get(namespace)!.promise;
+      });
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list }, () => false);
+      const loading = store.loadAll({ namespaces });
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(store.loadingProgress?.namespaces).toEqual({ done: 2, total: 5, waitingOn: [] });
+
+      await vi.advanceTimersByTimeAsync(slowLoadMs);
+      expect(store.loadingProgress?.namespaces).toEqual({ done: 2, total: 5, waitingOn: ["ns3", "ns4", "ns5"] });
+
+      for (const gate of gates.values()) {
+        gate.resolve([]);
+      }
+
+      await loading;
+      expect(store.loadingProgress).toBeUndefined();
     });
 
     it("keeps a single cluster-wide stream when only one namespace is loaded", async () => {

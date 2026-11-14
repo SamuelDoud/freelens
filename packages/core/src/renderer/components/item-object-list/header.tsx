@@ -15,9 +15,34 @@ import { SearchInputUrl } from "../input";
 import type { ItemObject } from "@freelensapp/list-layout";
 import type { IClassName, StrictReactNode } from "@freelensapp/utilities";
 
+import type { LoadingProgress } from "../../../common/item.store";
 import type { AdvancedSearchView } from "../../../features/advanced-search/renderer/advanced-search-panel";
 import type { HeaderCustomizer, HeaderPlaceholders, ItemListStore, ListLayoutSearchFilter } from "./list-layout";
 import type { Filter } from "./page-filters/store";
+
+const formatNames = (names: string[]) =>
+  names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+
+export const formatLoadingProgress = ({ loaded, total, namespaces }: LoadingProgress): string => {
+  const items =
+    total !== undefined
+      ? `Loading… ${loaded.toLocaleString()} / ${total.toLocaleString()} items`
+      : `Loading… ${loaded.toLocaleString()} items`;
+
+  if (!namespaces) {
+    return items;
+  }
+
+  const counted = `${items} · ${namespaces.done.toLocaleString()} of ${namespaces.total.toLocaleString()} namespaces`;
+
+  if (!namespaces.waitingOn.length) {
+    return counted;
+  }
+
+  const noun = namespaces.waitingOn.length === 1 ? "namespace" : "namespaces";
+
+  return `${counted}, waiting on ${noun} ${formatNames(namespaces.waitingOn)}`;
+};
 
 export interface ItemListLayoutHeaderProps<I extends ItemObject, PreLoadStores extends boolean> {
   getItems: () => I[];
@@ -65,9 +90,7 @@ export class ItemListLayoutHeader<I extends ItemObject, PreLoadStores extends bo
       const { loadingProgress } = store;
 
       if (loadingProgress && getFilters().length === 0) {
-        return loadingProgress.total !== undefined
-          ? `Loading… ${loadingProgress.loaded.toLocaleString()} / ${loadingProgress.total.toLocaleString()} items`
-          : `Loading… ${loadingProgress.loaded.toLocaleString()} items`;
+        return formatLoadingProgress(loadingProgress);
       }
 
       if (getFilters().length > 0 || getHasAdvancedSearchFilter()) {

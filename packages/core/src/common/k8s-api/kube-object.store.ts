@@ -152,7 +152,33 @@ export interface KubeObjectStoreOptions {
    * @default 500
    */
   pageSize?: number;
+
+  /**
+   * The largest page of a paginated list: each page asks for twice as many
+   * items as the one before, from `pageSize` up to this many.
+   *
+   * @default 8000
+   */
+  maxPageSize?: number;
 }
+
+/** How long a load runs before its progress names the namespaces it waits on */
+export const slowLoadMs = 10_000;
+
+/** The most namespaces a load's progress names when it waits on them */
+const namedPendingNamespaces = 3;
+
+const parseResourceVersion = (resourceVersion: string | undefined): bigint | undefined => {
+  if (!resourceVersion) {
+    return undefined;
+  }
+
+  try {
+    return BigInt(resourceVersion);
+  } catch {
+    return undefined;
+  }
+};
 
 export type KubeApiDataFrom<K extends KubeObject, A> =
   A extends KubeApi<K, infer D> ? (D extends KubeJsonApiDataFor<K> ? D : never) : never;
@@ -208,12 +234,16 @@ export class KubeObjectStore<
   public readonly limit: number | undefined;
   public readonly bufferSize: number;
   public readonly pageSize: number;
+  public readonly maxPageSize: number;
 
   private readonly loadedNamespaces = observable.box<string[]>();
   private readonly watchingController = new AbortController();
   // Bumped by every loadAll and reset: a progressive publish scheduled by
   // an older (or reset) load must not put its items back into the store.
   private loadGeneration = 0;
+  // The watch events an all-namespaces load caught while it listed, for
+  // loadAll to apply once it has merged the load's items.
+  private loadReplay: { generation: number; events: IKubeWatchEvent<D>[] } | undefined;
 
   constructor(
     protected readonly dependencies: KubeObjectStoreDependencies,
@@ -227,6 +257,7 @@ export class KubeObjectStore<
     // that want a bound pass bufferSize explicitly.
     this.bufferSize = opts?.bufferSize ?? Infinity;
     this.pageSize = opts?.pageSize ?? 500;
+    this.maxPageSize = Math.max(this.pageSize, opts?.maxPageSize ?? 8000);
 
     autoBind(this);
     this.bindWatchEventsUpdater();
@@ -354,8 +385,9 @@ export class KubeObjectStore<
     // cluster-scoped resource, or a load of at most one namespace, keeps
     // the single cluster-wide list.
     const loadClusterWide = !this.api.isNamespaced || (isLoadingAll && namespaces.length <= 1);
-    const streamCount = loadClusterWide ? 1 : namespaces.length;
-    const tracker = this.createLoadProgressTracker(streamCount, this.loadGeneration, onProgress);
+    const generation = this.loadGeneration;
+    const tracker = this.createLoadProgressTracker(loadClusterWide ? [""] : namespaces, generation, onProgress);
+    let loadWatch: Awaited<ReturnType<typeof this.startLoadWatch>> | undefined;
 
     try {
       if (loadClusterWide) {
@@ -363,7 +395,10 @@ export class KubeObjectStore<
           this.loadedNamespaces.set([]);
         }
 
-        const res = this.api.list({ reqInit, pageSize: this.pageSize, onPage: tracker.onPageFor("") }, this.query);
+        const res = this.api.list(
+          { reqInit, pageSize: this.pageSize, maxPageSize: this.maxPageSize, onPage: tracker.onPageFor("") },
+          this.query,
+        );
 
         if (onLoadFailure) {
           try {
@@ -397,6 +432,17 @@ export class KubeObjectStore<
       // watch at the oldest namespace snapshot instead.
       this.loadedNamespaces.set(isLoadingAll ? [] : namespaces);
 
+      // The cluster-wide watch that follows an all-namespaces load starts
+      // now, before the namespaces are listed, rather than from the oldest
+      // of their snapshots once they all are. On a large cluster that
+      // snapshot can be older than the history the API server keeps for
+      // watches by the time the last namespace is listed: the watch was
+      // refused as too old, and the store listed everything again, over
+      // and over. Watched from now, no namespace has to be listed again.
+      if (isLoadingAll && this.dependencies.context.isGlobalWatchEnabled()) {
+        loadWatch = await this.startLoadWatch(reqInit?.signal);
+      }
+
       // One paginated stream per namespace: every namespace pages in
       // independently and the tracker merges their pages into the
       // progressive snapshots. At most 16 streams are in flight at once,
@@ -405,15 +451,30 @@ export class KubeObjectStore<
       const listNamespace = limitAsync(
         async (namespace: string) =>
           this.api.list(
-            { namespace, reqInit, pageSize: this.pageSize, onPage: tracker.onPageFor(namespace) },
+            {
+              namespace,
+              reqInit,
+              pageSize: this.pageSize,
+              maxPageSize: this.maxPageSize,
+              onPage: tracker.onPageFor(namespace),
+            },
             this.query,
           ),
         16,
       );
       const results = await Promise.allSettled(namespaces.map((namespace) => listNamespace(namespace)));
 
-      if (isLoadingAll && results.every((result) => result.status === "fulfilled")) {
-        // The pages left the cluster-wide ("") resourceVersion at whichever
+      const caught =
+        isLoadingAll && results.every((result) => result.status === "fulfilled")
+          ? loadWatch?.finish(tracker.namespaceVersion)
+          : undefined;
+
+      if (caught) {
+        // The watch that follows starts where this one is now.
+        this.api.setResourceVersion("", caught.resourceVersion);
+        this.loadReplay = { generation, events: caught.events };
+      } else if (isLoadingAll && results.every((result) => result.status === "fulfilled")) {
+        // Without a watch started early, the pages left the cluster-wide ("") resourceVersion at whichever
         // namespace snapshot was parsed last. The cluster-wide watch must
         // start from the oldest snapshot instead: anything newer could
         // skip the events a lagging namespace has yet to tell it about,
@@ -450,8 +511,120 @@ export class KubeObjectStore<
 
       return res;
     } finally {
+      loadWatch?.stop();
       tracker.dispose();
     }
+  }
+
+  /**
+   * Watches every namespace from the current resourceVersion while an
+   * all-namespaces load lists them. `finish` ends the watch and returns the
+   * events newer than the snapshot of their namespace's list, which the
+   * listed items do not show yet, and the version the watch had reached.
+   * It returns nothing when the watch could not start or failed, and the
+   * load then points the watch at the oldest snapshot as before.
+   */
+  private async startLoadWatch(signal: AbortSignal | null | undefined) {
+    try {
+      // One item is enough for the version of the whole collection.
+      await this.api.list({ reqInit: { signal } }, { ...this.query, limit: 1 });
+    } catch (error) {
+      if (isAbortError(error) || signal?.aborted) {
+        throw error;
+      }
+
+      return undefined;
+    }
+
+    const startVersion = this.api.getResourceVersion("");
+    let latest = parseResourceVersion(startVersion);
+
+    if (startVersion === undefined || latest === undefined) {
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    const events: IKubeWatchEvent<D>[] = [];
+    let latestRaw = startVersion;
+    let failed = false;
+
+    signal?.addEventListener("abort", abort, { once: true });
+
+    const stop = () => {
+      controller.abort();
+      signal?.removeEventListener("abort", abort);
+    };
+
+    this.api.watch({
+      namespace: "",
+      abortController: controller,
+      // No timeout: a watch that the timeout restarts would replay from
+      // the start version.
+      timeout: 0,
+      query: { ...this.watchQuery, resourceVersion: startVersion },
+      callback: (event, error) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        if (error || !event || event.type === "ERROR") {
+          failed = true;
+          stop();
+
+          return;
+        }
+
+        const raw = event.object.metadata?.resourceVersion;
+        const version = parseResourceVersion(raw);
+
+        // Events come in version order, so an older one is a replay of a
+        // restarted stream.
+        if (raw === undefined || version === undefined || version <= latest!) {
+          return;
+        }
+
+        latest = version;
+        latestRaw = raw;
+        events.push(event);
+      },
+      onBookmark: (raw) => {
+        const version = parseResourceVersion(raw);
+
+        if (version !== undefined && version > latest!) {
+          latest = version;
+          latestRaw = raw;
+        }
+      },
+    });
+
+    return {
+      finish: (namespaceVersion: (namespace: string) => bigint | undefined) => {
+        const watched = !failed && !controller.signal.aborted;
+
+        stop();
+
+        if (!watched) {
+          return undefined;
+        }
+
+        return {
+          resourceVersion: latestRaw,
+          events: events.filter((event) => {
+            if (event.type === "ERROR") {
+              return false;
+            }
+
+            const listed = namespaceVersion(event.object.metadata?.namespace ?? "");
+
+            // A namespace the load did not list, such as one created
+            // meanwhile, takes every event.
+            return listed === undefined || parseResourceVersion(event.object.metadata?.resourceVersion)! > listed;
+          }),
+        };
+      },
+      stop,
+    };
   }
 
   /**
@@ -463,18 +636,21 @@ export class KubeObjectStore<
    * one.
    */
   private createLoadProgressTracker(
-    streamCount: number,
+    streamNames: string[],
     generation: number,
     onProgress: KubeObjectStoreLoadingParams<K>["onProgress"],
   ) {
     const publishIntervalMs = 250;
+    const streamCount = streamNames.length;
+    const fannedOut = streamCount > 1;
     const accumulated: K[] = [];
     const streams = new Map<
       string,
-      { loaded: number; remainingItemCount?: number; pages: number; resourceVersion?: string }
+      { loaded: number; remainingItemCount?: number; pages: number; resourceVersion?: string; done: boolean }
     >();
     let publishTimer: ReturnType<typeof setTimeout> | undefined;
     let lastPublishedAt = 0;
+    let slow = false;
 
     const publish = () => {
       publishTimer = undefined;
@@ -509,7 +685,9 @@ export class KubeObjectStore<
       const reported = [...streams.values()];
       const moreIsComing = reported.some((stream) => stream.pages > 1 || (stream.remainingItemCount ?? 0) > 0);
 
-      if (!moreIsComing) {
+      // A load of several namespaces reports how many are done, even when
+      // each of them fits in one page.
+      if (!moreIsComing && !fannedOut) {
         return;
       }
 
@@ -518,8 +696,33 @@ export class KubeObjectStore<
           ? reported.reduce((sum, stream) => sum + stream.loaded + (stream.remainingItemCount ?? 0), 0)
           : undefined;
 
-      this.loadingProgress = { loaded: accumulated.length, total };
+      if (!fannedOut) {
+        this.loadingProgress = { loaded: accumulated.length, total };
+
+        return;
+      }
+
+      const done = reported.filter((stream) => stream.done).length;
+      const pending = streamCount - done;
+
+      this.loadingProgress = {
+        loaded: accumulated.length,
+        total,
+        namespaces: {
+          done,
+          total: streamCount,
+          waitingOn:
+            slow && pending <= namedPendingNamespaces ? streamNames.filter((name) => !streams.get(name)?.done) : [],
+        },
+      };
     };
+
+    const slowTimer = fannedOut
+      ? setTimeout(() => {
+          slow = true;
+          reportProgress();
+        }, slowLoadMs)
+      : undefined;
 
     return {
       onPageFor:
@@ -534,6 +737,7 @@ export class KubeObjectStore<
             remainingItemCount: page.remainingItemCount,
             pages: (previous?.pages ?? 0) + 1,
             resourceVersion: page.resourceVersion ?? previous?.resourceVersion,
+            done: page.done,
           });
           reportProgress();
           schedulePublish();
@@ -569,7 +773,15 @@ export class KubeObjectStore<
 
         return oldest?.raw;
       },
+      // The snapshot a namespace was listed at, once its list is done.
+      namespaceVersion: (namespace: string): bigint | undefined => {
+        const stream = streams.get(namespace);
+
+        return stream?.done ? parseResourceVersion(stream.resourceVersion) : undefined;
+      },
       dispose: () => {
+        clearTimeout(slowTimer);
+
         if (publishTimer !== undefined) {
           clearTimeout(publishTimer);
           publishTimer = undefined;
@@ -608,6 +820,17 @@ export class KubeObjectStore<
       });
 
       this.mergeLoadedItems(items, merge, namespaces);
+
+      const replay = this.loadReplay;
+
+      this.loadReplay = undefined;
+
+      if (replay?.generation === generation && replay.events.length) {
+        // What changed while the namespaces were listed.
+        this.eventsBuffer.push(...replay.events);
+        this.updateFromEventsBuffer();
+      }
+
       timing.firstItems();
       timing.complete();
 

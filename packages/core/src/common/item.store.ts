@@ -30,6 +30,15 @@ export interface LoadingProgress {
   loaded: number;
   /** Items expected in total, when the source reports how many remain */
   total?: number;
+  /** For a load that lists its namespaces one by one */
+  namespaces?: {
+    /** Namespaces listed completely */
+    done: number;
+    /** Namespaces the load lists */
+    total: number;
+    /** The namespaces still listing, named once the load is slow and only a few are left */
+    waitingOn: string[];
+  };
 }
 
 export abstract class ItemStore<Item extends ItemObject> {
