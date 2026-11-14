@@ -25,6 +25,8 @@ export interface BarChartProps extends ChartProps {
   name?: string;
   minTime?: number; // Minimum timestamp (unix seconds) for x-axis
   maxTime?: number; // Maximum timestamp (unix seconds) for x-axis
+  /** Draw every series as a line, whatever the time range */
+  lines?: boolean;
 }
 
 const getBarColor = ({ dataset }: ScriptableContext<"bar" | "line">): string =>
@@ -138,6 +140,7 @@ const NonInjectedBarChart = observer(
     className,
     minTime,
     maxTime,
+    lines = false,
     plugins,
     options: customOptions,
     ...settings
@@ -149,21 +152,22 @@ const NonInjectedBarChart = observer(
     const inferredStepSeconds = rawDatasets[0]?.data?.length
       ? Math.max(Math.floor(timeRangeSeconds / rawDatasets[0].data.length), 1)
       : 60;
-    const useSteppedStyle = inferredStepSeconds >= ONE_HOUR_SECONDS || timeRangeSeconds >= ONE_DAY_SECONDS;
+    const useSteppedStyle = !lines && (inferredStepSeconds >= ONE_HOUR_SECONDS || timeRangeSeconds >= ONE_DAY_SECONDS);
+    const asLine = lines || useSteppedStyle;
 
     const datasets = rawDatasets
       .filter((set) => set.data?.length)
       .map((item) => ({
-        type: useSteppedStyle ? ChartKind.LINE : ChartKind.BAR,
-        borderWidth: useSteppedStyle ? 2 : { top: 3 },
-        barPercentage: useSteppedStyle ? undefined : 1,
-        categoryPercentage: useSteppedStyle ? undefined : 1,
+        type: asLine ? ChartKind.LINE : ChartKind.BAR,
+        borderWidth: asLine ? 2 : { top: 3 },
+        barPercentage: asLine ? undefined : 1,
+        categoryPercentage: asLine ? undefined : 1,
         stepped: useSteppedStyle,
-        tension: useSteppedStyle ? 0 : undefined,
-        pointRadius: useSteppedStyle ? 0 : undefined,
-        pointHoverRadius: useSteppedStyle ? 2 : undefined,
-        fill: useSteppedStyle,
-        backgroundColor: useSteppedStyle ? getBarColor({ dataset: item } as never) : undefined,
+        tension: lines ? 0.25 : useSteppedStyle ? 0 : undefined,
+        pointRadius: asLine ? 0 : undefined,
+        pointHoverRadius: lines ? 3 : useSteppedStyle ? 2 : undefined,
+        fill: asLine,
+        backgroundColor: asLine ? getBarColor({ dataset: item } as never) : undefined,
         ...item,
       }));
 
@@ -278,6 +282,9 @@ const NonInjectedBarChart = observer(
       animation: {
         duration: 0,
       },
+      // A line is too thin to point at: anywhere along the time axis shows
+      // the values of every series at that time.
+      interaction: lines ? { mode: "index", intersect: false } : undefined,
       elements: {
         bar: {
           backgroundColor: getBarColor,
@@ -286,6 +293,7 @@ const NonInjectedBarChart = observer(
       plugins: {
         tooltip: {
           mode: "index",
+          intersect: !lines,
           position: "cursor",
           callbacks: {
             title([item]: TooltipItem<"bar" | "line">[]) {
@@ -321,7 +329,7 @@ const NonInjectedBarChart = observer(
     return (
       <Chart
         className={cssNames("BarChart flex flex-col grow shrink-0 basis-0", className)}
-        type={useSteppedStyle ? ChartKind.LINE : ChartKind.BAR}
+        type={asLine ? ChartKind.LINE : ChartKind.BAR}
         data={{ datasets, ...rest }}
         options={merge(barOptions, customOptions)}
         plugins={plugins}
@@ -362,6 +370,10 @@ export const memoryOptions: ChartOptions = {
           if (typeof value == "string") {
             const float = parseFloat(value);
 
+            if (float === 0) {
+              return "0";
+            }
+
             if (float < 1) {
               return float.toFixed(3);
             }
@@ -369,7 +381,7 @@ export const memoryOptions: ChartOptions = {
             return bytesToUnits(parseInt(value));
           }
 
-          return bytesToUnits(value);
+          return value === 0 ? "0" : bytesToUnits(value);
         },
       },
     },

@@ -14,6 +14,10 @@ import { metricTabOptions } from "../chart/options";
 import selectedMetricsTimeRangeInjectable from "../cluster/overview/selected-metrics-time-range.injectable";
 import { ResourceMetricsContext } from "../resource-metrics";
 import { NoMetrics } from "../resource-metrics/no-metrics";
+import { getPodResources } from "./pod-resources";
+import { resourceReferenceLines } from "./resource-reference-lines";
+
+import type { Pod } from "@freelensapp/kube-object";
 
 import type { ChartDataSets } from "../chart";
 import type { MetricsTab } from "../chart/options";
@@ -38,6 +42,7 @@ const NonInjectedPodCharts = observer(({ selectedMetricsTimeRange }: Dependencie
   if (isMetricsEmpty(metrics)) return <NoMetrics />;
 
   const id = object.getId();
+  const resources = getPodResources(object as Pod);
   const { cpuUsage, memoryUsage, fsUsage, fsWrites, fsReads, networkReceive, networkTransmit } = mapValues(
     metrics,
     (metric) => normalizeMetrics(metric).data.result[0].values,
@@ -51,7 +56,14 @@ const NonInjectedPodCharts = observer(({ selectedMetricsTimeRange }: Dependencie
         tooltip: `Container CPU cores usage`,
         borderColor: "#00a7a0",
         data: cpuUsage.map(([x, y]) => ({ x: x * 1000, y })),
+        order: 2,
       },
+      ...resourceReferenceLines(
+        `${id}-cpu`,
+        cpuUsage.map(([x, y]) => ({ x: x * 1000, y })),
+        { request: resources.cpuRequest, limit: resources.cpuLimit },
+        "CPU",
+      ),
     ],
     Memory: [
       {
@@ -60,7 +72,14 @@ const NonInjectedPodCharts = observer(({ selectedMetricsTimeRange }: Dependencie
         tooltip: `Container memory usage`,
         borderColor: "#c93dce",
         data: memoryUsage.map(([x, y]) => ({ x: x * 1000, y })),
+        order: 2,
       },
+      ...resourceReferenceLines(
+        `${id}-memory`,
+        memoryUsage.map(([x, y]) => ({ x: x * 1000, y })),
+        { request: resources.memoryRequest, limit: resources.memoryLimit },
+        "memory",
+      ),
     ],
     Network: [
       {
@@ -105,6 +124,7 @@ const NonInjectedPodCharts = observer(({ selectedMetricsTimeRange }: Dependencie
 
   return (
     <BarChart
+      lines
       name={`${object.getName()}-metric-${tab}`}
       options={metricTabOptions[tab]}
       data={{ datasets: datasets[tab] }}

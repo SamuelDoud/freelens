@@ -3,10 +3,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { isRelativeTimeOperator } from "./conditions";
+import { parseQuantity } from "../../../common/utils/k8s-quantity";
+import { isRelativeTimeOperator, takesNoValue } from "./conditions";
 import { parseDuration } from "./duration";
 
 import type {
+  QuantitySearchCondition,
   SearchCondition,
   SearchField,
   SearchFieldValue,
@@ -19,8 +21,12 @@ import type {
  * An empty value is not an error: the condition is just not in effect yet.
  */
 export function getConditionError(condition: SearchCondition): string | undefined {
-  if (!condition.value.trim()) {
+  if (!condition.value.trim() || takesNoValue(condition)) {
     return undefined;
+  }
+
+  if (condition.kind === "quantity") {
+    return parseQuantity(condition.value) === undefined ? "Use a quantity such as 500m, 2, 512Mi or 1Gi" : undefined;
   }
 
   if (condition.kind === "text") {
@@ -46,7 +52,7 @@ export function getConditionError(condition: SearchCondition): string | undefine
  * Whether a condition takes part in the search: it has a value and the value is valid.
  */
 export const isConditionInEffect = (condition: SearchCondition) =>
-  Boolean(condition.value.trim()) && getConditionError(condition) === undefined;
+  takesNoValue(condition) || (Boolean(condition.value.trim()) && getConditionError(condition) === undefined);
 
 /**
  * Reads `YYYY-MM-DDTHH:mm[:ss]` as local time. A date alone is also read as the
@@ -118,6 +124,28 @@ function createTimeTest({ operator, value }: TimeSearchCondition): TimeTest {
   }
 }
 
+type QuantityTest = (amount: number | undefined) => boolean;
+
+function createQuantityTest({ operator, value }: QuantitySearchCondition): QuantityTest {
+  if (operator === "isSet") {
+    return (amount) => amount !== undefined;
+  }
+
+  const wanted = parseQuantity(value) as number;
+  // Quantities written differently can stand for the same amount (1Gi and
+  // 1024Mi, 0.5 and 500m); compare them without floating-point noise.
+  const tolerance = Math.abs(wanted) * 1e-9;
+
+  switch (operator) {
+    case "moreThan":
+      return (amount) => amount !== undefined && amount > wanted + tolerance;
+    case "lessThan":
+      return (amount) => amount !== undefined && amount < wanted - tolerance;
+    case "exactly":
+      return (amount) => amount !== undefined && Math.abs(amount - wanted) <= tolerance;
+  }
+}
+
 const toTexts = (values: SearchFieldValue | readonly SearchFieldValue[]): string[] =>
   [values]
     .flat()
@@ -132,6 +160,12 @@ function createItemTest<I>(condition: SearchCondition, field: SearchField<I>): I
     const test = createTextTest(condition);
 
     return (item) => toTexts(field.getValues(item)).some(test);
+  }
+
+  if (condition.kind === "quantity" && field.kind === "quantity") {
+    const test = createQuantityTest(condition);
+
+    return (item) => test(field.getQuantity(item));
   }
 
   if (condition.kind === "time" && field.kind === "time") {

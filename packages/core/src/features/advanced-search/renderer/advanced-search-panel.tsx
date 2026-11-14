@@ -16,7 +16,14 @@ import searchUrlPageParamInjectable from "../../../renderer/components/input/sea
 import { MenuActions, MenuItem } from "../../../renderer/components/menu";
 import { Select } from "../../../renderer/components/select";
 import currentPathInjectable from "../../../renderer/routes/current-path.injectable";
-import { anyFieldId, isRelativeTimeOperator, textSearchOperators, timeSearchOperators } from "../common/conditions";
+import {
+  anyFieldId,
+  isRelativeTimeOperator,
+  quantitySearchOperators,
+  takesNoValue,
+  textSearchOperators,
+  timeSearchOperators,
+} from "../common/conditions";
 import { getConditionError, isConditionInEffect } from "../common/create-condition-matcher";
 import { describeCondition } from "../common/describe-condition";
 import styles from "./advanced-search-panel.module.scss";
@@ -25,6 +32,7 @@ import {
   createCondition,
   quickSearchCondition,
   withField,
+  withQuantityOperator,
   withTextOperator,
   withTimeOperator,
 } from "./condition-editing";
@@ -68,7 +76,7 @@ const fieldTitles = <I,>(fields: readonly SearchField<I>[]) =>
 const chipLabel = (condition: SearchCondition, titles: Map<string, string>) => {
   const title = titles.get(condition.field) ?? condition.field;
 
-  if (!condition.value.trim()) {
+  if (!condition.value.trim() && !takesNoValue(condition)) {
     return `${describeCondition({ ...condition, value: "" }, title).replace(/\s*("")?$/, "")} …`;
   }
 
@@ -300,10 +308,27 @@ interface ConditionChipProps<I> {
   onRemove: () => void;
 }
 
+function valuePlaceholder<I>(condition: SearchCondition, field: SearchField<I> | undefined): string {
+  if (condition.kind === "time") {
+    return "Duration, e.g. 30m, 2h, 3d, 1w";
+  }
+
+  if (field?.kind === "quantity") {
+    return field.unit === "cpu" ? "Cores, e.g. 500m or 2" : "Bytes, e.g. 512Mi or 2Gi";
+  }
+
+  return "Value";
+}
+
 const ConditionChip = observer(
   <I,>({ index, condition, fields, titles, isOpen, onOpen, onClose, onChange, onRemove }: ConditionChipProps<I>) => {
     const error = getConditionError(condition);
-    const operators = condition.kind === "text" ? textSearchOperators : timeSearchOperators;
+    const operators = {
+      text: textSearchOperators,
+      time: timeSearchOperators,
+      quantity: quantitySearchOperators,
+    }[condition.kind];
+    const field = fields.find(({ id }) => id === condition.field);
     const ref = useRef<HTMLDivElement>(null);
 
     useDismiss(isOpen, ref, onClose);
@@ -342,6 +367,10 @@ const ConditionChip = observer(
     }
 
     const renderValue = () => {
+      if (takesNoValue(condition)) {
+        return null;
+      }
+
       if (condition.kind === "time" && !isRelativeTimeOperator(condition.operator)) {
         return (
           <input
@@ -360,7 +389,7 @@ const ConditionChip = observer(
           autoFocus
           data-testid={`advanced-search-value-${index}`}
           value={condition.value}
-          placeholder={condition.kind === "time" ? "Duration, e.g. 30m, 2h, 3d, 1w" : "Value"}
+          placeholder={valuePlaceholder(condition, field)}
           onChange={(value) => onChange({ ...condition, value })}
           onSubmit={onClose}
         />
@@ -403,11 +432,20 @@ const ConditionChip = observer(
                 return;
               }
 
-              onChange(
-                condition.kind === "text"
-                  ? withTextOperator(condition, option.value as (typeof textSearchOperators)[number]["id"])
-                  : withTimeOperator(condition, option.value as (typeof timeSearchOperators)[number]["id"], Date.now()),
-              );
+              switch (condition.kind) {
+                case "text":
+                  return onChange(
+                    withTextOperator(condition, option.value as (typeof textSearchOperators)[number]["id"]),
+                  );
+                case "time":
+                  return onChange(
+                    withTimeOperator(condition, option.value as (typeof timeSearchOperators)[number]["id"], Date.now()),
+                  );
+                case "quantity":
+                  return onChange(
+                    withQuantityOperator(condition, option.value as (typeof quantitySearchOperators)[number]["id"]),
+                  );
+              }
             }}
           />
         </div>

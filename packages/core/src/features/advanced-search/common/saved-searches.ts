@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { textSearchOperators, timeSearchOperators } from "./conditions";
+import { quantitySearchOperators, textSearchOperators, timeSearchOperators } from "./conditions";
 
 import type { SavedSearch, SearchCondition } from "./conditions";
 
@@ -29,6 +29,12 @@ function toCondition(value: unknown): SearchCondition | undefined {
     const operator = timeSearchOperators.find(({ id }) => id === value.operator)?.id;
 
     return operator && { ...base, kind: "time", operator };
+  }
+
+  if (value.kind === "quantity") {
+    const operator = quantitySearchOperators.find(({ id }) => id === value.operator)?.id;
+
+    return operator && { ...base, kind: "quantity", operator };
   }
 
   return undefined;

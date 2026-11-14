@@ -6,6 +6,7 @@
 import { anyFieldId, createConditionId, isRelativeTimeOperator } from "../common/conditions";
 
 import type {
+  QuantitySearchOperator,
   SearchCondition,
   SearchField,
   TextSearchOperator,
@@ -32,6 +33,10 @@ export function createCondition<I>(field: SearchField<I>, now: number, id = crea
     return { id, kind: "time", field: field.id, operator: "before", value: toLocalDateTimeInput(now), negate: false };
   }
 
+  if (field.kind === "quantity") {
+    return { id, kind: "quantity", field: field.id, operator: "moreThan", value: "", negate: false };
+  }
+
   return { id, kind: "text", field: field.id, operator: "contains", value: "", negate: false };
 }
 
@@ -45,6 +50,10 @@ export function withField<I>(condition: SearchCondition, field: SearchField<I>, 
   }
 
   return { ...createCondition(field, now, condition.id), negate: condition.negate };
+}
+
+export function withQuantityOperator(condition: SearchCondition, operator: QuantitySearchOperator): SearchCondition {
+  return condition.kind === "quantity" ? { ...condition, operator } : condition;
 }
 
 export function withTextOperator(condition: SearchCondition, operator: TextSearchOperator): SearchCondition {

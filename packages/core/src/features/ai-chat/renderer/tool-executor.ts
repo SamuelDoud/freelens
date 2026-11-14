@@ -7,6 +7,7 @@ import { dump } from "js-yaml";
 import {
   anyFieldId,
   createConditionId,
+  quantitySearchOperators,
   textSearchOperators,
   timeSearchOperators,
 } from "../../advanced-search/common/conditions";
@@ -18,6 +19,9 @@ import type { KubeApiResource } from "../../../common/rbac";
 import type { SearchCondition } from "../../advanced-search/common/conditions";
 import type { AiToolResult } from "../common/channels";
 import type { RawObject } from "./format";
+
+// The pod fields whose conditions compare amounts.
+const quantityFieldIds = new Set(["cpuRequest", "cpuLimit", "memoryRequest", "memoryLimit"]);
 
 export interface AiKubeClient {
   get: (path: string, query?: Record<string, string | number | boolean>) => Promise<unknown>;
@@ -423,6 +427,10 @@ export class AiToolExecutor {
     const operator = str(condition, "operator", true) as string;
     const value = typeof condition.value === "string" ? condition.value : String(condition.value ?? "");
     const negate = condition.negate === true;
+
+    if (quantityFieldIds.has(field) && quantitySearchOperators.some(({ id }) => id === operator)) {
+      return { id: createConditionId(), kind: "quantity", field, operator: operator as never, value, negate };
+    }
 
     if (textSearchOperators.some(({ id }) => id === operator)) {
       return {

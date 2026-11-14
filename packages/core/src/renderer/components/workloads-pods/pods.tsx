@@ -14,8 +14,10 @@ import { useEffect } from "react";
 import eventStoreInjectable from "../events/store.injectable";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
 import { SiblingsInTabLayout } from "../layout/siblings-in-tab-layout";
+import { podResourceColumnIds } from "./columns/pods-resource-column";
 import { getPodControllerKinds } from "./pod-controller-kinds";
 import { getPodContainerPorts } from "./pod-ports-cell";
+import { getPodResources } from "./pod-resources";
 import podStoreInjectable from "./store.injectable";
 
 import type { Pod } from "@freelensapp/kube-object";
@@ -46,6 +48,20 @@ const podSearchFields: SearchField<Pod>[] = [
     kind: "text",
     getValues: (pod) => pod.getAllContainers().map((container) => container.image),
   },
+  ...podResourceColumnIds.map(
+    (id): SearchField<Pod> => ({
+      id,
+      title: {
+        cpuRequest: "CPU request",
+        cpuLimit: "CPU limit",
+        memoryRequest: "Memory request",
+        memoryLimit: "Memory limit",
+      }[id],
+      kind: "quantity",
+      unit: id.startsWith("cpu") ? "cpu" : "memory",
+      getQuantity: (pod) => getPodResources(pod)[id],
+    }),
+  ),
 ];
 
 const NonInjectedPods = observer((props: Dependencies) => {
@@ -67,7 +83,8 @@ const NonInjectedPods = observer((props: Dependencies) => {
         dependentStores={[eventStore]} // status icon component uses event store
         tableId="workloads_pods"
         isConfigurable
-        defaultHiddenTableColumns={["ip", "node", "qos"]}
+        defaultHiddenTableColumns={["ip", "node", "qos", ...podResourceColumnIds]}
+        columnsAddedLater={podResourceColumnIds}
         searchFilters={[
           (pod) => pod.getSearchFields(),
           (pod) => pod.getStatusMessage(),
