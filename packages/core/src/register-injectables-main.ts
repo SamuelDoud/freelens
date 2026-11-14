@@ -8,6 +8,7 @@
 import { registerInjectables as registerCommonInjectables } from "./common/register-injectables";
 import { registerInjectables as registerExtensionsInjectables } from "./extensions/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesAiChatMainInjectables } from "./features/ai-chat/main/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesAppearanceMainInjectables } from "./features/appearance/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesApplicationMenuMainInjectables } from "./features/application-menu/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesClusterActivationMainInjectables } from "./features/cluster/activation/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesClusterConnectionsMainInjectables } from "./features/cluster/connections/main/register-injectables";
@@ -57,6 +58,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerCommonInjectables(di);
   registerExtensionsInjectables(di);
   registerFeaturesFeaturesAiChatMainInjectables(di);
+  registerFeaturesFeaturesAppearanceMainInjectables(di);
   registerFeaturesFeaturesApplicationMenuMainInjectables(di);
   registerFeaturesFeaturesClusterInjectables(di);
   registerFeaturesFeaturesClusterActivationMainInjectables(di);
