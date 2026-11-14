@@ -12,6 +12,7 @@ import { defaultColorThemePreference } from "../../../common/vars";
 import currentTimezoneInjectable from "../../../common/vars/current-timezone.injectable";
 import isDevelopmentInjectable from "../../../common/vars/is-development.injectable";
 import { readSavedSearches } from "../../advanced-search/common/saved-searches";
+import { readAiChatPreferences } from "../../ai-chat/common/preferences";
 import {
   ClusterPageMenuOrder,
   clampMaxCombinedLogsPods,
@@ -27,6 +28,7 @@ import {
 import type { ObservableMap } from "mobx";
 
 import type { SavedSearch } from "../../advanced-search/common/conditions";
+import type { AiChatPreferences } from "../../ai-chat/common/preferences";
 import type {
   EditorConfiguration,
   ExtensionRegistry,
@@ -62,6 +64,7 @@ export type PreferenceDescriptors = {
   readonly hotbarAutoHide: PreferenceDescription<boolean>;
   readonly persistentSearch: PreferenceDescription<boolean>;
   readonly savedSearches: PreferenceDescription<SavedSearch[], SavedSearch[]>;
+  readonly aiChat: PreferenceDescription<unknown, AiChatPreferences>;
   readonly logViewerPreferences: PreferenceDescription<Partial<LogViewerPreferences>, LogViewerPreferences>;
   readonly terminalCopyOnSelect: PreferenceDescription<boolean>;
   readonly hiddenTableColumns: PreferenceDescription<[string, string[]][], Map<string, Set<string>>>;
@@ -158,6 +161,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
       savedSearches: getPreferenceDescriptor<SavedSearch[], SavedSearch[]>({
         fromStore: (val) => readSavedSearches(val),
         toStore: (val) => (val.length ? [...val] : undefined),
+      }),
+      aiChat: getPreferenceDescriptor<unknown, AiChatPreferences>({
+        fromStore: (val) => readAiChatPreferences(val),
+        toStore: (val) => val,
       }),
       logViewerPreferences: getPreferenceDescriptor<Partial<LogViewerPreferences>, LogViewerPreferences>({
         fromStore: (val) => ({

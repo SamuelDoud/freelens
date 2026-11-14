@@ -1,0 +1,21 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+.aiPreferences {
+  section {
+    margin-bottom: 24px;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+
+  > * {
+    flex: 1;
+  }
+}

@@ -5,6 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import clearAiChatTabDataInjectable from "../../../../features/ai-chat/renderer/clear-ai-chat-tab-data.injectable";
 import clearCreateResourceTabDataInjectable from "../create-resource/clear-create-resource-tab-data.injectable";
 import clearEditResourceTabDataInjectable from "../edit-resource/clear-edit-resource-tab-data.injectable";
 import clearInstallChartTabDataInjectable from "../install-chart/clear-install-chart-tab-data.injectable";
@@ -28,6 +29,7 @@ const dockStoreInjectable = getInjectable({
         [TabKind.EDIT_RESOURCE]: di.inject(clearEditResourceTabDataInjectable),
         [TabKind.INSTALL_CHART]: di.inject(clearInstallChartTabDataInjectable),
         [TabKind.TERMINAL]: di.inject(clearTerminalTabDataInjectable),
+        [TabKind.AI_CHAT]: di.inject(clearAiChatTabDataInjectable),
       },
       tabDataValidator: {
         [TabKind.POD_LOGS]: di.inject(isLogsTabDataValidInjectable),

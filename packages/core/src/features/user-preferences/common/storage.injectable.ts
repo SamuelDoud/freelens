@@ -58,6 +58,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
         state.hotbarAutoHide = descriptors.hotbarAutoHide.fromStore(preferences.hotbarAutoHide);
         state.persistentSearch = descriptors.persistentSearch.fromStore(preferences.persistentSearch);
         state.savedSearches = descriptors.savedSearches.fromStore(preferences.savedSearches);
+        state.aiChat = descriptors.aiChat.fromStore(preferences.aiChat);
         state.logViewerPreferences = descriptors.logViewerPreferences.fromStore(preferences.logViewerPreferences);
         state.shell = descriptors.shell.fromStore(preferences.shell);
         state.syncKubeconfigEntries = descriptors.syncKubeconfigEntries.fromStore(preferences.syncKubeconfigEntries);
@@ -89,6 +90,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
             hotbarAutoHide: descriptors.hotbarAutoHide.toStore(state.hotbarAutoHide),
             persistentSearch: descriptors.persistentSearch.toStore(state.persistentSearch),
             savedSearches: descriptors.savedSearches.toStore(state.savedSearches),
+            aiChat: descriptors.aiChat.toStore(state.aiChat),
             logViewerPreferences: descriptors.logViewerPreferences.toStore(state.logViewerPreferences),
             shell: descriptors.shell.toStore(state.shell),
             syncKubeconfigEntries: descriptors.syncKubeconfigEntries.toStore(state.syncKubeconfigEntries),
