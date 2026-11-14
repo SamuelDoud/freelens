@@ -109,14 +109,17 @@ const NonInjectedContainerCharts = observer(
 
     return (
       <>
-        <BarChart
-          lines
-          name={`metrics-${tab}`}
-          options={metricTabOptions[tab]}
-          data={{ datasets: datasets[tab] }}
-          minTime={minTime}
-          maxTime={maxTime}
-        />
+        {/* The chart takes the height of its container: its own, so that the table does not add to it */}
+        <div>
+          <BarChart
+            lines
+            name={`metrics-${tab}`}
+            options={metricTabOptions[tab]}
+            data={{ datasets: datasets[tab] }}
+            minTime={minTime}
+            maxTime={maxTime}
+          />
+        </div>
         <MetricStatsTable tab={tab} datasets={datasets[tab]} />
       </>
     );
