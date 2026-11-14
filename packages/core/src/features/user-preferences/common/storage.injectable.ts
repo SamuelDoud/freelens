@@ -66,6 +66,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
         state.terminalConfig = descriptors.terminalConfig.fromStore(preferences.terminalConfig);
         state.terminalCopyOnSelect = descriptors.terminalCopyOnSelect.fromStore(preferences.terminalCopyOnSelect);
         state.rowClickAction = descriptors.rowClickAction.fromStore(preferences.rowClickAction);
+        state.multiviews = descriptors.multiviews.fromStore(preferences.multiviews);
         state.terminalTheme = descriptors.terminalTheme.fromStore(preferences.terminalTheme);
         state.clusterPageMenuOrder = descriptors.clusterPageMenuOrder.fromStore(preferences.clusterPageMenuOrder);
       }),
@@ -100,6 +101,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
             terminalConfig: descriptors.terminalConfig.toStore(state.terminalConfig),
             terminalCopyOnSelect: descriptors.terminalCopyOnSelect.toStore(state.terminalCopyOnSelect),
             rowClickAction: descriptors.rowClickAction.toStore(state.rowClickAction),
+            multiviews: descriptors.multiviews.toStore(state.multiviews),
             terminalTheme: descriptors.terminalTheme.toStore(state.terminalTheme),
             clusterPageMenuOrder: descriptors.clusterPageMenuOrder.toStore(state.clusterPageMenuOrder),
           },

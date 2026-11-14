@@ -84,5 +84,15 @@
         visibility: hidden;
       }
     }
+
+    // A multiview draws its title bars under the frames, in the gaps between them.
+    &.multiview {
+      background-color: transparent;
+      pointer-events: none;
+
+      iframe:not(.hidden) {
+        pointer-events: auto;
+      }
+    }
   }
 }

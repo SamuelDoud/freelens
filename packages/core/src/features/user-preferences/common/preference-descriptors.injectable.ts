@@ -13,6 +13,7 @@ import currentTimezoneInjectable from "../../../common/vars/current-timezone.inj
 import isDevelopmentInjectable from "../../../common/vars/is-development.injectable";
 import { readSavedSearches } from "../../advanced-search/common/saved-searches";
 import { readAiChatPreferences } from "../../ai-chat/common/preferences";
+import { readMultiViews } from "../../multiview/common/multiview";
 import { defaultThemePaletteId } from "../../theme/palettes/common/palettes";
 import {
   ClusterPageMenuOrder,
@@ -30,6 +31,7 @@ import type { ObservableMap } from "mobx";
 
 import type { SavedSearch } from "../../advanced-search/common/conditions";
 import type { AiChatPreferences } from "../../ai-chat/common/preferences";
+import type { MultiView } from "../../multiview/common/multiview";
 import type {
   EditorConfiguration,
   ExtensionRegistry,
@@ -73,6 +75,7 @@ export type PreferenceDescriptors = {
   readonly logViewerPreferences: PreferenceDescription<Partial<LogViewerPreferences>, LogViewerPreferences>;
   readonly terminalCopyOnSelect: PreferenceDescription<boolean>;
   readonly rowClickAction: PreferenceDescription<RowClickAction | undefined, RowClickAction>;
+  readonly multiviews: PreferenceDescription<MultiView[] | undefined, MultiView[]>;
   readonly hiddenTableColumns: PreferenceDescription<[string, string[]][], Map<string, Set<string>>>;
   readonly syncKubeconfigEntries: PreferenceDescription<
     KubeconfigSyncEntry[],
@@ -197,6 +200,11 @@ const userPreferenceDescriptorsInjectable = getInjectable({
 
           return Object.keys(storedValue).length > 0 ? storedValue : undefined;
         },
+      }),
+      multiviews: getPreferenceDescriptor<MultiView[] | undefined, MultiView[]>({
+        fromStore: readMultiViews,
+        toStore: (value) =>
+          value.length ? value.map((view) => ({ ...view, clusterIds: [...view.clusterIds] })) : undefined,
       }),
       rowClickAction: getPreferenceDescriptor<RowClickAction | undefined, RowClickAction>({
         fromStore: (val) => (val === "drawer" ? "drawer" : "expand"),

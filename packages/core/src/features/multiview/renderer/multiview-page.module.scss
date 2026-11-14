@@ -1,0 +1,68 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+// Under the frames of the clusters (#lens-views), which leave the title bars uncovered.
+.page {
+  position: absolute;
+  inset: 0;
+  background: var(--layoutBackground);
+}
+
+.pane {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid transparent;
+  border-top: none;
+
+  &.active {
+    border-color: var(--primary);
+
+    .title {
+      background: var(--primary);
+      color: var(--textColorAccent);
+    }
+  }
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--margin);
+  padding: 0 var(--padding);
+  background: var(--secondaryBackground);
+  color: var(--textColorPrimary);
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+
+.name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--margin) / 2);
+  font-weight: normal;
+}
+
+.viewName {
+  opacity: 0.8;
+}
+
+.status {
+  display: flex;
+  justify-content: center;
+  padding-top: 40px;
+}
+
+.missing {
+  margin: auto;
+  color: var(--textColorSecondary);
+}

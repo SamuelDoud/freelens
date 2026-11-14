@@ -12,6 +12,7 @@ import { registerInjectables as registerExtensionsInjectables } from "./extensio
 import { registerInjectables as registerFavoritesInjectables } from "./favorites/register-injectables";
 import { registerInjectables as registerHotbarInjectables } from "./hotbar/register-injectables";
 import { registerInjectables as registerLicensesInjectables } from "./licenses/register-injectables";
+import { registerInjectables as registerMultiviewInjectables } from "./multiview/register-injectables";
 import { registerInjectables as registerPersistentStorageInjectables } from "./persistent-storage/register-injectables";
 import { registerInjectables as registerPreferencesInjectables } from "./preferences/register-injectables";
 import { registerInjectables as registerUserPreferencesInjectables } from "./user-preferences/register-injectables";
@@ -48,6 +49,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerLicensesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerMultiviewInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
