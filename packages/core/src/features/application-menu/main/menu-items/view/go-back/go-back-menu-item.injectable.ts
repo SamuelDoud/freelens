@@ -4,14 +4,15 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
-import { webContents } from "electron";
+import { historyGoChannel } from "../../../../../history/common/channels";
 import applicationMenuItemInjectionToken from "../../application-menu-item-injection-token";
 
 const goBackMenuItemInjectable = getInjectable({
   id: "go-back-menu-item",
 
-  instantiate: () => ({
+  instantiate: (di) => ({
     kind: "clickable-menu-item" as const,
     parentId: "view",
     id: "go-back",
@@ -19,12 +20,8 @@ const goBackMenuItemInjectable = getInjectable({
     label: "Back",
     keyboardShortcut: "CmdOrCtrl+[",
 
-    onClick: () => {
-      webContents
-        .getAllWebContents()
-        .filter((wc) => wc.getType() === "window")
-        .forEach((wc) => wc.navigationHistory.goBack());
-    },
+    // Steps through the timeline of the main frame, which counts the steps within pages too.
+    onClick: () => di.inject(sendMessageToChannelInjectionToken)(historyGoChannel, -1),
   }),
 
   injectionToken: applicationMenuItemInjectionToken,
