@@ -43,7 +43,7 @@ describe("Chart", () => {
   beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (this: HTMLCanvasElement) {
       return createFakeContext(this);
-    } as typeof HTMLCanvasElement.prototype.getContext);
+    } as unknown as typeof HTMLCanvasElement.prototype.getContext);
   });
 
   afterEach(() => {
