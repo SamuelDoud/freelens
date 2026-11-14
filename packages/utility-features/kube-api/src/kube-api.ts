@@ -118,8 +118,15 @@ export interface KubeApiQueryParams {
   timeoutSeconds?: number;
   limit?: number; // doesn't work with ?watch
   continue?: string; // might be used with ?limit from second request
+  allowWatchBookmarks?: boolean; // only with ?watch
   labelSelector?: string | string[]; // restrict list of objects by their labels, e.g. labelSelector: ["label=value"]
   fieldSelector?: string | string[]; // restrict list of objects by their fields, e.g. fieldSelector: "field=name"
+}
+
+/** A bookmark of a watch: only its `resourceVersion` means anything */
+interface KubeWatchBookmark {
+  readonly type: "BOOKMARK";
+  readonly object?: { readonly metadata?: { readonly resourceVersion?: unknown } };
 }
 
 export interface KubeApiListPage<Object> {
@@ -131,6 +138,8 @@ export interface KubeApiListPage<Object> {
   remainingItemCount?: number;
   /** The resourceVersion of the snapshot this page belongs to */
   resourceVersion?: string;
+  /** Whether this is the last page of the list */
+  done: boolean;
 }
 
 export interface KubeApiListOptions<Object = KubeObject> {
@@ -145,6 +154,14 @@ export interface KubeApiListOptions<Object = KubeObject> {
    * for exactly one bounded request.
    */
   pageSize?: number;
+
+  /**
+   * Lets the pages of a paginated list grow: each page asks for twice as
+   * many items as the one before, up to this many. A long list then needs
+   * fewer requests, and finishes before the API server lets go of the
+   * snapshot it is paging through. Without it every page has `pageSize`.
+   */
+  maxPageSize?: number;
 
   /** Called with every page of a paginated list, in arrival order */
   onPage?: (page: KubeApiListPage<Object>) => void;
@@ -337,6 +354,14 @@ export interface KubeApiWatchOptions<Object extends KubeObject, Data extends Kub
    * arrives as a DELETED event.
    */
   query?: KubeApiQueryParams;
+
+  /**
+   * Called with the resourceVersion of every bookmark the API server sends.
+   * The watch asks for bookmarks, so that a watch restarted from its last
+   * version is not refused for being too old after a quiet while; they
+   * advance that version and are not passed to `callback`.
+   */
+  onBookmark?: (resourceVersion: string) => void;
 }
 
 export type KubeApiPatchType = "merge" | "json" | "strategic";
@@ -697,7 +722,7 @@ export class KubeApi<
   }
 
   async list(
-    { namespace = "", reqInit, pageSize, onPage }: KubeApiListOptions<Object> = {},
+    { namespace = "", reqInit, pageSize, maxPageSize, onPage }: KubeApiListOptions<Object> = {},
     query?: KubeApiQueryParams,
   ): Promise<Object[] | null> {
     await this.checkPreferredVersion();
@@ -714,6 +739,7 @@ export class KubeApi<
     const items: Object[] = [];
     let continueToken: string | undefined;
     let restartedAfterExpiry = false;
+    let limit = pageSize;
 
     for (;;) {
       reqInit?.signal?.throwIfAborted();
@@ -723,7 +749,7 @@ export class KubeApi<
       try {
         page = await this.listPage(
           url,
-          { ...query, limit: pageSize, ...(continueToken ? { continue: continueToken } : {}) },
+          { ...query, limit, ...(continueToken ? { continue: continueToken } : {}) },
           reqInit,
           namespace,
         );
@@ -752,9 +778,11 @@ export class KubeApi<
         loaded: items.length,
         remainingItemCount: page.remainingItemCount,
         resourceVersion: page.resourceVersion,
+        done: !page.continueToken,
       });
 
       continueToken = page.continueToken;
+      limit = Math.max(pageSize, Math.min(limit * 2, maxPageSize ?? pageSize));
 
       if (!continueToken) {
         return items;
@@ -977,6 +1005,7 @@ export class KubeApi<
     return this.formatUrlForListing(namespace, {
       watch: 1,
       resourceVersion: this.getResourceVersion(namespace),
+      allowWatchBookmarks: true,
       ...query,
     });
   }
@@ -991,6 +1020,7 @@ export class KubeApi<
       timeout = 600,
       watchId = `${this.kind.toLowerCase()}-${this.watchId++}`,
       query,
+      onBookmark,
     } = opts ?? {};
 
     // Create AbortController for this request
@@ -1083,7 +1113,18 @@ export class KubeApi<
 
         const emitLine = (line: string) => {
           try {
-            const event = JSON.parse(line) as IKubeWatchEvent<Data>;
+            const event = JSON.parse(line) as IKubeWatchEvent<Data> | KubeWatchBookmark;
+
+            if (event.type === "BOOKMARK") {
+              const resourceVersion = event.object?.metadata?.resourceVersion;
+
+              if (typeof resourceVersion === "string" && resourceVersion) {
+                this.setResourceVersion(namespace, resourceVersion);
+                onBookmark?.(resourceVersion);
+              }
+
+              return;
+            }
 
             if (event.type === "ERROR" && isKubeStatusData(event.object)) {
               errorReceived = true;
