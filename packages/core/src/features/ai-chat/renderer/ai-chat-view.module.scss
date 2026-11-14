@@ -1,0 +1,172 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+.aiChat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--dockInfoBackground);
+  color: var(--textColorPrimary);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--borderFaintColor);
+}
+
+.select {
+  min-width: 170px;
+}
+
+.allowChanges {
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+
+  &.allowed {
+    border-color: var(--colorWarning);
+    color: var(--colorWarning);
+  }
+}
+
+.spacer {
+  flex: 1;
+}
+
+.messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty {
+  color: var(--textColorSecondary);
+}
+
+.message {
+  max-width: 90%;
+  padding: 8px 12px;
+  border-radius: var(--border-radius);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.user {
+  align-self: flex-end;
+  white-space: pre-wrap;
+  background: var(--primary);
+  color: white;
+}
+
+.assistant {
+  align-self: flex-start;
+  background: var(--secondaryBackground);
+
+  p {
+    margin: 0 0 6px;
+  }
+
+  pre {
+    white-space: pre-wrap;
+  }
+}
+
+.tool {
+  align-self: flex-start;
+  max-width: 90%;
+  font-size: var(--font-size-small);
+  color: var(--textColorSecondary);
+  border-left: 2px solid var(--borderColor);
+  padding-left: 8px;
+
+  summary {
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  pre {
+    margin: 4px 0 0;
+    max-height: 240px;
+    overflow: auto;
+    font-family: var(--font-monospace);
+    white-space: pre-wrap;
+  }
+
+  &.failed {
+    border-left-color: var(--colorError);
+  }
+
+  &.done {
+    border-left-color: var(--colorSuccess);
+  }
+}
+
+.args {
+  color: var(--textColorTertiary);
+}
+
+.approval {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--colorWarning);
+  border-radius: var(--border-radius);
+}
+
+.approvalState {
+  color: var(--textColorSecondary);
+  text-transform: capitalize;
+}
+
+.notice {
+  padding: 6px 12px;
+  border-radius: var(--border-radius);
+  white-space: pre-wrap;
+
+  &.error {
+    color: var(--colorError);
+    border: 1px solid var(--colorError);
+  }
+
+  &.info {
+    color: var(--colorInfo);
+  }
+}
+
+.thinking {
+  color: var(--textColorSecondary);
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--borderFaintColor);
+}
+
+.input {
+  flex: 1;
+  resize: vertical;
+  min-height: 40px;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--textColorPrimary);
+  background: var(--inputControlBackground);
+  border: 1px solid var(--inputControlBorder);
+  border-radius: var(--border-radius);
+}

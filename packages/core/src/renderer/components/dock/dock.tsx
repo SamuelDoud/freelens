@@ -13,6 +13,8 @@ import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import React from "react";
+import { AiChatView } from "../../../features/ai-chat/renderer/ai-chat-view";
+import createAiChatTabInjectable from "../../../features/ai-chat/renderer/create-ai-chat-tab.injectable";
 import { MenuItem } from "../menu";
 import { MenuActions } from "../menu/menu-actions";
 import createResourceTabInjectable from "./create-resource/create-resource-tab.injectable";
@@ -36,6 +38,7 @@ export interface DockProps {
 interface Dependencies {
   createResourceTab: () => void;
   createTerminalTab: () => void;
+  createAiChatTab: () => void;
   dockStore: DockStore;
 }
 
@@ -126,6 +129,9 @@ class NonInjectedDock extends React.Component<DockProps & Dependencies> {
         return <LogsDockTab key={tab.id} tab={tab} />;
       case TabKind.TERMINAL:
         return <TerminalWindow tab={tab} />;
+      // Each tab is its own conversation.
+      case TabKind.AI_CHAT:
+        return <AiChatView key={tab.id} tabId={tab.id} />;
     }
   }
 
@@ -182,6 +188,10 @@ class NonInjectedDock extends React.Component<DockProps & Dependencies> {
                   <Icon small material="create" />
                   Create resource
                 </MenuItem>
+                <MenuItem className="create-ai-chat-tab" onClick={() => this.props.createAiChatTab()}>
+                  <Icon small material="smart_toy" />
+                  AI chat
+                </MenuItem>
               </MenuActions>
             </div>
             {hasTabs() && (
@@ -214,6 +224,7 @@ export const Dock = withInjectables<Dependencies, DockProps>(
       createResourceTab: di.inject(createResourceTabInjectable),
       dockStore: di.inject(dockStoreInjectable),
       createTerminalTab: di.inject(createTerminalTabInjectable),
+      createAiChatTab: di.inject(createAiChatTabInjectable),
       ...props,
     }),
   },

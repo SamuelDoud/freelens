@@ -52,6 +52,8 @@ export const DockTabs = ({ tabs, autoFocus, selectedTab, onChangeTab }: DockTabs
         return <DockTab value={tab} icon="subject" />;
       case TabKind.TERMINAL:
         return <TerminalTab value={tab} />;
+      case TabKind.AI_CHAT:
+        return <DockTab value={tab} icon="smart_toy" />;
     }
   };
 

@@ -6,6 +6,7 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import { registerInjectables as registerAiInjectables } from "./ai/register-injectables";
 import { registerInjectables as registerApplicationInjectables } from "./application/register-injectables";
 import currentPreferenceTabCompositeInjectable from "./current-preference-tab-composite.injectable";
 import currentPreferenceTabIdInjectable from "./current-preference-tab-id.injectable";
@@ -42,6 +43,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(preferencesCompositeInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerAiInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

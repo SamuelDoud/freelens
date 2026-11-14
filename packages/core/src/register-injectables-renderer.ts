@@ -8,6 +8,7 @@
 import { registerInjectables as registerCommonInjectables } from "./common/register-injectables";
 import { registerInjectables as registerExtensionsInjectables } from "./extensions/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesAdvancedSearchRendererInjectables } from "./features/advanced-search/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesAiChatRendererInjectables } from "./features/ai-chat/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesClusterActivationRendererInjectables } from "./features/cluster/activation/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesClusterDeleteDialogRendererInjectables } from "./features/cluster/delete-dialog/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesClusterExecuteRendererInjectables } from "./features/cluster/execute/renderer/register-injectables";
@@ -58,6 +59,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerCommonInjectables(di);
   registerExtensionsInjectables(di);
   registerFeaturesFeaturesAdvancedSearchRendererInjectables(di);
+  registerFeaturesFeaturesAiChatRendererInjectables(di);
   registerFeaturesFeaturesClusterInjectables(di);
   registerFeaturesFeaturesClusterActivationRendererInjectables(di);
   registerFeaturesFeaturesClusterDeleteDialogRendererInjectables(di);
