@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { APIServiceDetails } from "../../../config-api-services";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const apiServiceDetailItemInjectable = getInjectable({
   id: "api-service-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: APIServiceDetails,
-      enabled: computed(() => isAPIService(kubeObject.value.get()?.object)),
+      isFor: isAPIService,
       orderNumber: 10,
     };
   },

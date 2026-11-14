@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { ResourceSliceDetails } from "../../../devices-resource-slices";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const resourceSliceDetailItemInjectable = getInjectable({
   id: "resource-slice-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: ResourceSliceDetails,
-      enabled: computed(() => isResourceSlice(kubeObject.value.get()?.object)),
+      isFor: isResourceSlice,
       orderNumber: 10,
     };
   },

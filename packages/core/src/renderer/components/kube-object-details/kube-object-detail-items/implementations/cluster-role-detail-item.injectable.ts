@@ -5,24 +5,18 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { ClusterRoleDetails } from "../../../user-management/cluster-roles";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
 const clusterRoleDetailItemInjectable = getInjectable({
   id: "cluster-role-detail-item",
 
-  instantiate: (di) => {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
-    return {
-      Component: ClusterRoleDetails,
-      enabled: computed(() => isClusterRole(kubeObject.value.get()?.object)),
-      orderNumber: 10,
-    };
-  },
+  instantiate: () => ({
+    Component: ClusterRoleDetails,
+    isFor: isClusterRole,
+    orderNumber: 10,
+  }),
 
   injectionToken: kubeObjectDetailItemInjectionToken,
 });

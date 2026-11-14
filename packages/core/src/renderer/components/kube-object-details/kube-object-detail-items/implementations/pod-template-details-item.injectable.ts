@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { PodTemplateDetails } from "../../../workloads-pod-templates";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const podTemplateDetailItemInjectable = getInjectable({
   id: "pod-template-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: PodTemplateDetails,
-      enabled: computed(() => isPodTemplate(kubeObject.value.get()?.object)),
+      isFor: isPodTemplate,
       orderNumber: 10,
     };
   },

@@ -5,9 +5,9 @@
  */
 
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
-import { computed } from "mobx";
-import currentKubeObjectInDetailsInjectable from "../../../components/kube-object-details/current-kube-object-in-details.injectable";
 import enabledMetricsInjectable from "./metrics-enabled.injectable";
+
+import type { KubeObject } from "@freelensapp/kube-object";
 
 import type { ClusterMetricsResourceType } from "../../../../common/cluster-types";
 
@@ -15,17 +15,8 @@ const metricsDetailsComponentEnabledInjectable = getInjectable({
   id: "metrics-details-component-enabled",
   instantiate: (di, kind) => {
     const metricsEnabled = di.inject(enabledMetricsInjectable, kind);
-    const currentKubeObjectInDetails = di.inject(currentKubeObjectInDetailsInjectable);
-
-    return computed(() => {
-      const current = currentKubeObjectInDetails.value.get();
-
-      if (!current?.object) {
-        return false;
-      }
-
-      return metricsEnabled.get() && current.object.kind == kind;
-    });
+    // Whether an object of this kind shows its metrics.
+    return (object: KubeObject) => metricsEnabled.get() && object.kind === kind;
   },
   lifecycle: lifecycleEnum.keyedSingleton({
     getInstanceKey: (di, kind: ClusterMetricsResourceType) => kind,

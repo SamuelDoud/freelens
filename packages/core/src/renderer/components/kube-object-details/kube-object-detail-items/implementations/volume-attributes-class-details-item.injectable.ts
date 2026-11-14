@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { VolumeAttributesClassDetails } from "../../../storage-volume-attributes-classes";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const volumeAttributesClassDetailItemInjectable = getInjectable({
   id: "volume-attributes-class-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: VolumeAttributesClassDetails,
-      enabled: computed(() => isVolumeAttributesClass(kubeObject.value.get()?.object)),
+      isFor: isVolumeAttributesClass,
       orderNumber: 10,
     };
   },

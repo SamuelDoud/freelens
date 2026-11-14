@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { ServiceCIDRDetails } from "../../../network-service-cidrs";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const serviceCidrDetailItemInjectable = getInjectable({
   id: "service-cidr-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: ServiceCIDRDetails,
-      enabled: computed(() => isServiceCIDR(kubeObject.value.get()?.object)),
+      isFor: isServiceCIDR,
       orderNumber: 10,
     };
   },

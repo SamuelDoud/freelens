@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { MutatingAdmissionPolicyBindingDetails } from "../../../config-mutating-admission-policy-bindings";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const mutatingAdmissionPolicyBindingDetailItemInjectable = getInjectable({
   id: "mutating-admission-policy-binding-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: MutatingAdmissionPolicyBindingDetails,
-      enabled: computed(() => isMutatingAdmissionPolicyBinding(kubeObject.value.get()?.object)),
+      isFor: isMutatingAdmissionPolicyBinding,
       orderNumber: 10,
     };
   },

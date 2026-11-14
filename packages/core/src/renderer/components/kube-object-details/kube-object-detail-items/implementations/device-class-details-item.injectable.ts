@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { DeviceClassDetails } from "../../../devices-device-classes";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const deviceClassDetailItemInjectable = getInjectable({
   id: "device-class-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: DeviceClassDetails,
-      enabled: computed(() => isDeviceClass(kubeObject.value.get()?.object)),
+      isFor: isDeviceClass,
       orderNumber: 10,
     };
   },

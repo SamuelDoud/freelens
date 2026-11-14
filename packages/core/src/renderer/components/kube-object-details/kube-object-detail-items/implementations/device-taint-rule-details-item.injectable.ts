@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { DeviceTaintRuleDetails } from "../../../devices-device-taint-rules";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const deviceTaintRuleDetailItemInjectable = getInjectable({
   id: "device-taint-rule-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: DeviceTaintRuleDetails,
-      enabled: computed(() => isDeviceTaintRule(kubeObject.value.get()?.object)),
+      isFor: isDeviceTaintRule,
       orderNumber: 10,
     };
   },

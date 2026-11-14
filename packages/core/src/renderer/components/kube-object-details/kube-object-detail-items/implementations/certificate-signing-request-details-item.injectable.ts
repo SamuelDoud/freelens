@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { CertificateSigningRequestDetails } from "../../../user-management-certificate-signing-requests";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const certificateSigningRequestDetailItemInjectable = getInjectable({
   id: "certificate-signing-request-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: CertificateSigningRequestDetails,
-      enabled: computed(() => isCertificateSigningRequest(kubeObject.value.get()?.object)),
+      isFor: isCertificateSigningRequest,
       orderNumber: 10,
     };
   },

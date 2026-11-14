@@ -5,7 +5,6 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { KubeObjectMeta } from "../kube-object-meta";
 import { kubeObjectDetailItemInjectionToken } from "./kube-object-detail-items/kube-object-detail-item-injection-token";
 
@@ -13,7 +12,7 @@ const defaultKubeObjectMetaDetailsItemInjectable = getInjectable({
   id: "default-kube-object-meta-details-item",
   instantiate: () => ({
     Component: KubeObjectMeta,
-    enabled: computed(() => true),
+    isFor: () => true,
     orderNumber: 0,
   }),
   injectionToken: kubeObjectDetailItemInjectionToken,

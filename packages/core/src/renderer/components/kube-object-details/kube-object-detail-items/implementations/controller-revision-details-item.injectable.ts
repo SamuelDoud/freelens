@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { ControllerRevisionDetails } from "../../../workloads-controller-revisions";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const controllerRevisionDetailItemInjectable = getInjectable({
   id: "controller-revision-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: ControllerRevisionDetails,
-      enabled: computed(() => isControllerRevision(kubeObject.value.get()?.object)),
+      isFor: isControllerRevision,
       orderNumber: 10,
     };
   },
