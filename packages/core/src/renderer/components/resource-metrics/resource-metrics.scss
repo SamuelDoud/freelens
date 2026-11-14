@@ -11,6 +11,8 @@
 
   position: relative;
   margin-bottom: $margin * 2;
+  // A scrolling column (the side panel) would otherwise squeeze it below its content.
+  flex-shrink: 0;
 
   .switchers {
     margin-bottom: $margin * 2;
