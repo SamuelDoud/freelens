@@ -7,10 +7,12 @@
 import { CatalogCategory, CatalogEntity, categoryVersion } from "../catalog/catalog-entity";
 
 import type { CatalogEntityMetadata, CatalogEntitySpec, CatalogEntityStatus } from "../catalog";
-import type { CatalogEntityActionContext } from "../catalog/catalog-entity";
+import type { CatalogEntityActionContext, CatalogEntityContextMenuContext } from "../catalog/catalog-entity";
 
 export interface GeneralEntitySpec extends CatalogEntitySpec {
   path: string;
+  /** Where the entity is edited, offered as "Edit" in its context menu */
+  settingsPath?: string;
   icon?: {
     material?: string;
     background?: string;
@@ -23,6 +25,14 @@ export class GeneralEntity extends CatalogEntity<CatalogEntityMetadata, CatalogE
 
   async onRun(context: CatalogEntityActionContext) {
     context.navigate(this.spec.path);
+  }
+
+  onContextMenuOpen(context: CatalogEntityContextMenuContext) {
+    const { settingsPath } = this.spec;
+
+    if (settingsPath) {
+      context.menuItems.push({ title: "Edit", icon: "edit", onClick: () => context.navigate(settingsPath) });
+    }
   }
 }
 

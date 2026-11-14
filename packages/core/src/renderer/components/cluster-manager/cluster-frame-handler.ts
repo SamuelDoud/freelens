@@ -14,6 +14,7 @@ import type { Disposer } from "@freelensapp/utilities";
 
 import type { ClusterId } from "../../../common/cluster-types";
 import type { GetClusterById } from "../../../features/cluster/storage/common/get-by-id.injectable";
+import type { PaneRect } from "../../../features/multiview/common/multiview";
 
 export interface LensView {
   isLoaded: boolean;
@@ -57,6 +58,8 @@ export class ClusterFrameHandler {
     const iframe = document.createElement("iframe");
 
     iframe.id = `cluster-frame-${cluster.id}`;
+    // Shown once its cluster is ready, by whatever asked for it to be visible
+    iframe.classList.add("hidden");
     iframe.name = cluster.contextName.get();
     iframe.setAttribute("src", getClusterFrameUrl(clusterId));
     iframe.setAttribute("allow", "clipboard-read; clipboard-write");
@@ -112,9 +115,65 @@ export class ClusterFrameHandler {
 
   private prevVisibleClusterChange?: Disposer;
 
+  /** Undoes the panes of a multiview: frames fill the area again, one at a time. */
+  private resetPanes() {
+    document.getElementById("lens-views")?.classList.remove("multiview");
+
+    for (const { frame } of this.views.values()) {
+      frame.style.removeProperty("left");
+      frame.style.removeProperty("top");
+      frame.style.removeProperty("width");
+      frame.style.removeProperty("height");
+    }
+  }
+
+  /**
+   * Shows several clusters at once, each in its pane: `panes` gives each
+   * cluster's place in percent of the area, below a title bar of
+   * `titleHeight` pixels that the multiview draws itself.
+   */
+  public setVisibleClusters(panes: { clusterId: ClusterId; rect: PaneRect }[], titleHeight: number): void {
+    this.prevVisibleClusterChange?.();
+    this.resetPanes();
+    document.getElementById("lens-views")?.classList.add("multiview");
+
+    for (const { frame: view } of this.views.values()) {
+      view.classList.add("hidden");
+    }
+
+    const disposers = panes.map(({ clusterId, rect }) => {
+      const cluster = this.dependencies.getClusterById(clusterId);
+
+      return onceDefined(
+        () => {
+          const view = this.views.get(clusterId);
+
+          return cluster?.available.get() && cluster.ready.get() && view?.isLoaded ? view : undefined;
+        },
+        (view: LensView) => {
+          const gap = 2;
+
+          view.frame.style.left = `calc(${rect.left}% + ${gap}px)`;
+          view.frame.style.top = `calc(${rect.top}% + ${titleHeight}px)`;
+          view.frame.style.width = `calc(${rect.width}% - ${2 * gap}px)`;
+          view.frame.style.height = `calc(${rect.height}% - ${titleHeight + gap}px)`;
+          view.frame.classList.remove("hidden");
+        },
+      );
+    });
+
+    this.prevVisibleClusterChange = () => disposers.forEach((dispose) => dispose());
+  }
+
+  /** The cluster whose pane has the focus in a multiview, for what follows the visible cluster */
+  public setActivePane(clusterId: ClusterId | null): void {
+    this.dependencies.emitClusterVisibility(clusterId);
+  }
+
   public setVisibleCluster(clusterId: ClusterId | null): void {
     // Clear the previous when ASAP
     this.prevVisibleClusterChange?.();
+    this.resetPanes();
 
     this.dependencies.logger.info(`[LENS-VIEW]: refreshing iframe views, visible cluster id=${clusterId}`);
     this.dependencies.emitClusterVisibility(null);

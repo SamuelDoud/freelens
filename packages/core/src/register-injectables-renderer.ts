@@ -34,6 +34,8 @@ import { registerInjectables as registerFeaturesFeaturesHotbarStorageRendererInj
 import { registerInjectables as registerFeaturesFeaturesInlineDetailsRendererInjectables } from "./features/inline-details/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesLicensesInjectables } from "./features/licenses/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesLicensesRendererInjectables } from "./features/licenses/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesMultiviewInjectables } from "./features/multiview/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesMultiviewRendererInjectables } from "./features/multiview/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesNamespaceFilteringRendererInjectables } from "./features/namespace-filtering/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesNavigationReloadPageRendererInjectables } from "./features/navigation/reload-page/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPathPickingDialogRendererInjectables } from "./features/path-picking-dialog/renderer/register-injectables";
@@ -89,6 +91,8 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesInlineDetailsRendererInjectables(di);
   registerFeaturesFeaturesLicensesRendererInjectables(di);
   registerFeaturesFeaturesLicensesInjectables(di);
+  registerFeaturesFeaturesMultiviewRendererInjectables(di);
+  registerFeaturesFeaturesMultiviewInjectables(di);
   registerFeaturesFeaturesNamespaceFilteringRendererInjectables(di);
   registerFeaturesFeaturesNavigationReloadPageRendererInjectables(di);
   registerFeaturesFeaturesPathPickingDialogRendererInjectables(di);
