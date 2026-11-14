@@ -3,11 +3,16 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import type { AiHttpPostResult } from "../common/channels";
+export type AiHttpResult =
+  | { readonly ok: true; readonly status: number; readonly text: string }
+  | { readonly ok: false; readonly error: string };
 
-export async function aiHttpRequest(url: string, init: RequestInit, timeoutMs: number): Promise<AiHttpPostResult> {
+/** A request to an OpenAI-compatible server at a URL, stopped by the caller's signal or the timeout. */
+export async function aiHttpRequest(url: string, init: RequestInit, timeoutMs: number): Promise<AiHttpResult> {
+  const signals = [AbortSignal.timeout(timeoutMs), ...(init.signal ? [init.signal] : [])];
+
   try {
-    const response = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+    const response = await fetch(url, { ...init, signal: AbortSignal.any(signals) });
 
     return { ok: true, status: response.status, text: await response.text() };
   } catch (error) {

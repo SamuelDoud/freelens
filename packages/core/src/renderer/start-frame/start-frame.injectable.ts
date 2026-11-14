@@ -7,6 +7,7 @@
 import { onLoadOfApplicationInjectionToken } from "@freelensapp/application";
 import { runManyFor } from "@freelensapp/run-many";
 import { getInjectable } from "@ogre-tools/injectable";
+import { chatWindowChatId } from "../../features/ai-chat/renderer/chat-window";
 import * as tokens from "../before-frame-starts/tokens";
 import currentlyInClusterFrameInjectable from "../routes/currently-in-cluster-frame.injectable";
 
@@ -27,9 +28,12 @@ const startFrameInjectable = getInjectable({
       run: async () => {
         await beforeFrameStartsFirst();
 
+        // A chat's window is no application window: it skips the main frame's work.
+        const inChatWindow = chatWindowChatId() !== undefined;
+
         if (currentlyInClusterFrame) {
           await beforeClusterFrameStartsFirst();
-        } else {
+        } else if (!inChatWindow) {
           await beforeMainFrameStartsFirst();
         }
 
@@ -37,7 +41,7 @@ const startFrameInjectable = getInjectable({
 
         if (currentlyInClusterFrame) {
           await beforeClusterFrameStartsSecond();
-        } else {
+        } else if (!inChatWindow) {
           await beforeMainFrameStartsSecond();
         }
       },

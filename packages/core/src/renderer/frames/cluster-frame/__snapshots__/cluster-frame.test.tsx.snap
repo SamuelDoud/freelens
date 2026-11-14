@@ -637,6 +637,30 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -669,6 +693,9 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -1317,6 +1344,30 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -1349,6 +1400,9 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -2021,6 +2075,30 @@ exports[`<ClusterFrame /> > given cluster without list nodes, but with namespace
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -2053,6 +2131,9 @@ exports[`<ClusterFrame /> > given cluster without list nodes, but with namespace
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;

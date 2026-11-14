@@ -7,10 +7,10 @@
 .mainLayout {
   display: grid;
   grid-template-areas:
-    "sidebar contents"
-    "sidebar footer";
+    "sidebar contents right"
+    "sidebar footer right";
   grid-template-rows: [contents] 1fr [footer] auto;
-  grid-template-columns: [sidebar] var(--sidebar-width) [contents] 1fr;
+  grid-template-columns: [sidebar] var(--sidebar-width) [contents] minmax(0, 1fr) [right] auto;
   width: 100%;
   z-index: 1;
   height: 100%;
@@ -25,6 +25,13 @@
 
 .contents {
   overflow: hidden;
+}
+
+// The right column takes the height of both rows; it is empty unless something is shown in it.
+.rightPanel {
+  grid-area: right;
+  min-width: 0;
+  max-width: 60vw;
 }
 
 .footer {

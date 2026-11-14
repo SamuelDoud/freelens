@@ -1,0 +1,11 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+.window {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--dockInfoBackground);
+}

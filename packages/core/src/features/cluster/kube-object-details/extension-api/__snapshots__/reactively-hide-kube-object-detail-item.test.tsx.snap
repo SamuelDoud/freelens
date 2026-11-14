@@ -755,6 +755,30 @@ exports[`reactively hide kube object detail item > renders 1`] = `
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -787,6 +811,9 @@ exports[`reactively hide kube object detail item > renders 1`] = `
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -1552,6 +1579,30 @@ exports[`reactively hide kube object detail item > when the item is shown > rend
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -1584,6 +1635,9 @@ exports[`reactively hide kube object detail item > when the item is shown > rend
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>

@@ -12,31 +12,35 @@ import { Input } from "../../../../../renderer/components/input";
 import { SubTitle } from "../../../../../renderer/components/layout/sub-title";
 import { Select } from "../../../../../renderer/components/select";
 import { defaultAiSystemPrompt } from "../../../../ai-chat/common/default-system-prompt";
-import { defaultAiChatPreferences } from "../../../../ai-chat/common/preferences";
-import { aiProviderEfforts, aiProviderIds, defaultAiProviderLabels } from "../../../../ai-chat/common/providers";
+import { modelsFor } from "../../../../ai-chat/common/models";
+import { defaultAiChatPreferences, isOpenAiConfigured } from "../../../../ai-chat/common/preferences";
+import {
+  aiCliProviderIds,
+  aiProviderIds,
+  aiProviderLabels,
+  isAiCliProviderId,
+  openAiEfforts,
+} from "../../../../ai-chat/common/providers";
+import { modelOptions } from "../../../../ai-chat/renderer/ai-chat-view";
+import aiDiscoveryMirrorInjectable from "../../../../ai-chat/renderer/discovery.injectable";
 import userPreferencesStateInjectable from "../../../../user-preferences/common/state.injectable";
 import styles from "./ai-preferences.module.scss";
 
+import type { AiCliStatus } from "../../../../ai-chat/common/discovery";
 import type { AiChatPreferences, AiProviderPreferences } from "../../../../ai-chat/common/preferences";
-import type { AiProviderId } from "../../../../ai-chat/common/providers";
+import type { AiCliProviderId, AiProviderId } from "../../../../ai-chat/common/providers";
+import type { AiDiscoveryMirror } from "../../../../ai-chat/renderer/discovery.injectable";
 import type { UserPreferencesState } from "../../../../user-preferences/common/state.injectable";
 
 interface Dependencies {
   state: UserPreferencesState;
+  discovery: AiDiscoveryMirror;
 }
 
 const parseModels = (text: string) => [...new Set(text.split("\n").map((line) => line.trim()))].filter(Boolean);
 
 // The text is kept as typed, so that a new line can be started; the list is parsed from it.
-const ModelsInput = ({
-  models,
-  placeholder,
-  onChange,
-}: {
-  models: readonly string[];
-  placeholder: string;
-  onChange: (models: string[]) => void;
-}) => {
+const ModelsInput = ({ models, onChange }: { models: readonly string[]; onChange: (models: string[]) => void }) => {
   const [text, setText] = useState(models.join("\n"));
 
   return (
@@ -44,7 +48,7 @@ const ModelsInput = ({
       theme="round-black"
       multiLine
       rows={3}
-      placeholder={placeholder}
+      placeholder="One model per line"
       value={text}
       onChange={(value) => {
         setText(value);
@@ -54,24 +58,78 @@ const ModelsInput = ({
   );
 };
 
-const NonInjectedAiPreferences = observer(({ state }: Dependencies) => {
+const pathKeys: Record<AiCliProviderId, "claudePath" | "codexPath" | "musePath"> = {
+  claude: "claudePath",
+  codex: "codexPath",
+  muse: "musePath",
+};
+
+const describeStatus = (status: AiCliStatus) => {
+  switch (status.state) {
+    case "checking":
+      return "Checking…";
+    case "missing":
+      return "Not installed";
+    case "error":
+      return `Could not be asked: ${status.error ?? "unknown error"}`;
+    case "found":
+      return [
+        status.version,
+        status.signedIn === false ? "not signed in" : status.signedIn ? "signed in" : undefined,
+        `${status.models.length} model${status.models.length === 1 ? "" : "s"}`,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+  }
+};
+
+const NonInjectedAiPreferences = observer(({ state, discovery }: Dependencies) => {
   const preferences = state.aiChat ?? defaultAiChatPreferences;
+  const discovered = discovery.get();
   const update = (changes: Partial<AiChatPreferences>) => {
     state.aiChat = { ...preferences, ...changes };
   };
   const updateProvider = (id: AiProviderId, changes: Partial<AiProviderPreferences>) =>
     update({ providers: { ...preferences.providers, [id]: { ...preferences.providers[id], ...changes } } });
-  const label = (id: AiProviderId) => (id === "openai" ? preferences.openAiLabel : defaultAiProviderLabels[id]);
+  const label = (id: AiProviderId) => (id === "openai" ? preferences.openAiLabel : aiProviderLabels[id]);
   const endpoint = preferences.openAiEndpoint;
+  const backends = aiProviderIds.filter((id) => id !== "openai" || isOpenAiConfigured(preferences));
 
   return (
     <div className={styles.aiPreferences} data-testid="ai-preferences">
       <section>
-        <SubTitle title="Default backend" />
+        <div className={styles.row}>
+          <SubTitle title="Command-line agents" />
+          <Button plain label="Refresh" data-testid="ai-refresh-discovery" onClick={() => void discovery.refresh()} />
+        </div>
+        {aiCliProviderIds.map((id) => (
+          <div key={id} className={styles.cli} data-testid={`ai-cli-${id}`}>
+            <div className={styles.cliName}>{aiProviderLabels[id]}</div>
+            <div className={styles.cliStatus} data-testid={`ai-cli-status-${id}`}>
+              {describeStatus(discovered[id])}
+              {discovered[id].path && <span className={styles.path}>{discovered[id].path}</span>}
+            </div>
+            <Input
+              theme="round-black"
+              placeholder={`${id} (from the PATH)`}
+              value={preferences[pathKeys[id]]}
+              onChange={(value) => update({ [pathKeys[id]]: value })}
+            />
+          </div>
+        ))}
+        <small className="hint">
+          Claude Code, Codex and Muse run as installed on this computer, signed in to your account as in a terminal.
+          Freelens asks each for its models and efforts when it starts. In the chat they get only Freelens&apos;s tools:
+          their own shell, file and web tools are switched off or sandboxed.
+        </small>
+      </section>
+
+      <section>
+        <SubTitle title="Defaults for new chats" />
         <Select
           id="ai-default-provider"
           themeName="lens"
-          options={aiProviderIds.map((id) => ({ value: id, label: label(id) }))}
+          options={backends.map((id) => ({ value: id, label: label(id) }))}
           value={preferences.defaultProvider}
           onChange={(option) => {
             const provider = aiProviderIds.find((id) => id === option?.value);
@@ -79,93 +137,54 @@ const NonInjectedAiPreferences = observer(({ state }: Dependencies) => {
             if (provider) update({ defaultProvider: provider });
           }}
         />
-        <small className="hint">
-          The backend a new AI chat starts with. Each chat can switch backend, model and effort.
-        </small>
-      </section>
+        {backends.map((id) => {
+          const provider = preferences.providers[id];
+          const models = modelsFor(id, isAiCliProviderId(id) ? discovered[id].models : [], provider.extraModels);
+          const model = models.find((candidate) => candidate.id === provider.defaultModel) ?? models[0];
+          const efforts = id === "openai" ? openAiEfforts : (model?.efforts ?? []);
 
-      {aiProviderIds.map((id) => {
-        const provider = preferences.providers[id];
-
-        return (
-          <section key={id} data-testid={`ai-provider-${id}`}>
-            <SubTitle title={`${label(id)} models`} />
-            <ModelsInput
-              models={provider.models}
-              placeholder={id === "openai" ? "The server's own list is added in the chat" : "One model per line"}
-              onChange={(models) => updateProvider(id, { models })}
-            />
-            <small className="hint">
-              {id === "claude" &&
-                'The models offered in the chat, one per line: an alias such as "opus" or a full model name.'}
-              {id === "codex" &&
-                "The models offered in the chat, one per line. Empty offers only Codex's default model."}
-              {id === "openai" && "Models to offer besides the ones the server lists, one per line."}
-            </small>
-            <div className={styles.row}>
+          return (
+            <div key={id} className={styles.row} data-testid={`ai-defaults-${id}`}>
+              <span className={styles.backend}>{label(id)}</span>
               <Select
                 id={`ai-default-model-${id}`}
                 themeName="lens"
                 isCreatable
-                options={[
-                  { value: "", label: "Default model" },
-                  ...[...new Set([...provider.models, ...(provider.defaultModel ? [provider.defaultModel] : [])])].map(
-                    (model) => ({ value: model, label: model }),
-                  ),
-                ]}
-                value={provider.defaultModel}
-                onChange={(option) => updateProvider(id, { defaultModel: option?.value ?? "" })}
+                options={modelOptions(models, provider.defaultModel)}
+                value={
+                  provider.defaultModel || (models.some((candidate) => candidate.id === "default") ? "default" : "")
+                }
+                onChange={(option) =>
+                  updateProvider(id, { defaultModel: option?.value === "default" ? "" : (option?.value ?? "") })
+                }
               />
-              <Select
-                id={`ai-default-effort-${id}`}
-                themeName="lens"
-                options={[
-                  { value: "", label: "Default effort" },
-                  ...aiProviderEfforts[id].map((effort) => ({ value: effort, label: `Effort: ${effort}` })),
-                ]}
-                value={provider.defaultEffort}
-                onChange={(option) => updateProvider(id, { defaultEffort: option?.value ?? "" })}
-              />
+              <label className={styles.effort}>
+                <span>Effort</span>
+                <Select
+                  id={`ai-default-effort-${id}`}
+                  themeName="lens"
+                  isDisabled={efforts.length === 0}
+                  options={[
+                    { value: "", label: "default" },
+                    ...efforts.map((effort) => ({ value: effort, label: effort })),
+                  ]}
+                  value={efforts.includes(provider.defaultEffort) ? provider.defaultEffort : ""}
+                  onChange={(option) => updateProvider(id, { defaultEffort: option?.value ?? "" })}
+                />
+              </label>
             </div>
-          </section>
-        );
-      })}
-
-      <section>
-        <SubTitle title="Command-line agents" />
-        <div className={styles.row}>
-          <Input
-            theme="round-black"
-            placeholder="claude (from the PATH)"
-            value={preferences.claudePath}
-            onChange={(claudePath) => update({ claudePath })}
-          />
-          <Input
-            theme="round-black"
-            placeholder="codex (from the PATH)"
-            value={preferences.codexPath}
-            onChange={(codexPath) => update({ codexPath })}
-          />
-        </div>
-        <small className="hint">
-          Claude Code and Codex run as installed on this computer, signed in to your account as in a terminal. In the
-          chat they get only Freelens&apos;s tools: their own shell, file and web tools are switched off or sandboxed.
-        </small>
+          );
+        })}
       </section>
 
       <section>
         <SubTitle title="OpenAI-compatible server" />
         <div className={styles.row}>
-          <Input
-            theme="round-black"
-            placeholder="Name shown in the chat"
-            value={preferences.openAiLabel}
-            onChange={(openAiLabel) => update({ openAiLabel })}
-          />
           <Select
             id="ai-openai-endpoint-kind"
             themeName="lens"
             options={[
+              { value: "none", label: "Not set" },
               { value: "service", label: "A Service in the cluster" },
               { value: "url", label: "A URL" },
             ]}
@@ -175,12 +194,22 @@ const NonInjectedAiPreferences = observer(({ state }: Dependencies) => {
                 openAiEndpoint:
                   option?.value === "url"
                     ? { kind: "url", url: "" }
-                    : (defaultAiChatPreferences.openAiEndpoint as AiChatPreferences["openAiEndpoint"]),
+                    : option?.value === "service"
+                      ? { kind: "service", namespace: "", service: "", port: "" }
+                      : { kind: "none" },
               })
             }
           />
+          {endpoint.kind !== "none" && (
+            <Input
+              theme="round-black"
+              placeholder="Name shown in the chat"
+              value={preferences.openAiLabel}
+              onChange={(openAiLabel) => update({ openAiLabel })}
+            />
+          )}
         </div>
-        {endpoint.kind === "service" ? (
+        {endpoint.kind === "service" && (
           <div className={styles.row}>
             <Input
               theme="round-black"
@@ -201,7 +230,8 @@ const NonInjectedAiPreferences = observer(({ state }: Dependencies) => {
               onChange={(port) => update({ openAiEndpoint: { ...endpoint, port } })}
             />
           </div>
-        ) : (
+        )}
+        {endpoint.kind === "url" && (
           <Input
             theme="round-black"
             placeholder="http://host:8000"
@@ -209,9 +239,18 @@ const NonInjectedAiPreferences = observer(({ state }: Dependencies) => {
             onChange={(url) => update({ openAiEndpoint: { kind: "url", url } })}
           />
         )}
+        {endpoint.kind !== "none" && (
+          <>
+            <SubTitle title="Models of the server" />
+            <ModelsInput
+              models={preferences.providers.openai.extraModels}
+              onChange={(extraModels) => updateProvider("openai", { extraModels })}
+            />
+          </>
+        )}
         <small className="hint">
-          A server with the OpenAI chat completions API and tool calling, such as llama.cpp, vLLM or Ollama. A Service
-          is reached through the open cluster&apos;s API server with your credentials, so it needs no ingress.
+          Optional: a server with the OpenAI chat completions API and tool calling, such as llama.cpp, vLLM or Ollama. A
+          Service is reached through the open cluster&apos;s API server with your credentials, so it needs no ingress.
         </small>
       </section>
 
@@ -259,5 +298,6 @@ const NonInjectedAiPreferences = observer(({ state }: Dependencies) => {
 export const AiPreferences = withInjectables<Dependencies>(NonInjectedAiPreferences, {
   getProps: (di) => ({
     state: di.inject(userPreferencesStateInjectable),
+    discovery: di.inject(aiDiscoveryMirrorInjectable),
   }),
 });

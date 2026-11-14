@@ -643,6 +643,30 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -1044,6 +1068,9 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -1692,6 +1719,30 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -2062,6 +2113,9 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>

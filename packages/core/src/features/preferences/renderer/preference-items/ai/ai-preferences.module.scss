@@ -19,3 +19,40 @@
     flex: 1;
   }
 }
+
+.cli {
+  display: grid;
+  grid-template-columns: 110px 1fr minmax(180px, 30%);
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cliName {
+  font-weight: bold;
+}
+
+.cliStatus {
+  color: var(--textColorSecondary);
+  overflow: hidden;
+}
+
+.path {
+  display: block;
+  font-family: var(--font-monospace);
+  font-size: var(--font-size-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backend {
+  flex: 0 0 160px !important;
+}
+
+.effort {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--textColorSecondary);
+}

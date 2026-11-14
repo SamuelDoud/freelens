@@ -12,7 +12,8 @@ import type { AiMcpServerDependencies } from "./mcp-server";
 
 describe("AiMcpServer", () => {
   let server: AiMcpServer;
-  let sendToolCall: Mock<AiMcpServerDependencies["sendToolCall"]>;
+  let callTool: Mock<AiMcpServerDependencies["callTool"]>;
+  let allowChanges: boolean;
   let url: string;
 
   const rpc = async (method: string, params?: unknown, token = server.token) => {
@@ -29,8 +30,9 @@ describe("AiMcpServer", () => {
     ((await rpc("tools/list")).body.result.tools as { name: string }[]).map(({ name }) => name);
 
   beforeEach(async () => {
-    sendToolCall = vi.fn<AiMcpServerDependencies["sendToolCall"]>();
-    server = new AiMcpServer({ sendToolCall, logError: () => {} });
+    callTool = vi.fn<AiMcpServerDependencies["callTool"]>();
+    allowChanges = false;
+    server = new AiMcpServer({ allowsChanges: () => allowChanges, callTool, logError: () => {} });
     url = await server.urlFor("chat-1");
   });
 
@@ -63,7 +65,7 @@ describe("AiMcpServer", () => {
     expect(await toolNames()).not.toContain("delete_resource");
     expect(await toolNames()).toContain("list_resources");
 
-    server.setAllowChanges("chat-1", true);
+    allowChanges = true;
 
     expect(await toolNames()).toEqual(expect.arrayContaining(["delete_resource", "scale_workload", "list_resources"]));
   });
@@ -73,17 +75,15 @@ describe("AiMcpServer", () => {
 
     expect(body.result.isError).toBe(true);
     expect(body.result.content[0].text).toMatch(/Allow changes/);
-    expect(sendToolCall).not.toHaveBeenCalled();
+    expect(callTool).not.toHaveBeenCalled();
   });
 
-  it("hands a tool call to the chat's frame and answers with its result", async () => {
-    sendToolCall.mockImplementation(({ callId }) => server.resolveToolCall(callId, { ok: true, text: "3 Pods" }));
+  it("hands a tool call to the chat host and answers with its result", async () => {
+    callTool.mockResolvedValue({ ok: true, text: "3 Pods" });
 
     const { body } = await rpc("tools/call", { name: "list_resources", arguments: { kind: "Pod" } });
 
-    expect(sendToolCall).toHaveBeenCalledWith(
-      expect.objectContaining({ chatId: "chat-1", name: "list_resources", args: { kind: "Pod" } }),
-    );
+    expect(callTool).toHaveBeenCalledWith("chat-1", "list_resources", { kind: "Pod" });
     expect(body.result).toEqual({ content: [{ type: "text", text: "3 Pods" }], isError: false });
   });
 

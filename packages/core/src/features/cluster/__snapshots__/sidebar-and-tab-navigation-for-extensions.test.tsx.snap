@@ -688,6 +688,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -720,6 +744,9 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -1412,6 +1439,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -1444,6 +1495,9 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -2224,6 +2278,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -2256,6 +2334,9 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -2953,6 +3034,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -2985,6 +3090,9 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -3682,6 +3790,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -3714,6 +3846,9 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -4322,6 +4457,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -4354,6 +4513,9 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -5134,6 +5296,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -5166,6 +5352,9 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -5858,6 +6047,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -5890,6 +6103,9 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;
@@ -6498,6 +6714,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 New tab
               </div>
             </div>
+            <button
+              aria-label="AI chat"
+              class="aiChatButton glowing"
+              data-glowing="true"
+              data-testid="dock-ai-chat-button"
+              title="AI chat"
+              type="button"
+            >
+              <i
+                class="Icon material focusable small"
+              >
+                <span
+                  class="icon"
+                  data-icon-name="smart_toy"
+                >
+                  smart_toy
+                </span>
+              </i>
+              <span
+                class="label"
+              >
+                AI chat
+              </span>
+            </button>
             <i
               class="Icon material interactive focusable"
               tabindex="0"
@@ -6530,6 +6770,9 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
         </div>
       </div>
     </div>
+    <div
+      class="rightPanel"
+    />
   </div>
 </div>
 `;

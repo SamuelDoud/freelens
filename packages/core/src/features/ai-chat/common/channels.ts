@@ -5,7 +5,9 @@
 
 import { getMessageChannel, getRequestChannel } from "@freelensapp/messaging";
 
-import type { AiCliEvent } from "./cli-events";
+import type { AiChatSettings, AiChatSnapshot } from "./chat-state";
+import type { AiDiscovery } from "./discovery";
+import type { AiChatPlacement } from "./preferences";
 
 export interface AiToolResult {
   readonly ok: boolean;
@@ -13,63 +15,59 @@ export interface AiToolResult {
   readonly text: string;
 }
 
-export interface StartAiCliTurn {
-  /** The chat, unique across the cluster frames, so that tool calls reach the frame it lives in. */
-  readonly chatId: string;
-  readonly provider: "claude" | "codex";
-  /** The command to run; empty finds it on the PATH. */
-  readonly command: string;
-  readonly prompt: string;
-  readonly model: string;
-  readonly effort: string;
-  readonly systemPrompt: string;
-  readonly resumeSessionId?: string;
-  readonly allowChanges: boolean;
+// The chats live in the main process (the chat host). The views, in a cluster frame's dock or right
+// panel or in a window of their own, show copies of them and send the user's actions back.
+
+export interface CreateAiChat {
+  readonly clusterId: string;
+  readonly clusterName: string;
+  /** Where to show it; the user's last placement when undefined. */
+  readonly placement?: AiChatPlacement;
 }
 
-export type StartAiCliTurnResult = { readonly ok: true } | { readonly ok: false; readonly error: string };
+export const createAiChatChannel = getRequestChannel<CreateAiChat, AiChatSnapshot>("ai-chat-create");
 
-export const startAiCliTurnChannel = getRequestChannel<StartAiCliTurn, StartAiCliTurnResult>("ai-chat-start-cli-turn");
+/** The chats of one cluster, or of all clusters. */
+export const listAiChatsChannel = getRequestChannel<{ readonly clusterId?: string }, AiChatSnapshot[]>("ai-chat-list");
 
-export const stopAiCliTurnChannel = getRequestChannel<{ readonly chatId: string }, void>("ai-chat-stop-cli-turn");
+export type AiChatCommand =
+  | { readonly type: "send"; readonly chatId: string; readonly text: string }
+  | { readonly type: "stop"; readonly chatId: string }
+  | { readonly type: "settings"; readonly chatId: string; readonly settings: Partial<AiChatSettings> }
+  | { readonly type: "allow-changes"; readonly chatId: string; readonly allowChanges: boolean }
+  | { readonly type: "approval"; readonly chatId: string; readonly itemId: string; readonly approved: boolean }
+  | { readonly type: "move"; readonly chatId: string; readonly placement: AiChatPlacement }
+  | { readonly type: "clear"; readonly chatId: string }
+  | { readonly type: "close"; readonly chatId: string };
 
-/** Keeps the tools the MCP server lists in step with the chat's "Allow changes" checkbox. */
-export const setAiChatAllowChangesChannel = getRequestChannel<
-  { readonly chatId: string; readonly allowChanges: boolean },
-  void
->("ai-chat-set-allow-changes");
+export const aiChatCommandChannel = getRequestChannel<AiChatCommand, void>("ai-chat-command");
 
-/** What a command-line agent reported, for the frame that holds the chat. */
-export const aiCliEventChannel = getMessageChannel<{ readonly chatId: string; readonly event: AiCliEvent }>(
-  "ai-chat-cli-event",
-);
+/** A chat changed. */
+export const aiChatStateChannel = getMessageChannel<AiChatSnapshot>("ai-chat-state");
 
-/** A tool call of a command-line agent, for the frame that holds the chat to run. */
+/** A chat was closed. */
+export const aiChatClosedChannel = getMessageChannel<{ readonly chatId: string }>("ai-chat-closed");
+
+/**
+ * A tool call, for the cluster frame of the chat's cluster to run: the tools read that cluster and
+ * drive that frame. The chat host has already checked "Allow changes" and asked for approval.
+ */
 export const aiToolCallChannel = getMessageChannel<{
   readonly callId: string;
   readonly chatId: string;
+  readonly clusterId: string;
   readonly name: string;
   readonly args: unknown;
+  readonly allowChanges: boolean;
 }>("ai-chat-tool-call");
 
 export const aiToolResultChannel = getRequestChannel<{ readonly callId: string; readonly result: AiToolResult }, void>(
   "ai-chat-tool-result",
 );
 
-export interface AiHttpPost {
-  readonly url: string;
-  readonly body: unknown;
-  readonly timeoutMs: number;
-}
+/** What the CLIs installed on this computer offer, discovered when Freelens starts. */
+export const getAiDiscoveryChannel = getRequestChannel<void, AiDiscovery>("ai-chat-get-discovery");
 
-export type AiHttpPostResult =
-  | { readonly ok: true; readonly status: number; readonly text: string }
-  | { readonly ok: false; readonly error: string };
+export const refreshAiDiscoveryChannel = getRequestChannel<void, AiDiscovery>("ai-chat-refresh-discovery");
 
-/** A request to an OpenAI-compatible server at a URL, sent from the main process. */
-export const aiHttpPostChannel = getRequestChannel<AiHttpPost, AiHttpPostResult>("ai-chat-http-post");
-
-export const aiHttpGetChannel = getRequestChannel<
-  { readonly url: string; readonly timeoutMs: number },
-  AiHttpPostResult
->("ai-chat-http-get");
+export const aiDiscoveryChangedChannel = getMessageChannel<AiDiscovery>("ai-chat-discovery-changed");

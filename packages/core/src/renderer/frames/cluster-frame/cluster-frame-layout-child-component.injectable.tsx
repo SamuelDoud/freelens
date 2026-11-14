@@ -11,6 +11,7 @@ import { withInjectables } from "@ogre-tools/injectable-react";
 import { computed } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
+import { AiChatRightPanel } from "../../../features/ai-chat/renderer/ai-chat-right-panel";
 import { Dock } from "../../components/dock";
 import { MainLayout } from "../../components/layout/main-layout";
 import { Sidebar } from "../../components/layout/sidebar";
@@ -34,7 +35,7 @@ const NonInjectedClusterFrameLayout = observer((props: Dependencies) => {
 
   // The path keys the crash of the page, so that another page, or the same page for another path, renders again.
   return (
-    <MainLayout sidebar={<Sidebar />} footer={<Dock />} resetKey={current}>
+    <MainLayout sidebar={<Sidebar />} footer={<Dock />} rightPanel={<AiChatRightPanel />} resetKey={current}>
       {Component ? (
         <Component />
       ) : // NOTE: this check is to prevent an infinite loop

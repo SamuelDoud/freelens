@@ -863,10 +863,37 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -1878,10 +1905,37 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -2893,10 +2947,37 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
   <ul
@@ -4015,6 +4096,30 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -4056,6 +4161,9 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -5120,6 +5228,30 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -5318,6 +5450,9 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -6382,6 +6517,30 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
               <i
                 class="Icon material interactive focusable"
                 tabindex="0"
@@ -6582,6 +6741,9 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>
@@ -7593,10 +7755,37 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   New tab
                 </div>
               </div>
+              <button
+                aria-label="AI chat"
+                class="aiChatButton glowing"
+                data-glowing="true"
+                data-testid="dock-ai-chat-button"
+                title="AI chat"
+                type="button"
+              >
+                <i
+                  class="Icon material focusable small"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="smart_toy"
+                  >
+                    smart_toy
+                  </span>
+                </i>
+                <span
+                  class="label"
+                >
+                  AI chat
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+      <div
+        class="rightPanel"
+      />
     </div>
   </div>
 </body>

@@ -3,8 +3,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import type { AiToolResult } from "../common/channels";
-import type { AiToolSpec } from "../common/tools";
+import type { AiToolResult } from "./channels";
+import type { AiToolSpec } from "./tools";
 
 export interface OpenAiToolCall {
   id: string;
