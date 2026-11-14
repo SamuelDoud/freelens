@@ -39,7 +39,7 @@ export const getMetricsKubeObjectDetailItemInjectable = getInjectable({
 
       return {
         Component,
-        enabled: di.inject(metricsDetailsComponentEnabledInjectable, metricResourceType),
+        isFor: di.inject(metricsDetailsComponentEnabledInjectable, metricResourceType),
         orderNumber: -1,
       };
     };

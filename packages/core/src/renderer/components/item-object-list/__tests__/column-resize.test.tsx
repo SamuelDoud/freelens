@@ -51,6 +51,7 @@ const baseProps: ItemListLayoutContentProps<ItemObject, boolean> & {
   openConfirmDialog: any;
   toggleTableColumnVisibility: any;
   isTableColumnHidden: any;
+  getExpandedRows: any;
   store: StubStore;
 } = {
   getFilters: () => [],
@@ -78,6 +79,7 @@ const baseProps: ItemListLayoutContentProps<ItemObject, boolean> & {
   openConfirmDialog: vi.fn(),
   toggleTableColumnVisibility: vi.fn(),
   isTableColumnHidden: vi.fn(),
+  getExpandedRows: vi.fn(),
   copyClassNameFromHeadCells: false,
   isConfigurable: false,
 };

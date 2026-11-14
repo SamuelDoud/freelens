@@ -5,24 +5,18 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { VpaDetails } from "../../../config-vertical-pod-autoscalers";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
 const verticalPodAutoscalerDetailItemInjectable = getInjectable({
   id: "vertical-pod-autoscaler-detail-item",
 
-  instantiate: (di) => {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
-    return {
-      Component: VpaDetails,
-      enabled: computed(() => isVerticalPodAutoscaler(kubeObject.value.get()?.object)),
-      orderNumber: 10,
-    };
-  },
+  instantiate: () => ({
+    Component: VpaDetails,
+    isFor: isVerticalPodAutoscaler,
+    orderNumber: 10,
+  }),
 
   injectionToken: kubeObjectDetailItemInjectionToken,
 });

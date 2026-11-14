@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { ResourceClaimTemplateDetails } from "../../../devices-resource-claim-templates";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const resourceClaimTemplateDetailItemInjectable = getInjectable({
   id: "resource-claim-template-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: ResourceClaimTemplateDetails,
-      enabled: computed(() => isResourceClaimTemplate(kubeObject.value.get()?.object)),
+      isFor: isResourceClaimTemplate,
       orderNumber: 10,
     };
   },

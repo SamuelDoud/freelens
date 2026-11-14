@@ -115,6 +115,11 @@ export interface TableProps<Item> extends React.DOMAttributes<HTMLDivElement> {
    */
   rowLineHeight?: number;
   customRowHeights?: (item: Item, lineHeight: number, paddings: number) => number;
+  /**
+   * Keep the rows where they are: while it is set, the order the rows had when it was set holds,
+   * new rows come after them, and only a sort the user chooses reorders them.
+   */
+  holdOrder?: boolean;
   getTableRow?: (uid: string) => React.ReactElement<TableRowProps<Item>> | undefined | null;
   renderRow?: (item: Item, index: number) => React.ReactElement<TableRowProps<Item>> | undefined | null;
 }
@@ -200,6 +205,36 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
     return headElem;
   }
 
+  // The positions the rows had when the order was held, and the sort they had then.
+  private heldOrder?: { positions: Map<string, number>; sort: string };
+
+  /** The items in the held order: the ones it knows at their place, the others after them. */
+  private applyHeldOrder(sortedItems: Item[]): Item[] {
+    const sort = `${this.sortParams.sortBy}\0${this.sortParams.orderBy}`;
+
+    if (!this.props.holdOrder) {
+      this.heldOrder = undefined;
+
+      return sortedItems;
+    }
+
+    if (!this.heldOrder || this.heldOrder.sort !== sort) {
+      this.heldOrder = { positions: new Map(sortedItems.map((item, index) => [item.getId(), index])), sort };
+
+      return sortedItems;
+    }
+
+    const { positions } = this.heldOrder;
+    const position = (item: Item) => positions.get(item.getId()) ?? Number.POSITIVE_INFINITY;
+
+    // A stable sort: the items the order does not know keep their sorted order after the others.
+    return [...sortedItems].sort((left, right) => {
+      const difference = position(left) - position(right);
+
+      return Number.isNaN(difference) ? 0 : difference;
+    });
+  }
+
   getSorted(rawItems: Item[]) {
     const { sortBy, orderBy } = this.sortParams;
 
@@ -263,8 +298,12 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
     let rows: React.ReactElement<TableRowProps<Item>>[] = content.filter((elem) => elem.type === TableRow);
     let sortedItems = (rows.length ? rows.map((row) => row.props.sortItem) : items).filter(isDefined);
 
-    if (this.isSortable) {
-      sortedItems = this.getSorted(sortedItems);
+    if (!this.props.holdOrder) {
+      this.heldOrder = undefined;
+    }
+
+    if (this.isSortable || this.props.holdOrder) {
+      sortedItems = this.applyHeldOrder(this.isSortable ? this.getSorted(sortedItems) : sortedItems);
 
       if (rows.length) {
         // Index the rows once instead of scanning them for every item.

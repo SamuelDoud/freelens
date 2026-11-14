@@ -6,6 +6,7 @@
 
 import "./item-list-layout.scss";
 
+import { Icon } from "@freelensapp/icon";
 import { Spinner } from "@freelensapp/spinner";
 import { cssNames, isDefined, isReactNode, noop, prevDefault, stopPropagation } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
@@ -13,6 +14,9 @@ import autoBindReact from "auto-bind/react";
 import { action, isObservableArray, observable, observableRef } from "mobx";
 import { Observer, observer } from "mobx-react";
 import React from "react";
+import expandedRowsInjectable from "../../../features/inline-details/renderer/expanded-rows.injectable";
+import styles from "../../../features/inline-details/renderer/inline-details.module.scss";
+import { InlineRowExpansion } from "../../../features/inline-details/renderer/inline-row-expansion";
 import isTableColumnHiddenInjectable from "../../../features/user-preferences/common/is-table-column-hidden.injectable";
 import toggleTableColumnVisibilityInjectable from "../../../features/user-preferences/common/toggle-table-column-visibility.injectable";
 import activeThemeInjectable from "../../themes/active.injectable";
@@ -31,6 +35,8 @@ import type { IClassName, StrictReactNode } from "@freelensapp/utilities";
 
 import type { IComputedValue } from "mobx";
 
+import type { ExpandedRows } from "../../../features/inline-details/renderer/expanded-rows";
+import type { InlineDetails } from "../../../features/inline-details/renderer/inline-details";
 import type { IsTableColumnHidden } from "../../../features/user-preferences/common/is-table-column-hidden.injectable";
 import type { ToggleTableColumnVisibility } from "../../../features/user-preferences/common/toggle-table-column-visibility.injectable";
 import type { LensTheme } from "../../themes/lens-theme";
@@ -74,6 +80,8 @@ export interface ItemListLayoutContentProps<Item extends ItemObject, PreLoadStor
   hasDetailsView?: boolean;
   detailsItem?: Item;
   onDetails?: (item: Item) => void;
+  /** Details shown under the rows, besides the side panel that `onDetails` opens. */
+  inlineDetails?: InlineDetails<Item>;
 
   // other
   customizeRemoveDialog?: (selectedItems: Item[]) => Partial<ConfirmDialogParams>;
@@ -95,6 +103,7 @@ interface Dependencies {
   toggleTableColumnVisibility: ToggleTableColumnVisibility;
   isTableColumnHidden: IsTableColumnHidden;
   columnResizeStorage: StorageLayer<ColumnResizeStorageState>;
+  getExpandedRows: (tableId: string) => ExpandedRows;
 }
 
 @observer
@@ -308,6 +317,13 @@ export class NonInjectedItemListLayoutContent<
     return this.props.store.failedLoading;
   }
 
+  /** The open rows of this list, when it shows details under its rows. */
+  private get expandedRows(): ExpandedRows | undefined {
+    const { inlineDetails, getExpandedRows, tableId } = this.observableProps;
+
+    return inlineDetails ? getExpandedRows(tableId ?? "default") : undefined;
+  }
+
   renderRow(item: Item) {
     return this.getTableRow(item);
   }
@@ -330,8 +346,18 @@ export class NonInjectedItemListLayoutContent<
       tableId,
       isConfigurable,
       isTableColumnHidden,
+      inlineDetails,
     } = this.observableProps;
     const { isSelected } = store;
+    const expandedRows = this.expandedRows;
+    const id = item.getId();
+    const onRowClick = () => {
+      if (expandedRows && inlineDetails?.rowClickExpands()) {
+        expandedRows.toggle(id);
+      } else {
+        onDetails?.(item);
+      }
+    };
 
     // Inline column-visibility check from the captured snapshot; this.showColumn
     // reads this.props, which is forbidden here (foreign derivation).
@@ -347,9 +373,26 @@ export class NonInjectedItemListLayoutContent<
         searchItem={item}
         sortItem={item}
         selected={detailsItem && detailsItem.getId() === item.getId()}
-        onClick={hasDetailsView ? prevDefault(() => onDetails?.(item)) : undefined}
+        onClick={hasDetailsView ? prevDefault(onRowClick) : undefined}
         {...customizeTableRowProps(item)}
+        expansion={
+          expandedRows && inlineDetails && expandedRows.isShown(id) ? (
+            <InlineRowExpansion rows={expandedRows} id={id}>
+              {inlineDetails.render(item)}
+            </InlineRowExpansion>
+          ) : undefined
+        }
       >
+        {expandedRows && (
+          <TableCell className={styles.toggleCell} onClick={prevDefault(() => expandedRows.toggle(id))}>
+            <Icon
+              material="chevron_right"
+              className={cssNames(styles.chevron, { [styles.chevronOpen]: expandedRows.isOpen(id) })}
+              data-testid={`inline-details-toggle-${id}`}
+              aria-expanded={expandedRows.isOpen(id)}
+            />
+          </TableCell>
+        )}
         {isSelectable && (
           <TableCell checkbox isChecked={isSelected(item)} onClick={prevDefault(() => store.toggleSelection(item))} />
         )}
@@ -382,6 +425,17 @@ export class NonInjectedItemListLayoutContent<
         {renderItemMenu && (
           <TableCell className="menu">
             <div onClick={stopPropagation}>{renderItemMenu(item, store)}</div>
+          </TableCell>
+        )}
+        {expandedRows && (
+          <TableCell className={styles.drawerCell}>
+            <Icon
+              material="input"
+              className={styles.drawerIcon}
+              tooltip="Open in side panel"
+              data-testid={`open-side-panel-${id}`}
+              onClick={prevDefault(() => onDetails?.(item))}
+            />
           </TableCell>
         )}
       </TableRow>
@@ -543,8 +597,22 @@ export class NonInjectedItemListLayoutContent<
       ? this.props.getItems().filter((item) => !customizeTableRowProps?.(item).disabled)
       : [];
 
+    const expandedRows = this.expandedRows;
+
     return (
       <TableHead showTopLine nowrap>
+        {expandedRows && (
+          <TableCell className={styles.toggleCell}>
+            {expandedRows.openIds.length > 0 && (
+              <Icon
+                material="unfold_less"
+                tooltip="Close all details. The order of the list holds while details are open."
+                data-testid="inline-details-close-all"
+                onClick={() => expandedRows.closeAll()}
+              />
+            )}
+          </TableCell>
+        )}
         {isSelectable && (
           <Observer>
             {() => (
@@ -578,6 +646,7 @@ export class NonInjectedItemListLayoutContent<
         <TableCell className="menu">
           {isConfigurable && tableId ? this.renderColumnVisibilityMenu(tableId) : undefined}
         </TableCell>
+        {expandedRows && <TableCell className={styles.drawerCell} />}
       </TableHead>
     );
   }
@@ -600,6 +669,9 @@ export class NonInjectedItemListLayoutContent<
     const classNames = cssNames(className, "grow", "shrink-0", "basis-0", activeTheme.get().type);
     const items = getItems();
     const selectedItems = store.pickOnlySelected(items);
+    const expandedRows = this.expandedRows;
+    const rowHeights =
+      tableProps.customRowHeights ?? ((item: Item, lineHeight: number, paddings: number) => lineHeight + paddings);
 
     return (
       <div className="items grow shrink-0 basis-0 flex flex-col" ref={this.tableRef}>
@@ -622,6 +694,14 @@ export class NonInjectedItemListLayoutContent<
           noItems={this.renderNoItems()}
           className={classNames}
           {...tableProps}
+          // An open row makes room for its details, and keeps its place while any is open.
+          customRowHeights={
+            expandedRows
+              ? (item, lineHeight, paddings) =>
+                  rowHeights(item, lineHeight, paddings) + expandedRows.extraHeight(item.getId())
+              : tableProps.customRowHeights
+          }
+          holdOrder={expandedRows ? items.some((item) => expandedRows.isOpen(item.getId())) : undefined}
         >
           {this.renderTableHeader()}
           {this.renderItems()}
@@ -689,6 +769,7 @@ export const ItemListLayoutContent = withInjectables<Dependencies, ItemListLayou
       toggleTableColumnVisibility: di.inject(toggleTableColumnVisibilityInjectable),
       isTableColumnHidden: di.inject(isTableColumnHiddenInjectable),
       columnResizeStorage: di.inject(columnResizeStorageInjectable),
+      getExpandedRows: (tableId) => di.inject(expandedRowsInjectable, tableId),
     }),
   },
 ) as <Item extends ItemObject, PreLoadStores extends boolean>(

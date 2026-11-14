@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { PodCertificateRequestDetails } from "../../../user-management-pod-certificate-requests";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const podCertificateRequestDetailItemInjectable = getInjectable({
   id: "pod-certificate-request-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: PodCertificateRequestDetails,
-      enabled: computed(() => isPodCertificateRequest(kubeObject.value.get()?.object)),
+      isFor: isPodCertificateRequest,
       orderNumber: 10,
     };
   },

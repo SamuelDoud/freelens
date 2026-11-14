@@ -5,24 +5,18 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { RoleBindingDetails } from "../../../user-management/role-bindings";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
 const roleBindingDetailItemInjectable = getInjectable({
   id: "role-binding-detail-item",
 
-  instantiate: (di) => {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
-    return {
-      Component: RoleBindingDetails,
-      enabled: computed(() => isRoleBinding(kubeObject.value.get()?.object)),
-      orderNumber: 10,
-    };
-  },
+  instantiate: () => ({
+    Component: RoleBindingDetails,
+    isFor: isRoleBinding,
+    orderNumber: 10,
+  }),
 
   injectionToken: kubeObjectDetailItemInjectionToken,
 });

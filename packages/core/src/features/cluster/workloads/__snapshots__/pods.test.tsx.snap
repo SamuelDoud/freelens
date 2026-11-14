@@ -656,6 +656,13 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -960,6 +967,13 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
                         </i>
                       </div>
                     </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
                   </div>
                   <div
                     class="VirtualList KubeObjectListLayout Pods grow shrink-0 basis-0 dark"
@@ -977,6 +991,22 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
                           class="TableRow nowrap"
                           id="menu-actions-for-kube-object-menu-for-uuid-1"
                         >
+                          <div
+                            class="TableCell toggleCell"
+                          >
+                            <i
+                              aria-expanded="false"
+                              class="Icon chevron material focusable"
+                              data-testid="inline-details-toggle-uuid-1"
+                            >
+                              <span
+                                class="icon"
+                                data-icon-name="chevron_right"
+                              >
+                                chevron_right
+                              </span>
+                            </i>
+                          </div>
                           <div
                             class="TableCell checkbox"
                           >
@@ -1117,6 +1147,27 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
                                   more_vert
                                 </span>
                               </i>
+                            </div>
+                          </div>
+                          <div
+                            class="TableCell drawerCell"
+                          >
+                            <i
+                              class="Icon drawerIcon material interactive focusable"
+                              data-testid="open-side-panel-uuid-1"
+                              tabindex="0"
+                            >
+                              <span
+                                class="icon"
+                                data-icon-name="input"
+                              >
+                                input
+                              </span>
+                            </i>
+                            <div
+                              data-testid="tooltip-content-for-open-side-panel-uuid-1"
+                            >
+                              Open in side panel
                             </div>
                           </div>
                         </div>
@@ -1953,6 +2004,13 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -2256,6 +2314,13 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div
@@ -3092,6 +3157,13 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
                     class="TableHead sticky nowrap topLine"
                   >
                     <div
+                      class="TableCell toggleCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
+                    </div>
+                    <div
                       class="TableCell checkbox"
                     >
                       <label
@@ -3395,6 +3467,13 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
                           </span>
                         </i>
                       </div>
+                    </div>
+                    <div
+                      class="TableCell drawerCell nowrap"
+                    >
+                      <div
+                        class="content"
+                      />
                     </div>
                   </div>
                   <div

@@ -5,24 +5,18 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { NodeDetails } from "../../../nodes/details";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
 const nodeDetailItemInjectable = getInjectable({
   id: "node-detail-item",
 
-  instantiate: (di) => {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
-    return {
-      Component: NodeDetails,
-      enabled: computed(() => isNode(kubeObject.value.get()?.object)),
-      orderNumber: 10,
-    };
-  },
+  instantiate: () => ({
+    Component: NodeDetails,
+    isFor: isNode,
+    orderNumber: 10,
+  }),
 
   injectionToken: kubeObjectDetailItemInjectionToken,
 });

@@ -151,6 +151,13 @@ exports[`kube-object-list-layout > given pod store > renders 1`] = `
               class="TableHead sticky nowrap topLine"
             >
               <div
+                class="TableCell toggleCell nowrap"
+              >
+                <div
+                  class="content"
+                />
+              </div>
+              <div
                 class="TableCell checkbox"
               >
                 <label
@@ -523,6 +530,13 @@ exports[`kube-object-list-layout > given pod store > renders 1`] = `
                     </span>
                   </i>
                 </div>
+              </div>
+              <div
+                class="TableCell drawerCell nowrap"
+              >
+                <div
+                  class="content"
+                />
               </div>
             </div>
             <div

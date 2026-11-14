@@ -40,6 +40,7 @@ import type { LoadingProgress } from "../../../common/item.store";
 import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { AdvancedSearchView } from "../../../features/advanced-search/renderer/advanced-search-panel";
 import type { AdvancedSearchState } from "../../../features/advanced-search/renderer/advanced-search-state";
+import type { InlineDetails } from "../../../features/inline-details/renderer/inline-details";
 import type { SubscribableStore } from "../../kube-watch-api/kube-watch-api";
 import type { StorageLayer } from "../../utils/storage-helper";
 import type { AddRemoveButtonsProps } from "../add-remove-buttons";
@@ -140,6 +141,8 @@ export type ItemListLayoutProps<Item extends ItemObject, PreLoadStores extends b
   hasDetailsView?: boolean;
   detailsItem?: Item;
   onDetails?: (item: Item) => void;
+  /** Details shown under the rows, besides the side panel that `onDetails` opens. */
+  inlineDetails?: InlineDetails<Item>;
 
   // other
   customizeRemoveDialog?: (selectedItems: Item[]) => Partial<ConfirmDialogParams>;
@@ -423,6 +426,7 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
           hasDetailsView={this.props.hasDetailsView}
           detailsItem={this.props.detailsItem}
           onDetails={this.props.onDetails}
+          inlineDetails={this.props.inlineDetails}
           customizeRemoveDialog={this.props.customizeRemoveDialog}
           failedToLoadMessage={this.props.failedToLoadMessage}
           spinnerTestId={this.props.spinnerTestId}

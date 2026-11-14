@@ -9,7 +9,6 @@ import "./kube-object-details.scss";
 import { Spinner } from "@freelensapp/spinner";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
-import React from "react";
 import { Drawer } from "../drawer";
 import hideDetailsInjectable from "../kube-detail-params/hide-details.injectable";
 import kubeDetailsUrlParamInjectable from "../kube-detail-params/kube-details-url.injectable";
@@ -19,12 +18,11 @@ import kubeObjectDetailItemsInjectable from "./kube-object-detail-items/kube-obj
 
 import type { KubeObject } from "@freelensapp/kube-object";
 
-import type { IComputedValue } from "mobx";
-
 import type { IAsyncComputed } from "../../../common/utils/async-computed";
 import type { PageParam } from "../../navigation/page-param";
 import type { HideDetails } from "../kube-detail-params/hide-details.injectable";
 import type { CurrentKubeObject } from "./current-kube-object-in-details.injectable";
+import type { GetKubeObjectDetailItems } from "./kube-object-detail-items/kube-object-detail-items.injectable";
 
 export interface KubeObjectDetailsProps<Kube extends KubeObject = KubeObject> {
   className?: string;
@@ -32,7 +30,7 @@ export interface KubeObjectDetailsProps<Kube extends KubeObject = KubeObject> {
 }
 
 interface Dependencies {
-  detailComponents: IComputedValue<React.ElementType[]>;
+  detailComponents: GetKubeObjectDetailItems;
   kubeObject: IAsyncComputed<CurrentKubeObject>;
   hideDetails: HideDetails;
   kubeDetailsUrlParam: PageParam<string>;
@@ -68,7 +66,7 @@ const NonInjectedKubeObjectDetails = observer((props: Dependencies) => {
       )}
       {currentKubeObject?.object && (
         <>
-          {detailComponents.get().map((Component, index) => (
+          {detailComponents(currentKubeObject.object).map((Component, index) => (
             // The object id is part of the key so that switching to another
             // object remounts the detail components: otherwise React keeps the
             // same instances and every local state of the details (revealed

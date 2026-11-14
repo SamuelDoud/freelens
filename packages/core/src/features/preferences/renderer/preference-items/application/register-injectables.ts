@@ -11,6 +11,7 @@ import applicationPreferenceTabInjectable from "./application-preference-tab.inj
 import { registerInjectables as registerExtensionInstallRegistryInjectables } from "./extension-install-registry/register-injectables";
 import { registerInjectables as registerHotbarAutoHideInjectables } from "./hotbar-auto-hide/register-injectables";
 import { registerInjectables as registerMenuBarInjectables } from "./menu-bar/register-injectables";
+import { registerInjectables as registerRowClickInjectables } from "./row-click/register-injectables";
 import { registerInjectables as registerSidebarMenuInjectables } from "./sidebar-menu/register-injectables";
 import { registerInjectables as registerStartUpInjectables } from "./start-up/register-injectables";
 import { registerInjectables as registerThemeInjectables } from "./theme/register-injectables";
@@ -41,6 +42,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerMenuBarInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerRowClickInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

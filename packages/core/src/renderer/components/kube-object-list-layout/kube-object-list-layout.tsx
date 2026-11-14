@@ -16,6 +16,8 @@ import { observable, reaction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import { getKubeObjectSearchFields } from "../../../features/advanced-search/renderer/kube-object-search-fields";
+import { InlineDetailsPanel } from "../../../features/inline-details/renderer/inline-details-panel";
+import userPreferencesStateInjectable from "../../../features/user-preferences/common/state.injectable";
 import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-frame-context/for-namespaced-resources.injectable";
 import subscribeStoresInjectable from "../../kube-watch-api/subscribe-stores.injectable";
 import { ResourceKindMap, ResourceNames } from "../../utils/rbac";
@@ -32,6 +34,7 @@ import type { GeneralKubeObjectListLayoutColumn, SpecificKubeListLayoutColumn } 
 import type { Disposer } from "@freelensapp/utilities";
 
 import type { SearchField } from "../../../features/advanced-search/common/conditions";
+import type { UserPreferencesState } from "../../../features/user-preferences/common/state.injectable";
 import type { ClusterContext } from "../../cluster-frame-context/cluster-frame-context";
 import type { SubscribableStore, SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 import type { PageParam } from "../../navigation/page-param";
@@ -75,6 +78,7 @@ interface Dependencies {
   kubeSelectedUrlParam: PageParam<string>;
   toggleKubeDetailsPane: ToggleKubeDetailsPane;
   generalColumns: GeneralKubeObjectListLayoutColumn[];
+  preferences: UserPreferencesState;
 }
 
 const matchesApiFor = (api: SubscribableStore["api"]) => (column: GeneralKubeObjectListLayoutColumn) =>
@@ -293,6 +297,10 @@ class NonInjectedKubeObjectListLayout<
           />
         )}
         onDetails={onDetails ?? ((item) => toggleDetails(item.selfLink))}
+        inlineDetails={{
+          render: (item) => <InlineDetailsPanel object={item} />,
+          rowClickExpands: () => this.props.preferences.rowClickAction === "expand",
+        }}
         sortingCallbacks={sortingCallbacks}
         renderTableHeader={headers}
         renderTableContents={(item) =>
@@ -328,6 +336,7 @@ export const KubeObjectListLayout = withInjectables<
     kubeSelectedUrlParam: di.inject(kubeSelectedUrlParamInjectable),
     toggleKubeDetailsPane: di.inject(toggleKubeDetailsPaneInjectable),
     generalColumns: di.injectMany(kubeObjectListLayoutColumnInjectionToken),
+    preferences: di.inject(userPreferencesStateInjectable),
   }),
 }) as <K extends KubeObject, A extends KubeApi<K, D>, D extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>>(
   props: KubeObjectListLayoutProps<K, A, D>,

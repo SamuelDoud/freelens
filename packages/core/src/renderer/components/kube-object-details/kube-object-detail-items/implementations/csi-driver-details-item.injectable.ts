@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { CSIDriverDetails } from "../../../storage-csi-drivers";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const csiDriverDetailItemInjectable = getInjectable({
   id: "csi-driver-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: CSIDriverDetails,
-      enabled: computed(() => isCSIDriver(kubeObject.value.get()?.object)),
+      isFor: isCSIDriver,
       orderNumber: 10,
     };
   },

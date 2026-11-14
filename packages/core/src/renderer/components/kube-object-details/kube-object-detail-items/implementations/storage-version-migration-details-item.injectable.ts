@@ -4,9 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { StorageVersionMigrationDetails } from "../../../config-storage-version-migrations";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
@@ -14,11 +12,9 @@ const storageVersionMigrationDetailItemInjectable = getInjectable({
   id: "storage-version-migration-detail-item",
 
   instantiate(di) {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
     return {
       Component: StorageVersionMigrationDetails,
-      enabled: computed(() => isStorageVersionMigration(kubeObject.value.get()?.object)),
+      isFor: isStorageVersionMigration,
       orderNumber: 10,
     };
   },

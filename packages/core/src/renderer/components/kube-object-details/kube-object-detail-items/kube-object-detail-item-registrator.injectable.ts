@@ -6,12 +6,12 @@
 
 import { getRandomIdInjectionToken } from "@freelensapp/random";
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { extensionRegistratorInjectionToken } from "../../../../extensions/extension-loader/extension-registrator-injection-token";
 import extensionShouldBeEnabledForClusterFrameInjectable from "../../../extension-loader/extension-should-be-enabled-for-cluster-frame.injectable";
-import currentKubeObjectInDetailsInjectable from "../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "./kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "./kube-object-matches-to-kind-and-api-version";
+
+import type { KubeObject } from "@freelensapp/kube-object";
 
 import type { LensRendererExtension } from "../../../../extensions/lens-renderer-extension";
 
@@ -37,29 +37,18 @@ const kubeObjectDetailItemRegistratorInjectable = getInjectable({
         return getInjectable({
           id,
 
-          instantiate: (di) => {
-            const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
+          instantiate: () => ({
+            kind: registration.kind,
+            apiVersions: registration.apiVersions,
+            Component: registration.components.Details,
 
-            return {
-              kind: registration.kind,
-              apiVersions: registration.apiVersions,
-              Component: registration.components.Details,
+            isFor: (object: KubeObject) =>
+              extensionShouldBeEnabledForClusterFrame.value.get() &&
+              isRelevantKubeObject(object) &&
+              (registration.visible ? registration.visible.get() : true),
 
-              enabled: computed(() => {
-                if (!extensionShouldBeEnabledForClusterFrame.value.get()) {
-                  return false;
-                }
-
-                if (!isRelevantKubeObject(kubeObject.value.get()?.object)) {
-                  return false;
-                }
-
-                return registration.visible ? registration.visible.get() : true;
-              }),
-
-              orderNumber: 300 - (registration.priority || 50),
-            };
-          },
+            orderNumber: 300 - (registration.priority || 50),
+          }),
 
           injectionToken: kubeObjectDetailItemInjectionToken,
         });

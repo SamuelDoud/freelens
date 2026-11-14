@@ -45,6 +45,9 @@ import type {
 // state reaches the extension API through `ItemListLayout`, and a type derived
 // through `instantiate` would make the published declaration import the DI
 // library. `instantiate` is annotated with it, so the two cannot drift apart.
+/** What a plain click on a row of a resource list does: open its details under it, or in the side panel. */
+export type RowClickAction = "expand" | "drawer";
+
 export type PreferenceDescriptors = {
   readonly httpsProxy: PreferenceDescription<string | undefined>;
   readonly shell: PreferenceDescription<string | undefined>;
@@ -69,6 +72,7 @@ export type PreferenceDescriptors = {
   readonly aiChat: PreferenceDescription<unknown, AiChatPreferences>;
   readonly logViewerPreferences: PreferenceDescription<Partial<LogViewerPreferences>, LogViewerPreferences>;
   readonly terminalCopyOnSelect: PreferenceDescription<boolean>;
+  readonly rowClickAction: PreferenceDescription<RowClickAction | undefined, RowClickAction>;
   readonly hiddenTableColumns: PreferenceDescription<[string, string[]][], Map<string, Set<string>>>;
   readonly syncKubeconfigEntries: PreferenceDescription<
     KubeconfigSyncEntry[],
@@ -193,6 +197,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
 
           return Object.keys(storedValue).length > 0 ? storedValue : undefined;
         },
+      }),
+      rowClickAction: getPreferenceDescriptor<RowClickAction | undefined, RowClickAction>({
+        fromStore: (val) => (val === "drawer" ? "drawer" : "expand"),
+        toStore: (val) => (val === "expand" ? undefined : val),
       }),
       terminalCopyOnSelect: getPreferenceDescriptor<boolean>({
         fromStore: (val) => val ?? false,

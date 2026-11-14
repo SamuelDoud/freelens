@@ -6,14 +6,19 @@
 
 import { getInjectionToken } from "@ogre-tools/injectable";
 
-import type { IComputedValue } from "mobx";
+import type { KubeObject } from "@freelensapp/kube-object";
+
 import type React from "react";
 
 import type { KubeObjectDetailsProps } from "../kube-object-details";
 
 export interface KubeObjectDetailItem {
   Component: React.ElementType<KubeObjectDetailsProps<any>>;
-  enabled: IComputedValue<boolean>;
+  /**
+   * Whether the item shows for an object: in the drawer for the object in the URL, under a row for
+   * that row's object. Observables it reads keep the views up to date.
+   */
+  isFor: (object: KubeObject) => boolean;
   orderNumber: number;
 }
 

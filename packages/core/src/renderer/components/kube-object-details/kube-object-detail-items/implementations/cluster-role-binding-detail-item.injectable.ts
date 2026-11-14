@@ -5,24 +5,18 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed } from "mobx";
 import { ClusterRoleBindingDetails } from "../../../user-management/cluster-role-bindings";
-import currentKubeObjectInDetailsInjectable from "../../current-kube-object-in-details.injectable";
 import { kubeObjectDetailItemInjectionToken } from "../kube-object-detail-item-injection-token";
 import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-kind-and-api-version";
 
 const clusterRoleBindingDetailItemInjectable = getInjectable({
   id: "cluster-role-binding-detail-item",
 
-  instantiate: (di) => {
-    const kubeObject = di.inject(currentKubeObjectInDetailsInjectable);
-
-    return {
-      Component: ClusterRoleBindingDetails,
-      enabled: computed(() => isClusterRoleBinding(kubeObject.value.get()?.object)),
-      orderNumber: 10,
-    };
-  },
+  instantiate: () => ({
+    Component: ClusterRoleBindingDetails,
+    isFor: isClusterRoleBinding,
+    orderNumber: 10,
+  }),
 
   injectionToken: kubeObjectDetailItemInjectionToken,
 });
