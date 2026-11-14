@@ -25,7 +25,7 @@ const memoryLikeOptions: ChartOptions = {
             return bytesToUnits(parseInt(value));
           }
 
-          return bytesToUnits(value);
+          return value === 0 ? "0" : bytesToUnits(value);
         },
       },
     },

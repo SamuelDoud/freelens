@@ -8,9 +8,13 @@
 
 import { podsAgeColumnInjectable } from "./pods-age-column.injectable";
 import { podsContainersColumnInjectable } from "./pods-containers-column.injectable";
+import { podsCpuLimitColumnInjectable } from "./pods-cpu-limit-column.injectable";
+import { podsCpuRequestColumnInjectable } from "./pods-cpu-request-column.injectable";
 import { podsUsedCpuColumnInjectable } from "./pods-cpu-usage-column.injectable";
 import { podsipColumnInjectable } from "./pods-ip-column.injectable";
 import { podsLogsButtonColumnInjectable } from "./pods-logs-button-column.injectable";
+import { podsMemoryLimitColumnInjectable } from "./pods-memory-limit-column.injectable";
+import { podsMemoryRequestColumnInjectable } from "./pods-memory-request-column.injectable";
 import { podsUsedMemoryColumnInjectable } from "./pods-memory-usage-column.injectable";
 import { podsNameColumnInjectable } from "./pods-name-column.injectable";
 import { podsNamespaceColumnInjectable } from "./pods-namespace-column.injectable";
@@ -36,7 +40,27 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(podsCpuLimitColumnInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(podsCpuRequestColumnInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(podsLogsButtonColumnInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(podsMemoryLimitColumnInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(podsMemoryRequestColumnInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

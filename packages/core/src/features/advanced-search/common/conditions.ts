@@ -19,6 +19,13 @@ export type TextSearchOperator = "exactly" | "startsWith" | "contains" | "regex"
  */
 export type TimeSearchOperator = "on" | "before" | "after" | "olderThan" | "newerThan";
 
+/**
+ * How a quantity condition compares the field's amount with its own value, a
+ * Kubernetes quantity such as `500m`, `2` or `512Mi`. `isSet` takes no value
+ * and holds when the item has the amount at all.
+ */
+export type QuantitySearchOperator = "moreThan" | "lessThan" | "exactly" | "isSet";
+
 interface SearchConditionBase {
   /** Identifies the condition within its search, for editing it. */
   readonly id: string;
@@ -39,7 +46,12 @@ export interface TimeSearchCondition extends SearchConditionBase {
   readonly operator: TimeSearchOperator;
 }
 
-export type SearchCondition = TextSearchCondition | TimeSearchCondition;
+export interface QuantitySearchCondition extends SearchConditionBase {
+  readonly kind: "quantity";
+  readonly operator: QuantitySearchOperator;
+}
+
+export type SearchCondition = TextSearchCondition | TimeSearchCondition | QuantitySearchCondition;
 
 export type SearchFieldValue = string | number | null | undefined;
 
@@ -59,10 +71,20 @@ export interface TimeSearchField<I> {
   readonly getTime: (item: I) => number | null | undefined;
 }
 
+export interface QuantitySearchField<I> {
+  readonly id: string;
+  readonly title: string;
+  readonly kind: "quantity";
+  /** What the amount measures, for the hint of the value. */
+  readonly unit: "cpu" | "memory";
+  /** The amount for an item, in cores or bytes, or `undefined` when it has none. */
+  readonly getQuantity: (item: I) => number | undefined;
+}
+
 /**
  * A field of a list that advanced search can put conditions on.
  */
-export type SearchField<I> = TextSearchField<I> | TimeSearchField<I>;
+export type SearchField<I> = TextSearchField<I> | TimeSearchField<I> | QuantitySearchField<I>;
 
 /**
  * A search the user saved to open again. It belongs to one kind of list, the
@@ -97,6 +119,17 @@ export const timeSearchOperators: readonly { readonly id: TimeSearchOperator; re
   { id: "olderThan", label: "older than" },
   { id: "newerThan", label: "newer than" },
 ];
+
+export const quantitySearchOperators: readonly { readonly id: QuantitySearchOperator; readonly label: string }[] = [
+  { id: "moreThan", label: "more than" },
+  { id: "lessThan", label: "less than" },
+  { id: "exactly", label: "exactly" },
+  { id: "isSet", label: "is set" },
+];
+
+/** Whether a condition is complete without a value. */
+export const takesNoValue = (condition: SearchCondition) =>
+  condition.kind === "quantity" && condition.operator === "isSet";
 
 /** The id of the field that stands for the texts the quick search looks at. */
 export const anyFieldId = "any";

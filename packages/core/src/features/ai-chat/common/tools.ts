@@ -168,7 +168,7 @@ export const aiTools: readonly AiToolSpec[] = [
     name: "set_advanced_search",
     access: "navigate",
     description:
-      'Replace the advanced search conditions of a kind\'s list view and open it. Fields: "name", "namespace", "labels" (key=value), "annotations", "owner" (Kind/name), "age", "any"; Pods also "status", "controlledBy", "node", "ip", "qos", "restarts", "image"; Events "type", "reason", "message", "lastSeen". Conditions on one field are ORed, different fields ANDed, negated ones always ANDed. Text operators: exactly, startsWith, contains, regex. Time operators for age/lastSeen: on, before, after (a local date-time like 2026-11-14T09:00) and olderThan, newerThan (a duration like 30m, 2h, 3d, 1w).',
+      'Replace the advanced search conditions of a kind\'s list view and open it. Fields: "name", "namespace", "labels" (key=value), "annotations", "owner" (Kind/name), "age", "any"; Pods also "status", "controlledBy", "node", "ip", "qos", "restarts", "image", and the quantities "cpuRequest", "cpuLimit", "memoryRequest", "memoryLimit"; Events "type", "reason", "message", "lastSeen". Conditions on one field are ORed, different fields ANDed, negated ones always ANDed. Text operators: exactly, startsWith, contains, regex. Time operators for age/lastSeen: on, before, after (a local date-time like 2026-11-14T09:00) and olderThan, newerThan (a duration like 30m, 2h, 3d, 1w). Quantity operators: moreThan, lessThan, exactly (a Kubernetes quantity like 500m, 2, 512Mi, 1Gi) and isSet (no value).',
     inputSchema: {
       type: "object",
       properties: {

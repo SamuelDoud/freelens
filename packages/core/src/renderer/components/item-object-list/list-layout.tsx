@@ -127,6 +127,13 @@ export type ItemListLayoutProps<Item extends ItemObject, PreLoadStores extends b
   isSelectable?: boolean; // show checkbox in rows for selecting items
   isConfigurable?: boolean;
   defaultHiddenTableColumns?: string[];
+  /**
+   * Columns of `defaultHiddenTableColumns` added to the list after it
+   * shipped. A user who has configured the list already has its columns
+   * stored, so these start hidden for them too, once; after that their own
+   * choice holds.
+   */
+  columnsAddedLater?: readonly string[];
   copyClassNameFromHeadCells?: boolean;
   sortingCallbacks?: TableSortCallbacks<Item>;
   tableProps?: Partial<TableProps<Item>>; // low-level table configuration
@@ -255,9 +262,25 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
         throw new Error("[ItemListLayout]: configurable list require props.tableId to be specified");
       }
 
-      const config = this.props.userPreferencesState.hiddenTableColumns.get(tableId);
+      const { hiddenTableColumns } = this.props.userPreferencesState;
+      const config = hiddenTableColumns.get(tableId);
       if (config === undefined && this.props.defaultHiddenTableColumns) {
-        this.props.userPreferencesState.hiddenTableColumns.set(tableId, new Set(this.props.defaultHiddenTableColumns));
+        hiddenTableColumns.set(tableId, new Set(this.props.defaultHiddenTableColumns));
+      }
+
+      const { columnsAddedLater = [] } = this.props;
+      // Which of them this list has already introduced, kept with the hidden
+      // columns so it lives in the same preference.
+      const introducedKey = `${tableId}#introduced`;
+      const introduced = hiddenTableColumns.get(introducedKey) ?? new Set<string>();
+      const toIntroduce = columnsAddedLater.filter((columnId) => !introduced.has(columnId));
+
+      if (toIntroduce.length) {
+        if (config !== undefined) {
+          hiddenTableColumns.set(tableId, new Set([...config, ...toIntroduce]));
+        }
+
+        hiddenTableColumns.set(introducedKey, new Set([...introduced, ...toIntroduce]));
       }
     }
 
