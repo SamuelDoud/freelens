@@ -6,8 +6,11 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import { registerInjectables as registerCertificateSigningRequestsInjectables } from "./certificate-signing-requests/register-injectables";
 import { registerInjectables as registerClusterRoleBindingsInjectables } from "./cluster-role-bindings/register-injectables";
 import { registerInjectables as registerClusterRolesInjectables } from "./cluster-roles/register-injectables";
+import { registerInjectables as registerClusterTrustBundlesInjectables } from "./cluster-trust-bundles/register-injectables";
+import { registerInjectables as registerPodCertificateRequestsInjectables } from "./pod-certificate-requests/register-injectables";
 import { registerInjectables as registerPodSecurityPoliciesInjectables } from "./pod-security-policies/register-injectables";
 import { registerInjectables as registerRoleBindingsInjectables } from "./role-bindings/register-injectables";
 import { registerInjectables as registerRolesInjectables } from "./roles/register-injectables";
@@ -17,12 +20,27 @@ import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
+    registerCertificateSigningRequestsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     registerClusterRoleBindingsInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
     registerClusterRolesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerClusterTrustBundlesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerPodCertificateRequestsInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

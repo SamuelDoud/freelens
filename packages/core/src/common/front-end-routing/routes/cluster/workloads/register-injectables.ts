@@ -6,11 +6,13 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import { registerInjectables as registerControllerRevisionsInjectables } from "./controller-revisions/register-injectables";
 import { registerInjectables as registerCronJobsInjectables } from "./cron-jobs/register-injectables";
 import { registerInjectables as registerDaemonsetsInjectables } from "./daemonsets/register-injectables";
 import { registerInjectables as registerDeploymentsInjectables } from "./deployments/register-injectables";
 import { registerInjectables as registerJobsInjectables } from "./jobs/register-injectables";
 import { registerInjectables as registerOverviewInjectables } from "./overview/register-injectables";
+import { registerInjectables as registerPodTemplatesInjectables } from "./pod-templates/register-injectables";
 import { registerInjectables as registerPodsInjectables } from "./pods/register-injectables";
 import { registerInjectables as registerReplicasetsInjectables } from "./replicasets/register-injectables";
 import { registerInjectables as registerReplicationControllersInjectables } from "./replication-controllers/register-injectables";
@@ -19,6 +21,11 @@ import { registerInjectables as registerStatefulsetsInjectables } from "./statef
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
+  try {
+    registerControllerRevisionsInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
   try {
     registerCronJobsInjectables(di);
   } catch (e) {
@@ -41,6 +48,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerOverviewInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerPodTemplatesInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
