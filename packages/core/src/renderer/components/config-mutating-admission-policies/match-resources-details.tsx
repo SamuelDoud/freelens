@@ -3,7 +3,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import React from "react";
 import { DrawerItem, DrawerTitle } from "../drawer";
 
 import type { LabelSelector, MatchResources, NamedRuleWithOperations } from "@freelensapp/kube-object";
