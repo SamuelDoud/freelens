@@ -28,7 +28,7 @@
 // exceed Node's default heap; run with NODE_OPTIONS=--max-old-space-size=8192
 // if the build aborts with an out-of-memory error.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 import { builtinModules, createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -78,6 +78,24 @@ const workspacePackages = Object.keys(packageJson.dependencies).filter((name) =>
 // Bundling lets Vite resolve the named exports and default interop at build
 // time, sidestepping runtime ESM resolution.
 const bundledCjsPackages = ["@ogre-tools/injectable", "@ogre-tools/fp", "@ogre-tools/injectable-extension-for-mobx"];
+
+// Dependencies bundled into the main process to keep the package small: the
+// main process uses a small part of them, which bundling keeps and an external
+// would ship whole.
+// - @kubernetes/client-node: a generated client for the whole Kubernetes API,
+//   of which the main process reads kubeconfigs and little else.
+const bundledForSizePackages = ["@kubernetes/client-node"];
+
+// The renderer writes into the same directory as the main process, so Vite
+// cannot empty it; without this, every build leaves the previous build's
+// hashed chunks in assets/ and the packaged app ships them all.
+const cleanRendererAssetsPlugin = () => ({
+  name: "freelens:clean-renderer-assets",
+  apply: "build" as const,
+  buildStart() {
+    rmSync(resolve(buildDir, "assets"), { recursive: true, force: true });
+  },
+});
 
 // Rewrite the packaged main bundle's single merged `electron` import from a
 // named import into a default import + destructure.
@@ -339,7 +357,7 @@ export default defineConfig({
   main: {
     plugins: [
       standardDecorators(),
-      externalizeDepsPlugin({ exclude: [...workspacePackages, ...bundledCjsPackages] }),
+      externalizeDepsPlugin({ exclude: [...workspacePackages, ...bundledCjsPackages, ...bundledForSizePackages] }),
       rewriteElectronNamedImportsPlugin(),
     ],
     // Unlike the renderer (a browser target, where Vite bakes in
@@ -372,6 +390,7 @@ export default defineConfig({
       // Oxc cannot lower standard decorators, so standardDecorators() does
       // it first; @vitejs/plugin-react v6 then runs its dev-only
       // react-refresh pass through Oxc on the lowered code.
+      cleanRendererAssetsPlugin(),
       standardDecorators(),
       react(),
       runtimeRequireExternalsPlugin(),
@@ -419,7 +438,10 @@ export default defineConfig({
     build: {
       outDir: buildDir,
       emptyOutDir: false,
-      minify: false,
+      // Minified to keep the package small (the renderer bundle is the largest
+      // file of the app). Function and class names are kept: code and error
+      // messages read them, as webpack's unminified bundle always let them.
+      minify: "oxc",
       sourcemap: true,
       // Leave `require("<node-builtin>")` calls in bundled CommonJS deps
       // untouched, so at runtime (nodeIntegration) they return the real, shared,
@@ -441,6 +463,12 @@ export default defineConfig({
       },
       rollupOptions: {
         input: resolve(root, "src/renderer/index.html"),
+        output: {
+          minify: {
+            compress: { keepNames: { function: true, class: true } },
+            mangle: { keepNames: { function: true, class: true } },
+          },
+        },
       },
     },
   },

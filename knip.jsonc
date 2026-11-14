@@ -100,7 +100,12 @@
       // the renderer's devDependencies be dependencies; the entries above
       // already cover the config and its inputs
       "electron-vite": false,
-      "ignoreBinaries": ["distwin-unpackedFreelens.exe"],
+      "ignoreBinaries": [
+        "distwin-unpackedFreelens.exe",
+        // run by @kubernetes/client-node, which is bundled into
+        // static/build/main.js, to read a kubeconfig of WSL
+        "wsl.exe"
+      ],
       "ignoreDependencies": [
         // imported by the bundled static/build/main.js but declared as a
         // devDependency so electron-builder does not pack it into the app
