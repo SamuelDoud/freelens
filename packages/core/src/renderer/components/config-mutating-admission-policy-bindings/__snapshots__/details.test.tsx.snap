@@ -106,6 +106,25 @@ exports[`MutatingAdmissionPolicyBindingDetails > renders 1`] = `
         <span
           class="name"
         >
+          Namespace Selector
+        </span>
+        <span
+          class="value"
+        >
+          <div>
+            kubernetes.io/metadata.name=team-a
+          </div>
+          <div>
+            environment In (dev, test)
+          </div>
+        </span>
+      </div>
+      <div
+        class="DrawerItem"
+      >
+        <span
+          class="name"
+        >
           Resource Rules
         </span>
         <span

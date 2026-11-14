@@ -6,6 +6,7 @@
 import { observer } from "mobx-react";
 import React from "react";
 import { DrawerItem, DrawerTitle } from "../drawer";
+import { MatchResourcesDetails } from "./match-resources-details";
 
 import type { MutatingAdmissionPolicy } from "@freelensapp/kube-object";
 
@@ -75,26 +76,7 @@ export class MutatingAdmissionPolicyDetails extends React.Component<MutatingAdmi
           </div>
         ))}
 
-        {matchConstraints && (
-          <>
-            <DrawerTitle>Match Constraints</DrawerTitle>
-            {matchConstraints.matchPolicy && (
-              <DrawerItem name="Match Policy">{matchConstraints.matchPolicy}</DrawerItem>
-            )}
-            <DrawerItem name="Resource Rules">
-              {matchConstraints.resourceRules?.map((rule, index) => (
-                <div key={index}>
-                  <div>API Groups: {rule.apiGroups.join(", ")}</div>
-                  <div>API Versions: {rule.apiVersions?.join(", ")}</div>
-                  <div>Operations: {rule.operations.join(", ")}</div>
-                  {rule.resources && <div>Resources: {rule.resources.join(", ")}</div>}
-                  {rule.resourceNames && <div>Resource Names: {rule.resourceNames.join(", ")}</div>}
-                  {rule.scope && <div>Scope: {rule.scope}</div>}
-                </div>
-              ))}
-            </DrawerItem>
-          </>
-        )}
+        <MatchResourcesDetails title="Match Constraints" matchResources={matchConstraints} />
       </div>
     );
   }
