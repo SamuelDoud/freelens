@@ -207,6 +207,24 @@ describe("AiToolExecutor", () => {
     expect(text).toContain("detailsOpenFor: /api/v1/namespaces/a/pods/p");
   });
 
+  it("shows the conditions that hold for kinds it has no columns for", async () => {
+    vi.mocked(dependencies.kube.get).mockResolvedValue({
+      items: [
+        { metadata: { name: "v1.ok" }, status: { conditions: [{ type: "Available", status: "True" }] } },
+        { metadata: { name: "v1.down" }, status: { conditions: [{ type: "Available", status: "False" }] } },
+      ],
+    });
+
+    const { text } = await executor.execute("list_resources", { kind: "Widget" }, readOnly);
+
+    expect(text.split("\n")).toEqual([
+      "2 Widgets",
+      "name\tconditions\tage",
+      "v1.ok\tAvailable\t",
+      "v1.down\tAvailable=False\t",
+    ]);
+  });
+
   it("explains an unknown kind", async () => {
     expect((await executor.execute("list_resources", { kind: "Gadget" }, readOnly)).text).toMatch(
       /does not serve the kind Gadget/,
