@@ -7,12 +7,18 @@
  */
 
 import expandedRowsInjectable from "./expanded-rows.injectable";
+import expandedRowsRegistryInjectable from "./expanded-rows-registry.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
     di.register(expandedRowsInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(expandedRowsRegistryInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

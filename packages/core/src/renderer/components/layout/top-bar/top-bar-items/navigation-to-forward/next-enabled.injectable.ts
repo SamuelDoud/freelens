@@ -6,14 +6,14 @@
 
 import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
-import topBarStateInjectable from "../../state.injectable";
+import timelineInjectable from "../../../../../../features/history/renderer/timeline.injectable";
 
 const topBarNextEnabledInjectable = getInjectable({
   id: "top-bar-next-enabled",
   instantiate: (di) => {
-    const state = di.inject(topBarStateInjectable);
+    const timeline = di.inject(timelineInjectable);
 
-    return computed(() => state.nextEnabled);
+    return computed(() => timeline.index >= 0 && timeline.canGo(1));
   },
 });
 

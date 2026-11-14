@@ -5,13 +5,12 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { WindowAction } from "../../../../../../../common/ipc/window";
-import { requestWindowAction } from "../../../../../../ipc";
+import historyControllerInjectable from "../../../../../../../features/history/renderer/history-controller.injectable";
 
+/** Steps forward through the timeline of the window, between pages and within them */
 const goForwardInjectable = getInjectable({
   id: "go-forward",
-  instantiate: () => () => requestWindowAction(WindowAction.GO_FORWARD),
-  causesSideEffects: true,
+  instantiate: (di) => () => di.inject(historyControllerInjectable).go(1),
 });
 
 export default goForwardInjectable;

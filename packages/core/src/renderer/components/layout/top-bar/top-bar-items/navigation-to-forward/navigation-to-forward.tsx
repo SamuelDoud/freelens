@@ -7,6 +7,7 @@
 import { Icon } from "@freelensapp/icon";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
+import { HistoryStepsMenu } from "../../../../../../features/history/renderer/history-steps-menu";
 import goForwardInjectable from "./go-forward/go-forward.injectable";
 import topBarNextEnabledInjectable from "./next-enabled.injectable";
 
@@ -18,7 +19,15 @@ interface Dependencies {
 }
 
 const NonInjectedNavigationToForward = observer(({ nextEnabled, goForward }: Dependencies) => (
-  <Icon data-testid="history-forward" material="arrow_forward" onClick={goForward} disabled={!nextEnabled.get()} />
+  <HistoryStepsMenu direction={1}>
+    <Icon
+      data-testid="history-forward"
+      material="arrow_forward"
+      tooltip="Forward (right-click or hold for the list)"
+      onClick={goForward}
+      disabled={!nextEnabled.get()}
+    />
+  </HistoryStepsMenu>
 ));
 
 export const NavigationToForward = withInjectables<Dependencies>(

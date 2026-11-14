@@ -10,13 +10,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MockedFunction } from "vitest";
 import "@testing-library/jest-dom/vitest";
 
-import { computed, observable } from "mobx";
+import { computed } from "mobx";
 import platformInjectable from "../../../../common/vars/platform.injectable";
 import rendererExtensionsInjectable from "../../../../extensions/renderer-extensions.injectable";
+import timelineInjectable from "../../../../features/history/renderer/timeline.injectable";
 import { getDiForUnitTesting } from "../../../getDiForUnitTesting";
 import currentlyInClusterFrameInjectable from "../../../routes/currently-in-cluster-frame.injectable";
 import { renderFor } from "../../test-utils/renderFor";
-import topBarStateInjectable from "./state.injectable";
 import toggleMaximizeWindowInjectable from "./toggle-maximize-window/toggle-maximize-window.injectable";
 import { TopBar } from "./top-bar";
 import openAppContextMenuInjectable from "./top-bar-items/context-menu/open-app-context-menu/open-app-context-menu.injectable";
@@ -56,12 +56,12 @@ describe("<TopBar/>", () => {
 
   describe("with both previous and next history enabled", () => {
     beforeEach(() => {
-      di.override(topBarStateInjectable, () =>
-        observable.object({
-          prevEnabled: true,
-          nextEnabled: true,
-        }),
-      );
+      const timeline = di.inject(timelineInjectable);
+
+      timeline.record({ rootPath: "/welcome" });
+      timeline.record({ rootPath: "/catalog" });
+      timeline.record({ rootPath: "/preferences" });
+      timeline.go(-1);
     });
 
     it("renders w/o errors", () => {
@@ -83,14 +83,14 @@ describe("<TopBar/>", () => {
       expect(await findByTestId("history-forward")).toBeInTheDocument();
     });
 
-    it("enables arrow by ipc event", async () => {
+    it("enables the arrows when there are steps either way", async () => {
       const { findByTestId } = render(<TopBar />);
 
       expect(await findByTestId("history-back")).not.toHaveClass("disabled");
       expect(await findByTestId("history-forward")).not.toHaveClass("disabled");
     });
 
-    it("triggers browser history back and forward", async () => {
+    it("steps back and forward", async () => {
       const { findByTestId } = render(<TopBar />);
 
       const prevButton = await findByTestId("history-back");
