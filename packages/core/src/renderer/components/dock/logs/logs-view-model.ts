@@ -11,6 +11,7 @@ import {
   clampMaxCombinedLogsPods,
   defaultLogViewerPreferences,
 } from "../../../../features/user-preferences/common/preferences-helpers";
+import { LogTimestampFormatter } from "./format-log-timestamps";
 import { getTimestampedLogFilename } from "./get-timestamped-log-filename";
 import { stripAnsiColors } from "./merge-pod-logs";
 
@@ -73,6 +74,21 @@ export class LogTabViewModel {
   readonly logsWithoutTimestamps = computed(() => this.dependencies.getLogsWithoutTimestamps(this.tabId));
   readonly timestampSplitLogs = computed(() => this.dependencies.getTimestampSplitLogs(this.tabId));
   readonly logTabData = computed(() => this.dependencies.getLogTabData(this.tabId));
+
+  private readonly timestampFormatter = new LogTimestampFormatter();
+
+  /**
+   * The lines as the list shows them with the timestamps on: each timestamp in
+   * the time zone of the preferences. A plain getter, not a computed, because
+   * the list reads it for every row, outside any derivation of its own.
+   */
+  get formattedLogs(): string[] {
+    return this.timestampFormatter.format(
+      this.logs.get(),
+      () => this.timestampSplitLogs.get(),
+      this.dependencies.userPreferencesState.localeTimezone,
+    );
+  }
   readonly pods = computed(() => {
     const data = this.logTabData.get();
 

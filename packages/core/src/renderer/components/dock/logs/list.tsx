@@ -7,7 +7,7 @@
 import "./list.scss";
 
 import { Spinner } from "@freelensapp/spinner";
-import { array, cssNames, formatInTimeZone } from "@freelensapp/utilities";
+import { array, cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { AnsiUp } from "ansi_up";
 import autoBindReact from "auto-bind/react";
@@ -67,7 +67,6 @@ class NonForwardedLogList extends React.Component<
   private resizeObserver: ResizeObserver | null = null;
   private virtualListRef = React.createRef<VirtualListRef>(); // A reference for VirtualList component
   private measuredRowHeights = new Map<number, number>();
-  private formattedLogs: { source: string[]; timezone: string; logs: string[] } | undefined;
   private estimatedRowHeights:
     | {
         logs: string[];
@@ -306,30 +305,17 @@ class NonForwardedLogList extends React.Component<
    * render and from the VirtualList row renderer (getLogRow).
    */
   get logs(): string[] {
-    const { model, state } = this.observableProps;
+    const { model } = this.observableProps;
     const { showTimestamps } = model.logTabData.get() ?? {};
 
     if (!showTimestamps) {
       return model.logsWithoutTimestamps.get();
     }
 
-    const source = model.logs.get();
-    const timezone = state.localeTimezone;
-
     // This getter is read for every row the list renders, and formatting the
-    // timestamps of all the lines is the expensive part: they are formatted
-    // once for every change of the logs or of the time zone.
-    if (this.formattedLogs?.source !== source || this.formattedLogs.timezone !== timezone) {
-      this.formattedLogs = {
-        source,
-        timezone,
-        logs: model.timestampSplitLogs
-          .get()
-          .map(([logTimestamp, log]) => `${logTimestamp && formatInTimeZone(logTimestamp, timezone)}${log}`),
-      };
-    }
-
-    return this.formattedLogs.logs;
+    // timestamps of all the lines is the expensive part: the model keeps them
+    // until the logs or the time zone change.
+    return model.formattedLogs;
   }
 
   get showWordWrap(): boolean {
