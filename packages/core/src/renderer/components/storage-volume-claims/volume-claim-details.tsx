@@ -14,6 +14,7 @@ import { stopPropagation } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import React, { Fragment } from "react";
+import subscribeStoresInjectable from "../../kube-watch-api/subscribe-stores.injectable";
 import { Badge } from "../badge";
 import { DrawerItem, DrawerTitle } from "../drawer";
 import getDetailsUrlInjectable from "../kube-detail-params/get-details-url.injectable";
@@ -22,6 +23,7 @@ import podStoreInjectable from "../workloads-pods/store.injectable";
 import type { StorageClassApi } from "@freelensapp/kube-api";
 import type { Logger } from "@freelensapp/logger";
 
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 import type { GetDetailsUrl } from "../kube-detail-params/get-details-url.injectable";
 import type { KubeObjectDetailsProps } from "../kube-object-details";
 import type { PodStore } from "../workloads-pods/store";
@@ -29,6 +31,7 @@ import type { PodStore } from "../workloads-pods/store";
 export interface PersistentVolumeClaimDetailsProps extends KubeObjectDetailsProps<PersistentVolumeClaim> {}
 
 interface Dependencies {
+  subscribeStores: SubscribeStores;
   getDetailsUrl: GetDetailsUrl;
   podStore: PodStore;
   storageClassApi: StorageClassApi;
@@ -39,6 +42,18 @@ interface Dependencies {
 class NonInjectedPersistentVolumeClaimDetails extends React.Component<
   PersistentVolumeClaimDetailsProps & Dependencies
 > {
+  private unsubscribe: (() => void) | undefined;
+
+  // The pods using the claim are read from the pod store, which a store
+  // nobody subscribes to frees after a while.
+  componentDidMount() {
+    this.unsubscribe = this.props.subscribeStores([this.props.podStore]);
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe?.();
+  }
+
   render() {
     const { object: volumeClaim, podStore, getDetailsUrl, storageClassApi, logger } = this.props;
 
@@ -109,6 +124,7 @@ export const PersistentVolumeClaimDetails = withInjectables<Dependencies, Persis
   {
     getProps: (di, props) => ({
       ...props,
+      subscribeStores: di.inject(subscribeStoresInjectable),
       getDetailsUrl: di.inject(getDetailsUrlInjectable),
       podStore: di.inject(podStoreInjectable),
       storageClassApi: di.inject(storageClassApiInjectable),

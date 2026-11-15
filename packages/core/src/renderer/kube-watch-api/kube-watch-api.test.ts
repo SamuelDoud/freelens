@@ -5,8 +5,8 @@
 
 import { noop, WrappedAbortController } from "@freelensapp/utilities";
 import { observable, runInAction } from "mobx";
-import { describe, expect, it, vi } from "vitest";
-import { KubeWatchApi } from "./kube-watch-api";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { KubeWatchApi, storeLingerMs } from "./kube-watch-api";
 
 import type { Logger } from "@freelensapp/logger";
 
@@ -24,7 +24,9 @@ const logger: Logger = {
   warn: noop,
 };
 
-const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
+// The tests run on fake timers: a store's linger is minutes long.
+const flushPromises = () => vi.advanceTimersByTimeAsync(0);
+const lingerOver = () => vi.advanceTimersByTimeAsync(storeLingerMs);
 
 /**
  * A store whose lists stay pending until `finishLoads()`, and resolve on an
@@ -48,6 +50,8 @@ const createStore = ({ isNamespaced = false } = {}) => {
           reqInit?.signal?.addEventListener("abort", () => resolve(undefined));
         }),
     ),
+    failedLoading: false as boolean,
+    release: vi.fn(),
     subscribe: vi.fn(({ abortController }: KubeObjectStoreSubscribeParams = {}) => {
       const watchController = new WrappedAbortController(abortController);
 
@@ -86,7 +90,15 @@ const createKubeWatchApi = () => {
 };
 
 describe("KubeWatchApi", () => {
-  it("aborts the watch of a store when the subscription is disposed", async () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("ends the watch of a store once its last subscription has been gone for the linger", async () => {
     const { kubeWatchApi } = createKubeWatchApi();
     const { store, finishLoads, openWatches } = createStore();
 
@@ -98,10 +110,17 @@ describe("KubeWatchApi", () => {
 
     unsubscribe();
 
+    // kept for a view that comes back
+    await vi.advanceTimersByTimeAsync(storeLingerMs - 1);
+
+    expect(openWatches()).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+
     expect(openWatches()).toBe(0);
   });
 
-  it("does not watch a store whose subscription was disposed while its list was loading", async () => {
+  it("finishes the list of a store whose subscription was disposed while it was loading, and ends its watch with the linger", async () => {
     const { kubeWatchApi } = createKubeWatchApi();
     const { store, finishLoads, openWatches } = createStore();
 
@@ -110,7 +129,11 @@ describe("KubeWatchApi", () => {
     unsubscribe();
     await finishLoads();
 
-    expect(store.subscribe).not.toHaveBeenCalled();
+    expect(store.subscribe).toHaveBeenCalledTimes(1);
+    expect(openWatches()).toBe(1);
+
+    await lingerOver();
+
     expect(openWatches()).toBe(0);
   });
 
@@ -131,6 +154,7 @@ describe("KubeWatchApi", () => {
     expect(openWatches()).toBe(1);
 
     unsubscribeSecond();
+    await lingerOver();
 
     expect(openWatches()).toBe(0);
   });
@@ -152,6 +176,7 @@ describe("KubeWatchApi", () => {
     expect(openWatches()).toBe(1);
 
     unsubscribeSecond();
+    await lingerOver();
 
     expect(openWatches()).toBe(0);
   });
@@ -174,6 +199,7 @@ describe("KubeWatchApi", () => {
     expect(openWatches()).toBe(1);
 
     unsubscribeSecond();
+    await lingerOver();
 
     expect(openWatches()).toBe(0);
 
@@ -202,6 +228,7 @@ describe("KubeWatchApi", () => {
     expect(openWatches()).toBe(1);
 
     unsubscribe();
+    await lingerOver();
 
     expect(openWatches()).toBe(0);
   });
@@ -226,8 +253,266 @@ describe("KubeWatchApi", () => {
     expect(openWatches()).toBe(1);
 
     unsubscribe();
+    await lingerOver();
 
     expect(openWatches()).toBe(0);
+  });
+
+  describe("when the last subscription of a store goes", () => {
+    const subscribeAndLoad = async (isNamespaced = false) => {
+      const created = { ...createKubeWatchApi(), ...createStore({ isNamespaced }) };
+      const unsubscribe = created.kubeWatchApi.subscribeStores([created.store]);
+
+      await created.finishLoads();
+
+      return { ...created, unsubscribe };
+    };
+
+    it("lets a subscription that returns within the linger take the store as it is, without another list", async () => {
+      const { kubeWatchApi, store, openWatches, unsubscribe } = await subscribeAndLoad();
+
+      // navigating away from the view and back, five times
+      let last = unsubscribe;
+
+      for (let visit = 0; visit < 5; visit++) {
+        last();
+        await vi.advanceTimersByTimeAsync(60_000);
+        last = kubeWatchApi.subscribeStores([store]);
+        await flushPromises();
+      }
+
+      expect(store.loadAll).toHaveBeenCalledTimes(1);
+      expect(store.subscribe).toHaveBeenCalledTimes(1);
+      expect(openWatches()).toBe(1);
+      expect(store.release).not.toHaveBeenCalled();
+
+      last();
+      await lingerOver();
+
+      expect(openWatches()).toBe(0);
+      expect(store.release).toHaveBeenCalledTimes(1);
+    });
+
+    it("measures the linger from the last departure, not the first", async () => {
+      const { kubeWatchApi, store, openWatches, unsubscribe } = await subscribeAndLoad();
+
+      unsubscribe();
+      await vi.advanceTimersByTimeAsync(storeLingerMs - 1000);
+
+      const second = kubeWatchApi.subscribeStores([store]);
+
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(openWatches()).toBe(1);
+
+      second();
+      await vi.advanceTimersByTimeAsync(storeLingerMs - 1);
+
+      expect(openWatches()).toBe(1);
+      expect(store.release).not.toHaveBeenCalled();
+    });
+
+    it("loads and watches afresh for a subscription that comes after the linger, and the store was released", async () => {
+      const { kubeWatchApi, store, finishLoads, openWatches, unsubscribe } = await subscribeAndLoad();
+
+      unsubscribe();
+      await lingerOver();
+
+      expect(store.release).toHaveBeenCalledTimes(1);
+
+      kubeWatchApi.subscribeStores([store]);
+      await finishLoads();
+
+      expect(store.loadAll).toHaveBeenCalledTimes(2);
+      expect(store.subscribe).toHaveBeenCalledTimes(2);
+      expect(openWatches()).toBe(1);
+    });
+
+    it("does not release a store that a subscription of explicit namespaces still uses", async () => {
+      const { kubeWatchApi, store, finishLoads, openWatches, unsubscribe } = await subscribeAndLoad(true);
+      const unsubscribeOwned = kubeWatchApi.subscribeStores([store], { namespaces: ["default"] });
+
+      await finishLoads();
+      unsubscribe();
+      await lingerOver();
+
+      // the shared watch is over, the one of explicit namespaces goes on
+      expect(openWatches()).toBe(1);
+      expect(store.release).not.toHaveBeenCalled();
+
+      unsubscribeOwned();
+    });
+
+    it("loads the store again for a subscription that returns after its load failed", async () => {
+      const { kubeWatchApi, store, finishLoads, unsubscribe } = await subscribeAndLoad();
+
+      store.failedLoading = true;
+      unsubscribe();
+      await vi.advanceTimersByTimeAsync(1000);
+      kubeWatchApi.subscribeStores([store]);
+      await finishLoads();
+
+      expect(store.loadAll).toHaveBeenCalledTimes(2);
+    });
+
+    it("loads the store again for a subscription that returns after a failure reported by the load", async () => {
+      const { kubeWatchApi, store } = { ...createKubeWatchApi(), ...createStore() };
+      const onLoadFailure = vi.fn();
+
+      // the store reports the failure of a namespace, empties itself and carries on
+      store.loadAll.mockImplementationOnce(async ({ onLoadFailure }: KubeObjectStoreLoadAllParams = {}) => {
+        onLoadFailure?.(new Error("forbidden"));
+
+        return undefined;
+      });
+
+      const unsubscribe = kubeWatchApi.subscribeStores([store], { onLoadFailure });
+
+      await flushPromises();
+      unsubscribe();
+      kubeWatchApi.subscribeStores([store], { onLoadFailure });
+      await flushPromises();
+
+      expect(onLoadFailure).toHaveBeenCalledTimes(1);
+      expect(store.loadAll).toHaveBeenCalledTimes(2);
+    });
+
+    it("keeps the selection of the store while away and compares it with what it holds on return", async () => {
+      const { kubeWatchApi, clusterContext, store, finishLoads, openWatches, unsubscribe } =
+        await subscribeAndLoad(true);
+
+      unsubscribe();
+      runInAction(() => {
+        clusterContext.contextNamespaces = ["default", "kube-system"];
+      });
+      await finishLoads();
+
+      // nothing is listed for a store nobody looks at
+      expect(store.loadAll).toHaveBeenCalledTimes(1);
+
+      kubeWatchApi.subscribeStores([store]);
+      await finishLoads();
+
+      // only the namespace that was added
+      expect(store.loadAll).toHaveBeenCalledTimes(2);
+      expect(store.loadAll.mock.lastCall?.[0]).toMatchObject({ namespaces: ["kube-system"] });
+      expect(openWatches()).toBe(2);
+    });
+
+    it("lists the whole selection on return when the selection changed otherwise while away", async () => {
+      const { kubeWatchApi, clusterContext, store, finishLoads, openWatches, unsubscribe } =
+        await subscribeAndLoad(true);
+
+      unsubscribe();
+      runInAction(() => {
+        clusterContext.contextNamespaces = ["kube-system"];
+      });
+      await finishLoads();
+      kubeWatchApi.subscribeStores([store]);
+      await finishLoads();
+
+      expect(store.loadAll).toHaveBeenCalledTimes(2);
+      expect(store.loadAll.mock.lastCall?.[0]).toMatchObject({ namespaces: ["kube-system"] });
+      expect(openWatches()).toBe(1);
+    });
+
+    it("does nothing on return when the selection went and came back while away", async () => {
+      const { kubeWatchApi, clusterContext, store, finishLoads, unsubscribe } = await subscribeAndLoad(true);
+
+      unsubscribe();
+      runInAction(() => {
+        clusterContext.contextNamespaces = ["kube-system"];
+      });
+      runInAction(() => {
+        clusterContext.contextNamespaces = ["default"];
+      });
+      kubeWatchApi.subscribeStores([store]);
+      await finishLoads();
+
+      expect(store.loadAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("given a selection of namespaces that grows", () => {
+    it("lists and watches only the namespace added, and keeps the watch of the others", async () => {
+      const { kubeWatchApi, clusterContext } = createKubeWatchApi();
+      const { store, finishLoads, openWatches } = createStore({ isNamespaced: true });
+
+      kubeWatchApi.subscribeStores([store]);
+      await finishLoads();
+
+      runInAction(() => {
+        clusterContext.contextNamespaces = ["default", "kube-system"];
+      });
+
+      // the watch of default was not touched
+      expect(openWatches()).toBe(1);
+
+      await finishLoads();
+
+      expect(store.loadAll).toHaveBeenCalledTimes(2);
+      expect(store.loadAll.mock.lastCall?.[0]).toMatchObject({ namespaces: ["kube-system"] });
+      expect(store.subscribe.mock.lastCall?.[0]).toMatchObject({ namespaces: ["kube-system"] });
+      expect(openWatches()).toBe(2);
+    });
+
+    it("lists the whole selection again when a namespace is removed from it", async () => {
+      const { kubeWatchApi, clusterContext } = createKubeWatchApi();
+      const { store, finishLoads, openWatches } = createStore({ isNamespaced: true });
+
+      runInAction(() => {
+        clusterContext.contextNamespaces = ["default", "kube-system"];
+      });
+      kubeWatchApi.subscribeStores([store]);
+      await finishLoads();
+
+      runInAction(() => {
+        clusterContext.contextNamespaces = ["default"];
+      });
+      await finishLoads();
+
+      expect(store.loadAll).toHaveBeenCalledTimes(2);
+      expect(store.loadAll.mock.lastCall?.[0]).toMatchObject({ namespaces: ["default"] });
+      expect(openWatches()).toBe(1);
+    });
+
+    it("ends every group's watch with the last subscription", async () => {
+      const { kubeWatchApi, clusterContext } = createKubeWatchApi();
+      const { store, finishLoads, openWatches } = createStore({ isNamespaced: true });
+
+      const unsubscribe = kubeWatchApi.subscribeStores([store]);
+
+      await finishLoads();
+      runInAction(() => {
+        clusterContext.contextNamespaces = ["default", "kube-system", "other"];
+      });
+      await finishLoads();
+
+      expect(openWatches()).toBe(2);
+
+      unsubscribe();
+      await lingerOver();
+
+      expect(openWatches()).toBe(0);
+    });
+
+    it("loads an added namespace while the first one is still loading", async () => {
+      const { kubeWatchApi, clusterContext } = createKubeWatchApi();
+      const { store, finishLoads, openWatches } = createStore({ isNamespaced: true });
+
+      kubeWatchApi.subscribeStores([store]);
+      runInAction(() => {
+        clusterContext.contextNamespaces = ["default", "kube-system"];
+      });
+      await finishLoads();
+
+      expect(store.loadAll).toHaveBeenCalledTimes(2);
+      expect(store.subscribe.mock.calls.map(([opts]) => opts?.namespaces).sort()).toEqual([
+        ["default"],
+        ["kube-system"],
+      ]);
+      expect(openWatches()).toBe(2);
+    });
   });
 
   describe("given a store whose list query can change", () => {
@@ -263,6 +548,7 @@ describe("KubeWatchApi", () => {
       expect(openWatches()).toBe(1);
 
       unsubscribe();
+      await lingerOver();
 
       expect(openWatches()).toBe(0);
     });
@@ -275,6 +561,7 @@ describe("KubeWatchApi", () => {
 
       await finishLoads();
       unsubscribe();
+      await lingerOver();
       setListQuery('{"fieldSelector":"status.phase!=Succeeded"}');
 
       expect(store.loadAll).toHaveBeenCalledTimes(1);

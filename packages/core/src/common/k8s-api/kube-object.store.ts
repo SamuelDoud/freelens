@@ -127,6 +127,13 @@ export interface KubeObjectStoreSubscribeParams {
    * An optional parent abort controller
    */
   abortController?: AbortController;
+
+  /**
+   * The namespaces to watch, for a store that was loaded for those and no
+   * others in the meantime. Without it, the store watches the namespaces of
+   * its latest load.
+   */
+  namespaces?: string[];
 }
 
 export interface MergeItemsOptions {
@@ -164,6 +171,13 @@ export interface KubeObjectStoreOptions {
 
 /** How long a load runs before its progress names the namespaces it waits on */
 export const slowLoadMs = 10_000;
+
+/**
+ * How many items a store has to hold for `release` to free them. A smaller
+ * store costs little to keep, and views that read it without subscribing
+ * (a details panel, say) go on finding what they found before.
+ */
+export const releaseFromItemCount = 2000;
 
 /** The most namespaces a load's progress names when it waits on them */
 const namedPendingNamespaces = 3;
@@ -998,6 +1012,27 @@ export class KubeObjectStore<
     super.reset();
   }
 
+  /**
+   * Frees the items of a large store that no view subscribes to any longer,
+   * so that data nobody looks at stops holding memory. The store is as if
+   * never loaded, and loads afresh when a view subscribes again. The
+   * selection of items is kept, as it is across a load.
+   */
+  @action
+  release() {
+    if (this.items.length < releaseFromItemCount) {
+      return;
+    }
+
+    this.loadGeneration++;
+    this.heldVersions.clear();
+    this.eventsBuffer.clear();
+    this.items.clear();
+    this.isLoaded = false;
+    this.isLoading = false;
+    this.loadingProgress = undefined;
+  }
+
   protected resetOnError(error: any) {
     if (error) this.reset();
   }
@@ -1151,7 +1186,11 @@ export class KubeObjectStore<
     this.watchingController.abort();
   }
 
-  subscribe({ onLoadFailure, abortController = new AbortController() }: KubeObjectStoreSubscribeParams = {}): Disposer {
+  subscribe({
+    onLoadFailure,
+    abortController = new AbortController(),
+    namespaces,
+  }: KubeObjectStoreSubscribeParams = {}): Disposer {
     if (abortController.signal.aborted || this.watchingController.signal.aborted) {
       // The subscriber went away before it subscribed, e.g. a view that
       // unmounted while its list was loading, or the store stopped watching.
@@ -1169,10 +1208,12 @@ export class KubeObjectStore<
     if (this.api.isNamespaced) {
       void (async () => {
         try {
-          const loadedNamespaces = await Promise.race([
-            rejectPromiseBy(abortController.signal),
-            waitUntilDefined(() => this.loadedNamespaces.get()),
-          ]);
+          const loadedNamespaces =
+            namespaces ??
+            (await Promise.race([
+              rejectPromiseBy(abortController.signal),
+              waitUntilDefined(() => this.loadedNamespaces.get()),
+            ]));
 
           if (this.dependencies.context.isGlobalWatchEnabled() && loadedNamespaces.length === 0) {
             this.watchNamespace("", abortController, { onLoadFailure });
