@@ -11,7 +11,7 @@ import { Spinner } from "@freelensapp/spinner";
 import { cssNames, isDefined, isReactNode, noop, prevDefault, stopPropagation } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
-import { action, isObservableArray, observable, observableRef } from "mobx";
+import { action, isObservableArray, observable } from "mobx";
 import { Observer, observer } from "mobx-react";
 import React from "react";
 import expandedRowsInjectable from "../../../features/inline-details/renderer/expanded-rows.injectable";
@@ -28,6 +28,7 @@ import { MenuActions } from "../menu/menu-actions";
 import { NoItems } from "../no-items";
 import { Table, TableCell, TableHead, TableRow } from "../table";
 import columnResizeStorageInjectable from "./column-resize-storage/storage.injectable";
+import { createObservableProps } from "./observable-props";
 import pageFiltersStoreInjectable from "./page-filters/store.injectable";
 
 import type { ItemObject, TableCellProps } from "@freelensapp/list-layout";
@@ -47,6 +48,7 @@ import type { OpenConfirmDialog } from "../confirm-dialog/open.injectable";
 import type { TableProps, TableRowProps, TableSortCallbacks } from "../table";
 import type { ColumnResizeStorageState } from "./column-resize-storage/storage.injectable";
 import type { ItemListStore } from "./list-layout";
+import type { ObservableProps } from "./observable-props";
 import type { Filter, PageFiltersStore } from "./page-filters/store";
 
 interface ResizeState {
@@ -122,19 +124,21 @@ export class NonInjectedItemListLayoutContent<
   // (and the showColumn they call) are invoked from foreign derivations — the inner
   // <Observer> render prop and the <Table> row renderer — so they read props from
   // this observable snapshot, refreshed on every update, instead of this.props.
-  @observableRef private accessor observableProps: Readonly<
-    ItemListLayoutContentProps<Item, PreLoadStores> & Dependencies
-  >;
+  private readonly propsBox: ObservableProps<ItemListLayoutContentProps<Item, PreLoadStores> & Dependencies>;
+
+  private get observableProps() {
+    return this.propsBox.current;
+  }
 
   constructor(props: ItemListLayoutContentProps<Item, PreLoadStores> & Dependencies) {
     super(props);
-    this.observableProps = props;
+    this.propsBox = createObservableProps<ItemListLayoutContentProps<Item, PreLoadStores> & Dependencies>(props);
     autoBindReact(this);
     this.loadSavedColumnWidths();
   }
 
   componentDidUpdate() {
-    this.observableProps = this.props;
+    this.propsBox.update(this.props);
   }
 
   componentWillUnmount() {

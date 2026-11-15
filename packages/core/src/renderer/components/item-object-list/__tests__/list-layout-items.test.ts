@@ -118,4 +118,34 @@ describe("<ItemListLayout> items", () => {
 
     rows.dispose();
   });
+
+  it("does not filter again when an update brings the same props", () => {
+    const items = makeItems(10);
+    const { layout, props, filterItems, getSearchTexts } = makeLayout(() => items);
+    const rows = readInRows(layout);
+
+    filterItems.mockClear();
+    getSearchTexts.mockClear();
+    expect(Reflect.set(layout, "props", { ...props })).toBe(true);
+    layout.componentDidUpdate();
+
+    expect(filterItems).not.toHaveBeenCalled();
+    expect(getSearchTexts).not.toHaveBeenCalled();
+
+    rows.dispose();
+  });
+
+  it("keeps the array of items when an update yields the same items", () => {
+    const items = makeItems(10);
+    const { layout, props } = makeLayout(() => items);
+    const seen: ItemObject[][] = [];
+    const stop = autorun(() => seen.push(layout.items));
+
+    expect(Reflect.set(layout, "props", { ...props, getItems: () => [...items] })).toBe(true);
+    layout.componentDidUpdate();
+
+    expect(seen).toHaveLength(1);
+
+    stop();
+  });
 });

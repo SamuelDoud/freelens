@@ -4,6 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { Pod } from "@freelensapp/kube-object";
+import { act } from "@testing-library/react";
+import { observable, runInAction } from "mobx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DiContainer } from "@ogre-tools/injectable";
@@ -34,8 +37,10 @@ describe("kube-object-list-layout", () => {
   let di: DiContainer;
   let render: DiRender;
   let podStore: PodStore;
+  const selectedPath = observable.box("path");
 
   beforeEach(() => {
+    selectedPath.set("path");
     di = getDiForUnitTesting();
 
     di.override(directoryForUserDataInjectable, () => "/some-user-store-path");
@@ -57,7 +62,7 @@ describe("kube-object-list-layout", () => {
 
     di.override(subscribeStoresInjectable, () => vi.fn().mockImplementation(() => vi.fn()));
     di.override(kubeSelectedUrlParamInjectable, () => ({
-      get: () => "path",
+      get: () => selectedPath.get(),
     }));
     di.override(toggleKubeDetailsPaneInjectable, () => null);
     di.override(appPathsStateInjectable, () => ({
@@ -107,6 +112,66 @@ describe("kube-object-list-layout", () => {
 
         expect(result.getByPlaceholderText("Search My Custom Items...")).toBeInTheDocument();
       });
+    });
+  });
+
+  describe("when the store's items change", () => {
+    const makePod = (name: string, resourceVersion = "1") =>
+      new Pod({
+        apiVersion: "v1",
+        kind: "Pod",
+        metadata: {
+          name,
+          resourceVersion,
+          uid: name,
+          selfLink: `/api/v1/pods/${name}`,
+        },
+        spec: { containers: [{ name: "c", image: "i" }] },
+        status: { phase: "Running" },
+      } as unknown as ConstructorParameters<typeof Pod>[0]);
+
+    it("filters and sorts once per change, and not when only the selected item changes", () => {
+      const names = ["c", "a", "b"].map((name) => makePod(name));
+      const filterItems = vi.fn((items: Pod[]) => items);
+      const sortByName = vi.fn((pod: Pod) => pod.getName());
+
+      runInAction(() => {
+        podStore.isLoaded = true;
+        podStore.items.replace(names);
+      });
+      selectedPath.set("");
+
+      render(
+        <KubeObjectListLayout
+          className="Pods"
+          store={podStore}
+          tableId="workloads_pods"
+          renderHeaderTitle="Pods"
+          renderTableHeader={[{ title: "Name", className: "name", sortBy: "name", id: "name" }]}
+          renderTableContents={(pod) => [pod.getName()]}
+          sortingCallbacks={{ name: sortByName }}
+          filterItems={[filterItems]}
+          tableProps={{ sortByDefault: { sortBy: "name", orderBy: "asc" }, sortSyncWithUrl: false }}
+        />,
+      );
+
+      expect(sortByName).toHaveBeenCalledTimes(3);
+
+      filterItems.mockClear();
+      sortByName.mockClear();
+      act(() => {
+        runInAction(() => podStore.items.replace([...names, makePod("d")]));
+      });
+
+      expect(filterItems).toHaveBeenCalledTimes(1);
+      expect(sortByName).toHaveBeenCalledTimes(4);
+
+      filterItems.mockClear();
+      sortByName.mockClear();
+      act(() => selectedPath.set(names[0].selfLink));
+
+      expect(filterItems).not.toHaveBeenCalled();
+      expect(sortByName).not.toHaveBeenCalled();
     });
   });
 });

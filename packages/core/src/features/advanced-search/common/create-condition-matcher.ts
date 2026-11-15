@@ -181,6 +181,40 @@ function createItemTest<I>(condition: SearchCondition, field: SearchField<I>): I
   return undefined;
 }
 
+/**
+ * A key of what `createConditionMatcher` would compile out of these conditions: the conditions that
+ * are in effect and that a field of the list can read, in order. Two sets of conditions with the
+ * same key over the same fields compile to matchers that match the same items, so a list can keep
+ * its matcher, and the items it filtered, when an edit leaves the key as it was (an empty condition
+ * added, an unfinished quantity typed).
+ */
+export function getEffectiveConditionsKey<I>(
+  conditions: readonly SearchCondition[],
+  fields: readonly SearchField<I>[],
+): string {
+  const fieldsById = new Map(fields.map((field) => [field.id, field]));
+  const effective: string[][] = [];
+
+  for (const condition of conditions) {
+    const field = fieldsById.get(condition.field);
+
+    // A condition of another kind than its field's gets no test in createItemTest.
+    if (!field || field.kind !== condition.kind || !isConditionInEffect(condition)) {
+      continue;
+    }
+
+    effective.push([
+      condition.field,
+      condition.kind,
+      condition.operator,
+      condition.negate ? "1" : "0",
+      condition.value,
+    ]);
+  }
+
+  return JSON.stringify(effective);
+}
+
 export interface SearchMatcher<I> {
   /** Whether the matcher reads the clock, so it has to be run again as time passes. */
   readonly usesClock: boolean;

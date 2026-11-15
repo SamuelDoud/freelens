@@ -4,7 +4,7 @@
  */
 
 import { autorun, observable } from "mobx";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AdvancedSearchState } from "../../../../features/advanced-search/renderer/advanced-search-state";
 import { NonInjectedItemListLayout } from "../list-layout";
 import { PageFiltersStore } from "../page-filters/store";
@@ -40,7 +40,7 @@ const fields: SearchField<Item>[] = [
 
 const viewKey = "test/Item";
 
-const makeLayout = () => {
+const makeLayout = (viewFields: SearchField<Item>[] = fields) => {
   const search = observable.box("");
   const searchUrlParam = {
     get: () => search.get(),
@@ -52,7 +52,7 @@ const makeLayout = () => {
     getItems: () => items,
     store: { isLoaded: true },
     searchFilters: [(item: Item) => [item.getName(), item.namespace]],
-    advancedSearch: { viewKey, viewTitle: "Items", fields },
+    advancedSearch: { viewKey, viewTitle: "Items", fields: viewFields },
     renderTableContents: () => [],
     pageFiltersStore: new PageFiltersStore({ searchUrlParam }),
     advancedSearchState,
@@ -114,5 +114,43 @@ describe("<ItemListLayout> advanced search", () => {
     advancedSearchState.setConditions(viewKey, [condition("any", "exactly", "kube-system")]);
 
     expect(layout.items.map((item) => item.getName())).toEqual(["coredns"]);
+  });
+
+  it("keeps the items it filtered when an edit leaves the search in effect as it was", () => {
+    const getValues = vi.fn((item: Item) => item.getName());
+    const { layout, advancedSearchState } = makeLayout([{ id: "name", title: "Name", kind: "text", getValues }]);
+    const stop = autorun(() => layout.items);
+
+    advancedSearchState.setConditions(viewKey, [condition("name", "startsWith", "api")]);
+    getValues.mockClear();
+
+    // An empty value, an invalid expression and a field the list lacks are not in effect.
+    advancedSearchState.addCondition(viewKey, condition("name", "contains", ""));
+    advancedSearchState.addCondition(viewKey, {
+      id: "bad-regex",
+      kind: "text",
+      field: "name",
+      operator: "regex",
+      value: "(",
+      negate: false,
+    });
+    advancedSearchState.addCondition(viewKey, condition("missing", "contains", "x"));
+
+    expect(getValues).not.toHaveBeenCalled();
+    expect(layout.items.map((item) => item.getName())).toEqual(["api-server", "api-gateway"]);
+
+    advancedSearchState.addCondition(viewKey, condition("name", "contains", "gate"));
+
+    expect(getValues).toHaveBeenCalled();
+    expect(layout.items.map((item) => item.getName())).toEqual(["api-server", "api-gateway"]);
+
+    advancedSearchState.setConditions(viewKey, [
+      condition("name", "startsWith", "api"),
+      condition("name", "contains", "gate", true),
+    ]);
+
+    expect(layout.items.map((item) => item.getName())).toEqual(["api-server"]);
+
+    stop();
   });
 });
