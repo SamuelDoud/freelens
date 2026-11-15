@@ -6,6 +6,7 @@
 
 import { getOrInsertWith, interval } from "@freelensapp/utilities";
 import { observable, when } from "mobx";
+import { mapLinesIncremental } from "./map-lines-incremental";
 import {
   compareLogTimestamps,
   getLeadingTimestamp,
@@ -24,6 +25,7 @@ import type { IComputedValue } from "mobx";
 
 import type { TabId } from "../dock/store";
 import type { CallForLogs } from "./call-for-logs.injectable";
+import type { MappedLines } from "./map-lines-incremental";
 import type { LogTabData } from "./tab-store";
 
 type PodLogLine = string;
@@ -60,6 +62,10 @@ export class LogStore {
   private readonly podColors = new Map<TabId, Map<string, string>>();
   // How many lines every pod has in the tab, by pod id.
   private readonly lineCounts = new Map<TabId, Map<string, number>>();
+  // What the derived arrays were made from the last time, to map only the lines
+  // that are new since. Kept out of mobx on purpose: it is a cache, not state.
+  private readonly withoutTimestamps = new Map<TabId, MappedLines<string, string>>();
+  private readonly timestampSplits = new Map<TabId, MappedLines<string, [string, string]>>();
 
   constructor(private dependencies: Dependencies) {}
 
@@ -432,11 +438,19 @@ export class LogStore {
   }
 
   getLogsWithoutTimestamps(tabId: TabId): string[] {
-    return this.getLogs(tabId).map(this.removeTimestamps);
+    const mapped = mapLinesIncremental(this.withoutTimestamps.get(tabId), this.getLogs(tabId), this.removeTimestamps);
+
+    this.withoutTimestamps.set(tabId, mapped);
+
+    return mapped.output;
   }
 
   getTimestampSplitLogs(tabId: TabId): [string, string][] {
-    return this.getLogs(tabId).map(this.splitOutTimestamp);
+    const mapped = mapLinesIncremental(this.timestampSplits.get(tabId), this.getLogs(tabId), this.splitOutTimestamp);
+
+    this.timestampSplits.set(tabId, mapped);
+
+    return mapped.output;
   }
 
   /**
@@ -495,6 +509,8 @@ export class LogStore {
     this.cursors.delete(tabId);
     this.podColors.delete(tabId);
     this.lineCounts.delete(tabId);
+    this.withoutTimestamps.delete(tabId);
+    this.timestampSplits.delete(tabId);
   }
 
   reload(
