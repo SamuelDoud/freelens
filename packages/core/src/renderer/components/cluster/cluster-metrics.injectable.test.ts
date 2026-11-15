@@ -3,11 +3,15 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { computed } from "mobx";
-import { describe, expect, it, vi } from "vitest";
+import { noop } from "es-toolkit";
+import { action, computed, observable, reaction } from "mobx";
+import { resetNowInternalState } from "mobx-utils";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import requestClusterMetricsByNodeNamesInjectable from "../../../common/k8s-api/endpoints/metrics.api/request-cluster-metrics-by-node-names.injectable";
+import frameActivityInjectable from "../../../features/frame-activity/renderer/frame-activity.injectable";
 import { getDiForUnitTesting } from "../../getDiForUnitTesting";
 import clusterOverviewMetricsInjectable from "./cluster-metrics.injectable";
+import metricsTimeRangeStorageInjectable from "./overview/metrics-time-range-storage.injectable";
 import selectedMetricsTimeRangeInjectable from "./overview/selected-metrics-time-range.injectable";
 import selectedNodeRoleForMetricsInjectable from "./overview/selected-node-role-for-metrics.injectable";
 
@@ -96,5 +100,81 @@ describe("cluster-overview-metrics injectable", () => {
     });
 
     expect(requestClusterMetricsByNodeNames).toHaveBeenCalledWith(["master-1"], timestamps);
+  });
+});
+
+describe("cluster-overview-metrics injectable and the clock", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    resetNowInternalState();
+  });
+
+  const setup = (initialRange: { duration: number | null; customStart?: number; customEnd?: number }) => {
+    // The clocks are shared by interval: one made under real timers would not tick under fake ones.
+    resetNowInternalState();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+
+    const di = getDiForUnitTesting();
+    const requestClusterMetricsByNodeNames = vi.fn().mockResolvedValue({});
+    const state = observable.box(initialRange, { deep: false });
+    const active = observable.box(true);
+
+    di.override(requestClusterMetricsByNodeNamesInjectable, () => requestClusterMetricsByNodeNames);
+    di.override(
+      metricsTimeRangeStorageInjectable,
+      () =>
+        ({
+          get: () => state.get(),
+          set: action((value: never) => state.set(value)),
+          merge: action((update: object) => state.set({ ...state.get(), ...update } as never)),
+        }) as never,
+    );
+    di.override(frameActivityInjectable, () => computed(() => active.get()));
+    di.override(
+      selectedNodeRoleForMetricsInjectable,
+      () =>
+        ({
+          nodes: computed(() => []),
+          hasMasterNodes: computed(() => false),
+          hasWorkerNodes: computed(() => true),
+        }) as never,
+    );
+
+    // A chart on screen observes the value, as the overview does.
+    reaction(() => di.inject(clusterOverviewMetricsInjectable).value.get(), noop);
+
+    return { requestClusterMetricsByNodeNames, active };
+  };
+
+  it("asks again every minute for a range that follows the clock while it is shown", async () => {
+    const { requestClusterMetricsByNodeNames } = setup({ duration: 3600 });
+
+    await vi.advanceTimersByTimeAsync(3 * 60 * 1000 + 500);
+
+    expect(requestClusterMetricsByNodeNames).toHaveBeenCalledTimes(4);
+  });
+
+  it("does not ask again while the frame is hidden, and asks once it is shown again", async () => {
+    const { requestClusterMetricsByNodeNames, active } = setup({ duration: 3600 });
+
+    action(() => active.set(false))();
+    await vi.advanceTimersByTimeAsync(0);
+    requestClusterMetricsByNodeNames.mockClear();
+
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+    expect(requestClusterMetricsByNodeNames).not.toHaveBeenCalled();
+
+    action(() => active.set(true))();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(requestClusterMetricsByNodeNames).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not ask again for a custom range, which does not move", async () => {
+    const { requestClusterMetricsByNodeNames } = setup({ duration: null, customStart: 1000, customEnd: 2000 });
+
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+
+    expect(requestClusterMetricsByNodeNames).toHaveBeenCalledTimes(1);
   });
 });

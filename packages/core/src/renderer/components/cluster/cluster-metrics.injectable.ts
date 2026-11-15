@@ -5,15 +5,12 @@
  */
 
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
-import { now } from "mobx-utils";
 import requestClusterMetricsByNodeNamesInjectable from "../../../common/k8s-api/endpoints/metrics.api/request-cluster-metrics-by-node-names.injectable";
 import { asyncComputed } from "../../../common/utils/async-computed";
 import selectedMetricsTimeRangeInjectable from "./overview/selected-metrics-time-range.injectable";
 import selectedNodeRoleForMetricsInjectable from "./overview/selected-node-role-for-metrics.injectable";
 
 import type { ClusterMetricData } from "../../../common/k8s-api/endpoints/metrics.api/request-cluster-metrics-by-node-names.injectable";
-
-const everyMinute = 60 * 1000;
 
 const clusterOverviewMetricsInjectable = getInjectable({
   id: "cluster-overview-metrics",
@@ -24,8 +21,9 @@ const clusterOverviewMetricsInjectable = getInjectable({
 
     return asyncComputed<Partial<ClusterMetricData> | undefined>({
       getValueFromObservedPromise: async () => {
-        now(everyMinute);
-
+        // No clock of its own: the time range ticks every minute while it can
+        // be seen and follows the clock, and a hidden overview or a custom
+        // range asks for the same window again only when that changes.
         // The node name filter is built from the nodes alive right now, while
         // the time range can reach days back: on clusters with node churn the
         // samples of the replaced nodes would be filtered out (see #2409).
