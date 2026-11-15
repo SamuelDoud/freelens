@@ -11,7 +11,7 @@ import { Spinner } from "@freelensapp/spinner";
 import { cssNames, isDefined, isReactNode, noop, prevDefault, stopPropagation } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
-import { action, isObservableArray, observable } from "mobx";
+import { action, computed, isObservableArray, observable } from "mobx";
 import { Observer, observer } from "mobx-react";
 import React from "react";
 import expandedRowsInjectable from "../../../features/inline-details/renderer/expanded-rows.injectable";
@@ -490,6 +490,31 @@ export class NonInjectedItemListLayoutContent<
     return items.find((item) => item.getId() === uid);
   }
 
+  // The items that the row customization does not disable, kept for the same items and customization.
+  // A computed, so that what the customization reads still updates it.
+  private enabledItemsMemo?: {
+    items: Item[];
+    customizeTableRowProps: ItemListLayoutContentProps<Item, PreLoadStores>["customizeTableRowProps"];
+    value: IComputedValue<Item[]>;
+  };
+
+  private getEnabledItems(
+    items: Item[],
+    customizeTableRowProps: ItemListLayoutContentProps<Item, PreLoadStores>["customizeTableRowProps"],
+  ): Item[] {
+    const memo = this.enabledItemsMemo;
+
+    if (!memo || memo.items !== items || memo.customizeTableRowProps !== customizeTableRowProps) {
+      this.enabledItemsMemo = {
+        items,
+        customizeTableRowProps,
+        value: computed(() => items.filter((item) => !customizeTableRowProps?.(item).disabled)),
+      };
+    }
+
+    return this.enabledItemsMemo!.value.get();
+  }
+
   /** Whether a row of these items is open. Walks the open rows, which are few, not the items. */
   private hasOpenRowIn(expandedRows: ExpandedRows, items: Item[]) {
     return expandedRows.hasOpen && expandedRows.openIds.some((id) => this.findItemById(items, id) !== undefined);
@@ -601,10 +626,7 @@ export class NonInjectedItemListLayoutContent<
       return null;
     }
 
-    // Only the select-all checkbox needs the enabled items.
-    const enabledItems = isSelectable
-      ? this.props.getItems().filter((item) => !customizeTableRowProps?.(item).disabled)
-      : [];
+    const { getItems } = this.props;
 
     const expandedRows = this.expandedRows;
 
@@ -624,13 +646,18 @@ export class NonInjectedItemListLayoutContent<
         )}
         {isSelectable && (
           <Observer>
-            {() => (
-              <TableCell
-                checkbox
-                isChecked={store.isSelectedAll(enabledItems)}
-                onClick={prevDefault(() => store.toggleSelectionAll(enabledItems))}
-              />
-            )}
+            {() => {
+              // Only the select-all checkbox needs the enabled items, so they are worked out here.
+              const enabledItems = this.getEnabledItems(getItems(), customizeTableRowProps);
+
+              return (
+                <TableCell
+                  checkbox
+                  isChecked={store.isSelectedAll(enabledItems)}
+                  onClick={prevDefault(() => store.toggleSelectionAll(enabledItems))}
+                />
+              );
+            }}
           </Observer>
         )}
         {renderTableHeader.filter(isDefined).map(
