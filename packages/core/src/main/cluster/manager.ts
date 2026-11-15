@@ -46,13 +46,33 @@ interface Dependencies {
   addCluster: AddCluster;
 }
 
+/**
+ * Observes everything `cluster.getState()` reads, without building the state.
+ * The reaction only needs to know that something changed, and the clone of
+ * `knownResources` that `getState()` makes is the expensive part. The lists
+ * are only ever replaced as a whole, so their length stands in for their
+ * contents. The returned array is new on every run, so that the reaction
+ * fires on each change as it did with the state.
+ */
+const trackClusterState = (cluster: Cluster) => [
+  cluster.online.get(),
+  cluster.ready.get(),
+  cluster.disconnected.get(),
+  cluster.accessible.get(),
+  cluster.isAdmin.get(),
+  cluster.isGlobalWatchEnabled.get(),
+  cluster.allowedNamespaces.length,
+  cluster.resourcesToShow.size,
+  cluster.knownResources.length,
+];
+
 export class ClusterManager {
   constructor(private readonly dependencies: Dependencies) {}
 
   init = once(() => {
     // reacting to every cluster's state change and total amount of items
     reaction(
-      () => this.dependencies.clusters.get().map((c) => c.getState()),
+      () => this.dependencies.clusters.get().map(trackClusterState),
       () => this.updateCatalog(this.dependencies.clusters.get()),
       { fireImmediately: false },
     );

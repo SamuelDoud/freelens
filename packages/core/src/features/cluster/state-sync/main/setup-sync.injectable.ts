@@ -7,12 +7,14 @@
 import { beforeApplicationIsLoadingInjectionToken } from "@freelensapp/application";
 import { getInjectable } from "@ogre-tools/injectable";
 import { isEqual } from "es-toolkit";
-import { autorun } from "mobx";
+import { reaction } from "mobx";
 import clustersInjectable from "../../storage/common/clusters.injectable";
 import initClusterStoreInjectable from "../../storage/main/init.injectable";
 import emitClusterStateUpdateInjectable from "./emit-update.injectable";
 
-import type { ClusterId, ClusterState } from "../../../../common/cluster-types";
+import type { IReactionDisposer } from "mobx";
+
+import type { Cluster } from "../../../../common/cluster/cluster";
 
 const setupClusterStateBroadcastingInjectable = getInjectable({
   id: "setup-cluster-state-broadcasting",
@@ -20,23 +22,39 @@ const setupClusterStateBroadcastingInjectable = getInjectable({
     run: () => {
       const emitClusterStateUpdate = di.inject(emitClusterStateUpdateInjectable);
       const clusters = di.inject(clustersInjectable);
-      const prevStates = new Map<ClusterId, ClusterState>();
+      const watched = new Map<Cluster, IReactionDisposer>();
 
-      autorun(() => {
-        for (const cluster of clusters.get()) {
-          const prevState = prevStates.get(cluster.id);
-          const curState = cluster.getState();
+      // One reaction for each cluster: a change in one cluster computes the
+      // state of that cluster only, once, and emits what it computed.
+      reaction(
+        () => clusters.get(),
+        (current) => {
+          const present = new Set(current);
 
-          if (!prevState || !isEqual(prevState, curState)) {
-            prevStates.set(cluster.id, curState);
-
-            emitClusterStateUpdate({
-              clusterId: cluster.id,
-              state: cluster.getState(),
-            });
+          for (const [cluster, dispose] of watched) {
+            if (!present.has(cluster)) {
+              dispose();
+              watched.delete(cluster);
+            }
           }
-        }
-      });
+
+          for (const cluster of current) {
+            if (watched.has(cluster)) {
+              continue;
+            }
+
+            watched.set(
+              cluster,
+              reaction(
+                () => cluster.getState(),
+                (state) => emitClusterStateUpdate({ clusterId: cluster.id, state }),
+                { equals: isEqual, fireImmediately: true },
+              ),
+            );
+          }
+        },
+        { fireImmediately: true },
+      );
     },
     runAfter: initClusterStoreInjectable,
   }),
