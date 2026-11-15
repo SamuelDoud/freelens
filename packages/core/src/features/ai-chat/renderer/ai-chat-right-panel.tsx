@@ -7,7 +7,7 @@ import { ResizeDirection, ResizeGrowthDirection, ResizeSide, ResizingAnchor } fr
 import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import hostedClusterInjectable from "../../../renderer/cluster-frame-context/hosted-cluster.injectable";
 import userPreferencesStateInjectable from "../../user-preferences/common/state.injectable";
 import { defaultAiChatPreferences } from "../common/preferences";
@@ -30,24 +30,43 @@ const NonInjectedAiChatRightPanel = observer(({ mirror, cluster, state }: Depend
   const chats = cluster ? mirror.forCluster(cluster.id, "right") : [];
   const [selected, setSelected] = useState<string>();
   const preferences = state.aiChat ?? defaultAiChatPreferences;
+  // The width follows the pointer in local state, and is written to the
+  // preferences once, when the drag ends: every write is persisted and synced.
+  const [dragWidth, setDragWidth] = useState<number>();
+  const draggedWidth = useRef<number>();
 
   if (chats.length === 0) {
     return null;
   }
 
   const shown = chats.find((chat) => chat.id === selected) ?? chats[chats.length - 1];
+  const width = dragWidth ?? preferences.rightPanelWidth;
   const setWidth = (rightPanelWidth: number) => {
     state.aiChat = { ...preferences, rightPanelWidth };
   };
+  const endDrag = () => {
+    const finalWidth = draggedWidth.current;
+
+    draggedWidth.current = undefined;
+    setDragWidth(undefined);
+
+    if (finalWidth !== undefined && finalWidth !== preferences.rightPanelWidth) {
+      setWidth(finalWidth);
+    }
+  };
 
   return (
-    <div className={styles.rightPanel} style={{ width: preferences.rightPanelWidth }} data-testid="ai-chat-right-panel">
+    <div className={styles.rightPanel} style={{ width }} data-testid="ai-chat-right-panel">
       <ResizingAnchor
         direction={ResizeDirection.HORIZONTAL}
         placement={ResizeSide.LEADING}
         growthDirection={ResizeGrowthDirection.RIGHT_TO_LEFT}
-        getCurrentExtent={() => preferences.rightPanelWidth}
-        onDrag={setWidth}
+        getCurrentExtent={() => draggedWidth.current ?? preferences.rightPanelWidth}
+        onDrag={(newWidth) => {
+          draggedWidth.current = newWidth;
+          setDragWidth(newWidth);
+        }}
+        onEnd={endDrag}
         onDoubleClick={() => setWidth(defaultAiChatPreferences.rightPanelWidth)}
         minExtent={280}
         maxExtent={1200}
