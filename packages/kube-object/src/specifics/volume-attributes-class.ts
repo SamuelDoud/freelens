@@ -3,7 +3,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import autoBind from "auto-bind";
 import { KubeObject } from "../kube-object";
 
 import type { ClusterScopedMetadata, KubeJsonApiData } from "../api-types";
@@ -26,7 +25,6 @@ export class VolumeAttributesClass extends KubeObject<ClusterScopedMetadata, voi
 
   constructor({ driverName = "", parameters = {}, ...rest }: VolumeAttributesClassData) {
     super(rest);
-    autoBind(this);
     this.driverName = driverName;
     this.parameters = parameters;
   }
