@@ -14,15 +14,33 @@ import type { Cluster } from "../../common/cluster/cluster";
 
 export type UpdateEntityMetadata = (entity: KubernetesCluster, cluster: Cluster) => void;
 
+const hasSameLabels = (current: Record<string, string> | undefined, next: Record<string, string>) => {
+  if (!current) {
+    return false;
+  }
+
+  const keys = Object.keys(next);
+
+  return (
+    Object.keys(current).length === keys.length &&
+    keys.every((key) => Object.hasOwn(current, key) && current[key] === next[key])
+  );
+};
+
 const updateEntityMetadataInjectable = getInjectable({
   id: "update-entity-metadata",
 
   instantiate: (): UpdateEntityMetadata => {
     return (entity, cluster) => {
-      entity.metadata.labels = {
+      const labels = {
         ...entity.metadata.labels,
         ...toJS(cluster.labels),
       };
+
+      // Replacing equal labels would still notify whoever observes them.
+      if (!hasSameLabels(entity.metadata.labels, labels)) {
+        entity.metadata.labels = labels;
+      }
       entity.metadata.distro = cluster.distribution.get();
       entity.metadata.kubeVersion = cluster.version.get();
 
