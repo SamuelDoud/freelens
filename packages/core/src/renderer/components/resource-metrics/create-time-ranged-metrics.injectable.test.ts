@@ -5,7 +5,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const asyncComputedMock = vi.fn((options: unknown) => options);
+const asyncComputedMock = vi.fn((options: unknown) => Object.assign(options as object, { release: vi.fn() }));
 const nowMock = vi.fn();
 
 vi.mock("../../../common/utils/async-computed", async (importOriginal) => {

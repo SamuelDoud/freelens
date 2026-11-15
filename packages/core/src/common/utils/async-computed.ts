@@ -19,6 +19,15 @@ export interface IAsyncComputed<T> {
   invalidate: () => void;
 }
 
+/**
+ * An async computed that can give up what it holds: the value it has fetched.
+ * It fetches again the next time it is read, as it does after `invalidate`, but
+ * without keeping the previous value for the time between.
+ */
+export interface IReleasableAsyncComputed<T> extends IAsyncComputed<T> {
+  release: () => void;
+}
+
 interface AsyncComputedParams<T> {
   getValueFromObservedPromise: () => Promise<T>;
   valueWhenPending?: T;
@@ -31,7 +40,7 @@ export function asyncComputed<T>({
   getValueFromObservedPromise,
   valueWhenPending,
   betweenUpdates = "show-pending-value",
-}: AsyncComputedParams<T>): IAsyncComputed<T> {
+}: AsyncComputedParams<T>): IReleasableAsyncComputed<T> {
   const invalidateAtom = createAtom("invalidate");
   const pendingBox = observable.box(false);
   let neutralizePreviousPromise: () => void = noop;
@@ -94,6 +103,17 @@ export function asyncComputed<T>({
         if (betweenUpdates === "show-pending-value") {
           syncValueBox.set(valueWhenPending);
         }
+      });
+    },
+
+    release: () => {
+      // A request still in flight would put its answer back.
+      neutralizePreviousPromise();
+
+      runInAction(() => {
+        invalidateAtom.reportChanged();
+        pendingBox.set(true);
+        syncValueBox.set(valueWhenPending);
       });
     },
 
