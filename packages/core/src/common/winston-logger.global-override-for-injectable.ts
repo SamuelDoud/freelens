@@ -25,5 +25,6 @@ export default getGlobalOverride(
       error: noop,
       info: noop,
       silly: noop,
-    }) as winston.Logger,
+      isLevelEnabled: () => true,
+    }) as unknown as winston.Logger,
 );

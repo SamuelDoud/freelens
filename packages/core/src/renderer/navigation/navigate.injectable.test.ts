@@ -34,6 +34,7 @@ describe("navigate", () => {
           error: vi.fn(),
           info: vi.fn(),
           silly: vi.fn(),
+          isLevelEnabled: () => true,
         }) as unknown as winston.Logger,
     );
 

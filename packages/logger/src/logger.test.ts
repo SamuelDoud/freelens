@@ -29,7 +29,7 @@ describe("logger", () => {
 
       registerFeature(di, loggerFeature);
 
-      const winstonLoggerStub = { [scenario]: vi.fn() } as any;
+      const winstonLoggerStub = { [scenario]: vi.fn(), isLevelEnabled: () => true } as any;
 
       di.override(winstonLoggerInjectable, () => winstonLoggerStub);
 
@@ -45,7 +45,7 @@ describe("logger", () => {
 
       registerFeature(di, loggerFeature);
 
-      const winstonLoggerStub = { [scenario]: vi.fn() } as any;
+      const winstonLoggerStub = { [scenario]: vi.fn(), isLevelEnabled: () => true } as any;
 
       di.override(winstonLoggerInjectable, () => winstonLoggerStub);
 
@@ -61,7 +61,7 @@ describe("logger", () => {
 
       registerFeature(di, loggerFeature);
 
-      const winstonLoggerStub = { [scenario]: vi.fn() } as any;
+      const winstonLoggerStub = { [scenario]: vi.fn(), isLevelEnabled: () => true } as any;
 
       di.override(winstonLoggerInjectable, () => winstonLoggerStub);
 
@@ -92,7 +92,7 @@ describe("logger", () => {
 
       registerFeature(di, someFeature);
 
-      const winstonLoggerStub = { [scenario]: vi.fn() } as any;
+      const winstonLoggerStub = { [scenario]: vi.fn(), isLevelEnabled: () => true } as any;
 
       di.override(winstonLoggerInjectable, () => winstonLoggerStub);
 
@@ -123,5 +123,54 @@ describe("logger", () => {
     logger.info("some-message", "some-data");
 
     expect(log).toHaveBeenCalled();
+  });
+
+  describe("given a real winston logger", () => {
+    const setUp = (transportLevel: string | undefined) => {
+      const di = createContainer("irrelevant");
+      const log = vi.fn().mockImplementation((data, next) => next());
+
+      registerFeature(di, loggerFeature);
+
+      di.register(
+        getInjectable({
+          id: "some-transport",
+          instantiate: () => new TransportStream({ log, level: transportLevel }),
+          injectionToken: loggerTransportInjectionToken,
+        }),
+      );
+
+      return { logger: di.inject(loggerInjectable), log };
+    };
+
+    it("delivers a level the transport accepts although the logger level is lower, with the formatted message", () => {
+      const { logger, log } = setUp("debug");
+
+      logger.debug("some-message", { a: 1 });
+
+      expect(log).toHaveBeenCalledTimes(1);
+      expect(log.mock.calls[0][0][Symbol.for("message")]).toMatch(/^debug: some-message \{"a":1\}$/);
+    });
+
+    it("does not format or deliver a level no transport accepts", () => {
+      const { logger, log } = setUp("debug");
+      const toJSON = vi.fn(() => ({}));
+
+      logger.silly("some-message", { toJSON });
+
+      expect(toJSON).not.toHaveBeenCalled();
+      expect(log).not.toHaveBeenCalled();
+    });
+
+    it("uses the logger level for a transport without a level", () => {
+      const { logger, log } = setUp(undefined);
+      const toJSON = vi.fn(() => ({}));
+
+      logger.debug("some-message", { toJSON });
+      logger.info("some-message");
+
+      expect(toJSON).not.toHaveBeenCalled();
+      expect(log).toHaveBeenCalledTimes(1);
+    });
   });
 });
