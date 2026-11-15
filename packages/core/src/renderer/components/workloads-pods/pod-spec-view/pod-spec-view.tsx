@@ -46,6 +46,15 @@ export function PodSpecView({ pod, owner, requestKubeResource }: PodSpecViewProp
   const [mode, setMode] = useState<Mode>(hasTemplate ? "controller" : "pod");
   const [template, setTemplate] = useState<ControllerTemplate>();
   const podYaml = useMemo(() => toYaml(pod.spec), [pod.spec]);
+  // The diff table is quadratic in the lines of the spec, so it is made again
+  // only when the template or the pod's spec changes, not at every render.
+  const templateDiff = useMemo(
+    () =>
+      template && template.error === undefined
+        ? diffLines(toYaml(template.spec).trimEnd().split("\n"), podYaml.trimEnd().split("\n"))
+        : undefined,
+    [template, podYaml],
+  );
 
   useEffect(() => {
     if (mode !== "controller" || !owner || template) {
@@ -93,7 +102,7 @@ export function PodSpecView({ pod, owner, requestKubeResource }: PodSpecViewProp
       return <span>{`The ${owner.ref.kind} could not be read: ${template.error}`}</span>;
     }
 
-    const lines = diffLines(toYaml(template.spec).trimEnd().split("\n"), podYaml.trimEnd().split("\n"));
+    const lines = templateDiff ?? [];
 
     return (
       <>
