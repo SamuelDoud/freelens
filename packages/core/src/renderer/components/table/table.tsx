@@ -10,18 +10,21 @@ import assert from "node:assert";
 import { cssNames, isDefined } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
+import { computed } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import { VirtualList } from "../virtual-list";
 import orderByUrlParamInjectable from "./order-by-url-param.injectable";
 import sortByUrlParamInjectable from "./sort-by-url-param.injectable";
-import { getSorted } from "./sorting";
+import { applyHeldPositions, getSorted } from "./sorting";
 import { TableHead } from "./table-head";
 import tableModelInjectable from "./table-model/table-model.injectable";
 import { TableRow } from "./table-row";
 
 import type { ItemObject } from "@freelensapp/list-layout";
 import type { StrictReactNode } from "@freelensapp/utilities";
+
+import type { IComputedValue } from "mobx";
 
 import type { PageParam } from "../../navigation/page-param";
 import type { TableCellElem } from "./table-cell";
@@ -116,6 +119,12 @@ export interface TableProps<Item> extends React.DOMAttributes<HTMLDivElement> {
   rowLineHeight?: number;
   customRowHeights?: (item: Item, lineHeight: number, paddings: number) => number;
   /**
+   * Room to add under a few rows, by item id, on top of what `customRowHeights` gives. It is read
+   * while rendering, so a change of an observable it reads updates the heights without the rest of
+   * the table being worked out again.
+   */
+  extraRowHeights?: () => ReadonlyMap<string, number>;
+  /**
    * Keep the rows where they are: while it is set, the order the rows had when it was set holds,
    * new rows come after them, and only a sort the user chooses reorders them.
    */
@@ -205,34 +214,158 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
     return headElem;
   }
 
-  // The positions the rows had when the order was held, and the sort they had then.
-  private heldOrder?: { positions: Map<string, number>; sort: string };
+  // The positions the rows had when the order was held, how many positions there are, and the sort
+  // they had then.
+  private heldOrder?: { positions: Map<string, number>; length: number; sort: string };
 
   /** The items in the held order: the ones it knows at their place, the others after them. */
-  private applyHeldOrder(sortedItems: Item[]): Item[] {
-    const sort = `${this.sortParams.sortBy}\0${this.sortParams.orderBy}`;
-
-    if (!this.props.holdOrder) {
+  private applyHeldOrder(sortedItems: Item[], hold: boolean, sort: string): Item[] {
+    if (!hold) {
       this.heldOrder = undefined;
 
       return sortedItems;
     }
 
     if (!this.heldOrder || this.heldOrder.sort !== sort) {
-      this.heldOrder = { positions: new Map(sortedItems.map((item, index) => [item.getId(), index])), sort };
+      this.heldOrder = {
+        positions: new Map(sortedItems.map((item, index) => [item.getId(), index])),
+        length: sortedItems.length,
+        sort,
+      };
 
       return sortedItems;
     }
 
-    const { positions } = this.heldOrder;
-    const position = (item: Item) => positions.get(item.getId()) ?? Number.POSITIVE_INFINITY;
+    const { positions, length } = this.heldOrder;
 
-    // A stable sort: the items the order does not know keep their sorted order after the others.
-    return [...sortedItems].sort((left, right) => {
-      const difference = position(left) - position(right);
+    return applyHeldPositions(sortedItems, positions, length);
+  }
 
-      return Number.isNaN(difference) ? 0 : difference;
-    });
+  // The order of the items and the heights of their rows are worked out once for the same input,
+  // not on every render, and inside a computed so that an observable a sort callback or a height
+  // callback reads (the metrics of the usage sorts) still makes them current. A computed must not
+  // read this.props with mobx-react 9, so each one captures the values it needs.
+  private orderMemo?: {
+    items: Item[];
+    sortable: boolean;
+    sortBy?: string;
+    orderBy?: string;
+    callback?: TableSortCallback<Item>;
+    hold: boolean;
+    value: IComputedValue<Item[]>;
+  };
+
+  private heightsMemo?: {
+    ordered: Item[];
+    customRowHeights: NonNullable<TableProps<Item>["customRowHeights"]>;
+    rowLineHeight: number;
+    rowPadding: number;
+    value: IComputedValue<number[]>;
+    indexes?: { first: Map<string, number>; repeated: Map<string, number[]> };
+  };
+
+  private getOrderedItems(items: Item[]): Item[] {
+    const sortable = this.isSortable;
+    const { sortBy, orderBy } = this.sortParams;
+    const callback = sortBy ? this.props.sortable?.[sortBy] : undefined;
+    const hold = Boolean(this.props.holdOrder);
+    const memo = this.orderMemo;
+
+    if (
+      !memo ||
+      memo.items !== items ||
+      memo.sortable !== sortable ||
+      memo.sortBy !== sortBy ||
+      memo.orderBy !== orderBy ||
+      memo.callback !== callback ||
+      memo.hold !== hold
+    ) {
+      const sort = `${sortBy}\0${orderBy}`;
+      const value = computed(() => {
+        const defined = items.filter(isDefined);
+
+        if (!sortable && !hold) {
+          return defined;
+        }
+
+        const sorted = sortable && sortBy && orderBy ? getSorted(defined, callback, orderBy as TableOrderBy) : defined;
+
+        return this.applyHeldOrder(sorted, hold, sort);
+      });
+
+      this.orderMemo = { items, sortable, sortBy, orderBy, callback, hold, value };
+    }
+
+    return this.orderMemo!.value.get();
+  }
+
+  private getRowHeights(
+    ordered: Item[],
+    customRowHeights: NonNullable<TableProps<Item>["customRowHeights"]>,
+    rowLineHeight: number,
+    rowPadding: number,
+  ): number[] {
+    let memo = this.heightsMemo;
+
+    if (
+      !memo ||
+      memo.ordered !== ordered ||
+      memo.customRowHeights !== customRowHeights ||
+      memo.rowLineHeight !== rowLineHeight ||
+      memo.rowPadding !== rowPadding
+    ) {
+      const value = computed(() => ordered.map((item) => customRowHeights(item, rowLineHeight, rowPadding * 2)));
+
+      memo = this.heightsMemo = { ordered, customRowHeights, rowLineHeight, rowPadding, value };
+    }
+
+    const base = memo.value.get();
+    const extras = this.props.extraRowHeights?.();
+
+    if (!extras || extras.size === 0) {
+      return base;
+    }
+
+    if (!memo.indexes) {
+      const first = new Map<string, number>();
+      const repeated = new Map<string, number[]>();
+
+      ordered.forEach((item, index) => {
+        const id = item.getId();
+
+        if (!first.has(id)) {
+          first.set(id, index);
+        } else {
+          const others = repeated.get(id);
+
+          if (others) {
+            others.push(index);
+          } else {
+            repeated.set(id, [index]);
+          }
+        }
+      });
+      memo.indexes = { first, repeated };
+    }
+
+    const { first, repeated } = memo.indexes;
+    const heights = base.slice();
+
+    for (const [id, extra] of extras) {
+      const index = first.get(id);
+
+      if (index === undefined) {
+        continue;
+      }
+
+      heights[index] += extra;
+
+      for (const other of repeated.get(id) ?? []) {
+        heights[other] += extra;
+      }
+    }
+
+    return heights;
   }
 
   getSorted(rawItems: Item[]) {
@@ -296,16 +429,26 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
     } = this.props;
     const content = this.getContent();
     let rows: React.ReactElement<TableRowProps<Item>>[] = content.filter((elem) => elem.type === TableRow);
-    let sortedItems = (rows.length ? rows.map((row) => row.props.sortItem) : items).filter(isDefined);
+    let sortedItems: Item[];
 
     if (!this.props.holdOrder) {
       this.heldOrder = undefined;
     }
 
-    if (this.isSortable || this.props.holdOrder) {
-      sortedItems = this.applyHeldOrder(this.isSortable ? this.getSorted(sortedItems) : sortedItems);
+    if (!rows.length) {
+      sortedItems = this.getOrderedItems(items);
+    } else {
+      sortedItems = rows.map((row) => row.props.sortItem).filter(isDefined);
 
-      if (rows.length) {
+      if (this.isSortable || this.props.holdOrder) {
+        const sort = `${this.sortParams.sortBy}\0${this.sortParams.orderBy}`;
+
+        sortedItems = this.applyHeldOrder(
+          this.isSortable ? this.getSorted(sortedItems) : sortedItems,
+          Boolean(this.props.holdOrder),
+          sort,
+        );
+
         // Index the rows once instead of scanning them for every item.
         // First row wins for a repeated sortItem, as Array.find did.
         const rowsBySortItem = new Map<Item, React.ReactElement<TableRowProps<Item>>>();
@@ -328,7 +471,7 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
 
     if (virtual) {
       assert(customRowHeights && rowLineHeight && rowPadding);
-      const rowHeights = sortedItems.map((item) => customRowHeights(item, rowLineHeight, rowPadding * 2));
+      const rowHeights = this.getRowHeights(sortedItems, customRowHeights, rowLineHeight, rowPadding);
 
       return (
         <VirtualList

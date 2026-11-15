@@ -4,7 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { Ordering, rectifyOrdering, sortCompare, tuple } from "@freelensapp/utilities";
+import { sortCompare } from "@freelensapp/utilities";
+
+import type { ItemObject } from "@freelensapp/list-layout";
 
 import type { TableOrderBy, TableSortCallback } from "./table";
 
@@ -17,40 +19,122 @@ export function getSorted<T>(
     return rawItems;
   }
 
-  const sortData = rawItems.map((item, index) => ({
-    index,
-    sortBy: sortingCallback(item),
-  }));
+  // Each key is built once per item and the sort orders indexes, so that
+  // the comparator allocates nothing and ties stay in input order.
+  const length = rawItems.length;
+  const keys: ReturnType<TableSortCallback<T>>[] = new Array(length);
+  let anyArray = false;
 
-  sortData.sort((left, right) => {
-    if (!Array.isArray(left.sortBy) && !Array.isArray(right.sortBy)) {
-      return rectifyOrdering(sortCompare(left.sortBy, right.sortBy), orderBy);
+  for (let i = 0; i < length; i++) {
+    const key = sortingCallback(rawItems[i]);
+
+    keys[i] = key;
+
+    if (Array.isArray(key)) {
+      anyArray = true;
     }
-
-    const leftSortBy = [left.sortBy].flat();
-    const rightSortBy = [right.sortBy].flat();
-    const zipIter = tuple.zip(leftSortBy, rightSortBy);
-    let r = zipIter.next();
-
-    for (; !r.done; r = zipIter.next()) {
-      const [nextL, nextR] = r.value;
-      const sortOrder = rectifyOrdering(sortCompare(nextL, nextR), orderBy);
-
-      if (sortOrder !== Ordering.EQUAL) {
-        return sortOrder;
-      }
-    }
-
-    const [leftRest, rightRest] = r.value;
-
-    return leftRest.length - rightRest.length;
-  });
-
-  const res = [];
-
-  for (const { index } of sortData) {
-    res.push(rawItems[index]);
   }
 
-  return res;
+  const sign = orderBy === "desc" ? -1 : 1;
+  const order: number[] = new Array(length);
+
+  for (let i = 0; i < length; i++) {
+    order[i] = i;
+  }
+
+  if (!anyArray) {
+    order.sort((left, right) => sign * sortCompare(keys[left], keys[right]));
+  } else {
+    // A single value is a key of one part. flat(0) copies an array key without its holes, as
+    // [key].flat() did.
+    const parts: (string | number | undefined)[][] = new Array(length);
+
+    for (let i = 0; i < length; i++) {
+      const key = keys[i];
+
+      parts[i] = Array.isArray(key) ? key.flat(0) : [key as string | number | undefined];
+    }
+
+    order.sort((left, right) => {
+      const leftParts = parts[left];
+      const rightParts = parts[right];
+      const common = Math.min(leftParts.length, rightParts.length);
+
+      for (let i = 0; i < common; i++) {
+        const ordering = sortCompare(leftParts[i], rightParts[i]);
+
+        if (ordering !== 0) {
+          return sign * ordering;
+        }
+      }
+
+      // The shorter key first, whichever the direction.
+      return leftParts.length - rightParts.length;
+    });
+  }
+
+  const sorted: T[] = new Array(length);
+
+  for (let i = 0; i < length; i++) {
+    sorted[i] = rawItems[order[i]];
+  }
+
+  return sorted;
+}
+
+/**
+ * The items with the ones whose id has a position placed at it, and the others after them in the
+ * order they came. Items of one id share a position and keep their order. `length` is the number of
+ * positions there were when the order was taken.
+ */
+export function applyHeldPositions<Item extends ItemObject>(
+  sortedItems: Item[],
+  positions: Map<string, number>,
+  length: number,
+): Item[] {
+  const slots: (Item | undefined)[] = new Array(length);
+  const sharing = new Map<number, Item[]>();
+  const unknown: Item[] = [];
+
+  for (const item of sortedItems) {
+    const position = positions.get(item.getId());
+
+    if (position === undefined) {
+      unknown.push(item);
+    } else if (slots[position] === undefined) {
+      slots[position] = item;
+    } else {
+      const others = sharing.get(position);
+
+      if (others) {
+        others.push(item);
+      } else {
+        sharing.set(position, [item]);
+      }
+    }
+  }
+
+  const result: Item[] = [];
+
+  for (let position = 0; position < length; position++) {
+    const item = slots[position];
+
+    if (item !== undefined) {
+      result.push(item);
+
+      const others = sharing.size ? sharing.get(position) : undefined;
+
+      if (others) {
+        for (const other of others) {
+          result.push(other);
+        }
+      }
+    }
+  }
+
+  for (const item of unknown) {
+    result.push(item);
+  }
+
+  return result;
 }
