@@ -57,125 +57,125 @@ export interface PodLogSearchProps {
   model: LogTabViewModel;
 }
 
-export const LogSearch = observer(
-  ({ onSearch, scrollToOverlay, model: { logTabData, searchStore, ...model } }: PodLogSearchProps) => {
-    const tabData = logTabData.get();
+export const LogSearch = observer(({ onSearch, scrollToOverlay, model }: PodLogSearchProps) => {
+  const { logTabData, searchStore } = model;
+  const tabData = logTabData.get();
 
-    if (!tabData) {
-      return null;
-    }
+  if (!tabData) {
+    return null;
+  }
 
-    const logs = tabData.showTimestamps ? model.logs.get() : model.logsWithoutTimestamps.get();
-    const { setNextOverlayActive, setPrevOverlayActive, searchQuery, occurrences, activeFind, totalFinds } =
-      searchStore;
+  // The lines the list shows, so that what is found is what is highlighted:
+  // with the timestamps on, they are the formatted ones, not the raw ones.
+  const logs = tabData.showTimestamps ? model.formattedLogs : model.logsWithoutTimestamps.get();
+  const { setNextOverlayActive, setPrevOverlayActive, searchQuery, occurrences, activeFind, totalFinds } = searchStore;
 
-    const [inputValue, setInputValue] = useState(searchQuery);
-    const inputValueRef = useRef(inputValue);
-    inputValueRef.current = inputValue;
-    const [searchPending, setSearchPending] = useState(false);
+  const [inputValue, setInputValue] = useState(searchQuery);
+  const inputValueRef = useRef(inputValue);
+  inputValueRef.current = inputValue;
+  const [searchPending, setSearchPending] = useState(false);
 
-    const jumpDisabled = !inputValue || (!searchPending && !occurrences.length);
+  const jumpDisabled = !inputValue || (!searchPending && !occurrences.length);
 
-    const runSearch = useMemo(
-      () =>
-        debounce((query: string) => {
-          searchStore.onSearch(logs, query);
-          scrollToOverlay(searchStore.activeOverlayLine);
-          setSearchPending(false);
-        }, SEARCH_DEBOUNCE_MS),
-      [logs, searchStore, scrollToOverlay],
-    );
+  const runSearch = useMemo(
+    () =>
+      debounce((query: string) => {
+        searchStore.onSearch(logs, query);
+        scrollToOverlay(searchStore.activeOverlayLine);
+        setSearchPending(false);
+      }, SEARCH_DEBOUNCE_MS),
+    [logs, searchStore, scrollToOverlay],
+  );
 
-    useEffect(() => () => runSearch.cancel(), [runSearch]);
+  useEffect(() => () => runSearch.cancel(), [runSearch]);
 
-    // Sync the local input if the store's query changes externally (e.g. reset).
-    useEffect(() => {
-      setInputValue(searchQuery);
-    }, [searchQuery]);
+  // Sync the local input if the store's query changes externally (e.g. reset).
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
 
-    const setSearch = useCallback(
-      (query: string, options?: { immediate?: boolean }) => {
-        setInputValue(query);
-        onSearch?.(query);
-        setSearchPending(query !== "");
-        runSearch(query);
-        if (options?.immediate || query === "") {
-          runSearch.flush();
-        }
-      },
-      [runSearch, onSearch],
-    );
-
-    const onInputChange = useCallback((value: string) => setSearch(value), [setSearch]);
-
-    const onPrevOverlay = () => {
-      runSearch.flush();
-      setPrevOverlayActive();
-      scrollToOverlay(searchStore.activeOverlayLine);
-    };
-
-    const onNextOverlay = () => {
-      runSearch.flush();
-      setNextOverlayActive();
-      scrollToOverlay(searchStore.activeOverlayLine);
-    };
-
-    const onClear = () => {
-      setSearch("");
-    };
-
-    const onKeyDown = (evt: React.KeyboardEvent<any>) => {
-      if (evt.key === "Enter") {
+  const setSearch = useCallback(
+    (query: string, options?: { immediate?: boolean }) => {
+      setInputValue(query);
+      onSearch?.(query);
+      setSearchPending(query !== "");
+      runSearch(query);
+      if (options?.immediate || query === "") {
         runSearch.flush();
-        if (evt.shiftKey) {
-          onPrevOverlay();
-        } else {
-          onNextOverlay();
-        }
+      }
+    },
+    [runSearch, onSearch],
+  );
+
+  const onInputChange = useCallback((value: string) => setSearch(value), [setSearch]);
+
+  const onPrevOverlay = () => {
+    runSearch.flush();
+    setPrevOverlayActive();
+    scrollToOverlay(searchStore.activeOverlayLine);
+  };
+
+  const onNextOverlay = () => {
+    runSearch.flush();
+    setNextOverlayActive();
+    scrollToOverlay(searchStore.activeOverlayLine);
+  };
+
+  const onClear = () => {
+    setSearch("");
+  };
+
+  const onKeyDown = (evt: React.KeyboardEvent<any>) => {
+    if (evt.key === "Enter") {
+      runSearch.flush();
+      if (evt.shiftKey) {
+        onPrevOverlay();
+      } else {
+        onNextOverlay();
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Re-run search when logs stream in; reuse the debounced runner so bursts
+    // of incoming lines don't trigger back-to-back full scans.
+    if (inputValueRef.current) {
+      runSearch(inputValueRef.current);
+    }
+  }, [logs, runSearch]);
+
+  useEffect(() => {
+    const onGlobalFind = (evt: KeyboardEvent) => {
+      if (!isFindHotkey(evt)) {
+        return;
+      }
+
+      const selectedText = getSelectedTextFromLogsList();
+
+      if (selectedText) {
+        setSearch(selectedText, { immediate: true });
       }
     };
 
-    useEffect(() => {
-      // Re-run search when logs stream in; reuse the debounced runner so bursts
-      // of incoming lines don't trigger back-to-back full scans.
-      if (inputValueRef.current) {
-        runSearch(inputValueRef.current);
-      }
-    }, [logs, runSearch]);
+    window.addEventListener("keydown", onGlobalFind, true);
 
-    useEffect(() => {
-      const onGlobalFind = (evt: KeyboardEvent) => {
-        if (!isFindHotkey(evt)) {
-          return;
-        }
+    return () => {
+      window.removeEventListener("keydown", onGlobalFind, true);
+    };
+  }, [setSearch]);
 
-        const selectedText = getSelectedTextFromLogsList();
-
-        if (selectedText) {
-          setSearch(selectedText, { immediate: true });
-        }
-      };
-
-      window.addEventListener("keydown", onGlobalFind, true);
-
-      return () => {
-        window.removeEventListener("keydown", onGlobalFind, true);
-      };
-    }, [setSearch]);
-
-    return (
-      <div className="LogSearch flex grow shrink-0 basis-0 justify-end gap-2 items-center">
-        <SearchInput
-          value={inputValue}
-          onChange={onInputChange}
-          showClearIcon={true}
-          contentRight={totalFinds > 0 && <div className="find-count">{`${activeFind} / ${totalFinds}`}</div>}
-          onClear={onClear}
-          onKeyDown={onKeyDown}
-        />
-        <Icon material="keyboard_arrow_up" tooltip="Previous" onClick={onPrevOverlay} disabled={jumpDisabled} />
-        <Icon material="keyboard_arrow_down" tooltip="Next" onClick={onNextOverlay} disabled={jumpDisabled} />
-      </div>
-    );
-  },
-);
+  return (
+    <div className="LogSearch flex grow shrink-0 basis-0 justify-end gap-2 items-center">
+      <SearchInput
+        value={inputValue}
+        onChange={onInputChange}
+        showClearIcon={true}
+        contentRight={totalFinds > 0 && <div className="find-count">{`${activeFind} / ${totalFinds}`}</div>}
+        onClear={onClear}
+        onKeyDown={onKeyDown}
+      />
+      <Icon material="keyboard_arrow_up" tooltip="Previous" onClick={onPrevOverlay} disabled={jumpDisabled} />
+      <Icon material="keyboard_arrow_down" tooltip="Next" onClick={onNextOverlay} disabled={jumpDisabled} />
+    </div>
+  );
+});
