@@ -82,7 +82,7 @@ function normalizeTimestampToUnixSeconds(value: number | string | undefined): nu
  * @param rangeSeconds - Time range in seconds
  * @returns Appropriate step in seconds
  */
-function calculateAdaptiveStep(rangeSeconds: number): number {
+export function calculateAdaptiveStep(rangeSeconds: number): number {
   const HOUR = 3_600;
   const DAY = 24 * HOUR;
 

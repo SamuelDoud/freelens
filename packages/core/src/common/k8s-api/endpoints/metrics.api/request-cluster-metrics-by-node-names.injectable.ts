@@ -29,7 +29,7 @@ export interface ClusterMetricData {
   fsUsage: MetricData;
 }
 
-type ClusterMetricKey = keyof ClusterMetricData;
+export type ClusterMetricKey = keyof ClusterMetricData;
 
 const defaultClusterMetricKeys: ClusterMetricKey[] = [
   "memoryUsage",

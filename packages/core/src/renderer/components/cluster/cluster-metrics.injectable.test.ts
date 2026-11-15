@@ -103,6 +103,81 @@ describe("cluster-overview-metrics injectable", () => {
   });
 });
 
+describe("cluster-overview-metrics injectable and the last-point metrics", () => {
+  const defaultKeys = [
+    "memoryUsage",
+    "memoryRequests",
+    "memoryLimits",
+    "memoryCapacity",
+    "memoryAllocatableCapacity",
+    "cpuUsage",
+    "cpuRequests",
+    "cpuLimits",
+    "cpuCapacity",
+    "cpuAllocatableCapacity",
+    "podUsage",
+    "podCapacity",
+    "podAllocatableCapacity",
+  ];
+
+  const setup = (timestamps: { start: number; end: number; range: number }) => {
+    const di = getDiForUnitTesting();
+    const requestClusterMetricsByNodeNames = vi.fn(async (_names: string[], params?: { metrics?: string[] }) =>
+      Object.fromEntries((params?.metrics ?? defaultKeys).map((key) => [key, { data: { result: [] } }])),
+    );
+
+    di.override(requestClusterMetricsByNodeNamesInjectable, () => requestClusterMetricsByNodeNames as never);
+    di.override(selectedMetricsTimeRangeInjectable, () => ({ timestamps: computed(() => timestamps) }) as never);
+    di.override(
+      selectedNodeRoleForMetricsInjectable,
+      () =>
+        ({
+          nodes: computed(() => []),
+          hasMasterNodes: computed(() => false),
+          hasWorkerNodes: computed(() => true),
+        }) as never,
+    );
+
+    return { requestClusterMetricsByNodeNames, metrics: di.inject(clusterOverviewMetricsInjectable) };
+  };
+
+  it("asks for the series over the whole range and the other metrics over the end of it", async () => {
+    const { requestClusterMetricsByNodeNames, metrics } = setup({ start: 10_000, end: 13_600, range: 3600 });
+
+    metrics.value.get();
+    await vi.waitFor(() => expect(requestClusterMetricsByNodeNames).toHaveBeenCalledTimes(2));
+
+    const [series, lastPoints] = requestClusterMetricsByNodeNames.mock.calls.map(([, params]) => params as never) as {
+      start: number;
+      end: number;
+      step?: number;
+      metrics: string[];
+    }[];
+
+    expect(series).toMatchObject({ start: 10_000, end: 13_600, metrics: ["cpuUsage", "memoryUsage"] });
+    expect(lastPoints.end).toBe(13_600);
+    expect(lastPoints.step).toBe(60);
+    expect((lastPoints.start - 10_000) % 60).toBe(0);
+    expect(lastPoints.end - lastPoints.start).toBeLessThanOrEqual(7 * 60);
+    expect([...series.metrics, ...lastPoints.metrics].sort()).toEqual([...defaultKeys].sort());
+  });
+
+  it("gives the same set of metrics as one request for everything", async () => {
+    const { metrics } = setup({ start: 10_000, end: 13_600, range: 3600 });
+
+    metrics.value.get();
+    await vi.waitFor(() => expect(Object.keys(metrics.value.get() ?? {}).sort()).toEqual([...defaultKeys].sort()));
+  });
+
+  it("makes one request for a range that is not longer than the end of it", async () => {
+    const { requestClusterMetricsByNodeNames, metrics } = setup({ start: 100, end: 400, range: 300 });
+
+    metrics.value.get();
+    await vi.waitFor(() => expect(requestClusterMetricsByNodeNames).toHaveBeenCalledTimes(1));
+    expect(requestClusterMetricsByNodeNames).toHaveBeenCalledWith([], { start: 100, end: 400, range: 300 });
+  });
+});
+
 describe("cluster-overview-metrics injectable and the clock", () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -144,37 +219,41 @@ describe("cluster-overview-metrics injectable and the clock", () => {
     // A chart on screen observes the value, as the overview does.
     reaction(() => di.inject(clusterOverviewMetricsInjectable).value.get(), noop);
 
-    return { requestClusterMetricsByNodeNames, active };
+    // A refresh asks for the series, and for the rest of the metrics besides.
+    const refreshes = () =>
+      requestClusterMetricsByNodeNames.mock.calls.filter(([, params]) => params?.metrics?.includes("cpuUsage")).length;
+
+    return { requestClusterMetricsByNodeNames, refreshes, active };
   };
 
   it("asks again every minute for a range that follows the clock while it is shown", async () => {
-    const { requestClusterMetricsByNodeNames } = setup({ duration: 3600 });
+    const { refreshes } = setup({ duration: 3600 });
 
     await vi.advanceTimersByTimeAsync(3 * 60 * 1000 + 500);
 
-    expect(requestClusterMetricsByNodeNames).toHaveBeenCalledTimes(4);
+    expect(refreshes()).toBe(4);
   });
 
   it("does not ask again while the frame is hidden, and asks once it is shown again", async () => {
-    const { requestClusterMetricsByNodeNames, active } = setup({ duration: 3600 });
+    const { requestClusterMetricsByNodeNames, refreshes, active } = setup({ duration: 3600 });
 
     action(() => active.set(false))();
     await vi.advanceTimersByTimeAsync(0);
     requestClusterMetricsByNodeNames.mockClear();
 
     await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
-    expect(requestClusterMetricsByNodeNames).not.toHaveBeenCalled();
+    expect(refreshes()).toBe(0);
 
     action(() => active.set(true))();
     await vi.advanceTimersByTimeAsync(0);
-    expect(requestClusterMetricsByNodeNames).toHaveBeenCalledTimes(1);
+    expect(refreshes()).toBe(1);
   });
 
   it("does not ask again for a custom range, which does not move", async () => {
-    const { requestClusterMetricsByNodeNames } = setup({ duration: null, customStart: 1000, customEnd: 2000 });
+    const { refreshes } = setup({ duration: null, customStart: 1000, customEnd: 2000 });
 
     await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
 
-    expect(requestClusterMetricsByNodeNames).toHaveBeenCalledTimes(1);
+    expect(refreshes()).toBe(1);
   });
 });
