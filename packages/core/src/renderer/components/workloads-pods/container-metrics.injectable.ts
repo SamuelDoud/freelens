@@ -23,17 +23,8 @@ const podContainerMetricsInjectable = createTimeRangedMetricsInjectable({
       start,
       end,
       range,
-      metrics: [
-        "cpuUsage",
-        "cpuRequests",
-        "cpuLimits",
-        "memoryUsage",
-        "memoryRequests",
-        "memoryLimits",
-        "fsUsage",
-        "fsWrites",
-        "fsReads",
-      ],
+      // The requests and limits drawn as reference lines come from the pod spec.
+      metrics: ["cpuUsage", "memoryUsage", "fsUsage", "fsWrites", "fsReads"],
     }),
 });
 
