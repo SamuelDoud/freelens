@@ -82,4 +82,32 @@ describe("ExpandedRows", () => {
     expect(rows.isShown("a")).toBe(false);
     expect(frames).toEqual([]);
   });
+
+  it("gives the room of every row in one map, the same numbers extraHeight gives", () => {
+    rows.openRow("a");
+    rows.openRow("b");
+    rows.setMeasured("a", 300);
+    rows.setMeasured("b", 100);
+
+    for (const step of [0, expandDurationMs / 3, expandDurationMs / 3, expandDurationMs, expandDurationMs]) {
+      runFrames(step);
+
+      const heights = rows.extraHeights.get();
+
+      expect([...heights.keys()].sort()).toEqual(["a", "b"]);
+      expect(heights.get("a")).toBe(rows.extraHeight("a"));
+      expect(heights.get("b")).toBe(rows.extraHeight("b"));
+    }
+
+    rows.close("a");
+    runFrames(expandDurationMs);
+    runFrames(expandDurationMs);
+
+    expect([...rows.extraHeights.get().keys()]).toEqual(["b"]);
+    expect(rows.hasOpen).toBe(true);
+
+    rows.closeAll();
+
+    expect(rows.hasOpen).toBe(false);
+  });
 });

@@ -486,6 +486,11 @@ export class NonInjectedItemListLayoutContent<
     return items.find((item) => item.getId() === uid);
   }
 
+  /** Whether a row of these items is open. Walks the open rows, which are few, not the items. */
+  private hasOpenRowIn(expandedRows: ExpandedRows, items: Item[]) {
+    return expandedRows.hasOpen && expandedRows.openIds.some((id) => this.findItemById(items, id) !== undefined);
+  }
+
   getRow(uid: string) {
     return (
       <div key={uid}>
@@ -670,8 +675,6 @@ export class NonInjectedItemListLayoutContent<
     const items = getItems();
     const selectedItems = store.pickOnlySelected(items);
     const expandedRows = this.expandedRows;
-    const rowHeights =
-      tableProps.customRowHeights ?? ((item: Item, lineHeight: number, paddings: number) => lineHeight + paddings);
 
     return (
       <div className="items grow shrink-0 basis-0 flex flex-col" ref={this.tableRef}>
@@ -695,13 +698,8 @@ export class NonInjectedItemListLayoutContent<
           className={classNames}
           {...tableProps}
           // An open row makes room for its details, and keeps its place while any is open.
-          customRowHeights={
-            expandedRows
-              ? (item, lineHeight, paddings) =>
-                  rowHeights(item, lineHeight, paddings) + expandedRows.extraHeight(item.getId())
-              : tableProps.customRowHeights
-          }
-          holdOrder={expandedRows ? items.some((item) => expandedRows.isOpen(item.getId())) : undefined}
+          extraRowHeights={expandedRows ? () => expandedRows.extraHeights.get() : tableProps.extraRowHeights}
+          holdOrder={expandedRows ? this.hasOpenRowIn(expandedRows, items) : undefined}
         >
           {this.renderTableHeader()}
           {this.renderItems()}
