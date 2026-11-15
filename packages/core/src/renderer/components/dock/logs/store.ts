@@ -51,7 +51,9 @@ interface PodLogs {
 }
 
 export class LogStore {
-  protected podLogs = observable.map<TabId, PodLogLine[]>();
+  // The lines of a tab are replaced as a whole and never changed in place, so
+  // the arrays need no observable copy of their own.
+  protected podLogs = observable.map<TabId, PodLogLine[]>({}, { deep: false });
   protected refreshers = new Map<TabId, IntervalFn>();
   private readonly requests = new Map<TabId, AbortController>();
   private readonly cursors = new Map<TabId, Map<string, PodLogsCursor>>();
