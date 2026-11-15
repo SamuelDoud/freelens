@@ -45,8 +45,7 @@ export class ResourceApplier {
   private async getKubectlPath() {
     const kubectl = this.dependencies.createKubectl(this.cluster.version.get());
 
-    await kubectl.ensureKubectl();
-
+    // getPath() prepares kubectl itself.
     return kubectl.getPath();
   }
 
