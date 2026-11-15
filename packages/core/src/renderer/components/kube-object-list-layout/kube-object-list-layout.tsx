@@ -27,6 +27,7 @@ import toggleKubeDetailsPaneInjectable from "../kube-detail-params/toggle-detail
 import { KubeObjectMenu } from "../kube-object-menu";
 import { MenuControls } from "../menu";
 import { NamespaceSelectFilter } from "../namespaces/namespace-select-filter";
+import { getCellOrder } from "./cell-order";
 
 import type { KubeApi } from "@freelensapp/kube-api";
 import type { KubeJsonApiDataFor, KubeObject } from "@freelensapp/kube-object";
@@ -283,6 +284,23 @@ class NonInjectedKubeObjectListLayout<
       }
     });
 
+    // The order of the cells depends on how many of them the list gives and on the columns, not on the
+    // item, so it is worked out once for each count and not for every row.
+    const priorityOrders = new Map<number, number[]>();
+    const getPriorityOrder = (contentCount: number) => {
+      let order = priorityOrders.get(contentCount);
+
+      if (!order) {
+        order = getCellOrder(
+          contentCount,
+          targetColumns.map((col) => col.priority),
+        );
+        priorityOrders.set(contentCount, order);
+      }
+
+      return order;
+    };
+
     const headers = sortBy(
       [...(renderTableHeader || []).map((header, index) => ({ priority: 20 - index, header })), ...targetColumns],
       (v) => -v.priority,
@@ -368,15 +386,11 @@ class NonInjectedKubeObjectListLayout<
         }}
         sortingCallbacks={sortingCallbacks}
         renderTableHeader={headers}
-        renderTableContents={(item) =>
-          sortBy(
-            [
-              ...renderTableContents(item).map((content, index) => ({ priority: 20 - index, content })),
-              ...targetColumns.map((col) => ({ priority: col.priority, content: col.content(item) })),
-            ],
-            (item) => -item.priority,
-          ).map((value) => value.content)
-        }
+        renderTableContents={(item) => {
+          const contents = [...renderTableContents(item), ...targetColumns.map((col) => col.content(item))];
+
+          return getPriorityOrder(contents.length - targetColumns.length).map((position) => contents[position]);
+        }}
         spinnerTestId="kube-object-list-layout-spinner"
         advancedSearch={advancedSearchView}
         {...layoutProps}

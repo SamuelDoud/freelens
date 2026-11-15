@@ -51,6 +51,9 @@ import type { ItemListStore } from "./list-layout";
 import type { ObservableProps } from "./observable-props";
 import type { Filter, PageFiltersStore } from "./page-filters/store";
 
+// More than the rows a screen shows, with room to scroll.
+const rowCacheLimit = 500;
+
 interface ResizeState {
   columnId: string;
   startX: number;
@@ -142,6 +145,7 @@ export class NonInjectedItemListLayoutContent<
   }
 
   componentWillUnmount() {
+    this.rowCache.clear();
     this.cleanupResizeListeners();
   }
 
@@ -520,21 +524,46 @@ export class NonInjectedItemListLayoutContent<
     return expandedRows.hasOpen && expandedRows.openIds.some((id) => this.findItemById(items, id) !== undefined);
   }
 
+  // One <Observer> per row, kept while the row is on screen, with the computed that finds its item.
+  // The row is asked for again whenever the list gets another array of items; handing back the same
+  // element lets React leave its content alone, and the computed tells the observer only when the
+  // row's own item is another object. Whatever else a row shows (selection, details, columns) is
+  // read by the observer, which follows it.
+  private readonly rowCache = new Map<
+    string,
+    { element: React.ReactElement; item: IComputedValue<Item | undefined> }
+  >();
+
   getRow(uid: string) {
-    return (
-      <div key={uid}>
-        <Observer>
-          {() => {
-            // observableProps, not this.props: this <Observer> is its own derivation.
-            const item = this.findItemById(this.observableProps.getItems(), uid);
+    let entry = this.rowCache.get(uid);
 
-            if (!item) return null;
+    if (!entry) {
+      // Only the rows on screen are in the cache; a list that was scrolled through starts over.
+      if (this.rowCache.size >= rowCacheLimit) {
+        this.rowCache.clear();
+      }
 
-            return this.getTableRow(item);
-          }}
-        </Observer>
-      </div>
-    );
+      // observableProps, not this.props: the observer is its own derivation.
+      const item = computed(() => this.findItemById(this.observableProps.getItems(), uid));
+
+      entry = {
+        item,
+        element: (
+          <Observer>
+            {() => {
+              const found = item.get();
+
+              if (!found) return null;
+
+              return this.getTableRow(found);
+            }}
+          </Observer>
+        ),
+      };
+      this.rowCache.set(uid, entry);
+    }
+
+    return <div key={uid}>{entry.element}</div>;
   }
 
   removeItemsDialog(selectedItems: Item[]) {
