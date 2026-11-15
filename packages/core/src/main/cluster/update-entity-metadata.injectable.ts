@@ -14,7 +14,7 @@ import type { Cluster } from "../../common/cluster/cluster";
 
 export type UpdateEntityMetadata = (entity: KubernetesCluster, cluster: Cluster) => void;
 
-const hasSameLabels = (current: Record<string, string> | undefined, next: Record<string, string>) => {
+const hasSameLabels = (current: Partial<Record<string, string>> | undefined, next: Partial<Record<string, string>>) => {
   if (!current) {
     return false;
   }

@@ -33,7 +33,7 @@ const NonInjectedAiChatRightPanel = observer(({ mirror, cluster, state }: Depend
   // The width follows the pointer in local state, and is written to the
   // preferences once, when the drag ends: every write is persisted and synced.
   const [dragWidth, setDragWidth] = useState<number>();
-  const draggedWidth = useRef<number>();
+  const draggedWidth = useRef<number | undefined>(undefined);
 
   if (chats.length === 0) {
     return null;
