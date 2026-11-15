@@ -8,6 +8,7 @@ import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import execHelmInjectable from "../../exec-helm/exec-helm.injectable";
 import emitHelmRepositoriesChangedInjectable from "../emit-helm-repositories-changed.injectable";
+import updateHelmRepositoriesInjectable from "../update-helm-repositories.injectable";
 
 import type { AsyncResult } from "@freelensapp/utilities";
 
@@ -20,6 +21,7 @@ const removeHelmRepositoryInjectable = getInjectable({
     const execHelm = di.inject(execHelmInjectable);
     const logger = di.inject(loggerInjectionToken);
     const emitHelmRepositoriesChanged = di.inject(emitHelmRepositoriesChangedInjectable);
+    const updateHelmRepositories = di.inject(updateHelmRepositoriesInjectable);
 
     return async (repo: HelmRepo): AsyncResult<void, string> => {
       logger.info(`[HELM]: removing repo ${repo.name} (${repo.url})`);
@@ -27,6 +29,7 @@ const removeHelmRepositoryInjectable = getInjectable({
       const result = await execHelm(["repo", "remove", repo.name]);
 
       if (result.callWasSuccessful) {
+        updateHelmRepositories.invalidate();
         emitHelmRepositoriesChanged();
 
         return {

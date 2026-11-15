@@ -11,6 +11,7 @@ import emitHelmRepositoriesChangedInjectable from "./emit-helm-repositories-chan
 import { registerInjectables as registerGetActiveHelmRepositoriesInjectables } from "./get-active-helm-repositories/register-injectables";
 import getActiveHelmRepositoryInjectable from "./get-active-helm-repository.injectable";
 import { registerInjectables as registerRemoveHelmRepositoryInjectables } from "./remove-helm-repository/register-injectables";
+import updateHelmRepositoriesInjectable from "./update-helm-repositories.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
@@ -22,6 +23,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(getActiveHelmRepositoryInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(updateHelmRepositoriesInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

@@ -4,6 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { createHash } from "node:crypto";
 import { iter, put, sortBySemverVersion } from "@freelensapp/utilities";
 import * as yaml from "js-yaml";
 
@@ -72,6 +73,17 @@ export class HelmChartManager {
   protected async updateYamlCache() {
     const cacheFile = await this.dependencies.readFile(this.repo.cacheFilePath);
     const cacheFileStats = await this.dependencies.stat(this.repo.cacheFilePath);
+
+    // `helm repo update` rewrites every index on each run, so a newer mtime
+    // seldom means new content. Parsing the index is the costly part; hashing
+    // it is not.
+    const hash = createHash("sha256").update(cacheFile).digest("hex");
+    const previous = this.dependencies.cache.get(this.repo.name);
+
+    if (previous?.hash === hash) {
+      return put(this.dependencies.cache, this.repo.name, { ...previous, mtimeMs: cacheFileStats.mtimeMs });
+    }
+
     const data = yaml.load(cacheFile) as string | number | HelmCacheFile;
 
     if (!data || typeof data !== "object" || typeof data.entries !== "object") {
@@ -85,6 +97,7 @@ export class HelmChartManager {
 
     return put(this.dependencies.cache, this.repo.name, {
       data: JSON.stringify(normalized),
+      hash,
       mtimeMs: cacheFileStats.mtimeMs,
     });
   }

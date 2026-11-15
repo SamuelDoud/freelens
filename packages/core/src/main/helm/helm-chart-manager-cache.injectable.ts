@@ -9,6 +9,8 @@ import { getInjectable } from "@ogre-tools/injectable";
 export interface ChartCacheEntry {
   data: string; // serialized JSON
   mtimeMs: number;
+  /** sha256 of the index file the data was parsed from */
+  hash?: string;
 }
 
 export type HelmChartManagerCache = Map<string, ChartCacheEntry>;
