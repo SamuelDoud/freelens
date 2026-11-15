@@ -56,3 +56,19 @@
   gap: 6px;
   color: var(--textColorSecondary);
 }
+
+.remoteHost {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+
+  :global(.hint) {
+    grid-column: 1 / -1;
+  }
+}
+
+.remoteLabel {
+  color: var(--textColorAccent);
+}

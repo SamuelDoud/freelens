@@ -3,14 +3,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import path from "node:path";
 import { createInterface } from "node:readline";
 import { findAiTool } from "../common/tools";
 import type { ChildProcess } from "node:child_process";
 
-import type { Spawn } from "../../../main/child-process/spawn.injectable";
 import type { AiCliEvent } from "../common/cli-events";
+import type { AiCliHost } from "./cli-host";
 
 export interface MuseTurn {
   readonly chatId: string;
@@ -24,10 +22,8 @@ export interface MuseTurn {
 }
 
 export interface AiMuseSessionsDependencies {
-  spawn: Spawn;
-  env: () => NodeJS.ProcessEnv;
-  workDir: () => string;
-  emptyKubeconfig: () => string;
+  /** Where the CLIs run now: this computer, or another host over SSH */
+  host: () => AiCliHost;
   logWarn: (message: string) => void;
 }
 
@@ -108,19 +104,23 @@ export const museMcpAuthVariable = "FREELENS_MCP_AUTH";
  * The workspace is a minimal repository holding only that file; its secret header is a reference to
  * an environment variable, as Muse wants it.
  */
-export function prepareMuseWorkspace(baseDir: string, chatId: string, mcpUrl: string): string {
-  const workspace = path.join(baseDir, `muse-${chatId}`);
+export async function prepareMuseWorkspace(
+  host: AiCliHost,
+  baseDir: string,
+  chatId: string,
+  mcpUrl: string,
+): Promise<string> {
+  const workspace = host.join(baseDir, `muse-${chatId}`);
   const authReference = "${" + museMcpAuthVariable + "}";
 
-  mkdirSync(path.join(workspace, ".git", "objects"), { recursive: true, mode: 0o700 });
-  mkdirSync(path.join(workspace, ".git", "refs", "heads"), { recursive: true, mode: 0o700 });
-  writeFileSync(path.join(workspace, ".git", "HEAD"), "ref: refs/heads/main\n");
-  writeFileSync(
-    path.join(workspace, ".mcp.json"),
+  await host.mkdir(host.join(workspace, ".git", "objects"));
+  await host.mkdir(host.join(workspace, ".git", "refs", "heads"));
+  await host.writeFile(host.join(workspace, ".git", "HEAD"), "ref: refs/heads/main\n");
+  await host.writeFile(
+    host.join(workspace, ".mcp.json"),
     JSON.stringify({
       mcpServers: { freelens: { type: "http", url: mcpUrl, headers: { Authorization: authReference } } },
     }),
-    { mode: 0o600 },
   );
 
   return workspace;
@@ -128,6 +128,7 @@ export function prepareMuseWorkspace(baseDir: string, chatId: string, mcpUrl: st
 
 interface MuseSession {
   child: ChildProcess;
+  host: AiCliHost;
   workspace: string;
   sessionId?: string;
   effort: string;
@@ -210,7 +211,7 @@ export class AiMuseSessions {
     if (session) {
       this.sessions.delete(chatId);
       session.child.kill();
-      rmSync(session.workspace, { recursive: true, force: true });
+      void session.host.remove(session.workspace).catch(() => {});
 
       for (const { reject } of session.pending.values()) {
         reject(new Error("Muse stopped."));
@@ -219,9 +220,12 @@ export class AiMuseSessions {
   }
 
   private async start(turn: MuseTurn): Promise<MuseSession> {
-    const { spawn, env, workDir, emptyKubeconfig } = this.dependencies;
-    const workspace = prepareMuseWorkspace(workDir(), turn.chatId, turn.mcpUrl);
-    const child = spawn(
+    const host = this.dependencies.host();
+    const { workDir, emptyKubeconfig } = await host.workDir();
+    // Freelens's MCP server as the host reaches it: itself, or through the SSH connection.
+    const mcpUrl = await host.mcpUrl(turn.mcpUrl);
+    const workspace = await prepareMuseWorkspace(host, workDir, turn.chatId, mcpUrl);
+    const child = await host.spawn(
       turn.command,
       [
         "acp",
@@ -236,12 +240,13 @@ export class AiMuseSessions {
       ],
       {
         cwd: workspace,
-        env: { ...env(), KUBECONFIG: emptyKubeconfig(), [museMcpAuthVariable]: `Bearer ${turn.mcpToken}` },
-        stdio: ["pipe", "pipe", "pipe"],
+        env: { KUBECONFIG: emptyKubeconfig, [museMcpAuthVariable]: `Bearer ${turn.mcpToken}` },
+        readsStdin: true,
       },
     );
     const session: MuseSession = {
       child,
+      host,
       workspace,
       effort: turn.effort,
       model: turn.model,

@@ -71,3 +71,22 @@ export const getAiDiscoveryChannel = getRequestChannel<void, AiDiscovery>("ai-ch
 export const refreshAiDiscoveryChannel = getRequestChannel<void, AiDiscovery>("ai-chat-refresh-discovery");
 
 export const aiDiscoveryChangedChannel = getMessageChannel<AiDiscovery>("ai-chat-discovery-changed");
+
+/** What ssh asks while connecting to the host the CLIs run on, for a window to ask the user. */
+export interface AiSshPrompt {
+  readonly id: string;
+  /** A secret is not shown as typed; a confirmation is answered yes or no. */
+  readonly kind: "secret" | "confirm" | "text";
+  readonly text: string;
+  readonly host: string;
+}
+
+export const aiSshPromptChannel = getMessageChannel<AiSshPrompt>("ai-chat-ssh-prompt");
+
+/** The user's answer to a prompt of ssh; no answer cancels it. */
+export const aiSshPromptAnswerChannel = getMessageChannel<{ readonly id: string; readonly answer?: string }>(
+  "ai-chat-ssh-prompt-answer",
+);
+
+/** A prompt was answered in one window: the others close theirs. */
+export const aiSshPromptSettledChannel = getMessageChannel<{ readonly id: string }>("ai-chat-ssh-prompt-settled");

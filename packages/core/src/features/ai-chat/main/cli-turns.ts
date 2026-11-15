@@ -4,16 +4,13 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { writeFileSync } from "node:fs";
-import path from "node:path";
 import { createInterface } from "node:readline";
 import { parseClaudeStreamLine, parseCodexStreamLine } from "../common/cli-events";
 import { buildClaudeArgs, buildClaudeMcpConfig, buildCodexArgs, codexMcpTokenVariable } from "./cli-args";
-import { aiWorkDir } from "./work-dir";
 import type { ChildProcess } from "node:child_process";
 
-import type { Spawn } from "../../../main/child-process/spawn.injectable";
 import type { AiCliEvent } from "../common/cli-events";
+import type { AiCliHost } from "./cli-host";
 
 export interface CliTurn {
   readonly chatId: string;
@@ -29,8 +26,8 @@ export interface CliTurn {
 }
 
 export interface AiCliTurnsDependencies {
-  spawn: Spawn;
-  env: () => NodeJS.ProcessEnv;
+  /** Where the CLIs run now: this computer, or another host over SSH */
+  host: () => AiCliHost;
   logInfo: (message: string) => void;
 }
 
@@ -39,44 +36,65 @@ const stderrTailBytes = 4000;
 /** The turns of Claude Code and Codex: one process per turn, continuing the CLI's own session. */
 export class AiCliTurns {
   private readonly running = new Map<string, ChildProcess>();
+  /** Turns stopped before their process started */
+  private readonly stopped = new Set<string>();
+  /** Processes stopped by the user */
+  private readonly killed = new WeakSet<ChildProcess>();
 
   constructor(private readonly dependencies: AiCliTurnsDependencies) {}
 
   start(turn: CliTurn, onEvent: (event: AiCliEvent) => void) {
-    const { workDir, emptyKubeconfig } = aiWorkDir();
-    const newSessionId = turn.resumeSessionId ? undefined : randomUUID();
-    let args: string[];
-    let parse: (line: string) => AiCliEvent[];
-
-    if (turn.provider === "claude") {
-      const mcpConfigPath = path.join(workDir, `mcp-${turn.chatId}.json`);
-
-      writeFileSync(mcpConfigPath, JSON.stringify(buildClaudeMcpConfig(turn.mcpUrl, turn.mcpToken)), { mode: 0o600 });
-      args = buildClaudeArgs({ ...turn, mcpConfigPath, newSessionId });
-      parse = parseClaudeStreamLine;
-    } else {
-      args = buildCodexArgs(turn);
-      parse = parseCodexStreamLine;
-    }
-
-    this.dependencies.logInfo(`[AI-CHAT]: starting ${turn.command} for chat ${turn.chatId}`);
-
-    const child = this.dependencies.spawn(turn.command, args, {
-      cwd: workDir,
-      env: { ...this.dependencies.env(), KUBECONFIG: emptyKubeconfig, [codexMcpTokenVariable]: turn.mcpToken },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-
-    this.running.set(turn.chatId, child);
-
     let finished = false;
-    let stderrTail = "";
     const finish = (error?: string) => {
       if (!finished) {
         finished = true;
         onEvent(error ? { kind: "done", error } : { kind: "done" });
       }
     };
+
+    this.stopped.delete(turn.chatId);
+    void this.run(turn, onEvent, finish).catch((error) =>
+      finish(error instanceof Error ? error.message : String(error)),
+    );
+  }
+
+  private async run(turn: CliTurn, onEvent: (event: AiCliEvent) => void, finish: (error?: string) => void) {
+    const host = this.dependencies.host();
+    const { workDir, emptyKubeconfig } = await host.workDir();
+    // Freelens's MCP server as the host reaches it: itself, or through the SSH connection.
+    const mcpUrl = await host.mcpUrl(turn.mcpUrl);
+    const newSessionId = turn.resumeSessionId ? undefined : randomUUID();
+    let args: string[];
+    let parse: (line: string) => AiCliEvent[];
+
+    if (turn.provider === "claude") {
+      const mcpConfigPath = host.join(workDir, `mcp-${turn.chatId}.json`);
+
+      await host.writeFile(mcpConfigPath, JSON.stringify(buildClaudeMcpConfig(mcpUrl, turn.mcpToken)));
+      args = buildClaudeArgs({ ...turn, mcpUrl, mcpConfigPath, newSessionId });
+      parse = parseClaudeStreamLine;
+    } else {
+      args = buildCodexArgs({ ...turn, mcpUrl });
+      parse = parseCodexStreamLine;
+    }
+
+    if (this.stopped.delete(turn.chatId)) {
+      finish("Stopped.");
+
+      return;
+    }
+
+    this.dependencies.logInfo(`[AI-CHAT]: starting ${turn.command} on ${host.label} for chat ${turn.chatId}`);
+
+    const child = await host.spawn(turn.command, args, {
+      cwd: workDir,
+      env: { KUBECONFIG: emptyKubeconfig, [codexMcpTokenVariable]: turn.mcpToken },
+      readsStdin: false,
+    });
+
+    this.running.set(turn.chatId, child);
+
+    let stderrTail = "";
 
     child.stderr?.on("data", (chunk: Buffer) => {
       stderrTail = (stderrTail + chunk.toString("utf8")).slice(-stderrTailBytes);
@@ -102,7 +120,8 @@ export class AiCliTurns {
     child.on("close", (code, signal) => {
       this.running.delete(turn.chatId);
 
-      if (signal) {
+      // ssh ends with its own code when stopped, not with the signal.
+      if (signal || this.killed.has(child)) {
         finish("Stopped.");
       } else if (code !== 0) {
         finish(stderrTail.trim() || `${turn.command} exited with code ${code}.`);
@@ -113,6 +132,13 @@ export class AiCliTurns {
   }
 
   stop(chatId: string) {
-    this.running.get(chatId)?.kill("SIGTERM");
+    const child = this.running.get(chatId);
+
+    if (child) {
+      this.killed.add(child);
+      child.kill("SIGTERM");
+    } else {
+      this.stopped.add(chatId);
+    }
   }
 }

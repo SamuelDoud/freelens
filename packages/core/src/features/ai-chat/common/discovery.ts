@@ -28,6 +28,8 @@ export interface AiCliStatus {
   readonly models: readonly AiCliModel[];
   readonly error?: string;
   readonly checkedAt?: number;
+  /** Where the CLI was looked for: "this computer", or the SSH host */
+  readonly host?: string;
 }
 
 export type AiDiscovery = Readonly<Record<AiCliProviderId, AiCliStatus>>;

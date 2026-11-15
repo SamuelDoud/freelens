@@ -21,7 +21,8 @@ export interface AiChatHostDependencies {
   preferences: () => AiChatPreferences;
   updatePreferences: (changes: Partial<AiChatPreferences>) => void;
   /** The command a CLI runs as, or undefined when it is not installed. */
-  resolveCommand: (provider: AiCliProviderId) => string | undefined;
+  /** The command a CLI runs as on the host the CLIs run on; finding it may connect to that host. */
+  resolveCommand: (provider: AiCliProviderId) => Promise<string | undefined>;
   cliTurns: AiCliTurns;
   muse: AiMuseSessions;
   mcpUrlFor: (chatId: string) => Promise<string>;
@@ -308,7 +309,15 @@ export class AiChatHost {
       return this.sendToOpenAi(chat, text);
     }
 
-    const command = this.dependencies.resolveCommand(chat.provider);
+    let command: string | undefined;
+
+    try {
+      command = await this.dependencies.resolveCommand(chat.provider);
+    } catch (error) {
+      this.applyCliEvent(chat.id, { kind: "done", error: error instanceof Error ? error.message : String(error) });
+
+      return;
+    }
 
     if (!command) {
       this.applyCliEvent(chat.id, {

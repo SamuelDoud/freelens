@@ -27,6 +27,33 @@ export interface AiProviderPreferences {
   readonly extraModels: readonly string[];
 }
 
+/**
+ * Another host the CLIs run on, over SSH: where Claude Code, Codex or Muse are installed and
+ * signed in, such as a development machine. Empty fields leave it to the user's SSH configuration.
+ */
+export interface AiRemoteHost {
+  readonly enabled: boolean;
+  /** A DNS name, an address or an alias of the SSH configuration, with or without "user@" */
+  readonly destination: string;
+  readonly port: string;
+  /** A private key to use, instead of the SSH agent's and configuration's */
+  readonly identityFile: string;
+  /** An SSH configuration file to use instead of ~/.ssh/config */
+  readonly configFile: string;
+}
+
+export const defaultAiRemoteHost: AiRemoteHost = {
+  enabled: false,
+  destination: "",
+  port: "",
+  identityFile: "",
+  configFile: "",
+};
+
+/** Whether the CLIs run on another host */
+export const usesRemoteHost = ({ remoteHost }: AiChatPreferences) =>
+  remoteHost.enabled && remoteHost.destination.trim() !== "";
+
 export interface AiChatPreferences {
   /** The system prompt; empty uses the built-in one. */
   readonly systemPrompt: string;
@@ -45,6 +72,7 @@ export interface AiChatPreferences {
   /** Set when the user first opens the chat from a robot button: the buttons stop glowing. */
   readonly discovered: boolean;
   readonly rightPanelWidth: number;
+  readonly remoteHost: AiRemoteHost;
 }
 
 const emptyProvider: AiProviderPreferences = { defaultModel: "", defaultEffort: "", extraModels: [] };
@@ -67,6 +95,7 @@ export const defaultAiChatPreferences: AiChatPreferences = {
   placement: "bottom",
   discovered: false,
   rightPanelWidth: 420,
+  remoteHost: defaultAiRemoteHost,
 };
 
 /** Whether the OpenAI-compatible backend is set up, and so offered in the chat. */
@@ -159,5 +188,17 @@ export function readAiChatPreferences(value: unknown): AiChatPreferences {
     placement: value.placement === "right" || value.placement === "window" ? value.placement : "bottom",
     discovered: value.discovered === true,
     rightPanelWidth: readNumber(value.rightPanelWidth, defaultAiChatPreferences.rightPanelWidth, 280, 1600),
+    remoteHost: readRemoteHost(value.remoteHost),
   };
 }
+
+const readRemoteHost = (value: unknown): AiRemoteHost =>
+  isRecord(value)
+    ? {
+        enabled: value.enabled === true,
+        destination: readString(value.destination).trim(),
+        port: /^\d{1,5}$/.test(readString(value.port).trim()) ? readString(value.port).trim() : "",
+        identityFile: readString(value.identityFile).trim(),
+        configFile: readString(value.configFile).trim(),
+      }
+    : defaultAiRemoteHost;

@@ -27,7 +27,7 @@ import userPreferencesStateInjectable from "../../../../user-preferences/common/
 import styles from "./ai-preferences.module.scss";
 
 import type { AiCliStatus } from "../../../../ai-chat/common/discovery";
-import type { AiChatPreferences, AiProviderPreferences } from "../../../../ai-chat/common/preferences";
+import type { AiChatPreferences, AiProviderPreferences, AiRemoteHost } from "../../../../ai-chat/common/preferences";
 import type { AiCliProviderId, AiProviderId } from "../../../../ai-chat/common/providers";
 import type { AiDiscoveryMirror } from "../../../../ai-chat/renderer/discovery.injectable";
 import type { UserPreferencesState } from "../../../../user-preferences/common/state.injectable";
@@ -89,6 +89,9 @@ const NonInjectedAiPreferences = observer(({ state, discovery }: Dependencies) =
   const update = (changes: Partial<AiChatPreferences>) => {
     state.aiChat = { ...preferences, ...changes };
   };
+  const remote = preferences.remoteHost;
+  const updateRemote = (changes: Partial<AiRemoteHost>) => update({ remoteHost: { ...remote, ...changes } });
+  const discoveredOn = aiCliProviderIds.map((id) => discovered[id].host).find(Boolean);
   const updateProvider = (id: AiProviderId, changes: Partial<AiProviderPreferences>) =>
     update({ providers: { ...preferences.providers, [id]: { ...preferences.providers[id], ...changes } } });
   const label = (id: AiProviderId) => (id === "openai" ? preferences.openAiLabel : aiProviderLabels[id]);
@@ -98,10 +101,81 @@ const NonInjectedAiPreferences = observer(({ state, discovery }: Dependencies) =
   return (
     <div className={styles.aiPreferences} data-testid="ai-preferences">
       <section>
+        <SubTitle title="Where the command-line agents run" />
+        <div className={styles.row}>
+          <Button
+            label="This computer"
+            data-testid="ai-host-local"
+            primary={!remote.enabled}
+            outlined={remote.enabled}
+            onClick={() => update({ remoteHost: { ...remote, enabled: false } })}
+          />
+          <Button
+            label="Another host over SSH"
+            data-testid="ai-host-remote"
+            primary={remote.enabled}
+            outlined={!remote.enabled}
+            onClick={() => update({ remoteHost: { ...remote, enabled: true } })}
+          />
+        </div>
+        {remote.enabled && (
+          <div className={styles.remoteHost} data-testid="ai-remote-host">
+            <label className={styles.remoteLabel}>Host</label>
+            <Input
+              theme="round-black"
+              data-testid="ai-remote-destination"
+              placeholder="A DNS name or an alias of your SSH configuration, as user@host or host"
+              value={remote.destination}
+              onChange={(destination) => updateRemote({ destination: destination.trim() })}
+            />
+            <label className={styles.remoteLabel}>Port</label>
+            <Input
+              theme="round-black"
+              data-testid="ai-remote-port"
+              placeholder="From your SSH configuration, or 22"
+              value={remote.port}
+              onChange={(port) => updateRemote({ port: port.trim() })}
+            />
+            <label className={styles.remoteLabel}>Key</label>
+            <Input
+              theme="round-black"
+              data-testid="ai-remote-identity"
+              placeholder="Private key file; empty uses your SSH agent and configuration"
+              value={remote.identityFile}
+              onChange={(identityFile) => updateRemote({ identityFile: identityFile.trim() })}
+            />
+            <label className={styles.remoteLabel}>SSH config</label>
+            <Input
+              theme="round-black"
+              data-testid="ai-remote-config"
+              placeholder="~/.ssh/config"
+              value={remote.configFile}
+              onChange={(configFile) => updateRemote({ configFile: configFile.trim() })}
+            />
+            <small className="hint">
+              Freelens connects with your ssh, its configuration, keys and agent. What the host asks while connecting (a
+              new host key, a passphrase, a password, Duo or another second factor) Freelens asks you in a dialog; the
+              connection then stays open for eight hours, so the chats do not ask again. Claude Code, Codex and Muse run
+              on the host as installed and signed in there, and reach Freelens&apos;s tools through the connection.
+              Freelens connects when you refresh below or open a chat, not when it starts.
+            </small>
+          </div>
+        )}
+      </section>
+
+      <section>
         <div className={styles.row}>
           <SubTitle title="Command-line agents" />
-          <Button plain label="Refresh" data-testid="ai-refresh-discovery" onClick={() => void discovery.refresh()} />
+          <Button
+            plain
+            label={remote.enabled ? "Connect and refresh" : "Refresh"}
+            data-testid="ai-refresh-discovery"
+            onClick={() => void discovery.refresh()}
+          />
         </div>
+        {discoveredOn && (
+          <small className="hint" data-testid="ai-discovered-on">{`Looked for on ${discoveredOn}`}</small>
+        )}
         {aiCliProviderIds.map((id) => (
           <div key={id} className={styles.cli} data-testid={`ai-cli-${id}`}>
             <div className={styles.cliName}>{aiProviderLabels[id]}</div>
@@ -118,8 +192,9 @@ const NonInjectedAiPreferences = observer(({ state, discovery }: Dependencies) =
           </div>
         ))}
         <small className="hint">
-          Claude Code, Codex and Muse run as installed on this computer, signed in to your account as in a terminal.
-          Freelens asks each for its models and efforts when it starts. In the chat they get only Freelens&apos;s tools:
+          Claude Code, Codex and Muse run as installed on {remote.enabled ? "the host" : "this computer"}, signed in to
+          your account as in a terminal. Freelens asks each for its models and efforts
+          {remote.enabled ? " when it connects" : " when it starts"}. In the chat they get only Freelens&apos;s tools:
           their own shell, file and web tools are switched off or sandboxed.
         </small>
       </section>

@@ -33,7 +33,7 @@ describe("AiChatHost", () => {
       updatePreferences: (changes) => {
         preferences = { ...preferences, ...changes };
       },
-      resolveCommand: (provider) => `/usr/local/bin/${provider}`,
+      resolveCommand: async (provider) => `/usr/local/bin/${provider}`,
       cliTurns: cliTurns as unknown as AiCliTurns,
       muse: { prompt: vi.fn(), stop: vi.fn(), close: vi.fn() } as unknown as AiMuseSessions,
       mcpUrlFor: async (chatId) => `http://127.0.0.1:1/mcp/${chatId}`,
@@ -192,7 +192,7 @@ describe("AiChatHost", () => {
   });
 
   it("explains a CLI that is not installed", async () => {
-    dependencies.resolveCommand = () => undefined;
+    dependencies.resolveCommand = async () => undefined;
     host = new AiChatHost(dependencies);
 
     const { id } = host.create({ clusterId: "cluster-1", clusterName: "homelab" });

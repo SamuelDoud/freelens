@@ -53,9 +53,11 @@ describe("prepareMuseWorkspace", () => {
     const { tmpdir } = await import("node:os");
     const path = await import("node:path");
     const { prepareMuseWorkspace } = await import("./muse-acp");
+    const { LocalCliHost } = await import("./cli-host");
     const base = mkdtempSync(path.join(tmpdir(), "muse-workspace-test-"));
+    const host = new LocalCliHost({ spawn: () => undefined as never, env: () => ({}), platform: process.platform });
 
-    const workspace = prepareMuseWorkspace(base, "chat-1", "http://127.0.0.1:4000/mcp/chat-1");
+    const workspace = await prepareMuseWorkspace(host, base, "chat-1", "http://127.0.0.1:4000/mcp/chat-1");
 
     expect(existsSync(path.join(workspace, ".git", "HEAD"))).toBe(true);
     expect(JSON.parse(readFileSync(path.join(workspace, ".mcp.json"), "utf8"))).toEqual({

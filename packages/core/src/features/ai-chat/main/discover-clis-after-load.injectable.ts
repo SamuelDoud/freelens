@@ -8,6 +8,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { reaction } from "mobx";
 import shellEnvironmentReadyInjectable from "../../shell-sync/main/shell-environment-ready.injectable";
 import userPreferencesStateInjectable from "../../user-preferences/common/state.injectable";
+import { defaultAiChatPreferences, usesRemoteHost } from "../common/preferences";
 import aiCliDiscoveryInjectable from "./cli-discovery.injectable";
 
 // The CLIs are asked what they offer once the application has loaded, when the login shell's PATH
@@ -19,14 +20,26 @@ const discoverAiClisAfterLoadInjectable = getInjectable({
       const discovery = di.inject(aiCliDiscoveryInjectable);
       const state = di.inject(userPreferencesStateInjectable);
 
+      // CLIs on another host are found when a chat or the preferences need them, not at startup:
+      // connecting may ask for a second factor, which nobody expects when Freelens opens.
+      const isLocal = () => !usesRemoteHost(state.aiChat ?? defaultAiChatPreferences);
+
       // The CLIs are found on the login shell's PATH, which syncs in the background.
       void di
         .inject(shellEnvironmentReadyInjectable)
         .wait()
-        .then(() => discovery.refresh());
+        .then(() => {
+          if (isLocal()) {
+            void discovery.refresh();
+          }
+        });
       reaction(
         () => [state.aiChat?.claudePath, state.aiChat?.codexPath, state.aiChat?.musePath].join("\0"),
-        () => void discovery.refresh(),
+        () => {
+          if (isLocal()) {
+            void discovery.refresh();
+          }
+        },
       );
     },
   }),

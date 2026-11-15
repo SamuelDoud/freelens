@@ -5,9 +5,8 @@
 
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
-import spawnInjectable from "../../../main/child-process/spawn.injectable";
+import aiCliHostInjectable from "./cli-host.injectable";
 import { AiMuseSessions } from "./muse-acp";
-import { aiWorkDir } from "./work-dir";
 
 // Creating it has no side effects: Muse starts only with a chat's first turn.
 const aiMuseSessionsInjectable = getInjectable({
@@ -16,10 +15,7 @@ const aiMuseSessionsInjectable = getInjectable({
     const logger = di.inject(loggerInjectionToken);
 
     return new AiMuseSessions({
-      spawn: di.inject(spawnInjectable),
-      env: () => process.env,
-      workDir: () => aiWorkDir().workDir,
-      emptyKubeconfig: () => aiWorkDir().emptyKubeconfig,
+      host: di.inject(aiCliHostInjectable),
       logWarn: (message) => logger.warn(message),
     });
   },

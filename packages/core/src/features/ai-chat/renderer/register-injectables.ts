@@ -14,6 +14,9 @@ import createAiChatTabInjectable from "./create-ai-chat-tab.injectable";
 import aiDiscoveryMirrorInjectable from "./discovery.injectable";
 import aiDiscoveryChangedListenerInjectable from "./discovery-changed-listener.injectable";
 import openAiChatInjectable from "./open-ai-chat.injectable";
+import aiSshPromptListenerInjectable from "./ssh-prompt-listener.injectable";
+import aiSshPromptSettledListenerInjectable from "./ssh-prompt-settled-listener.injectable";
+import aiSshPromptStateInjectable from "./ssh-prompt-state.injectable";
 import syncAiChatDockTabsInjectable from "./sync-ai-chat-dock-tabs.injectable";
 import aiToolCallListenerInjectable from "./tool-call-listener.injectable";
 import aiToolExecutorInjectable from "./tool-executor.injectable";
@@ -44,6 +47,21 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(aiDiscoveryMirrorInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(aiSshPromptListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(aiSshPromptSettledListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(aiSshPromptStateInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

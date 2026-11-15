@@ -3,8 +3,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { accessSync, constants } from "node:fs";
-import path from "node:path";
 import {
   initialAiDiscovery,
   parseClaudeModels,
@@ -14,17 +12,15 @@ import {
 } from "../common/discovery";
 import { aiCliCommands, aiCliProviderIds } from "../common/providers";
 
-import type { Spawn } from "../../../main/child-process/spawn.injectable";
 import type { AiCliModel, AiCliStatus, AiDiscovery } from "../common/discovery";
 import type { AiCliProviderId } from "../common/providers";
+import type { AiCliHost } from "./cli-host";
 
 export interface AiCliDiscoveryDependencies {
-  spawn: Spawn;
-  env: () => NodeJS.ProcessEnv;
+  /** Where the CLIs run now: this computer, or another host over SSH */
+  host: () => AiCliHost;
   /** The paths set in the preferences; empty finds the command on the PATH. */
   configuredPaths: () => Readonly<Record<AiCliProviderId, string>>;
-  workDir: () => string;
-  platform: NodeJS.Platform;
   logWarn: (message: string) => void;
 }
 
@@ -36,16 +32,6 @@ interface ProcessResult {
 }
 
 const timeoutMs = 15_000;
-
-const isExecutable = (file: string) => {
-  try {
-    accessSync(file, constants.X_OK);
-
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 const lines = (text: string) => text.split(/\r?\n/).filter(Boolean);
 
@@ -67,6 +53,8 @@ export class AiCliDiscovery {
   private current: AiDiscovery = initialAiDiscovery;
   private pending?: Promise<AiDiscovery>;
   private readonly listeners = new Set<(discovery: AiDiscovery) => void>();
+  private discoveredOn?: string;
+  private workDir = "";
 
   constructor(private readonly dependencies: AiCliDiscoveryDependencies) {}
 
@@ -89,39 +77,49 @@ export class AiCliDiscovery {
     return this.pending;
   }
 
-  /** The command a CLI runs as: the preference's path, or the first match on the PATH. */
-  resolveCommand(provider: AiCliProviderId): string | undefined {
-    const configured = this.dependencies.configuredPaths()[provider].trim();
+  /** The command a CLI runs as on its host: the preference's path, or the first match on the PATH. */
+  resolveCommand(provider: AiCliProviderId): Promise<string | undefined> {
+    return this.dependencies
+      .host()
+      .resolveCommand(aiCliCommands[provider], this.dependencies.configuredPaths()[provider]);
+  }
 
-    if (configured) {
-      return isExecutable(configured) ? configured : undefined;
-    }
-
-    const { platform } = this.dependencies;
-    const extensions = platform === "win32" ? ["", ".exe", ".cmd", ".bat"] : [""];
-    const directories = (this.dependencies.env().PATH ?? "").split(path.delimiter).filter(Boolean);
-
-    for (const directory of directories) {
-      for (const extension of extensions) {
-        const candidate = path.join(directory, `${aiCliCommands[provider]}${extension}`);
-
-        if (isExecutable(candidate)) {
-          return candidate;
-        }
-      }
-    }
-
-    return undefined;
+  /** The host the CLIs were last found on */
+  get host(): string | undefined {
+    return this.discoveredOn;
   }
 
   private async discoverAll(): Promise<AiDiscovery> {
+    const host = this.dependencies.host();
+
     this.publish(
       Object.fromEntries(
         aiCliProviderIds.map((provider) => [provider, { ...this.current[provider], state: "checking" as const }]),
       ) as unknown as AiDiscovery,
     );
 
-    const statuses = await Promise.all(aiCliProviderIds.map((provider) => this.discover(provider)));
+    let statuses: AiCliStatus[];
+
+    try {
+      // Connecting asks the user what the host wants, once for all the CLIs.
+      await host.connect();
+      this.workDir = (await host.workDir()).workDir;
+      statuses = await Promise.all(aiCliProviderIds.map((provider) => this.discover(provider)));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      this.dependencies.logWarn(`[AI-CHAT]: connecting to ${host.label} failed: ${message}`);
+      statuses = aiCliProviderIds.map((provider) => ({
+        provider,
+        state: "error" as const,
+        models: [],
+        error: `Could not reach ${host.label}: ${message}`,
+        checkedAt: Date.now(),
+      }));
+    }
+
+    statuses = statuses.map((status) => ({ ...status, host: host.label }));
+    this.discoveredOn = host.label;
 
     this.publish(Object.fromEntries(statuses.map((status) => [status.provider, status])) as unknown as AiDiscovery);
 
@@ -137,7 +135,7 @@ export class AiCliDiscovery {
   }
 
   private async discover(provider: AiCliProviderId): Promise<AiCliStatus> {
-    const command = this.resolveCommand(provider);
+    const command = await this.resolveCommand(provider);
     const checkedAt = Date.now();
 
     if (!command) {
@@ -240,7 +238,7 @@ export class AiCliDiscovery {
               jsonrpc: "2.0",
               id: 2,
               method: "session/new",
-              params: { cwd: this.dependencies.workDir(), mcpServers: [] },
+              params: { cwd: this.workDir, mcpServers: [] },
             },
           ]
             .map((message) => JSON.stringify(message))
@@ -268,55 +266,55 @@ export class AiCliDiscovery {
     args: string[],
     options: { input?: string; until?: (stdout: string) => boolean; keepStdinOpen?: boolean } = {},
   ): Promise<ProcessResult> {
-    return new Promise((resolve, reject) => {
-      const child = this.dependencies.spawn(command, args, {
-        cwd: this.dependencies.workDir(),
-        env: this.dependencies.env(),
-        stdio: ["pipe", "pipe", "pipe"],
-      });
-      let stdout = "";
-      let stderr = "";
-      let settled = false;
-      const finish = (result: Omit<ProcessResult, "stdout" | "stderr">) => {
-        if (!settled) {
-          settled = true;
-          clearTimeout(timer);
-          resolve({ ...result, stdout, stderr });
-        }
-      };
-      const timer = setTimeout(() => {
-        child.kill?.();
-        finish({ code: null, timedOut: true });
-      }, timeoutMs);
+    const spawned = this.dependencies.host().spawn(command, args, { cwd: this.workDir, env: {}, readsStdin: true });
 
-      child.on("error", (error) => {
-        if (!settled) {
-          settled = true;
-          clearTimeout(timer);
-          reject(error);
-        }
-      });
-      child.stdout?.on("data", (chunk: Buffer) => {
-        stdout += chunk.toString("utf8");
+    return spawned.then(
+      (child) =>
+        new Promise((resolve, reject) => {
+          let stdout = "";
+          let stderr = "";
+          let settled = false;
+          const finish = (result: Omit<ProcessResult, "stdout" | "stderr">) => {
+            if (!settled) {
+              settled = true;
+              clearTimeout(timer);
+              resolve({ ...result, stdout, stderr });
+            }
+          };
+          const timer = setTimeout(() => {
+            child.kill?.();
+            finish({ code: null, timedOut: true });
+          }, timeoutMs);
 
-        if (options.until?.(stdout)) {
-          child.kill();
-          finish({ code: 0, timedOut: false });
-        }
-      });
-      child.stderr?.on("data", (chunk: Buffer) => {
-        stderr += chunk.toString("utf8");
-      });
-      child.on("close", (code) => finish({ code, timedOut: false }));
+          child.on("error", (error) => {
+            if (!settled) {
+              settled = true;
+              clearTimeout(timer);
+              reject(error);
+            }
+          });
+          child.stdout?.on("data", (chunk: Buffer) => {
+            stdout += chunk.toString("utf8");
 
-      if (options.input !== undefined) {
-        child.stdin?.write(options.input);
-      }
+            if (options.until?.(stdout)) {
+              child.kill();
+              finish({ code: 0, timedOut: false });
+            }
+          });
+          child.stderr?.on("data", (chunk: Buffer) => {
+            stderr += chunk.toString("utf8");
+          });
+          child.on("close", (code) => finish({ code, timedOut: false }));
 
-      // Most commands read their stdin to its end; the protocol servers stop when it closes.
-      if (!options.keepStdinOpen) {
-        child.stdin?.end();
-      }
-    });
+          if (options.input !== undefined) {
+            child.stdin?.write(options.input);
+          }
+
+          // Most commands read their stdin to its end; the protocol servers stop when it closes.
+          if (!options.keepStdinOpen) {
+            child.stdin?.end();
+          }
+        }),
+    );
   }
 }
