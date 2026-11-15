@@ -490,7 +490,11 @@ export class KubeObjectStore<
       for (const result of results) {
         switch (result.status) {
           case "fulfilled":
-            res.push(...(result.value ?? []));
+            // Not push(...list): a namespace with more than ~120k objects
+            // of one kind exceeds the argument limit of a call.
+            for (const item of result.value ?? []) {
+              res.push(item);
+            }
             break;
 
           case "rejected":

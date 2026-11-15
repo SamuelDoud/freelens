@@ -784,6 +784,29 @@ describe("KubeObjectStore", () => {
       });
     });
 
+    it("loads a namespace holding more objects than a call can take as arguments", async () => {
+      // Spreading a list into push() throws a RangeError from about 120k
+      // arguments on in Node, and from some hundred thousand under Vitest,
+      // whose stack is larger; one shared item keeps the list cheap to build.
+      const count = 1_000_000;
+      const shared = {
+        getNs: () => "big",
+        getName: () => "item",
+        getId: () => "uid",
+      } as unknown as KubeObject;
+      const big = new Array<KubeObject>(count).fill(shared);
+      const small = objectNamed("small", "tiny");
+      const list = vi.fn(({ namespace }: { namespace?: string }) =>
+        Promise.resolve(namespace === "big" ? big : [small]),
+      );
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list }, () => false);
+
+      await expect(store.loadAll({ namespaces: ["big", "tiny"] })).resolves.toHaveLength(count + 1);
+
+      expect(store.items).toHaveLength(count + 1);
+      expect(store.isLoaded).toBe(true);
+    });
+
     it("names the namespaces a slow load still waits on once only a few are left", async () => {
       const namespaces = ["ns1", "ns2", "ns3", "ns4", "ns5"];
       const gates = new Map(namespaces.map((namespace) => [namespace, deferred<KubeObject[]>()]));
