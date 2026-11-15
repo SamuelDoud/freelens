@@ -116,4 +116,26 @@ describe("search store tests", () => {
       expect(searchStore.isActiveOverlay(0, 1)).toBe(false);
     });
   });
+
+  it("finds the occurrences matchAll finds, for random lines and queries", () => {
+    const alphabet = ["a", "A", "b", "İ", "i", "I", ".", "*", " ", "\\", "(", "ß", "ǅ"];
+    let state = 11;
+    const random = (limit: number) => {
+      state = (state * 1664525 + 1013904223) >>> 0;
+
+      return state % limit;
+    };
+    const text = (length: number) => Array.from({ length }, () => alphabet[random(alphabet.length)]).join("");
+
+    for (let round = 0; round < 500; round += 1) {
+      const lines = Array.from({ length: random(30) }, () => text(random(25)));
+      const query = text(1 + random(3));
+      const regex = new RegExp(SearchStore.escapeRegex(query), "gi");
+      const expected = lines.flatMap((line, index) => Array.from(line.matchAll(regex), () => index));
+
+      searchStore.onSearch(lines, query);
+
+      expect(searchStore.occurrences).toEqual(expected);
+    }
+  });
 });
