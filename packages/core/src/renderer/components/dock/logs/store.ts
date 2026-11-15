@@ -32,6 +32,8 @@ type PodLogLine = string;
 
 const logLinesToLoad = 500;
 
+const noLines: ReadonlyMap<string, number> = new Map();
+
 interface Dependencies {
   /** Whether a logs tab can be seen: the frame is active, the dock open and the tab selected */
   isTabSeen: (tabId: TabId) => boolean;
@@ -40,11 +42,13 @@ interface Dependencies {
 
 /**
  * How far the lines of a pod have been read: the timestamp of the newest line
- * and the lines that carry it, which the next request returns again.
+ * and, for every text, how many lines carry that timestamp with it. The next
+ * request returns them again, and a text that comes back more often than it
+ * was counted is a new line that happens to repeat the one before it.
  */
 interface PodLogsCursor {
   timestamp: string;
-  lines: Set<string>;
+  lines: Map<string, number>;
 }
 
 interface PodLogs {
@@ -366,11 +370,19 @@ export class LogStore {
     for (const { pod, lines } of logsOfPods) {
       const podId = pod.getId();
       let cursor = cursors.get(podId);
+      // The copies of every line the cursor's timestamp had before this
+      // response, and how many of them this response has served so far.
+      let counted = cursor?.lines ?? noLines;
+      const served = new Map<string, number>();
       let isNew = !cursor;
       const newLines: string[] = [];
       // The lines as the API counts them for tailLines: the pieces of a line
       // split on "\r" carry no timestamp.
       let newApiLines = 0;
+
+      if (cursor) {
+        cursor = { timestamp: cursor.timestamp, lines: new Map(cursor.lines) };
+      }
 
       for (const line of lines) {
         const timestamp = getLeadingTimestamp(line);
@@ -378,12 +390,24 @@ export class LogStore {
         if (timestamp) {
           const order = cursor ? compareLogTimestamps(timestamp, cursor.timestamp) : 1;
 
-          isNew = order > 0 || (order === 0 && !cursor?.lines.has(line));
+          if (order > 0) {
+            isNew = true;
+            cursor = { timestamp, lines: new Map([[line, 1]]) };
+            counted = noLines;
+            served.clear();
+            served.set(line, 1);
+          } else if (order === 0 && cursor) {
+            // The n-th copy of a line is new when the cursor had counted fewer.
+            const copy = (served.get(line) ?? 0) + 1;
 
-          if (isNew && cursor && order === 0) {
-            cursor.lines.add(line);
-          } else if (isNew) {
-            cursor = { timestamp, lines: new Set([line]) };
+            served.set(line, copy);
+            isNew = copy > (counted.get(line) ?? 0);
+
+            if (isNew) {
+              cursor.lines.set(line, copy);
+            }
+          } else {
+            isNew = false;
           }
 
           if (isNew) {
