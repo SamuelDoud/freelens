@@ -126,5 +126,22 @@ export function ipcRendererOn(
  * Removes possible observable values to avoid exceptions like "can't clone object".
  */
 function sanitizePayload<T>(data: any): T {
+  if (typeof data === "object" && data !== null && alreadyPlainPayloads.has(data)) {
+    return data;
+  }
+
   return toJS(data);
+}
+
+const alreadyPlainPayloads = new WeakSet<object>();
+
+/**
+ * Marks the result of a `toJS` as plain, so that `broadcastMessage` does not
+ * copy it a second time. For a caller that has just converted the payload and
+ * does not touch it afterwards.
+ */
+export function asPlainPayload<T extends object>(data: T): T {
+  alreadyPlainPayloads.add(data);
+
+  return data;
 }
