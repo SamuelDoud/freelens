@@ -27,7 +27,7 @@ const makeItems = (count: number) => Array.from({ length: count }, (_, index) =>
 // reading the items as the rows it shows.
 const ROWS = 27;
 
-const makeLayout = (getItems: () => ItemObject[]) => {
+const makeLayout = (getItems: () => ItemObject[], extraProps: Record<string, unknown> = {}) => {
   const search = observable.box("");
   const searchUrlParam = {
     get: () => search.get(),
@@ -43,6 +43,7 @@ const makeLayout = (getItems: () => ItemObject[]) => {
     filterItems: [filterItems],
     renderTableContents: () => [],
     pageFiltersStore: new PageFiltersStore({ searchUrlParam }),
+    ...extraProps,
   } as unknown as LayoutProps;
   const layout = new NonInjectedItemListLayout(props);
 
@@ -147,5 +148,32 @@ describe("<ItemListLayout> items", () => {
     expect(seen).toHaveLength(1);
 
     stop();
+  });
+
+  describe("search texts of items", () => {
+    const run = (pure: boolean) => {
+      const items = makeItems(100);
+      const { layout, search, getSearchTexts } = makeLayout(() => items, { searchFiltersArePure: pure });
+      const stop = autorun(() => layout.items);
+      const found: string[][] = [];
+
+      for (const query of ["uid-9", "item-1", "uid_9", "ITEM1", "zzz"]) {
+        runInAction(() => search.set(query));
+        found.push(layout.items.map((item) => item.getId()));
+      }
+
+      stop();
+
+      return { found, reads: getSearchTexts.mock.calls.length };
+    };
+
+    it("finds the same items with or without keeping the texts, and reads them fewer times", () => {
+      const plain = run(false);
+      const kept = run(true);
+
+      expect(kept.found).toEqual(plain.found);
+      expect(plain.reads).toBeGreaterThanOrEqual(500);
+      expect(kept.reads).toBeLessThanOrEqual(200);
+    });
   });
 });

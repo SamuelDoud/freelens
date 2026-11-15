@@ -16,7 +16,10 @@ import { NamespaceSelectBadge } from "../namespaces/namespace-select-badge";
 import { WithTooltip } from "../with-tooltip";
 import replicaSetStoreInjectable from "./store.injectable";
 
+import type { ReplicaSet } from "@freelensapp/kube-object";
+
 import type { EventStore } from "../events/store";
+import type { ListLayoutSearchFilter } from "../item-object-list/list-layout";
 import type { ReplicaSetStore } from "./store";
 
 enum columnId {
@@ -32,6 +35,9 @@ interface Dependencies {
   replicaSetStore: ReplicaSetStore;
   eventStore: EventStore;
 }
+
+// The same array on every render keeps the text the list searches in; each filter reads its item only.
+const searchFilters: ListLayoutSearchFilter<ReplicaSet>[] = [(replicaSet) => replicaSet.getSearchFields()];
 
 const NonInjectedReplicaSets = observer((props: Dependencies) => {
   const { eventStore, replicaSetStore } = props;
@@ -52,7 +58,8 @@ const NonInjectedReplicaSets = observer((props: Dependencies) => {
           [columnId.ready]: (replicaSet) => replicaSet.getReady(),
           [columnId.age]: (replicaSet) => -replicaSet.getCreationTimestamp(),
         }}
-        searchFilters={[(replicaSet) => replicaSet.getSearchFields()]}
+        searchFilters={searchFilters}
+        searchFiltersArePure
         renderHeaderTitle="Replica Sets"
         renderTableHeader={[
           { title: "Name", className: "name", sortBy: columnId.name, id: columnId.name },

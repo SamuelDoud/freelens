@@ -33,6 +33,7 @@ import { PageFiltersList } from "./page-filters/list";
 import { FilterType } from "./page-filters/store";
 import pageFiltersStoreInjectable from "./page-filters/store.injectable";
 import { createSearchMatcher } from "./search-matcher";
+import { canSearchByText, filterBySearchText } from "./search-text-cache";
 import itemListLayoutStorageInjectable from "./storage.injectable";
 
 import type { ItemObject, TableCellProps } from "@freelensapp/list-layout";
@@ -113,6 +114,13 @@ export type ItemListLayoutProps<Item extends ItemObject, PreLoadStores extends b
   preloadStores?: boolean;
   hideFilters?: boolean;
   searchFilters?: ListLayoutSearchFilter<Item>[];
+  /**
+   * Set when every one of `searchFilters` reads nothing but the item it is given, and the item is
+   * replaced by a new object when it changes. The list then keeps the text it searches in for each
+   * item, and a search stops reading every item's texts again. Keep the array of filters the same
+   * between renders for the text to be kept.
+   */
+  searchFiltersArePure?: boolean;
   filterItems?: ListLayoutItemsFilter<Item>[];
 
   /**
@@ -382,6 +390,10 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
       const search = this.observableProps.pageFiltersStore.getValues(FilterType.SEARCH)[0] || "";
 
       if (search && searchFilters.length) {
+        if (this.observableProps.searchFiltersArePure && canSearchByText(search)) {
+          return filterBySearchText(items, searchFilters, search);
+        }
+
         const matchesSearch = createSearchMatcher(search);
 
         return items.filter((item) => searchFilters.some((getTexts) => [getTexts(item)].flat().some(matchesSearch)));

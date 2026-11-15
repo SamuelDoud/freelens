@@ -16,6 +16,9 @@ import { NamespaceSelectBadge } from "../namespaces/namespace-select-badge";
 import { WithTooltip } from "../with-tooltip";
 import configMapStoreInjectable from "./store.injectable";
 
+import type { ConfigMap } from "@freelensapp/kube-object";
+
+import type { ListLayoutSearchFilter } from "../item-object-list/list-layout";
 import type { ConfigMapStore } from "./store";
 
 enum columnId {
@@ -24,6 +27,12 @@ enum columnId {
   keys = "keys",
   age = "age",
 }
+
+// The same array on every render keeps the text the list searches in; each filter reads its item only.
+const searchFilters: ListLayoutSearchFilter<ConfigMap>[] = [
+  (configMap) => configMap.getSearchFields(),
+  (configMap) => configMap.getKeys(),
+];
 
 interface Dependencies {
   configMapStore: ConfigMapStore;
@@ -45,7 +54,8 @@ class NonInjectedConfigMaps extends React.Component<Dependencies> {
             [columnId.keys]: (configMap) => configMap.getKeys(),
             [columnId.age]: (configMap) => -configMap.getCreationTimestamp(),
           }}
-          searchFilters={[(configMap) => configMap.getSearchFields(), (configMap) => configMap.getKeys()]}
+          searchFilters={searchFilters}
+          searchFiltersArePure
           renderHeaderTitle="Config Maps"
           renderTableHeader={[
             { title: "Name", className: "name", sortBy: columnId.name, id: columnId.name },
