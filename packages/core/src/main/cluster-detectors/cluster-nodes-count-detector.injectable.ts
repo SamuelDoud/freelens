@@ -16,6 +16,25 @@ const clusterNodeCountDetectorInjectable = getInjectable({
   instantiate: (di) => {
     const k8sRequest = di.inject(k8SRequestInjectable);
     const requestNodeCount = async (cluster: Cluster) => {
+      // The Table format, without the objects, is about 200 bytes per node
+      // where a NodeList is about 10 KiB. A server that does not know it
+      // answers 406, or ignores the header and returns the list.
+      try {
+        const table = (await k8sRequest(cluster, "/api/v1/nodes?includeObject=None", {
+          headers: { Accept: "application/json;as=Table;g=meta.k8s.io;v=v1" },
+        })) as { rows?: unknown[]; items?: unknown[] };
+
+        if (Array.isArray(table.rows)) {
+          return table.rows.length;
+        }
+
+        if (Array.isArray(table.items)) {
+          return table.items.length;
+        }
+      } catch {
+        // fall through to the plain list
+      }
+
       const { items } = (await k8sRequest(cluster, "/api/v1/nodes")) as { items: unknown[] };
 
       return items.length;
