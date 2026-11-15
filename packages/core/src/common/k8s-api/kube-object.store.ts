@@ -179,6 +179,9 @@ export const slowLoadMs = 10_000;
  */
 export const releaseFromItemCount = 2000;
 
+/** How many individually loaded objects `release` keeps, the latest ones */
+export const releaseKeepsLoadedCount = 500;
+
 /** The most namespaces a load's progress names when it waits on them */
 const namedPendingNamespaces = 3;
 
@@ -264,6 +267,10 @@ export class KubeObjectStore<
   // per namespace for everyone, which any other list of it moves on, so a
   // watch restarted from that could skip events, deletes among them.
   private readonly heldVersions = new Map<string, string>();
+  // Ids of the objects asked for one by one with load(), oldest first. A
+  // panel that shows such an object reads it from the store without
+  // subscribing, so release() keeps them.
+  private readonly individuallyLoaded = new Set<string>();
 
   constructor(
     protected readonly dependencies: KubeObjectStoreDependencies,
@@ -1009,14 +1016,30 @@ export class KubeObjectStore<
     // already streamed in must not reappear after the reset.
     this.loadGeneration++;
     this.heldVersions.clear();
+    this.individuallyLoaded.clear();
     super.reset();
+  }
+
+  private noteIndividuallyLoaded(id: string) {
+    // Latest last, and a later list does not make it a listed object
+    this.individuallyLoaded.delete(id);
+    this.individuallyLoaded.add(id);
+
+    for (const oldest of this.individuallyLoaded) {
+      if (this.individuallyLoaded.size <= releaseKeepsLoadedCount) {
+        break;
+      }
+
+      this.individuallyLoaded.delete(oldest);
+    }
   }
 
   /**
    * Frees the items of a large store that no view subscribes to any longer,
    * so that data nobody looks at stops holding memory. The store is as if
    * never loaded, and loads afresh when a view subscribes again. The
-   * selection of items is kept, as it is across a load.
+   * objects loaded one by one (the latest few) and the selection of items
+   * are kept.
    */
   @action
   release() {
@@ -1027,7 +1050,7 @@ export class KubeObjectStore<
     this.loadGeneration++;
     this.heldVersions.clear();
     this.eventsBuffer.clear();
-    this.items.clear();
+    this.items.replace(this.items.filter((item) => this.individuallyLoaded.has(item.getId())));
     this.isLoaded = false;
     this.isLoading = false;
     this.loadingProgress = undefined;
@@ -1053,6 +1076,8 @@ export class KubeObjectStore<
 
       this.items.replace(newItems);
     }
+
+    this.noteIndividuallyLoaded(item.getId());
 
     return item;
   }

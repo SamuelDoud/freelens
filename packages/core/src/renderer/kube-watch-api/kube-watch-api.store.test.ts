@@ -7,7 +7,7 @@ import { KubeObject, KubeStatus } from "@freelensapp/kube-object";
 import { noop, WrappedAbortController } from "@freelensapp/utilities";
 import { observable, runInAction } from "mobx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { KubeObjectStore, releaseFromItemCount } from "../../common/k8s-api/kube-object.store";
+import { KubeObjectStore, releaseFromItemCount, releaseKeepsLoadedCount } from "../../common/k8s-api/kube-object.store";
 import { KubeWatchApi, storeLingerMs } from "./kube-watch-api";
 
 import type { KubeApi, KubeApiWatchOptions } from "@freelensapp/kube-api";
@@ -94,6 +94,7 @@ const createEnvironment = ({ namespaces = ["default"], objectsPerNamespace = 3 }
         return items;
       },
     ),
+    get: vi.fn(async ({ name, namespace }: { name: string; namespace: string }) => objectIn(namespace, name, "900")),
     watch: vi.fn((opts: WatchOptions) => {
       const controller = new WrappedAbortController(opts.abortController);
 
@@ -235,6 +236,44 @@ describe("KubeWatchApi with a store", () => {
     expect(store.isLoaded).toBe(true);
     expect(names()).toHaveLength(releaseFromItemCount);
     expect(openWatches()).toHaveLength(1);
+  });
+
+  it("keeps the objects a panel loaded by name when the linger of a large store is over", async () => {
+    const { kubeWatchApi, store, names, settle } = createEnvironment({ objectsPerNamespace: releaseFromItemCount });
+    const unsubscribe = kubeWatchApi.subscribeStores([store]);
+
+    await settle();
+
+    // a details panel asks for one secret by name, and for one that the list holds
+    await store.load({ name: "token", namespace: "default" });
+    await store.load({ name: "item-5", namespace: "default" });
+    unsubscribe();
+    await vi.advanceTimersByTimeAsync(storeLingerMs);
+
+    expect(store.isLoaded).toBe(false);
+    expect(names()).toEqual(["default/item-5", "default/token"]);
+    // the panel still finds them
+    expect(store.getByName("token", "default")).toBeDefined();
+  });
+
+  it("keeps only the latest individually loaded objects, so that they cannot regrow what a release frees", async () => {
+    const { store } = createEnvironment({ objectsPerNamespace: releaseFromItemCount });
+    const extra = releaseKeepsLoadedCount + 100;
+
+    for (let index = 0; index < extra; index++) {
+      await store.load({ name: `loaded-${index}`, namespace: "default" });
+    }
+
+    for (let index = 0; index < releaseFromItemCount; index++) {
+      store.items.push(objectIn("default", `listed-${index}`));
+    }
+
+    store.release();
+
+    expect(store.items).toHaveLength(releaseKeepsLoadedCount);
+    expect(store.getByName("loaded-99", "default")).toBeUndefined();
+    expect(store.getByName("loaded-100", "default")).toBeDefined();
+    expect(store.getByName(`loaded-${extra - 1}`, "default")).toBeDefined();
   });
 
   it("keeps the items of a small store when the linger is over", async () => {
