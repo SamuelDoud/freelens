@@ -362,6 +362,15 @@ export interface KubeApiWatchOptions<Object extends KubeObject, Data extends Kub
    * advance that version and are not passed to `callback`.
    */
   onBookmark?: (resourceVersion: string) => void;
+
+  /**
+   * Gives the resourceVersion to start the watch from, asked again for every
+   * restart. Without it, a watch starts from the version the API remembers
+   * for the namespace, which any list of the same API moves on, and a restart
+   * from a version newer than what the caller has seen skips the events in
+   * between, deletes included.
+   */
+  getResourceVersion?: () => string | undefined;
 }
 
 export type KubeApiPatchType = "merge" | "json" | "strategic";
@@ -1021,11 +1030,13 @@ export class KubeApi<
       watchId = `${this.kind.toLowerCase()}-${this.watchId++}`,
       query,
       onBookmark,
+      getResourceVersion,
     } = opts ?? {};
 
     // Create AbortController for this request
     const abortController = new WrappedAbortController(opts?.abortController);
-    const watchUrl = this.getWatchUrl(namespace, query);
+    const ownVersion = getResourceVersion?.();
+    const watchUrl = this.getWatchUrl(namespace, ownVersion ? { resourceVersion: ownVersion, ...query } : query);
 
     abortController.signal.addEventListener("abort", () => {
       this.dependencies.logDebug(`watch (${watchId}) aborted ${watchUrl}`);

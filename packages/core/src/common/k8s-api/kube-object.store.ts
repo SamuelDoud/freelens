@@ -244,6 +244,12 @@ export class KubeObjectStore<
   // The watch events an all-namespaces load caught while it listed, for
   // loadAll to apply once it has merged the load's items.
   private loadReplay: { generation: number; events: IKubeWatchEvent<D>[] } | undefined;
+  // The resourceVersion of what the store holds, per namespace ("" for a
+  // cluster-wide list): set when a load completes, advanced by the events
+  // and bookmarks the store's watches deliver. The API remembers one version
+  // per namespace for everyone, which any other list of it moves on, so a
+  // watch restarted from that could skip events, deletes among them.
+  private readonly heldVersions = new Map<string, string>();
 
   constructor(
     protected readonly dependencies: KubeObjectStoreDependencies,
@@ -402,7 +408,11 @@ export class KubeObjectStore<
 
         if (onLoadFailure) {
           try {
-            return (await res) ?? [];
+            const listed = (await res) ?? [];
+
+            this.holdVersion("", tracker.streamVersion(""));
+
+            return listed;
           } catch (error) {
             // An aborted request (e.g. the view unmounted before the list
             // arrived) is not a real failure -- let it propagate so the
@@ -424,7 +434,11 @@ export class KubeObjectStore<
           }
         }
 
-        return (await res) ?? [];
+        const listed = (await res) ?? [];
+
+        this.holdVersion("", tracker.streamVersion(""));
+
+        return listed;
       }
 
       // Keep the all-namespaces marker empty so that subscribe() stays on
@@ -472,6 +486,7 @@ export class KubeObjectStore<
       if (caught) {
         // The watch that follows starts where this one is now.
         this.api.setResourceVersion("", caught.resourceVersion);
+        this.holdVersion("", caught.resourceVersion);
         this.loadReplay = { generation, events: caught.events };
       } else if (isLoadingAll && results.every((result) => result.status === "fulfilled")) {
         // Without a watch started early, the pages left the cluster-wide ("") resourceVersion at whichever
@@ -484,7 +499,20 @@ export class KubeObjectStore<
         if (oldestResourceVersion !== undefined) {
           this.api.setResourceVersion("", oldestResourceVersion);
         }
+
+        this.holdVersion("", oldestResourceVersion);
       }
+
+      if (!isLoadingAll) {
+        // Each namespace is watched from its own snapshot.
+        results.forEach((result, index) => {
+          this.holdVersion(
+            namespaces[index],
+            result.status === "fulfilled" ? tracker.streamVersion(namespaces[index]) : undefined,
+          );
+        });
+      }
+
       const res: K[] = [];
 
       for (const result of results) {
@@ -518,6 +546,39 @@ export class KubeObjectStore<
       loadWatch?.stop();
       tracker.dispose();
     }
+  }
+
+  /**
+   * Records the version a completed load leaves a namespace at, or forgets
+   * it when the load could not tell, so that the watch falls back to the
+   * version the API remembers.
+   */
+  private holdVersion(namespace: string, version: string | undefined) {
+    if (version === undefined) {
+      this.heldVersions.delete(namespace);
+    } else {
+      this.heldVersions.set(namespace, version);
+    }
+  }
+
+  /** Moves a namespace's held version forward to one a watch delivered. */
+  private advanceHeldVersion(namespace: string, version: unknown) {
+    if (typeof version !== "string" || !version) {
+      return;
+    }
+
+    const held = parseResourceVersion(this.heldVersions.get(namespace));
+    const next = parseResourceVersion(version);
+
+    // Versions are opaque to a client, but a replayed (older) event must not
+    // move a numeric one back.
+    if (held === undefined || next === undefined || next > held) {
+      this.heldVersions.set(namespace, version);
+    }
+  }
+
+  private watchedVersion(namespace: string): string | undefined {
+    return this.heldVersions.get(namespace) ?? this.api.getResourceVersion(namespace);
   }
 
   /**
@@ -777,6 +838,12 @@ export class KubeObjectStore<
 
         return oldest?.raw;
       },
+      // The snapshot of a stream, as the API server gave it, once its list is done.
+      streamVersion: (stream: string): string | undefined => {
+        const state = streams.get(stream);
+
+        return state?.done ? state.resourceVersion : undefined;
+      },
       // The snapshot a namespace was listed at, once its list is done.
       namespaceVersion: (namespace: string): bigint | undefined => {
         const stream = streams.get(namespace);
@@ -927,6 +994,7 @@ export class KubeObjectStore<
     // Invalidate progressive publishes of a load still in flight: what it
     // already streamed in must not reappear after the reset.
     this.loadGeneration++;
+    this.heldVersions.clear();
     super.reset();
   }
 
@@ -1125,7 +1193,7 @@ export class KubeObjectStore<
   }
 
   private watchNamespace(namespace: string, abortController: AbortController, opts: KubeObjectStoreSubscribeParams) {
-    if (!this.api.getResourceVersion(namespace)) {
+    if (!this.watchedVersion(namespace)) {
       return;
     }
 
@@ -1142,6 +1210,13 @@ export class KubeObjectStore<
         abortController,
         callback,
         query: this.watchQuery,
+        // From what this store holds, at every restart too.
+        getResourceVersion: () => this.watchedVersion(namespace),
+        onBookmark: (version) => {
+          if (!signal.aborted) {
+            this.advanceHeldVersion(namespace, version);
+          }
+        },
       });
     };
 
@@ -1151,7 +1226,7 @@ export class KubeObjectStore<
       // the signal the abort would be retried.
       if (signal.aborted || !this.isLoaded || (error as Record<string, unknown> | null)?.type === "aborted") return;
 
-      if (error instanceof Response) {
+      if (error instanceof Response && error.status !== 410) {
         if (error.status === 404 || error.status === 401) {
           // api has gone, or credentials are not permitted, let's not retry
           return;
@@ -1160,7 +1235,10 @@ export class KubeObjectStore<
         // not sure what to do, best to retry
         clearTimeout(timedRetry);
         timedRetry = setTimeout(startNewWatch, 5000);
-      } else if (error instanceof KubeStatus && error.code === 410) {
+      } else if (
+        (error instanceof KubeStatus && error.code === 410) ||
+        (error instanceof Response && error.status === 410)
+      ) {
         clearTimeout(timedRetry);
         // resourceVersion has gone, let's try to reload
         timedRetry = setTimeout(() => {
@@ -1178,6 +1256,10 @@ export class KubeObjectStore<
 
       if (data) {
         this.eventsBuffer.push(data);
+
+        if (data.type !== "ERROR") {
+          this.advanceHeldVersion(namespace, data.object.metadata?.resourceVersion);
+        }
       }
     };
 
