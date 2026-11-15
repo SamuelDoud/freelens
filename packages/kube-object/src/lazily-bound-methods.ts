@@ -59,8 +59,9 @@ export function bindMethodsLazily(constructor: Function): void {
       }
 
       const getter = function (this: object) {
-        // Reads through the prototype or through `super` must see the plain method.
-        if (Object.getPrototypeOf(this) !== prototype) {
+        // Reads through the prototype or through `super` must see the plain method. A read
+        // without a receiver is how vi.spyOn inspects an accessor, and it needs the method.
+        if (this == null || Object.getPrototypeOf(this) !== prototype) {
           return method;
         }
 

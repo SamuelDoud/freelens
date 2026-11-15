@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ConfigMap } from "./specifics/config-map";
 import { Pod } from "./specifics/pod";
 import { Secret } from "./specifics/secret";
@@ -134,5 +134,86 @@ describe("lazily bound KubeObject methods", () => {
     p.getName();
 
     expect(JSON.parse(JSON.stringify(p))).toEqual({ apiVersion: "v1", kind: "Pod", metadata: p.metadata });
+  });
+
+  describe("spies and replacements", () => {
+    it("lets vi.spyOn on an instance see later calls, and restores", () => {
+      const p = pod();
+      const spy = vi.spyOn(p, "getName");
+
+      expect(p.getName()).toBe("a");
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      spy.mockRestore();
+
+      expect(p.getName()).toBe("a");
+      expect(Object.getOwnPropertyDescriptor(p, "getName")?.get).toBeUndefined();
+    });
+
+    it("lets vi.spyOn on an instance that already cached its method", () => {
+      const p = pod();
+
+      p.getName();
+
+      const spy = vi.spyOn(p, "getName").mockReturnValue("mocked");
+
+      expect(p.getName()).toBe("mocked");
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps the spy on one instance away from others", () => {
+      const a = pod();
+      const b = pod();
+      const spy = vi.spyOn(a, "getName");
+
+      b.getName();
+      a.getName();
+
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it("lets plain assignment replace a method, before and after the first read", () => {
+      const before = pod();
+      const after = pod();
+
+      after.getName();
+      (before as any).getName = () => "x";
+      (after as any).getName = () => "y";
+
+      expect(before.getName()).toBe("x");
+      expect(after.getName()).toBe("y");
+    });
+
+    it("sees a prototype spy installed before any instance exists", () => {
+      class Fresh extends Pod {}
+
+      const spy = vi.spyOn(Fresh.prototype, "getName").mockReturnValue("proto");
+      const p = new Fresh({ apiVersion: "v1", kind: "Pod", metadata });
+
+      expect(p.getName()).toBe("proto");
+      expect(spy).toHaveBeenCalledTimes(1);
+      spy.mockRestore();
+    });
+
+    it("lets a prototype spy installed later reach instances that have not cached the method, not the ones that have", () => {
+      class Later extends Pod {}
+
+      const cached = new Later({ apiVersion: "v1", kind: "Pod", metadata });
+      const uncached = new Later({ apiVersion: "v1", kind: "Pod", metadata });
+
+      cached.getName();
+
+      const spy = vi.spyOn(Later.prototype, "getName").mockReturnValue("proto");
+
+      // Eager binding gave every instance its own bound copy at construction, so none saw the spy;
+      // here only an instance that has not read the method yet does.
+      expect(cached.getName()).toBe("a");
+      expect(uncached.getName()).toBe("proto");
+      expect(new Later({ apiVersion: "v1", kind: "Pod", metadata }).getName()).toBe("proto");
+
+      spy.mockRestore();
+
+      expect(new Later({ apiVersion: "v1", kind: "Pod", metadata }).getName()).toBe("a");
+    });
   });
 });
