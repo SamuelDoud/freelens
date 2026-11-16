@@ -18,6 +18,7 @@ import requestHelmChartVersionsInjectable from "../../common/k8s-api/endpoints/h
 import requestHelmReleaseConfigurationInjectable from "../../common/k8s-api/endpoints/helm-releases.api/request-configuration.injectable";
 import requestHelmReleaseUpdateInjectable from "../../common/k8s-api/endpoints/helm-releases.api/request-update.injectable";
 import listClusterHelmReleasesInjectable from "../../main/helm/helm-service/list-helm-releases.injectable";
+import secretStoreInjectable from "../../renderer/components/config-secrets/store.injectable";
 import getRandomUpgradeChartTabIdInjectable from "../../renderer/components/dock/upgrade-chart/get-random-upgrade-chart-tab-id.injectable";
 import requestDetailedHelmReleaseInjectable from "../../renderer/components/helm-releases/release-details/release-details-model/request-detailed-helm-release.injectable";
 import { toHelmRelease } from "../../renderer/components/helm-releases/to-helm-release";
@@ -71,6 +72,11 @@ describe("showing details for helm release", () => {
     showCheckedErrorNotificationMock = vi.fn();
 
     builder.beforeWindowStart(({ windowDi }) => {
+      // A cluster with no release Secrets (another storage driver): the releases come from helm.
+      windowDi.override(
+        secretStoreInjectable,
+        () => ({ isLoaded: true, isLoading: false, failedLoading: false, contextItems: [] }) as never,
+      );
       windowDi.override(getRandomUpgradeChartTabIdInjectable, () => () => "some-tab-id");
       windowDi.override(showSuccessNotificationInjectable, () => showSuccessNotificationMock);
       windowDi.override(showCheckedErrorNotificationInjectable, () => showCheckedErrorNotificationMock);

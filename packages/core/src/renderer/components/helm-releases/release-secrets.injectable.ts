@@ -5,7 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { computed, onBecomeObserved, onBecomeUnobserved } from "mobx";
+import { compareShallow, computed, onBecomeObserved, onBecomeUnobserved } from "mobx";
 import subscribeStoresInjectable from "../../kube-watch-api/subscribe-stores.injectable";
 import secretStoreInjectable from "../config-secrets/store.injectable";
 
@@ -16,8 +16,13 @@ const releaseSecretsInjectable = getInjectable({
     const subscribeStores = di.inject(subscribeStoresInjectable);
     const secretStore = di.inject(secretStoreInjectable);
 
-    const releaseSecrets = computed(() =>
-      secretStore.contextItems.filter((secret) => secret.type.startsWith("helm.sh/release")),
+    // Equal while the same Secrets are listed, so that changes of other Secrets do not list releases again.
+    const releaseSecrets = computed(
+      () =>
+        secretStore.contextItems.filter(
+          (secret) => secret.type.startsWith("helm.sh/release") || secret.metadata.labels?.owner === "helm",
+        ),
+      { equals: compareShallow },
     );
 
     let unsubscribe: () => void;
