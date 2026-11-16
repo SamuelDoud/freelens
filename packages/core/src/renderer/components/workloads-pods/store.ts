@@ -255,12 +255,39 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
     return result;
   }
 
+  // A pod object and a metrics object are never changed after they are made (a
+  // watch event or a metrics list makes new ones), so the usage of a pod is
+  // worked out once for the pair, and goes with the pod. Lists and sorts ask
+  // for it per pod on every pass.
+  private readonly kubeMetricsOfPod = new WeakMap<
+    Pod,
+    { metrics: PodMetrics; usage: { cpu: number; memory: number } }
+  >();
+
   getPodKubeMetrics(pod: Pod) {
-    const containers = pod.getContainers();
-    const empty = { cpu: 0, memory: 0 };
     const metrics = this.kubeMetricsByPod.get(`${pod.getNs()}/${pod.getName()}`);
 
-    if (!metrics || !metrics.containers || !containers) return { cpu: NaN, memory: NaN };
+    if (!metrics || !metrics.containers) return { cpu: NaN, memory: NaN };
+
+    const cached = this.kubeMetricsOfPod.get(pod);
+
+    if (cached?.metrics === metrics) {
+      // A copy, as every call returned a new object.
+      return { ...cached.usage };
+    }
+
+    const usage = this.computePodKubeMetrics(pod, metrics);
+
+    this.kubeMetricsOfPod.set(pod, { metrics, usage });
+
+    return { ...usage };
+  }
+
+  private computePodKubeMetrics(pod: Pod, metrics: PodMetrics) {
+    const containers = pod.getContainers();
+    const empty = { cpu: 0, memory: 0 };
+
+    if (!containers) return { cpu: NaN, memory: NaN };
 
     return containers.reduce((total, container) => {
       let cpu = "0";
