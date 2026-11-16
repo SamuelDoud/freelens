@@ -8,7 +8,6 @@ import "./table-cell.scss";
 
 import { Icon } from "@freelensapp/icon";
 import { cssNames } from "@freelensapp/utilities";
-import autoBindReact from "auto-bind/react";
 import React from "react";
 import { Checkbox } from "../checkbox";
 
@@ -19,10 +18,10 @@ export type TableCellElem = React.ReactElement<TableCellProps>;
 export class TableCell extends React.Component<TableCellProps> {
   private suppressClick = false;
 
-  constructor(props: TableCellProps) {
-    super(props);
-    autoBindReact(this);
-  }
+  // Bound on first render instead of with auto-bind in the constructor, which
+  // binds every method of every cell. It still dispatches through the
+  // prototype, so a subclass can override `onClick`.
+  private boundOnClick?: (evt: React.MouseEvent<HTMLDivElement>) => void;
 
   onClick(evt: React.MouseEvent<HTMLDivElement>) {
     const { _sort, sortBy, onClick } = this.props;
@@ -105,7 +104,12 @@ export class TableCell extends React.Component<TableCellProps> {
     const content = title || children;
 
     return (
-      <div {...cellProps} className={classNames} style={style} onClick={this.onClick}>
+      <div
+        {...cellProps}
+        className={classNames}
+        style={style}
+        onClick={(this.boundOnClick ??= (evt) => this.onClick(evt))}
+      >
         {this.renderCheckbox()}
         {_nowrap ? <div className="content">{content}</div> : content}
         {this.renderSortIcon()}

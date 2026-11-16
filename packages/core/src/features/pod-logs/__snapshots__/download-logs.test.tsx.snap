@@ -38,7 +38,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -83,7 +83,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -91,7 +91,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -99,7 +99,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -199,7 +199,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -207,7 +207,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -252,7 +252,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -260,7 +260,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -268,7 +268,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -276,7 +276,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -284,7 +284,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -389,7 +389,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -397,7 +397,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs a
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1122,7 +1122,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -1167,7 +1167,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1175,7 +1175,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1183,7 +1183,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -1283,7 +1283,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1291,7 +1291,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -1336,7 +1336,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1344,7 +1344,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1352,7 +1352,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1360,7 +1360,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1368,7 +1368,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -1473,7 +1473,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1481,7 +1481,7 @@ exports[`download logs options in logs dock tab > opening pod logs > when logs n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div

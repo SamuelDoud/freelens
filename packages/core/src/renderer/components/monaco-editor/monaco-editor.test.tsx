@@ -3,7 +3,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { act } from "@testing-library/react";
+import { DiContextProvider } from "@ogre-tools/injectable-react";
+import { act, render as testingLibraryRender } from "@testing-library/react";
 import { editor } from "monaco-editor";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -51,14 +52,15 @@ const createFakeEditor = (containerElem: HTMLElement): FakeEditor => {
 };
 
 describe("<MonacoEditor />", () => {
+  let di: ReturnType<typeof getDiForUnitTesting>;
   let render: DiRender;
   let fakeEditors: FakeEditor[];
   let model: editor.ITextModel;
 
   beforeEach(() => {
-    const di = getDiForUnitTesting();
-
+    di = getDiForUnitTesting();
     render = renderFor(di);
+
     fakeEditors = [];
 
     model = { uri: { path: "/monaco-editor/some-id" }, getLineCount: () => 1 } as unknown as editor.ITextModel;
@@ -109,11 +111,18 @@ describe("<MonacoEditor />", () => {
     let unmount: () => void;
 
     beforeEach(() => {
-      ({ rerender, unmount } = render(
-        <React.StrictMode>
+      // The root itself is strict: React double-invokes the effects of a tree that mounts in the first
+      // commit only for the fibers inside a strict root or a strict element placed by that commit, so a
+      // provider above the StrictMode element would hide the remount.
+      const result = testingLibraryRender(
+        <DiContextProvider value={di}>
           <MonacoEditor id="some-id" theme="vs" value="some-value" />
-        </React.StrictMode>,
-      ));
+        </DiContextProvider>,
+        { reactStrictMode: true },
+      );
+
+      rerender = (ui) => result.rerender(<DiContextProvider value={di}>{ui}</DiContextProvider>);
+      unmount = result.unmount;
     });
 
     it("creates a new editor after the remount", () => {

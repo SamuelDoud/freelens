@@ -287,5 +287,88 @@ describe("Table tests", () => {
 
       expect(getSorted(items, (item) => item)).toStrictEqual(getSortedReference(items, (item) => item));
     });
+    describe("starting from a previous result", () => {
+      type Row = { id: number; key: unknown };
+
+      // Rows with many ties, so that the order of equal keys is exercised.
+      const makeRows = (next: () => number, count: number, shape: "numbers" | "strings" | "arrays" | "mixed"): Row[] =>
+        Array.from({ length: count }, (_, id) => {
+          const n = Math.floor(next() * 40);
+          const key =
+            shape === "numbers"
+              ? next() < 0.05
+                ? undefined
+                : n
+              : shape === "strings"
+                ? `k${n}`
+                : shape === "arrays"
+                  ? [n % 7, `s${n}`]
+                  : next() < 0.5
+                    ? n
+                    : `k${n}`;
+
+          return { id, key };
+        });
+
+      it.each(["numbers", "strings", "arrays", "mixed"] as const)(
+        "gives the order of a sort from scratch after a flush, %s keys",
+        (shape) => {
+          for (let seed = 1; seed <= 12; seed++) {
+            const next = random(seed);
+            let rows = makeRows(next, 600 + Math.floor(next() * 400), shape);
+
+            for (const direction of ["asc", "desc"] as const) {
+              let previous = getSorted(rows, (row) => row.key as any, direction);
+
+              for (let flush = 0; flush < 6; flush++) {
+                // A flush replaces some rows by new objects, appends some and removes some, in the store's order.
+                const replaced = rows.map((row) =>
+                  next() < 0.02 ? { id: row.id, key: next() < 0.5 ? row.key : makeRows(next, 1, shape)[0].key } : row,
+                );
+                const added = makeRows(next, Math.floor(next() * 10), shape).map((row, i) => ({
+                  ...row,
+                  id: 10000 + flush * 100 + i,
+                }));
+                const kept = replaced.filter(() => next() > 0.01);
+
+                rows = next() < 0.5 ? [...kept, ...added] : [...added, ...kept];
+
+                const expected = getSorted(rows, (row) => row.key as any, direction);
+                const actual = getSorted(rows, (row) => row.key as any, direction, previous);
+
+                expect(actual.map((row) => row.id)).toStrictEqual(expected.map((row) => row.id));
+                previous = actual;
+              }
+            }
+          }
+        },
+      );
+
+      it("falls back to the full sort when the keys of the previous items changed", () => {
+        const next = random(7);
+        const rows = makeRows(next, 1000, "numbers") as { id: number; key: number }[];
+        const previous = getSorted(rows, (row) => row.key);
+        const changed = rows.map((row) => row.key);
+        const flipped = (row: { id: number }) => -changed[row.id] || 0;
+
+        expect(getSorted(rows, flipped, "asc", previous).map((row) => row.id)).toStrictEqual(
+          getSorted(rows, flipped, "asc").map((row) => row.id),
+        );
+      });
+
+      it("handles the same item twice and a previous list with strangers", () => {
+        const next = random(3);
+        const rows = makeRows(next, 800, "numbers");
+        const previous = getSorted(rows, (row) => row.key as number);
+        const twice = [...rows, rows[5], rows[6]];
+
+        expect(getSorted(twice, (row) => row.key as number, "asc", previous)).toStrictEqual(
+          getSorted(twice, (row) => row.key as number, "asc"),
+        );
+        expect(getSorted(rows.slice(300), (row) => row.key as number, "asc", previous)).toStrictEqual(
+          getSorted(rows.slice(300), (row) => row.key as number),
+        );
+      });
+    });
   });
 });

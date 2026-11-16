@@ -254,8 +254,15 @@ peerDependencyRules:
   allowedVersions:
     mobx: '7'
 
+# The patch of @ogre-tools/injectable-react makes withInjectables work out the props of a
+# synchronous getProps in the render itself. The library computed them in a layout effect and
+# stored them in state, so that every wrapped component rendered twice per update, the first time
+# with the props of the update before, and once as a placeholder on mount. An asynchronous
+# getProps still uses the state and the placeholder. The patch is keyed by the exact version, so
+# a version bump reports it as unused: port it, or drop it if the library has fixed this.
 patchedDependencies:
   '@async-fn/vitest': patches/@async-fn__vitest.patch
+  '@ogre-tools/injectable-react@27.0.0': patches/@ogre-tools__injectable-react@27.0.0.patch
   '@xterm/xterm@6.0.0': patches/@xterm__xterm@6.0.0.patch
   monaco-editor@0.57.0: patches/monaco-editor@0.57.0.patch
 

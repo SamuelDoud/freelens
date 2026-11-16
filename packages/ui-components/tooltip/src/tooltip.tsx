@@ -11,7 +11,7 @@ import autoBindReact from "auto-bind/react";
 import { action, observable, observableRef, runInAction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { computeNextPosition } from "./helpers";
 
 import type { IClassName, StrictReactNode } from "@freelensapp/utilities";
@@ -54,8 +54,14 @@ const defaultProps = {
   offset: 10,
 };
 
+type ActiveTooltipProps = TooltipProps &
+  typeof defaultProps & {
+    /** The mouse entered the target before this component was mounted. */
+    initiallyHovered?: boolean;
+  };
+
 @observer
-class DefaultedTooltip extends React.Component<TooltipProps & typeof defaultProps> {
+class ActiveTooltip extends React.Component<ActiveTooltipProps> {
   static defaultProps = defaultProps as object;
 
   @observableRef accessor elem: HTMLDivElement | null = null;
@@ -66,9 +72,13 @@ class DefaultedTooltip extends React.Component<TooltipProps & typeof defaultProp
 
   @observable accessor isContentVisible = false; // animation manager
 
-  constructor(props: TooltipProps & typeof defaultProps) {
+  constructor(props: ActiveTooltipProps) {
     super(props);
     autoBindReact(this);
+
+    if (props.initiallyHovered) {
+      this.isVisible = true;
+    }
   }
 
   get targetElem(): HTMLElement | null {
@@ -86,6 +96,11 @@ class DefaultedTooltip extends React.Component<TooltipProps & typeof defaultProp
   componentDidMount() {
     this.hoverTarget?.addEventListener("mouseenter", this.onEnterTarget);
     this.hoverTarget?.addEventListener("mouseleave", this.onLeaveTarget);
+
+    if (this.props.initiallyHovered) {
+      requestAnimationFrame(action(() => (this.isContentVisible = true)));
+    }
+
     this.refreshPosition();
   }
 
@@ -171,4 +186,51 @@ class DefaultedTooltip extends React.Component<TooltipProps & typeof defaultProp
   }
 }
 
-export const Tooltip = DefaultedTooltip as React.ComponentClass<TooltipProps>;
+/**
+ * Mounts the tooltip machinery (observables, bound handlers, listeners on the
+ * target) only once the pointer first enters the target, or when `visible` is
+ * set. A tooltip that is never hovered costs one plain component and two
+ * listeners.
+ */
+class LazyTooltip extends React.Component<TooltipProps, { hovered: boolean }> {
+  state = { hovered: false };
+
+  private hoverTarget: HTMLElement | null = null;
+
+  private readonly onEnterTarget = () => {
+    if (this.state.hovered) {
+      return;
+    }
+
+    this.removeListeners();
+    // Synchronous, so that the mounted tooltip has its own listeners attached
+    // before the pointer can leave again.
+    flushSync(() => this.setState({ hovered: true }));
+  };
+
+  private removeListeners() {
+    this.hoverTarget?.removeEventListener("mouseenter", this.onEnterTarget);
+    this.hoverTarget = null;
+  }
+
+  componentDidMount() {
+    const target = document.getElementById(this.props.targetId);
+
+    this.hoverTarget = this.props.tooltipOnParentHover ? (target?.parentElement ?? null) : target;
+    this.hoverTarget?.addEventListener("mouseenter", this.onEnterTarget);
+  }
+
+  componentWillUnmount() {
+    this.removeListeners();
+  }
+
+  render() {
+    if (!this.state.hovered && !this.props.visible) {
+      return null;
+    }
+
+    return <ActiveTooltip {...(this.props as ActiveTooltipProps)} initiallyHovered={this.state.hovered} />;
+  }
+}
+
+export const Tooltip = LazyTooltip as React.ComponentClass<TooltipProps>;

@@ -116,7 +116,8 @@ export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> 
   private readonly podStatuses = new WeakMap<Pod, string>();
 
   private syncedPodIndex() {
-    const items = this.dependencies.podStore.items;
+    // A copy: iterating the observable array goes through its proxy, ten times slower.
+    const items = this.dependencies.podStore.items.slice();
 
     // The usual call finds nothing new: one pass of lookups, no copy.
     if (items.length !== this.indexedPods.size || !items.every((pod) => this.indexedPods.has(pod))) {
