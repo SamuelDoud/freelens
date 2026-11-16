@@ -96,8 +96,10 @@ const valueSet = (text: string | undefined) => {
 type Columns = Record<string, string | number>;
 
 /** Whether a status ("Ready,SchedulingDisabled" counts as both of its parts) is one of the values. */
+// Kinds without a status column of their own (custom resources, APIService, ...) show the
+// conditions that hold, which the status filters match the same way.
 const statusIsOneOf = (columns: Columns, values: Set<string>) => {
-  const status = String(columns.status ?? "").toLowerCase();
+  const status = String(columns.status ?? columns.conditions ?? "").toLowerCase();
 
   return values.has(status) || status.split(",").some((part) => values.has(part));
 };
@@ -285,38 +287,42 @@ export class AiToolExecutor {
           throw new ToolError(`"sortBy" must be one of ${Object.keys(listOrders).join(", ")}.`);
         }
 
-        // A filter on a column the kind lacks would match nothing: say which columns there are.
-        const available = new Set([
-          ...Object.keys(statusColumns(resource.kind, {})),
-          ...Object.keys(statusColumns(resource.kind, items[0] ?? {})),
-        ]);
-        const needed: [boolean, string, string[]][] = [
-          [minRestarts !== undefined, "minRestarts", ["restarts"]],
-          [Boolean(statusIn), "status", ["status"]],
-          [Boolean(statusOut), "statusNot", ["status"]],
-          [notReady, "notReady", ["ready", "status"]],
-        ];
+        const allRows = items.map((object) => ({ object, columns: statusColumns(resource.kind, object) }));
 
-        for (const [used, filter, columns] of needed) {
-          if (used && !columns.some((column) => available.has(column))) {
-            throw new ToolError(
-              `"${filter}" filters the ${columns.join(" or ")} column, which ${resource.kind} does not have. Its columns: ${
-                [...available].join(", ") || "none besides name, namespace and age"
-              }.`,
-            );
+        // A filter on a column the kind lacks would match nothing: say which columns there are. The
+        // columns of a custom resource depend on its objects (conditions), so every object counts, and
+        // an empty list answers with no match rather than an error.
+        if (allRows.length > 0) {
+          const available = new Set([
+            ...Object.keys(statusColumns(resource.kind, {})),
+            ...allRows.flatMap(({ columns }) => Object.keys(columns)),
+          ]);
+          const needed: [boolean, string, string[]][] = [
+            [minRestarts !== undefined, "minRestarts", ["restarts"]],
+            [Boolean(statusIn), "status", ["status", "conditions"]],
+            [Boolean(statusOut), "statusNot", ["status", "conditions"]],
+            [notReady, "notReady", ["ready", "status"]],
+          ];
+
+          for (const [used, filter, columns] of needed) {
+            if (used && !columns.some((column) => available.has(column))) {
+              throw new ToolError(
+                `"${filter}" filters the ${columns.join(" or ")} column, which ${resource.kind} does not have. Its columns: ${
+                  [...available].join(", ") || "none besides name, namespace and age"
+                }.`,
+              );
+            }
           }
         }
 
         const filtered = minRestarts !== undefined || statusIn || statusOut || notReady;
-        const rows = items
-          .map((object) => ({ object, columns: statusColumns(resource.kind, object) }))
-          .filter(
-            ({ columns }) =>
-              (minRestarts === undefined || Number(columns.restarts ?? 0) >= minRestarts) &&
-              (!statusIn || statusIsOneOf(columns, statusIn)) &&
-              (!statusOut || !statusIsOneOf(columns, statusOut)) &&
-              (!notReady || isNotReady(columns)),
-          );
+        const rows = allRows.filter(
+          ({ columns }) =>
+            (minRestarts === undefined || Number(columns.restarts ?? 0) >= minRestarts) &&
+            (!statusIn || statusIsOneOf(columns, statusIn)) &&
+            (!statusOut || !statusIsOneOf(columns, statusOut)) &&
+            (!notReady || isNotReady(columns)),
+        );
 
         if (order) {
           rows.sort(order);

@@ -76,7 +76,7 @@ export const aiTools: readonly AiToolSpec[] = [
         status: {
           type: "string",
           description:
-            'Only these values of the status column, comma-separated, any case: "CrashLoopBackOff,Error", "Pending", "NotReady".',
+            'Only these values of the status column (or, for kinds without one, of the conditions that hold), comma-separated, any case: "CrashLoopBackOff,Error", "Pending", "NotReady", "Ready".',
         },
         statusNot: { type: "string", description: 'Leave out these values of the status column: "Running,Completed".' },
         notReady: {

@@ -342,6 +342,28 @@ describe("AiToolExecutor", () => {
         '"minRestarts" filters the restarts column, which Deployment does not have. Its columns: ready, available.',
       );
     });
+
+    it("answers an empty list with no match, not an error", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({ items: [] });
+
+      const result = await executor.execute("list_resources", { kind: "Widget", status: "Ready" }, readOnly);
+
+      expect(result).toEqual({ ok: true, text: "0 Widgets, 0 matching" });
+    });
+
+    it("takes the columns of every object, not only the first", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({
+        items: [
+          { metadata: { name: "w1", namespace: "a" } },
+          { metadata: { name: "w2", namespace: "a" }, status: { conditions: [{ type: "Ready", status: "True" }] } },
+        ],
+      });
+
+      const result = await executor.execute("list_resources", { kind: "Widget", status: "Ready" }, readOnly);
+
+      expect(result.ok).toBe(true);
+      expect(result.text.split("\n")[0]).toBe("2 Widgets, 1 matching");
+    });
   });
 
   describe("pods with init containers", () => {
