@@ -566,6 +566,45 @@ describe("KubeObjectStore", () => {
       await loading;
     });
 
+    it("does not put the items of a load back into a store that was reset meanwhile", async () => {
+      const [a, b] = [objectNamed("a"), objectNamed("b")];
+      const gate = deferred<KubeObject[]>();
+      const list = vi.fn(({ onPage }: { onPage?: (page: unknown) => void }) => {
+        onPage?.({ items: [a], loaded: 1, remainingItemCount: 1 });
+
+        return gate.promise;
+      });
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list });
+
+      const loading = store.loadAll({});
+      await vi.advanceTimersByTimeAsync(1000);
+      store.reset();
+      gate.resolve([a, b]);
+      await loading;
+
+      expect(store.items).toHaveLength(0);
+      expect(store.isLoaded).toBe(false);
+    });
+
+    it("keeps the items of two loads that overlap without a reset", async () => {
+      const [a, b] = [objectNamed("a", "ns1"), objectNamed("b", "ns2")];
+      const first = deferred<KubeObject[]>();
+      const second = deferred<KubeObject[]>();
+      const list = vi.fn(({ namespace }: { namespace?: string }) =>
+        namespace === "ns1" ? first.promise : second.promise,
+      );
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list }, () => false);
+
+      const loadingFirst = store.loadAll({ namespaces: ["ns1"] });
+      const loadingSecond = store.loadAll({ namespaces: ["ns2"] });
+
+      second.resolve([b]);
+      first.resolve([a]);
+      await Promise.all([loadingFirst, loadingSecond]);
+
+      expect(store.items.map((item) => item.getName()).sort()).toEqual(["a", "b"]);
+    });
+
     it("streams every requested namespace and keeps items of namespaces not being loaded", async () => {
       const keep = objectNamed("keep", "other");
       const a1 = objectNamed("a1", "ns1");

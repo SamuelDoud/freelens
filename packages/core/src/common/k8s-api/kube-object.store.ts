@@ -258,6 +258,10 @@ export class KubeObjectStore<
   // Bumped by every loadAll and reset: a progressive publish scheduled by
   // an older (or reset) load must not put its items back into the store.
   private loadGeneration = 0;
+  // Bumped by every reset and release, and not by loads: a load that began
+  // before one must not fill the emptied store when it ends, while loads
+  // that merely overlap each merge their own namespaces.
+  private emptiedCount = 0;
   // The watch events an all-namespaces load caught while it listed, for
   // loadAll to apply once it has merged the load's items.
   private loadReplay: { generation: number; events: IKubeWatchEvent<D>[] } | undefined;
@@ -917,6 +921,7 @@ export class KubeObjectStore<
     namespaces ??= this.dependencies.context.contextNamespaces;
     this.isLoading = true;
     const generation = ++this.loadGeneration;
+    const emptiedCount = this.emptiedCount;
     const timing = startLoadTiming(this.api.apiBase, generation);
 
     try {
@@ -931,6 +936,10 @@ export class KubeObjectStore<
           timing.firstItems();
         },
       });
+
+      if (emptiedCount !== this.emptiedCount) {
+        return undefined;
+      }
 
       this.mergeLoadedItems(items, merge, namespaces);
 
@@ -1036,6 +1045,7 @@ export class KubeObjectStore<
     // Invalidate progressive publishes of a load still in flight: what it
     // already streamed in must not reappear after the reset.
     this.loadGeneration++;
+    this.emptiedCount++;
     this.heldVersions.clear();
     this.individuallyLoaded.clear();
     super.reset();
@@ -1069,6 +1079,7 @@ export class KubeObjectStore<
     }
 
     this.loadGeneration++;
+    this.emptiedCount++;
     this.heldVersions.clear();
     this.eventsBuffer.clear();
     this.items.replace(this.items.filter((item) => this.individuallyLoaded.has(item.getId())));
