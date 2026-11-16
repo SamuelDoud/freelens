@@ -544,6 +544,28 @@ describe("KubeObjectStore", () => {
       expect(store.isLoaded).toBe(true);
     });
 
+    it("shows no object twice when a list starts over after its continue token expired", async () => {
+      const [a, b, c] = [objectNamed("a"), objectNamed("b"), objectNamed("c")];
+      const gate = deferred<KubeObject[]>();
+      const list = vi.fn(({ onPage }: { onPage?: (page: unknown) => void }) => {
+        onPage?.({ items: [a, b], loaded: 2, remainingItemCount: 1 });
+        // the token expired: the list begins again from its first page
+        onPage?.({ items: [a, b], loaded: 2, remainingItemCount: 1 });
+
+        return gate.promise;
+      });
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list });
+
+      const loading = store.loadAll({});
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(store.items.map((item) => item.getName())).toEqual(["a", "b"]);
+      expect(store.loadingProgress).toEqual({ loaded: 2, total: 3 });
+
+      gate.resolve([a, b, c]);
+      await loading;
+    });
+
     it("streams every requested namespace and keeps items of namespaces not being loaded", async () => {
       const keep = objectNamed("keep", "other");
       const a1 = objectNamed("a1", "ns1");

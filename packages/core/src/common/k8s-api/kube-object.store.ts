@@ -732,7 +732,9 @@ export class KubeObjectStore<
     const publishIntervalMs = 250;
     const streamCount = streamNames.length;
     const fannedOut = streamCount > 1;
-    const accumulated: K[] = [];
+    let accumulated: K[] = [];
+    // What each stream contributed, to take it back when its list starts over.
+    const streamItems = new Map<string, K[]>();
     const streams = new Map<
       string,
       { loaded: number; remainingItemCount?: number; pages: number; resourceVersion?: string; done: boolean }
@@ -817,9 +819,25 @@ export class KubeObjectStore<
       onPageFor:
         (stream: string) =>
         (page: KubeApiListPage<K>): void => {
-          accumulated.push(...page.items);
-
           const previous = streams.get(stream);
+          const contributed = streamItems.get(stream) ?? [];
+
+          // A later page always raises `loaded`; a first page of the whole
+          // list in its place means the list started over (its continue
+          // token expired), and the items it already gave are given again.
+          if (previous && previous.loaded > 0 && page.loaded <= previous.loaded && page.items.length === page.loaded) {
+            const again = new Set(contributed);
+
+            accumulated = accumulated.filter((item) => !again.has(item));
+            contributed.length = 0;
+          }
+
+          for (const item of page.items) {
+            accumulated.push(item);
+            contributed.push(item);
+          }
+
+          streamItems.set(stream, contributed);
 
           streams.set(stream, {
             loaded: page.loaded,
