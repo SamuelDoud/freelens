@@ -135,7 +135,7 @@ class ClusterConnection {
    * Prevents overlapping connection status checks: while a credential plugin
    * waits for an interactive login, no other caller must start another attempt.
    */
-  private isRefreshing = false;
+  private refreshInFlight: Promise<void> | undefined;
 
   constructor(
     private readonly dependencies: Dependencies,
@@ -322,6 +322,8 @@ class ClusterConnection {
           message: "Starting connection ...",
         });
         await this.reconnect();
+        // A check that began before the proxy restarted saw the old proxy.
+        await this.refreshInFlight?.catch(() => {});
       } catch (error) {
         this.dependencies.broadcastConnectionUpdate({
           level: "error",
@@ -493,30 +495,38 @@ class ClusterConnection {
     this.dependencies.logger.debug(`[CLUSTER]: refreshed accessibility data`, this.cluster.getState());
   }
 
-  async refreshConnectionStatus() {
+  refreshConnectionStatus(): Promise<void> {
     // activate(), the refresh timer and the network events all end up here: a
-    // check still waiting for a credential plugin must not be doubled.
-    if (this.isRefreshing) {
+    // check still waiting for a credential plugin must not be doubled. A
+    // caller that finds one joins it, so that an activation goes on with the
+    // status that check finds instead of the one before it.
+    if (this.refreshInFlight) {
       this.dependencies.logger.debug(
         `[CLUSTER]: skipping refresh, previous refresh still in progress`,
         this.cluster.getMeta(),
       );
 
-      return;
+      return this.refreshInFlight;
     }
 
-    this.isRefreshing = true;
-
-    try {
+    const refresh = (async () => {
       const connectionStatus = await this.getConnectionStatus();
 
       runInAction(() => {
         this.cluster.online.set(connectionStatus > ClusterStatus.Offline);
         this.cluster.accessible.set(connectionStatus == ClusterStatus.AccessGranted);
       });
-    } finally {
-      this.isRefreshing = false;
-    }
+    })();
+    const clear = () => {
+      if (this.refreshInFlight === refresh) {
+        this.refreshInFlight = undefined;
+      }
+    };
+
+    this.refreshInFlight = refresh;
+    refresh.then(clear, clear);
+
+    return refresh;
   }
 
   protected async getConnectionStatus(): Promise<ClusterStatus> {
