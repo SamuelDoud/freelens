@@ -51,4 +51,4 @@ export function storeAppearance(value: AppearancePreferences): Partial<Appearanc
 
 /** The CSS font stack for a chosen font, falling back to the default fonts. */
 export const fontStack = (fontFamily: string) =>
-  `${fontFamily ? `"${fontFamily.replace(/"/g, "")}", ` : ""}"Roboto", "Helvetica", "Arial", sans-serif`;
+  `${fontFamily ? `"${fontFamily.replace(/["\\\n\r]/g, "")}", ` : ""}"Roboto", "Helvetica", "Arial", sans-serif`;

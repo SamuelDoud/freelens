@@ -6,6 +6,7 @@
 import { sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
 import { beforeFrameStartsSecondInjectionToken } from "../../../renderer/before-frame-starts/tokens";
+import { chatWindowChatId } from "../../ai-chat/renderer/chat-window";
 import { historyGoChannel } from "../common/channels";
 
 // The "back" and "forward" buttons of a mouse
@@ -17,6 +18,11 @@ const mouseHistoryButtonsInjectable = getInjectable({
   instantiate: (di) => ({
     run: () => {
       const send = di.inject(sendMessageToChannelInjectionToken);
+
+      // The step goes to every window: a chat's own window has no history of the application to go back in.
+      if (chatWindowChatId()) {
+        return;
+      }
 
       window.addEventListener("mouseup", (event) => {
         const delta = mouseButtonSteps[event.button];

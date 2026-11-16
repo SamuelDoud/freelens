@@ -17,7 +17,12 @@ const clusterFramePressedListenerInjectable = getMessageChannelListenerInjectabl
 
     return (clusterId) => {
       if (!inClusterFrame) {
-        runInAction(() => di.inject(pressedClusterFrameInjectable).set(clusterId));
+        const pressed = di.inject(pressedClusterFrameInjectable);
+
+        // Cleared first: a press of the frame pressed last must still change the value, after the active pane
+        // moved some other way, such as a click on a pane's title.
+        runInAction(() => pressed.set(undefined));
+        runInAction(() => pressed.set(clusterId));
       }
     };
   },

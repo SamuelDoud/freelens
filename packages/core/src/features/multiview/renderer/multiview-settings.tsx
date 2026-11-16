@@ -17,7 +17,7 @@ import navigateInjectable from "../../../renderer/navigation/navigate.injectable
 import routePathParametersInjectable from "../../../renderer/routes/route-path-parameters.injectable";
 import clustersInjectable from "../../cluster/storage/common/clusters.injectable";
 import userPreferencesStateInjectable from "../../user-preferences/common/state.injectable";
-import { multiViewLayouts, multiViewPath, newMultiViewId } from "../common/multiview";
+import { multiViewLayouts, multiViewPath, newMultiViewId, removedClusterIds } from "../common/multiview";
 import multiViewSettingsRouteInjectable from "../common/multiview-settings-route.injectable";
 
 import type { IComputedValue } from "mobx";
@@ -68,9 +68,14 @@ const MultiViewForm = observer(
       update({
         clusterIds: checked ? [...draft.clusterIds, id] : draft.clusterIds.filter((clusterId) => clusterId !== id),
       });
+    // Clusters removed since the multiview was made stay listed, to uncheck, and do not count as panes.
+    const removed = removedClusterIds(
+      draft.clusterIds,
+      clusters.map(({ id }) => id),
+    );
     const problem = !draft.name.trim()
       ? "Give it a name."
-      : draft.clusterIds.length < 2
+      : draft.clusterIds.length - removed.length < 2
         ? "Pick at least two clusters."
         : undefined;
 
@@ -107,6 +112,15 @@ const MultiViewForm = observer(
                 />
               );
             })}
+            {removed.map((id) => (
+              <Checkbox
+                key={id}
+                data-testid={`multiview-cluster-${id}`}
+                label={`${draft.clusterIds.indexOf(id) + 1}. Removed cluster ${id}`}
+                value
+                onChange={(checked) => toggleCluster(id, checked)}
+              />
+            ))}
           </div>
         </section>
         <section>

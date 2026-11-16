@@ -6,13 +6,25 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import lastShownClusterFramesInjectable from "./last-shown-cluster-frames.injectable";
 import relayShownClusterFramesInjectable from "./relay-shown-cluster-frames.injectable";
+import replayShownClusterFramesInjectable from "./replay-shown-cluster-frames.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
+    di.register(lastShownClusterFramesInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(relayShownClusterFramesInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(replayShownClusterFramesInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

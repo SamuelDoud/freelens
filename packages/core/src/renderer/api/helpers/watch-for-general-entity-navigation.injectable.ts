@@ -42,6 +42,10 @@ const watchForGeneralEntityNavigationInjectable = getInjectable({
 
                   if (activeEntity) {
                     entityRegistry.activeEntity = activeEntity;
+                  } else if (entities.some((entity) => entity.getId() === entityRegistry.activeEntity?.getId())) {
+                    // Left the page of a general entity, such as a multiview. Another entity that became active
+                    // meanwhile, a cluster, keeps its place.
+                    entityRegistry.activeEntity = undefined;
                   }
                 },
                 {

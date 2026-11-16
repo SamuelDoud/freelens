@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { paneRects, readMultiViews } from "./multiview";
+import { paneRects, readMultiViews, removedClusterIds } from "./multiview";
 
 describe("paneRects", () => {
   it("puts panes side by side, stacked or in a grid", () => {
@@ -37,5 +37,11 @@ describe("readMultiViews", () => {
       { id: "a", name: "Prod", clusterIds: ["c1", "c2"], layout: "rows", iconText: "PRD" },
       { id: "b", name: "Bad layout", clusterIds: [], layout: "columns" },
     ]);
+  });
+});
+
+describe("removedClusterIds", () => {
+  it("lists the clusters that no longer exist, in order", () => {
+    expect(removedClusterIds(["a", "gone", "b", "gone2"], ["a", "b", "c"])).toEqual(["gone", "gone2"]);
   });
 });

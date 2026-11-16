@@ -26,4 +26,8 @@ describe("appearance preferences", () => {
     expect(fontStack("")).toBe('"Roboto", "Helvetica", "Arial", sans-serif');
     expect(fontStack('Fira "Sans')).toBe('"Fira Sans", "Roboto", "Helvetica", "Arial", sans-serif');
   });
+
+  it("keep a backslash in a font name from escaping the closing quote", () => {
+    expect(fontStack("Fira\\")).toBe('"Fira", "Roboto", "Helvetica", "Arial", sans-serif');
+  });
 });

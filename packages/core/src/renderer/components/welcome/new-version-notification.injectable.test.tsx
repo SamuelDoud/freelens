@@ -56,4 +56,15 @@ describe("new-version-notification.injectable", () => {
 
     expect(showInfoMock).not.toHaveBeenCalled();
   });
+
+  it("tells the user once, however often the welcome page is visited", async () => {
+    di.override(getLatestVersionViaChannelInjectable, () => async () => "1.2.4");
+
+    const newVersionNotification = di.inject(newVersionNotificationInjectable);
+
+    await newVersionNotification();
+    await newVersionNotification();
+
+    expect(showInfoMock).toHaveBeenCalledTimes(1);
+  });
 });

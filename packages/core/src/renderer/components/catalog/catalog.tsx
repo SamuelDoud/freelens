@@ -33,6 +33,7 @@ import catalogEntityStoreInjectable from "./catalog-entity-store.injectable";
 import { CatalogMenu } from "./catalog-menu";
 import catalogPreviousActiveTabStorageInjectable from "./catalog-previous-active-tab-storage/catalog-previous-active-tab-storage.injectable";
 import catalogRouteParametersInjectable from "./catalog-route-parameters.injectable";
+import { categoryToSwitchTo } from "./category-to-show";
 import getCategoryColumnsInjectable from "./columns/get.injectable";
 import customCategoryViewsInjectable from "./custom-views.injectable";
 import onCatalogEntityListClickInjectable from "./entity-details/on-catalog-click.injectable";
@@ -164,20 +165,15 @@ class NonInjectedCatalog extends React.Component<Dependencies> {
       reaction(
         () => [...catalogCategoryRegistry.filteredItems],
         (categories) => {
-          const currentCategory = catalogEntityStore.activeCategory.get();
-          const someCategory = categories[0];
-
-          if (routeActiveTab() === browseCatalogTab || !someCategory) {
-            return;
-          }
-
-          const currentCategoryShouldBeShown = Boolean(
-            categories.find((item) => item.getId() === someCategory.getId()),
+          const next = categoryToSwitchTo(
+            catalogEntityStore.activeCategory.get(),
+            categories,
+            routeActiveTab() === browseCatalogTab,
           );
 
-          if (!currentCategory || !currentCategoryShouldBeShown) {
-            this.activeTab = someCategory.getId();
-            catalogEntityStore.activeCategory.set(someCategory);
+          if (next) {
+            this.activeTab = next.getId();
+            catalogEntityStore.activeCategory.set(next);
           }
         },
       ),

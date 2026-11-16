@@ -6,7 +6,7 @@
 import { Icon } from "@freelensapp/icon";
 import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { computed, reaction, when } from "mobx";
+import { computed, reaction } from "mobx";
 import { observer } from "mobx-react";
 import { useEffect, useState } from "react";
 import clusterFrameHandlerInjectable from "../../../renderer/components/cluster-manager/cluster-frame-handler.injectable";
@@ -20,6 +20,7 @@ import multiViewRouteInjectable from "../common/multiview-route.injectable";
 import navigateToMultiViewSettingsInjectable from "../common/navigate-to-multiview-settings.injectable";
 import styles from "./multiview-page.module.scss";
 import pressedClusterFrameInjectable from "./pressed-cluster-frame.injectable";
+import { startFramesInOrder } from "./start-frames-in-order";
 
 import type { IComputedValue, IObservableValue } from "mobx";
 
@@ -71,24 +72,12 @@ const NonInjectedMultiViewPage = observer(
 
       let cancelled = false;
 
-      // One frame after the other: each loads the whole interface, and several
-      // starting at once compete for the same resources.
-      void (async () => {
-        for (const clusterId of clusterIds) {
-          if (cancelled) {
-            return;
-          }
-
-          clusterFrames.initView(clusterId);
-          requestClusterActivation({ clusterId });
-
-          try {
-            await when(() => clusterFrames.hasLoadedView(clusterId), { timeout: frameStartTimeoutMs });
-          } catch {
-            // A frame that does not load in time does not hold up the others.
-          }
-        }
-      })();
+      void startFramesInOrder(
+        clusterIds,
+        { clusterFrames, getClusterById, requestClusterActivation },
+        () => cancelled,
+        frameStartTimeoutMs,
+      );
 
       clusterFrames.setVisibleClusters(
         clusterIds.map((clusterId, index) => ({ clusterId, rect: rects[index] })),
@@ -147,7 +136,7 @@ const NonInjectedMultiViewPage = observer(
                 onMouseDown={() => setActive(clusterId)}
                 data-testid={`multiview-pane-title-${index}`}
               >
-                <span className={styles.name}>{cluster?.name.get() ?? `Unknown cluster ${clusterId}`}</span>
+                <span className={styles.name}>{cluster?.name.get() ?? `Removed cluster ${clusterId}`}</span>
                 {index === 0 && (
                   <span className={styles.tools}>
                     <span className={styles.viewName}>{`${view.name} · ${layoutLabel}`}</span>
