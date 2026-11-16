@@ -8,6 +8,7 @@ import assert from "node:assert";
 import { disposer } from "@freelensapp/utilities";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
+import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { debounce } from "es-toolkit/compat";
 import { reaction } from "mobx";
@@ -48,6 +49,15 @@ export class Terminal {
   private readonly webLinksAddon = new WebLinksAddon((event, link) => this.dependencies.openLinkInBrowser(link));
   private scrollPos = 0;
   /**
+   * The WebGL renderer, while the terminal is shown. A terminal that is not
+   * attached holds none, so that the tabs left open do not hold contexts
+   * (a browser keeps about sixteen alive and drops the oldest) and a terminal
+   * that is shown again gets a fresh one.
+   */
+  private webgl: WebglAddon | undefined;
+  /** Set when a WebGL context could not be created at all: the DOM renderer it is. */
+  private webglUnavailable = false;
+  /**
    * Whether an `error`-level status line was written. Such a line keeps its
    * place above the prompt, which means the buffer must not be cleared once
    * the session becomes ready.
@@ -68,11 +78,14 @@ export class Terminal {
   attachTo(parentElem: HTMLElement) {
     assert(this.elem, "Terminal should always be mounted somewhere");
     parentElem.appendChild(this.elem);
+    this.enableWebgl();
     this.onActivate();
   }
 
   detach() {
     const { elem } = this;
+
+    this.disableWebgl();
 
     if (elem) {
       this.dependencies.spawningPool.appendChild(elem);
@@ -162,8 +175,64 @@ export class Terminal {
 
   destroy() {
     this.disposer();
+    this.disableWebgl();
     this.xterm.dispose();
   }
+
+  /**
+   * Draws with WebGL instead of the DOM, which is much cheaper for a terminal
+   * that scrolls a lot of output. Wherever WebGL is not there (no GPU, a
+   * blocked driver) or goes away (the context is lost: a GPU reset, or the
+   * browser taking it for a newer one), the terminal keeps the DOM renderer
+   * that xterm falls back to when the addon is disposed.
+   */
+  private enableWebgl() {
+    if (this.webgl || this.webglUnavailable) {
+      return;
+    }
+
+    try {
+      const webgl = new WebglAddon();
+
+      webgl.onContextLoss(() => {
+        this.dependencies.logger.warn("[TERMINAL]: the WebGL context was lost, drawing with the DOM renderer");
+
+        if (this.webgl === webgl) {
+          this.disableWebgl();
+        }
+      });
+
+      this.xterm.loadAddon(webgl);
+      this.webgl = webgl;
+      // The glyphs are drawn into a texture when they are first needed, and a
+      // font that is still loading then would be drawn as its fallback for good.
+      document.fonts?.addEventListener("loadingdone", this.clearTextureAtlas);
+    } catch (error) {
+      this.webglUnavailable = true;
+      this.dependencies.logger.info("[TERMINAL]: WebGL is not available, drawing with the DOM renderer", error);
+    }
+  }
+
+  private disableWebgl() {
+    const { webgl } = this;
+
+    if (!webgl) {
+      return;
+    }
+
+    this.webgl = undefined;
+    document.fonts?.removeEventListener("loadingdone", this.clearTextureAtlas);
+
+    try {
+      webgl.dispose();
+    } catch (error) {
+      this.dependencies.logger.warn("[TERMINAL]: failed to dispose the WebGL renderer", error);
+    }
+  }
+
+  private readonly clearTextureAtlas = () => {
+    this.webgl?.clearTextureAtlas();
+  };
 
   fit = () => this.fitAddon.fit();
 
