@@ -4,17 +4,29 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { createConditionMatcher, getConditionError, parseLocalDateTime } from "./create-condition-matcher";
+import {
+  createConditionMatcher,
+  getConditionError,
+  getEffectiveConditionsKey,
+  parseLocalDateTime,
+} from "./create-condition-matcher";
 import { describeCondition } from "./describe-condition";
 import { parseDuration } from "./duration";
 
-import type { SearchCondition, SearchField, TextSearchOperator, TimeSearchOperator } from "./conditions";
+import type {
+  QuantitySearchOperator,
+  SearchCondition,
+  SearchField,
+  TextSearchOperator,
+  TimeSearchOperator,
+} from "./conditions";
 
 interface Item {
   name: string;
   namespace: string;
   labels: string[];
   created?: number;
+  restarts?: number;
 }
 
 const fields: SearchField<Item>[] = [
@@ -22,6 +34,7 @@ const fields: SearchField<Item>[] = [
   { id: "namespace", title: "Namespace", kind: "text", getValues: (item) => item.namespace },
   { id: "labels", title: "Labels", kind: "text", getValues: (item) => item.labels },
   { id: "age", title: "Age", kind: "time", getTime: (item) => item.created },
+  { id: "restarts", title: "Restarts", kind: "quantity", unit: "count", getQuantity: (item) => item.restarts },
 ];
 
 let nextId = 0;
@@ -42,6 +55,15 @@ const time = (operator: TimeSearchOperator, value: string, negate = false): Sear
   operator,
   value,
   negate,
+});
+
+const quantity = (operator: QuantitySearchOperator, value: string): SearchCondition => ({
+  id: String(nextId++),
+  kind: "quantity",
+  field: "cpu",
+  operator,
+  value,
+  negate: false,
 });
 
 const at = (value: string) => parseLocalDateTime(value);
@@ -154,7 +176,64 @@ describe("createConditionMatcher", () => {
   });
 });
 
+describe("restarts, a number field", () => {
+  const restarts = (operator: QuantitySearchOperator, value: string): SearchCondition => ({
+    ...quantity(operator, value),
+    field: "restarts",
+  });
+  const legacy = (operator: TextSearchOperator, value: string): SearchCondition => ({
+    ...text("restarts", operator, value),
+  });
+  const withRestarts = (conditions: SearchCondition[]) => {
+    const counts = [0, 1, 3, 10, undefined];
+    const matcher = createConditionMatcher(conditions, fields)!;
+
+    return counts.filter((count) => matcher.matches({ name: "pod", namespace: "", labels: [], restarts: count }, 0));
+  };
+
+  it("compares the count with more than, less than and exactly", () => {
+    expect(withRestarts([restarts("moreThan", "2")])).toEqual([3, 10]);
+    expect(withRestarts([restarts("lessThan", "3")])).toEqual([0, 1]);
+    expect(withRestarts([restarts("exactly", "1")])).toEqual([1]);
+    expect(withRestarts([restarts("isSet", "")])).toEqual([0, 1, 3, 10]);
+  });
+
+  it("still reads a condition saved when restarts was a text field as the text of the count", () => {
+    expect(withRestarts([legacy("contains", "1")])).toEqual([1, 10]);
+    expect(withRestarts([legacy("exactly", "3")])).toEqual([3]);
+    expect(withRestarts([legacy("regex", "^1")])).toEqual([1, 10]);
+    expect(getEffectiveConditionsKey([legacy("contains", "1")], fields)).not.toBe("[]");
+  });
+});
+
+describe("a loose condition, as the quick search is saved", () => {
+  const withLoose = (value: string, loose?: boolean) =>
+    ({ ...text("name", "contains", value), loose }) as SearchCondition;
+
+  it("ignores - and _ in the field's text like the quick search does", () => {
+    expect(names([withLoose("apiserver", true)])).toEqual(["api-server"]);
+    expect(names([withLoose("API-SERVER", true)])).toEqual(["api-server"]);
+    // A separator in the query stays literal.
+    expect(names([withLoose("api_server", true)])).toEqual([]);
+  });
+
+  it("leaves a condition without the flag matching the text exactly", () => {
+    expect(names([withLoose("apiserver")])).toEqual([]);
+    expect(names([withLoose("apiserver", false)])).toEqual([]);
+  });
+
+  it("is not the same search as the one without the flag", () => {
+    expect(getEffectiveConditionsKey([withLoose("api", true)], fields)).not.toBe(
+      getEffectiveConditionsKey([withLoose("api")], fields),
+    );
+  });
+});
+
 describe("getConditionError", () => {
+  it("reports a quantity too large to hold", () => {
+    expect(getConditionError(quantity("moreThan", "1e400"))).toBe("Use a quantity such as 500m, 2, 512Mi or 1Gi");
+  });
+
   it("reports an invalid regex, duration or date, and accepts an empty value", () => {
     expect(getConditionError(text("name", "regex", "(a"))).toBeDefined();
     expect(getConditionError(time("olderThan", "2 days"))).toBeDefined();
@@ -186,6 +265,19 @@ describe("parseLocalDateTime", () => {
     expect(parseLocalDateTime("2026-11-13")).toBe(new Date(2026, 10, 13).getTime());
     expect(parseLocalDateTime("2026-11-13T07:05")).toBe(new Date(2026, 10, 13, 7, 5).getTime());
     expect(parseLocalDateTime("13/11/2026")).toBeNaN();
+  });
+
+  it.each(["2026-02-31", "2026-13-01", "2026-00-10", "2026-04-31", "2026-11-13T24:00", "2026-11-13T07:60"])(
+    "rejects %s as a date that does not exist",
+    (value) => {
+      expect(parseLocalDateTime(value)).toBeNaN();
+      expect(getConditionError({ ...time("before", value) })).toBe("Pick a date and time");
+    },
+  );
+
+  it("reads the last day of a leap February", () => {
+    expect(parseLocalDateTime("2028-02-29")).toBe(new Date(2028, 1, 29).getTime());
+    expect(parseLocalDateTime("2026-02-29")).toBeNaN();
   });
 });
 

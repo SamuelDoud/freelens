@@ -39,6 +39,12 @@ interface SearchConditionBase {
 export interface TextSearchCondition extends SearchConditionBase {
   readonly kind: "text";
   readonly operator: TextSearchOperator;
+  /**
+   * For `contains`: match the way the quick search does, where `-` and `_` in the field's text are
+   * ignored (`nginxingress` finds `nginx-ingress`). Set on the condition a quick search is saved
+   * as; a condition the user writes matches the text exactly.
+   */
+  readonly loose?: boolean;
 }
 
 export interface TimeSearchCondition extends SearchConditionBase {
@@ -76,7 +82,7 @@ export interface QuantitySearchField<I> {
   readonly title: string;
   readonly kind: "quantity";
   /** What the amount measures, for the hint of the value. */
-  readonly unit: "cpu" | "memory";
+  readonly unit: "cpu" | "memory" | "count";
   /** The amount for an item, in cores or bytes, or `undefined` when it has none. */
   readonly getQuantity: (item: I) => number | undefined;
 }

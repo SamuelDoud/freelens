@@ -50,4 +50,10 @@ describe("readSavedSearches", () => {
       { id: "c4", kind: "time", field: "name", operator: "olderThan", value: "2h", negate: false },
     ]);
   });
+
+  it("keeps the flag of a condition saved from the quick search", () => {
+    const [read] = readSavedSearches([{ ...search, conditions: [{ ...condition, loose: true }] }]);
+
+    expect(read.conditions).toEqual([{ ...condition, loose: true }]);
+  });
 });

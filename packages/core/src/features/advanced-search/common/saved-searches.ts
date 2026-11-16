@@ -22,7 +22,7 @@ function toCondition(value: unknown): SearchCondition | undefined {
   if (value.kind === "text") {
     const operator = textSearchOperators.find(({ id }) => id === value.operator)?.id;
 
-    return operator && { ...base, kind: "text", operator };
+    return operator && { ...base, kind: "text", operator, ...(value.loose === true && { loose: true }) };
   }
 
   if (value.kind === "time") {

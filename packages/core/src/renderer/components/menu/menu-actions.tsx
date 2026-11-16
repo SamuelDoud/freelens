@@ -16,6 +16,7 @@ import { observer } from "mobx-react";
 import React, { isValidElement } from "react";
 import openConfirmDialogInjectable from "../confirm-dialog/open.injectable";
 import { Menu, MenuItem } from "./menu";
+import { releasedMenuControls } from "./released-menu-controls";
 
 import type { IconProps } from "@freelensapp/icon";
 import type { TooltipDecoratorProps } from "@freelensapp/tooltip";
@@ -99,10 +100,7 @@ class NonInjectedMenuActions extends React.Component<MenuActionsProps & Dependen
   }
 
   componentWillUnmount(): void {
-    this.props.onMenuReady?.({
-      open: () => {},
-      close: () => {},
-    });
+    this.props.onMenuReady?.(releasedMenuControls);
     this.disposers.forEach((dispose) => dispose());
   }
 

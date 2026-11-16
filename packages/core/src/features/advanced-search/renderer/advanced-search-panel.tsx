@@ -77,7 +77,7 @@ const chipLabel = (condition: SearchCondition, titles: Map<string, string>) => {
   const title = titles.get(condition.field) ?? condition.field;
 
   if (!condition.value.trim() && !takesNoValue(condition)) {
-    return `${describeCondition({ ...condition, value: "" }, title).replace(/\s*("")?$/, "")} …`;
+    return `${describeCondition({ ...condition, value: "" }, title).replace(/\s*(""|\/\/)?$/, "")} …`;
   }
 
   return describeCondition(condition, title);
@@ -132,19 +132,36 @@ const addOpenCondition = <I,>(view: AdvancedSearchView<I>, state: AdvancedSearch
 };
 
 /** The name field of the rename dialog, which tells the dialog the name as it is typed. */
-const RenameInput = ({ initial, onChange }: { initial: string; onChange: (name: string) => void }) => {
+const RenameInput = ({
+  initial,
+  onChange,
+  replacedBy,
+}: {
+  initial: string;
+  onChange: (name: string) => void;
+  /** The saved search that renaming to this name would replace, if any. */
+  replacedBy: (name: string) => SavedSearch | undefined;
+}) => {
   const [name, setName] = useState(initial);
+  const replaced = name.trim() ? replacedBy(name) : undefined;
 
   return (
-    <Input
-      autoFocus
-      data-testid="saved-search-rename-input"
-      value={name}
-      onChange={(value) => {
-        setName(value);
-        onChange(value);
-      }}
-    />
+    <>
+      <Input
+        autoFocus
+        data-testid="saved-search-rename-input"
+        value={name}
+        onChange={(value) => {
+          setName(value);
+          onChange(value);
+        }}
+      />
+      {replaced && (
+        <span className={styles.hint} data-testid="saved-search-rename-replaces">
+          A saved search named &quot;{replaced.name}&quot; exists and will be replaced.
+        </span>
+      )}
+    </>
   );
 };
 
@@ -157,6 +174,11 @@ const renameSavedSearch = (search: SavedSearch, { savedSearches, openConfirmDial
         <span>Rename the saved search</span>
         <RenameInput
           initial={search.name}
+          replacedBy={(value) => {
+            const other = savedSearches.findByName(search.viewKey, value);
+
+            return other && other.id !== search.id ? other : undefined;
+          }}
           onChange={(value) => {
             name = value;
           }}
@@ -314,6 +336,10 @@ function valuePlaceholder<I>(condition: SearchCondition, field: SearchField<I> |
   }
 
   if (field?.kind === "quantity") {
+    if (field.unit === "count") {
+      return "Number, e.g. 5";
+    }
+
     return field.unit === "cpu" ? "Cores, e.g. 500m or 2" : "Bytes, e.g. 512Mi or 2Gi";
   }
 

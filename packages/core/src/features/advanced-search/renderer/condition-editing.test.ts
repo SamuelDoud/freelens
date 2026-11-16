@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createCondition,
+  quickSearchCondition,
   toLocalDateTimeInput,
   withField,
   withTextOperator,
@@ -56,5 +57,14 @@ describe("condition editing", () => {
 
   it("formats a time for a datetime-local input", () => {
     expect(toLocalDateTimeInput(new Date(2026, 0, 2, 3, 4).getTime())).toBe("2026-01-02T03:04");
+  });
+
+  it("saves the quick search loose, and drops that when the operator stops being contains", () => {
+    const quick = quickSearchCondition("nginx");
+
+    expect(quick).toMatchObject({ field: "any", operator: "contains", loose: true });
+    expect(withTextOperator(quick, "contains")).toMatchObject({ loose: true });
+    expect(withTextOperator(quick, "exactly")).not.toHaveProperty("loose");
+    expect(createCondition(name, now, "a")).not.toHaveProperty("loose");
   });
 });

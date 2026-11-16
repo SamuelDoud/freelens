@@ -210,12 +210,43 @@ describe("Table tests", () => {
     });
   });
 
+  describe("keys without a value", () => {
+    const sorted = (keys: unknown[], direction: "asc" | "desc") =>
+      getSorted(
+        keys.map((key, id) => ({ id, key })),
+        ({ key }) => key as any,
+        direction,
+      ).map(({ id }) => id);
+
+    it.each(["asc", "desc"] as const)("puts undefined and NaN last, in input order, sorting %s", (direction) => {
+      const keys = [undefined, 2, Number.NaN, 1, undefined, 3];
+      const present = direction === "asc" ? [3, 1, 5] : [5, 1, 3];
+
+      expect(sorted(keys, direction)).toStrictEqual([...present, 0, 2, 4]);
+    });
+
+    it("puts a part without a value last in a multi-part key", () => {
+      const items = [
+        ["a", undefined],
+        ["a", 1],
+        ["a", Number.NaN],
+        ["a", 0],
+      ];
+
+      expect(getSorted(items, (item) => item as any, "desc")).toStrictEqual([
+        ["a", 1],
+        ["a", 0],
+        ["a", undefined],
+        ["a", Number.NaN],
+      ]);
+    });
+  });
+
   describe("equivalence with the previous comparator", () => {
     const value = (next: () => number): string | number | undefined => {
       const pick = next();
 
-      if (pick < 0.1) return undefined;
-      if (pick < 0.15) return Number.NaN;
+      // undefined and NaN have no consistent order in the old comparator; they are tested below.
       if (pick < 0.2) return -0;
       if (pick < 0.6) return Math.floor(next() * 5);
 

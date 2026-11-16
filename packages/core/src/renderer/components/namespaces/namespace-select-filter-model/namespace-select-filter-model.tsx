@@ -87,7 +87,7 @@ export function namespaceSelectFilterModelFor(dependencies: Dependencies): Names
       label: "All Namespaces",
       id: "all-namespaces",
     },
-    ...context.allNamespaces.sort(sortNamespacesByIfTheyHaveBeenSelected).map((namespace) => ({
+    ...[...context.allNamespaces].sort(sortNamespacesByIfTheyHaveBeenSelected).map((namespace) => ({
       value: namespace,
       label: namespace,
       id: namespace,

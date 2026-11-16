@@ -67,6 +67,28 @@ describe("SavedSearches", () => {
     expect(savedSearches.all).toEqual([]);
   });
 
+  it("replaces the search that has the name a rename gives, as a save does", () => {
+    const { savedSearches } = makeSavedSearches();
+    const api = savedSearches.save(request("api"));
+    const web = savedSearches.save(request("web"));
+    const otherView = savedSearches.save(request("web", "v1/Node"));
+
+    savedSearches.rename(api.id, " WEB ");
+
+    expect(savedSearches.forView("v1/Pod").map(({ id, name }) => [id, name])).toEqual([[api.id, "WEB"]]);
+    expect(savedSearches.all.some(({ id }) => id === web.id)).toBe(false);
+    expect(savedSearches.all.some(({ id }) => id === otherView.id)).toBe(true);
+  });
+
+  it("lets a search change the case of its own name", () => {
+    const { savedSearches } = makeSavedSearches();
+    const api = savedSearches.save(request("api"));
+
+    savedSearches.rename(api.id, "API");
+
+    expect(savedSearches.all.map(({ name }) => name)).toEqual(["API"]);
+  });
+
   it("reads a store without saved searches as none", () => {
     const savedSearches = new SavedSearches(observable.object({}) as unknown as UserPreferencesState);
 

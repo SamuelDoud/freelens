@@ -26,6 +26,7 @@ import kubeSelectedUrlParamInjectable from "../kube-detail-params/kube-selected-
 import toggleKubeDetailsPaneInjectable from "../kube-detail-params/toggle-details.injectable";
 import { KubeObjectMenu } from "../kube-object-menu";
 import { MenuControls } from "../menu";
+import { releasedMenuControls } from "../menu/released-menu-controls";
 import { NamespaceSelectFilter } from "../namespaces/namespace-select-filter";
 import { getCellOrder } from "./cell-order";
 
@@ -215,7 +216,13 @@ class NonInjectedKubeObjectListLayout<
   }
 
   private registerControls = (id: string) => (controls: MenuControls) => {
-    this.menuControls.set(id, controls);
+    // A row that left the screen releases its menu: keep nothing for it, as a list that is
+    // scrolled through would otherwise hold an entry for every row it ever showed.
+    if (controls === releasedMenuControls) {
+      this.menuControls.delete(id);
+    } else {
+      this.menuControls.set(id, controls);
+    }
   };
 
   private getDefaultView(resourceName: string): AdvancedSearchView<K> {

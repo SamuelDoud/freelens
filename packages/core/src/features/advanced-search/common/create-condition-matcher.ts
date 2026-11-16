@@ -67,19 +67,26 @@ export function parseLocalDateTime(value: string): number {
 
   const [, year, month, day, hours = "0", minutes = "0", seconds = "0"] = match;
 
-  return new Date(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-    Number(hours),
-    Number(minutes),
-    Number(seconds),
-  ).getTime();
+  const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hours), Number(minutes), Number(seconds));
+
+  // Date rolls an impossible day (February 31) over into the next month; the date the user wrote
+  // has to be the one read. Only the day is compared: a time in a daylight-saving gap is real.
+  if (date.getMonth() !== Number(month) - 1 || date.getDate() !== Number(day) || Number(minutes) > 59) {
+    return Number.NaN;
+  }
+
+  if (Number(hours) > 23 || Number(seconds) > 59) {
+    return Number.NaN;
+  }
+
+  return date.getTime();
 }
 
 type ValueTest = (value: string) => boolean;
 
-function createTextTest({ operator, value }: TextSearchCondition): ValueTest {
+const separators = /[-_]/g;
+
+function createTextTest({ operator, value, loose }: TextSearchCondition): ValueTest {
   if (operator === "regex") {
     const expression = new RegExp(value, "i");
 
@@ -94,6 +101,14 @@ function createTextTest({ operator, value }: TextSearchCondition): ValueTest {
     case "startsWith":
       return (text) => text.toLowerCase().startsWith(query);
     case "contains":
+      if (loose) {
+        return (text) => {
+          const lowered = text.toLowerCase();
+
+          return lowered.includes(query) || lowered.replace(separators, "").includes(query);
+        };
+      }
+
       return (text) => text.toLowerCase().includes(query);
   }
 }
@@ -155,11 +170,26 @@ const toTexts = (values: SearchFieldValue | readonly SearchFieldValue[]): string
 /** Whether a condition, read without its `negate`, holds for an item. */
 type ItemTest<I> = (item: I, now: number) => boolean;
 
+const isTextOnNumberField = <I>(condition: SearchCondition, field: SearchField<I>) =>
+  condition.kind === "text" && field.kind === "quantity";
+
 function createItemTest<I>(condition: SearchCondition, field: SearchField<I>): ItemTest<I> | undefined {
   if (condition.kind === "text" && field.kind === "text") {
     const test = createTextTest(condition);
 
     return (item) => toTexts(field.getValues(item)).some(test);
+  }
+
+  // A field that was a text one (restarts) and is a number now: a search saved when it was text
+  // reads the amount as the text it was, so that it finds what it found.
+  if (condition.kind === "text" && field.kind === "quantity") {
+    const test = createTextTest(condition);
+
+    return (item) => {
+      const amount = field.getQuantity(item);
+
+      return amount !== undefined && test(String(amount));
+    };
   }
 
   if (condition.kind === "quantity" && field.kind === "quantity") {
@@ -199,7 +229,11 @@ export function getEffectiveConditionsKey<I>(
     const field = fieldsById.get(condition.field);
 
     // A condition of another kind than its field's gets no test in createItemTest.
-    if (!field || field.kind !== condition.kind || !isConditionInEffect(condition)) {
+    if (
+      !field ||
+      (field.kind !== condition.kind && !isTextOnNumberField(condition, field)) ||
+      !isConditionInEffect(condition)
+    ) {
       continue;
     }
 
@@ -209,6 +243,7 @@ export function getEffectiveConditionsKey<I>(
       condition.operator,
       condition.negate ? "1" : "0",
       condition.value,
+      condition.kind === "text" && condition.loose ? "loose" : "",
     ]);
   }
 

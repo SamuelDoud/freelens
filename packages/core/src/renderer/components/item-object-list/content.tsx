@@ -64,6 +64,10 @@ interface ResizeState {
 
 export interface ItemListLayoutContentProps<Item extends ItemObject, PreLoadStores extends boolean> {
   getFilters: () => Filter[];
+  /** Whether conditions of the advanced search are filtering the items. */
+  getHasAdvancedSearchFilter?: () => boolean;
+  /** Clears the conditions of the advanced search. */
+  resetAdvancedSearch?: () => void;
   tableId?: string;
   className: IClassName;
   getItems: () => Item[];
@@ -624,12 +628,18 @@ export class NonInjectedItemListLayoutContent<
       return <Spinner center data-testid={this.props.spinnerTestId} />;
     }
 
-    if (this.props.getFilters().length > 0) {
+    if (this.props.getFilters().length > 0 || this.props.getHasAdvancedSearchFilter?.()) {
       return (
         <NoItems>
           No items found.
           <p>
-            <a onClick={() => this.props.pageFiltersStore.reset()} className="contrast">
+            <a
+              onClick={() => {
+                this.props.pageFiltersStore.reset();
+                this.props.resetAdvancedSearch?.();
+              }}
+              className="contrast"
+            >
               Reset filters?
             </a>
           </p>

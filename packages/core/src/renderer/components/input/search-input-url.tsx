@@ -195,6 +195,10 @@ class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & De
 
   componentWillUnmount(): void {
     this.disposers.forEach((dispose) => dispose());
+    // The search belongs to the list being left: a pending write would otherwise land on the page
+    // that replaces it. The stored value is kept, as it is keyed by this list's own namespace.
+    this.updateUrl.cancel();
+    this.updateStorage.flush();
   }
 
   setValue = (value: string) => {

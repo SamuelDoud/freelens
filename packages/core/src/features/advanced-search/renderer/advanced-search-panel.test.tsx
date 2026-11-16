@@ -127,6 +127,14 @@ describe("advanced search panel", () => {
     expect(getByTestId("advanced-search-chip-1")).toBeTruthy();
   });
 
+  it("labels a regex condition without a value as one still to fill in", () => {
+    const { getByTestId } = render(<AdvancedSearchPanel view={view} />);
+
+    act(() => state.setConditions("v1/Pod", [condition("", { operator: "regex" })]));
+
+    expect(getByTestId("advanced-search-chip-0").textContent).toMatch(/^Name matches regex …(?!.*\/\/)/);
+  });
+
   it("removes a condition with the ✕ of its chip, without opening it", () => {
     state.setConditions("v1/Pod", [condition("api"), condition("web", { id: "c-2" })]);
 
@@ -246,6 +254,37 @@ describe("advanced search panel", () => {
     confirmations[1].ok?.();
 
     expect(savedSearches.all).toEqual([]);
+  });
+
+  it("warns, and replaces on confirming, when a rename takes the name of another saved search", () => {
+    const save = (name: string) =>
+      savedSearches.save({
+        name,
+        viewKey: "v1/Pod",
+        viewTitle: "Pods",
+        routePath: "/pods",
+        conditions: [condition("a")],
+      });
+
+    save("APIs");
+    save("Web");
+
+    const { getByTestId } = render(<AdvancedSearchControls view={view} />);
+
+    fireEvent.click(getByTestId("icon-for-saved-searches-menu"));
+    fireEvent.click(getByTestId("saved-search-rename-APIs"));
+
+    const rename = render(<>{confirmations[0].message}</>);
+
+    expect(rename.queryByTestId("saved-search-rename-replaces")).toBeNull();
+
+    fireEvent.change(rename.getByTestId("saved-search-rename-input"), { target: { value: "web" } });
+
+    expect(rename.getByTestId("saved-search-rename-replaces").textContent).toContain('"Web"');
+
+    act(() => confirmations[0].ok?.());
+
+    expect(savedSearches.all.map(({ name }) => name)).toEqual(["web"]);
   });
 
   it("offers a command per saved search in the cluster frame that opens its list with its conditions", () => {

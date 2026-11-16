@@ -10,6 +10,21 @@ import type { ItemObject } from "@freelensapp/list-layout";
 
 import type { TableOrderBy, TableSortCallback } from "./table";
 
+// A key without a value (undefined, null or NaN) goes after every other key in either direction and
+// equals its like, so the comparator stays consistent.
+const isMissing = (key: unknown) => key === undefined || key === null || Number.isNaN(key);
+
+function compareKeys(left: unknown, right: unknown, sign: 1 | -1) {
+  const leftMissing = isMissing(left);
+  const rightMissing = isMissing(right);
+
+  if (leftMissing || rightMissing) {
+    return leftMissing === rightMissing ? 0 : leftMissing ? 1 : -1;
+  }
+
+  return sign * sortCompare(left, right);
+}
+
 export function getSorted<T>(
   rawItems: T[],
   sortingCallback: TableSortCallback<T> | undefined,
@@ -35,7 +50,7 @@ export function getSorted<T>(
     }
   }
 
-  const sign = orderBy === "desc" ? -1 : 1;
+  const sign: 1 | -1 = orderBy === "desc" ? -1 : 1;
   const order: number[] = new Array(length);
 
   for (let i = 0; i < length; i++) {
@@ -43,7 +58,7 @@ export function getSorted<T>(
   }
 
   if (!anyArray) {
-    order.sort((left, right) => sign * sortCompare(keys[left], keys[right]));
+    order.sort((left, right) => compareKeys(keys[left], keys[right], sign));
   } else {
     // A single value is a key of one part. flat(0) copies an array key without its holes, as
     // [key].flat() did.
@@ -61,10 +76,10 @@ export function getSorted<T>(
       const common = Math.min(leftParts.length, rightParts.length);
 
       for (let i = 0; i < common; i++) {
-        const ordering = sortCompare(leftParts[i], rightParts[i]);
+        const ordering = compareKeys(leftParts[i], rightParts[i], sign);
 
         if (ordering !== 0) {
-          return sign * ordering;
+          return ordering;
         }
       }
 
