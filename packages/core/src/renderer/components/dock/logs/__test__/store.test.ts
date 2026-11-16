@@ -121,6 +121,27 @@ describe("LogStore request lifecycle", () => {
     expect(callForLogs).toHaveBeenCalledTimes(3);
   });
 
+  it("keeps the lines shown when a poll fails, says why, and polls again with a backoff", async () => {
+    await store.load(tabId, computedPods, computedTabData);
+    callForLogs.mockRejectedValue(new Error("connection reset"));
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(store.getLogs(tabId)).toEqual([initialLog]);
+    expect(store.getPollError(tabId)).toBe("Failed to load new lines: connection reset");
+    expect(callForLogs).toHaveBeenCalledTimes(2);
+
+    // The next attempt waits twice the interval of a healthy poll.
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(callForLogs).toHaveBeenCalledTimes(2);
+
+    callForLogs.mockResolvedValue(`${initialLog}\n${nextLog}`);
+    await vi.advanceTimersByTimeAsync(20_000);
+
+    expect(store.getLogs(tabId)).toEqual([initialLog, nextLog]);
+    expect(store.getPollError(tabId)).toBeUndefined();
+  });
+
   it("cancels a waiting poll when the tab stops", async () => {
     await store.load(tabId, computedPods, computedTabData);
     pod.set(undefined);
