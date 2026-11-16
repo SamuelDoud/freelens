@@ -143,6 +143,8 @@ export class AiChatHost {
       case "stop":
         return this.stop(chat);
       case "settings":
+        if (chat.running && this.refuseWhileRunning(chat, "change the backend, model or effort")) break;
+
         Object.assign(chat, command.settings satisfies Partial<AiChatSettings>);
         break;
       case "allow-changes":
@@ -154,6 +156,8 @@ export class AiChatHost {
       case "move":
         return this.move(chat, command.placement);
       case "clear":
+        if (chat.running && this.refuseWhileRunning(chat, "start a new chat")) break;
+
         this.rejectApprovals(chat);
         chat.items = [];
         chat.sessions.clear();
@@ -165,6 +169,13 @@ export class AiChatHost {
     }
 
     this.publish(chat);
+  }
+
+  /** A change that would mismatch a running turn's session or backend: said in the chat, not done. */
+  private refuseWhileRunning(chat: ChatRecord, what: string) {
+    this.add(chat, { kind: "notice", tone: "error", text: `Wait for the answer or stop it to ${what}.` });
+
+    return true;
   }
 
   /** The user closed a chat's window: the chat goes back to the dock of its cluster. */

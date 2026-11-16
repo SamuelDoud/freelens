@@ -258,4 +258,16 @@ describe("AiChatHost", () => {
     expect(last().running).toBe(false);
     expect(last().items[1]).toMatchObject({ kind: "notice", tone: "error", text: "spawn muse ENOENT" });
   });
+
+  it("refuses a backend change and a new chat while a turn runs, saying so in the chat", async () => {
+    const { id } = host.create({ clusterId: "cluster-1", clusterName: "homelab" });
+
+    await host.command({ type: "send", chatId: id, text: "hi" });
+    await host.command({ type: "settings", chatId: id, settings: { provider: "codex", model: "m", effort: "" } });
+    await host.command({ type: "clear", chatId: id });
+
+    expect(last()).toMatchObject({ provider: "claude", running: true });
+    expect(last().items.map((item) => item.kind)).toEqual(["user", "notice", "notice"]);
+    expect(last().items[1]).toMatchObject({ tone: "error" });
+  });
 });
