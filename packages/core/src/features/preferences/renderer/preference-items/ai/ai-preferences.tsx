@@ -6,7 +6,7 @@
 import { Button } from "@freelensapp/button";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Checkbox } from "../../../../../renderer/components/checkbox";
 import { Input } from "../../../../../renderer/components/input";
 import { SubTitle } from "../../../../../renderer/components/layout/sub-title";
@@ -53,6 +53,32 @@ const ModelsInput = ({ models, onChange }: { models: readonly string[]; onChange
       onChange={(value) => {
         setText(value);
         onChange(parseModels(value));
+      }}
+    />
+  );
+};
+
+// The text is kept as typed: emptying the box to write a prompt of one's own must not bring the built-in one back.
+const SystemPromptInput = ({ prompt, onChange }: { prompt: string; onChange: (prompt: string) => void }) => {
+  const [text, setText] = useState(prompt || defaultAiSystemPrompt);
+
+  // "Reset to default" changes the stored prompt from outside the box.
+  useEffect(() => {
+    if (!prompt && text.trim() !== "" && text.trim() !== defaultAiSystemPrompt.trim()) {
+      setText(defaultAiSystemPrompt);
+    }
+  }, [prompt]);
+
+  return (
+    <Input
+      theme="round-black"
+      multiLine
+      rows={12}
+      maxRows={30}
+      value={text}
+      onChange={(value) => {
+        setText(value);
+        onChange(value.trim() === defaultAiSystemPrompt.trim() ? "" : value);
       }}
     />
   );
@@ -134,7 +160,7 @@ const NonInjectedAiPreferences = observer(({ state, discovery }: Dependencies) =
               data-testid="ai-remote-port"
               placeholder="From your SSH configuration, or 22"
               value={remote.port}
-              onChange={(port) => updateRemote({ port: port.trim() })}
+              onChange={(port) => updateRemote({ port: port.replace(/\D/g, "").slice(0, 5) })}
             />
             <label className={styles.remoteLabel}>Key</label>
             <Input
@@ -173,6 +199,11 @@ const NonInjectedAiPreferences = observer(({ state, discovery }: Dependencies) =
             onClick={() => void discovery.refresh()}
           />
         </div>
+        {remote.enabled && !remote.destination && (
+          <small className="hint" data-testid="ai-remote-host-missing">
+            No host is set above, so the agents run on this computer.
+          </small>
+        )}
         {discoveredOn && (
           <small className="hint" data-testid="ai-discovered-on">{`Looked for on ${discoveredOn}`}</small>
         )}
@@ -205,7 +236,7 @@ const NonInjectedAiPreferences = observer(({ state, discovery }: Dependencies) =
           id="ai-default-provider"
           themeName="lens"
           options={backends.map((id) => ({ value: id, label: label(id) }))}
-          value={preferences.defaultProvider}
+          value={backends.includes(preferences.defaultProvider) ? preferences.defaultProvider : backends[0]}
           onChange={(option) => {
             const provider = aiProviderIds.find((id) => id === option?.value);
 
@@ -344,14 +375,7 @@ const NonInjectedAiPreferences = observer(({ state, discovery }: Dependencies) =
 
       <section>
         <SubTitle title="System prompt" />
-        <Input
-          theme="round-black"
-          multiLine
-          rows={12}
-          maxRows={30}
-          value={preferences.systemPrompt || defaultAiSystemPrompt}
-          onChange={(text) => update({ systemPrompt: text.trim() === defaultAiSystemPrompt.trim() ? "" : text })}
-        />
+        <SystemPromptInput prompt={preferences.systemPrompt} onChange={(systemPrompt) => update({ systemPrompt })} />
         <div className={styles.row}>
           <small className="hint">
             {preferences.systemPrompt ? "Your own system prompt." : "The built-in system prompt."} The chat adds the
