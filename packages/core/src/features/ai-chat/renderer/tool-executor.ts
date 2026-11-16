@@ -28,8 +28,8 @@ import type { SearchCondition } from "../../advanced-search/common/conditions";
 import type { AiToolResult } from "../common/channels";
 import type { RawObject } from "./format";
 
-// The pod fields whose conditions compare amounts.
-const quantityFieldIds = new Set(["cpuRequest", "cpuLimit", "memoryRequest", "memoryLimit"]);
+// The pod fields whose conditions compare amounts: the restarts, and the resources.
+const quantityFieldIds = new Set(["restarts", "cpuRequest", "cpuLimit", "memoryRequest", "memoryLimit"]);
 
 export interface AiKubeClient {
   get: (path: string, query?: Record<string, string | number | boolean>) => Promise<unknown>;

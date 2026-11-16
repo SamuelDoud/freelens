@@ -185,6 +185,19 @@ describe("AiToolExecutor", () => {
     ).toBe(false);
   });
 
+  it("searches the restarts of pods as a number, as the list's own search does", async () => {
+    const result = await executor.execute(
+      "set_advanced_search",
+      { kind: "Pod", conditions: [{ field: "restarts", operator: "moreThan", value: "0" }] },
+      readOnly,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(advancedSearch.get("v1/Pod")).toEqual([
+      expect.objectContaining({ kind: "quantity", field: "restarts", operator: "moreThan", value: "0" }),
+    ]);
+  });
+
   it("opens views and details", async () => {
     await executor.execute("open_view", { kind: "Deployment" }, readOnly);
     await executor.execute("open_view", { kind: "Widget" }, readOnly);
