@@ -61,6 +61,7 @@ const trackClusterState = (cluster: Cluster) => [
   cluster.accessible.get(),
   cluster.isAdmin.get(),
   cluster.isGlobalWatchEnabled.get(),
+  cluster.isGlobalListEnabled.get(),
   cluster.allowedNamespaces.length,
   cluster.resourcesToShow.size,
   cluster.knownResources.length,

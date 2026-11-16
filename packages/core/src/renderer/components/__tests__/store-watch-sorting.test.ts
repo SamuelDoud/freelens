@@ -38,6 +38,7 @@ const dependencies = {
     contextNamespaces: ["default"],
     hasSelectedAll: true,
     isGlobalWatchEnabled: () => true,
+    isGlobalListEnabled: () => false,
     isLoadingAll: () => true,
   },
   logger: { debug: noop, error: noop, info: noop, silly: noop, warn: noop },

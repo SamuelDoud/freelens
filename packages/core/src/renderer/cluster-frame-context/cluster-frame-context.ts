@@ -14,4 +14,6 @@ export interface ClusterContext {
 
   isLoadingAll(namespaces: string[]): boolean;
   isGlobalWatchEnabled(): boolean;
+  /** Whether the user may list a namespaced resource in all namespaces with one request */
+  isGlobalListEnabled(): boolean;
 }

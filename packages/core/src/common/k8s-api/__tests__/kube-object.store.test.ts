@@ -29,6 +29,7 @@ class FakeKubeObjectStore extends KubeObjectStore<KubeObject> {
           contextNamespaces: [],
           hasSelectedAll: false,
           isGlobalWatchEnabled: () => true,
+          isGlobalListEnabled: () => false,
           isLoadingAll: () => true,
         },
         logger: {
@@ -53,14 +54,19 @@ class FakeKubeObjectStore extends KubeObjectStore<KubeObject> {
 // the method that owns the `onLoadFailure` branches -- against a fake
 // `api.list()`, instead of bypassing it entirely.
 class RealLoadItemsKubeObjectStore extends KubeObjectStore<KubeObject> {
-  constructor(api: Partial<KubeApi<KubeObject>>, isLoadingAll: (namespaces: string[]) => boolean = () => true) {
+  constructor(
+    api: Partial<KubeApi<KubeObject>>,
+    isLoadingAll: (namespaces: string[]) => boolean = () => true,
+    permissions: { list?: boolean; watch?: boolean } = {},
+  ) {
     super(
       {
         context: {
           allNamespaces: [],
           contextNamespaces: [],
           hasSelectedAll: false,
-          isGlobalWatchEnabled: () => true,
+          isGlobalWatchEnabled: () => permissions.watch ?? true,
+          isGlobalListEnabled: () => permissions.list ?? false,
           isLoadingAll,
         },
         logger: {
@@ -710,6 +716,89 @@ describe("KubeObjectStore", () => {
       expect(resourceVersions.get("")).toBe("20");
       // Empty loadedNamespaces keeps subscribe() on the cluster-wide watch.
       expect(store["loadedNamespaces"].get()).toEqual([]);
+    });
+
+    describe("when the user may list cluster-wide", () => {
+      const makeStore = (
+        isLoadingAll: (namespaces: string[]) => boolean,
+        permissions: { list?: boolean; watch?: boolean } = { list: true },
+      ) => {
+        const resourceVersions = new Map<string, string>();
+        const all = [
+          objectNamed("a1", "ns1"),
+          objectNamed("b1", "ns2"),
+          objectNamed("a2", "ns1"),
+          objectNamed("c1", "ns3"),
+        ];
+        const list = vi.fn(
+          ({ namespace, onPage }: { namespace?: string; maxPageSize?: number; onPage?: (page: unknown) => void }) => {
+            const items = namespace ? all.filter((item) => item.getNs() === namespace) : all;
+
+            onPage?.({ items, loaded: items.length, remainingItemCount: 0, resourceVersion: "40", done: true });
+
+            return Promise.resolve(items);
+          },
+        );
+        const store = new RealLoadItemsKubeObjectStore(
+          {
+            isNamespaced: true,
+            list,
+            setResourceVersion: (namespace: string, version: string) => resourceVersions.set(namespace, version),
+            getResourceVersion: (namespace = "") => resourceVersions.get(namespace),
+          } as Partial<KubeApi<KubeObject>>,
+          isLoadingAll,
+          permissions,
+        );
+
+        return { store, list };
+      };
+      const paged = (list: { mock: { calls: { namespace?: string; onPage?: unknown }[][] } }) =>
+        list.mock.calls.filter(([options]) => options.onPage).map(([options]) => options.namespace);
+      const names = (store: KubeObjectStore<KubeObject>) =>
+        store.items.map((item) => `${item.getNs()}/${item.getName()}`);
+
+      it("loads all namespaces with one cluster-wide paginated list, with the rows the per-namespace streams give", async () => {
+        const fanOut = makeStore(() => true, { list: false });
+        const single = makeStore(() => true);
+
+        await fanOut.store.loadAll({ namespaces: ["ns1", "ns2", "ns3"] });
+        await single.store.loadAll({ namespaces: ["ns1", "ns2", "ns3"] });
+
+        expect(paged(fanOut.list).sort()).toEqual(["ns1", "ns2", "ns3"]);
+        expect(single.list).toHaveBeenCalledTimes(1);
+        expect(single.list.mock.calls[0][0].namespace).toBeUndefined();
+        expect(single.list.mock.calls[0][0].onPage).toBeDefined();
+        expect(single.list.mock.calls[0][0].maxPageSize).toBe(4000);
+        expect(names(single.store)).toEqual(names(fanOut.store));
+        expect(single.store["loadedNamespaces"].get()).toEqual([]);
+      });
+
+      it("lists only the selected namespaces when the selection is not all of them", async () => {
+        const { store, list } = makeStore(() => false);
+
+        await store.loadAll({ namespaces: ["ns1", "ns2"] });
+
+        expect(paged(list).sort()).toEqual(["ns1", "ns2"]);
+        expect(names(store).sort()).toEqual(["ns1/a1", "ns1/a2", "ns2/b1"]);
+      });
+
+      it("keeps the per-namespace streams of a user who may not list cluster-wide", async () => {
+        const { store, list } = makeStore(() => true, { list: false });
+
+        await store.loadAll({ namespaces: ["ns1", "ns2", "ns3"] });
+
+        expect(paged(list)).toHaveLength(3);
+      });
+
+      it("watches each namespace from the list's version when the user may not watch cluster-wide", async () => {
+        const { store, list } = makeStore(() => true, { list: true, watch: false });
+
+        await store.loadAll({ namespaces: ["ns1", "ns2", "ns3"] });
+
+        expect(list).toHaveBeenCalledTimes(1);
+        expect(store["loadedNamespaces"].get()).toEqual(["ns1", "ns2", "ns3"]);
+        expect(store["heldVersions"].get("ns2")).toBe("40");
+      });
     });
 
     it("keeps at most 16 namespace streams in flight at once", async () => {

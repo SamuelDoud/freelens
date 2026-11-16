@@ -81,6 +81,7 @@ const createKubeWatchApi = () => {
     hasSelectedAll: false,
     isLoadingAll: () => false,
     isGlobalWatchEnabled: () => false,
+    isGlobalListEnabled: () => false,
   });
 
   return {

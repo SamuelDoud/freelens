@@ -464,6 +464,7 @@ class ClusterConnection {
     runInAction(() => {
       this.cluster.isAdmin.set(accessibility.isAdmin);
       this.cluster.isGlobalWatchEnabled.set(accessibility.isGlobalWatchEnabled);
+      this.cluster.isGlobalListEnabled.set(accessibility.isGlobalListEnabled);
       this.cluster.allowedNamespaces.replace(accessibility.allowedNamespaces);
       this.cluster.knownResources.replace(accessibility.knownResources);
       this.cluster.resourcesToShow.replace(accessibility.resourcesToShow);
@@ -475,6 +476,7 @@ class ClusterConnection {
     return {
       isAdmin: this.cluster.isAdmin.get(),
       isGlobalWatchEnabled: this.cluster.isGlobalWatchEnabled.get(),
+      isGlobalListEnabled: this.cluster.isGlobalListEnabled.get(),
       allowedNamespaces: [...this.cluster.allowedNamespaces],
       knownResources: [...this.cluster.knownResources],
       resourcesToShow: [...this.cluster.resourcesToShow],
@@ -566,7 +568,7 @@ class ClusterConnection {
     // takes as long as the slowest of them instead of their sum. None of
     // them throws (canI resolves to false, requestAllowedNamespaces to the
     // context namespace and requestApiResources to an AsyncResult).
-    const [isAdmin, isGlobalWatchEnabled, allowedNamespaces, knownResources] = await Promise.all([
+    const [isAdmin, isGlobalWatchEnabled, isGlobalListEnabled, allowedNamespaces, knownResources] = await Promise.all([
       canI({
         namespace: "kube-system",
         resource: "*",
@@ -574,6 +576,10 @@ class ClusterConnection {
       }),
       canI({
         verb: "watch",
+        resource: "*",
+      }),
+      canI({
+        verb: "list",
         resource: "*",
       }),
       this.requestAllowedNamespaces(proxyConfig),
@@ -607,7 +613,7 @@ class ClusterConnection {
       requestNamespaceListPermissions,
     );
 
-    return { isAdmin, isGlobalWatchEnabled, allowedNamespaces, knownResources, resourcesToShow };
+    return { isAdmin, isGlobalWatchEnabled, isGlobalListEnabled, allowedNamespaces, knownResources, resourcesToShow };
   }
 
   refreshConnectionStatus(): Promise<void> {

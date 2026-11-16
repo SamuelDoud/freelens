@@ -411,19 +411,26 @@ export class KubeObjectStore<
   }: KubeObjectStoreLoadingParams<K>): Promise<K[]> {
     const isLoadingAll = this.dependencies.context.isLoadingAll(namespaces);
     // A namespaced load spanning several namespaces fans out into one
-    // paginated stream per namespace — including an all-namespaces load,
-    // whose namespaces the caller has already resolved. Only a
-    // cluster-scoped resource, or a load of at most one namespace, keeps
-    // the single cluster-wide list.
-    const loadClusterWide = !this.api.isNamespaced || (isLoadingAll && namespaces.length <= 1);
+    // paginated stream per namespace, unless it is an all-namespaces load
+    // by a user who may list cluster-wide: that one is a single paginated
+    // cluster-wide list. A cluster-scoped resource, or a load of at most
+    // one namespace, keeps the single cluster-wide list as well.
+    const loadClusterWide =
+      !this.api.isNamespaced ||
+      (isLoadingAll && (namespaces.length <= 1 || this.dependencies.context.isGlobalListEnabled()));
     const generation = this.loadGeneration;
     const tracker = this.createLoadProgressTracker(loadClusterWide ? [""] : namespaces, generation, onProgress);
     let loadWatch: Awaited<ReturnType<typeof this.startLoadWatch>> | undefined;
 
     try {
       if (loadClusterWide) {
+        // Without the permission to watch cluster-wide, a cluster-wide list
+        // is followed by a watch of each namespace.
+        const watchNamespaces =
+          this.api.isNamespaced && namespaces.length > 1 && !this.dependencies.context.isGlobalWatchEnabled();
+
         if (this.api.isNamespaced) {
-          this.loadedNamespaces.set([]);
+          this.loadedNamespaces.set(watchNamespaces ? namespaces : []);
         }
 
         const res = this.api.list(
@@ -436,6 +443,7 @@ export class KubeObjectStore<
             const listed = (await res) ?? [];
 
             this.holdVersion("", tracker.streamVersion(""));
+            this.holdNamespaceVersions(watchNamespaces, namespaces, tracker.streamVersion(""));
 
             return listed;
           } catch (error) {
@@ -462,6 +470,7 @@ export class KubeObjectStore<
         const listed = (await res) ?? [];
 
         this.holdVersion("", tracker.streamVersion(""));
+        this.holdNamespaceVersions(watchNamespaces, namespaces, tracker.streamVersion(""));
 
         return listed;
       }
@@ -586,6 +595,15 @@ export class KubeObjectStore<
       this.heldVersions.delete(namespace);
     } else {
       this.heldVersions.set(namespace, version);
+    }
+  }
+
+  /** The namespaces a cluster-wide list is followed by a watch of each get the version it left. */
+  private holdNamespaceVersions(watched: boolean, namespaces: string[], version: string | undefined) {
+    if (watched) {
+      for (const namespace of namespaces) {
+        this.holdVersion(namespace, version);
+      }
     }
   }
 

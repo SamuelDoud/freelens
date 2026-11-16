@@ -67,6 +67,7 @@ export class Cluster {
    * Global watch-api accessibility , e.g. "/api/v1/services?watch=1"
    */
   readonly isGlobalWatchEnabled = observable.box(false);
+  readonly isGlobalListEnabled = observable.box(false);
 
   /**
    * Preferences
@@ -203,6 +204,7 @@ export class Cluster {
       resourcesToShow: this.resourcesToShow.toJSON(),
       knownResources: toJS(this.knownResources),
       isGlobalWatchEnabled: this.isGlobalWatchEnabled.get(),
+      isGlobalListEnabled: this.isGlobalListEnabled.get(),
     };
   }
 
@@ -218,6 +220,7 @@ export class Cluster {
       this.disconnected.set(state.disconnected);
       this.isAdmin.set(state.isAdmin);
       this.isGlobalWatchEnabled.set(state.isGlobalWatchEnabled);
+      this.isGlobalListEnabled.set(state.isGlobalListEnabled ?? false);
       this.online.set(state.online);
       this.ready.set(state.ready);
     });
