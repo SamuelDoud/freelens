@@ -6,7 +6,7 @@
 import { noop, WrappedAbortController } from "@freelensapp/utilities";
 import { observable, runInAction } from "mobx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { KubeWatchApi, storeLingerMs } from "./kube-watch-api";
+import { KubeWatchApi, lingerBudget, storeLingerMs } from "./kube-watch-api";
 
 import type { Logger } from "@freelensapp/logger";
 
@@ -33,16 +33,17 @@ const lingerOver = () => vi.advanceTimersByTimeAsync(storeLingerMs);
  * abort like `KubeObjectStore.loadAll` does. Its watches are wrapped the way
  * `KubeApi.watch` wraps the controller it is given.
  */
-const createStore = ({ isNamespaced = false } = {}) => {
+const createStore = ({ isNamespaced = false, apiBase = "/api/v1/foos", items = 0 } = {}) => {
   const pendingLoads: Array<() => void> = [];
   const watchSignals: AbortSignal[] = [];
 
   const store = {
     api: {
       isNamespaced,
-      apiBase: "/api/v1/foos",
+      apiBase,
       kind: "Foo",
     },
+    getTotalCount: () => items,
     loadAll: vi.fn(
       ({ reqInit }: KubeObjectStoreLoadAllParams = {}) =>
         new Promise<undefined>((resolve) => {
@@ -565,6 +566,91 @@ describe("KubeWatchApi", () => {
       setListQuery('{"fieldSelector":"status.phase!=Succeeded"}');
 
       expect(store.loadAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("the budget of the stores that linger", () => {
+    const visit = async (kubeWatchApi: KubeWatchApi, index: number, items = 0) => {
+      const created = createStore({ apiBase: `/api/v1/kind${index}`, items });
+      const unsubscribe = kubeWatchApi.subscribeStores([created.store]);
+
+      await created.finishLoads();
+      unsubscribe();
+
+      return created;
+    };
+
+    it("ends the longest lingering store when more kinds than the budget linger", async () => {
+      const { kubeWatchApi } = createKubeWatchApi();
+      const visited = [];
+
+      for (let index = 0; index <= lingerBudget.kinds; index++) {
+        visited.push(await visit(kubeWatchApi, index));
+      }
+
+      expect(visited[0].openWatches()).toBe(0);
+      expect(visited[0].store.release).toHaveBeenCalledTimes(1);
+      expect(visited.slice(1).map((each) => each.openWatches())).toEqual(Array(lingerBudget.kinds).fill(1));
+      expect(visited[1].store.release).not.toHaveBeenCalled();
+    });
+
+    it("keeps a returning store as the most recently used", async () => {
+      const { kubeWatchApi } = createKubeWatchApi();
+      const first = await visit(kubeWatchApi, 0);
+
+      for (let index = 1; index < lingerBudget.kinds; index++) {
+        await visit(kubeWatchApi, index);
+      }
+
+      // the first is visited again, and so is no longer the one to go
+      kubeWatchApi.subscribeStores([first.store])();
+      await visit(kubeWatchApi, 100);
+
+      expect(first.openWatches()).toBe(1);
+      expect(first.store.loadAll).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not keep a store over the item budget, and ends the older ones to make room", async () => {
+      const { kubeWatchApi } = createKubeWatchApi();
+      const small = await visit(kubeWatchApi, 0, 10);
+      const half = await visit(kubeWatchApi, 1, lingerBudget.items / 2);
+      const huge = await visit(kubeWatchApi, 2, lingerBudget.items + 1);
+
+      expect(huge.openWatches()).toBe(0);
+      expect(huge.store.release).toHaveBeenCalledTimes(1);
+      expect(small.openWatches()).toBe(0);
+      expect(half.openWatches()).toBe(0);
+
+      const other = await visit(kubeWatchApi, 3, lingerBudget.items / 2);
+
+      expect(other.openWatches()).toBe(1);
+    });
+
+    it("bounds the open watches of the stores kept", async () => {
+      const { kubeWatchApi, clusterContext } = createKubeWatchApi();
+
+      clusterContext.contextNamespaces = Array.from({ length: 20 }, (_, index) => `ns${index}`);
+
+      const visitNamespaced = async (index: number) => {
+        const created = createStore({ isNamespaced: true, apiBase: `/api/v1/kind${index}` });
+        const unsubscribe = kubeWatchApi.subscribeStores([created.store]);
+
+        await created.finishLoads();
+        unsubscribe();
+
+        return created;
+      };
+
+      const kept = [];
+
+      for (let index = 0; index < 4; index++) {
+        kept.push(await visitNamespaced(index));
+      }
+
+      // 20 watches each (one per namespace): two fit in the budget of 48,
+      // each one after them ends the longest lingering
+      expect(kept.map((each) => each.openWatches())).toEqual([0, 0, 1, 1]);
+      expect(kept[0].store.release).toHaveBeenCalledTimes(1);
     });
   });
 });
