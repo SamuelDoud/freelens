@@ -30,6 +30,12 @@ export interface PodStoreDependencies extends KubeObjectStoreDependencies {
   readonly hideCompletedPods?: () => boolean;
 }
 
+const isForbidden = (error: unknown): boolean => {
+  const { code, status } = (error ?? {}) as { code?: unknown; status?: unknown };
+
+  return code === 403 || status === 403;
+};
+
 export class PodStore extends KubeObjectStore<Pod, PodApi> {
   constructor(
     protected readonly dependencies: PodStoreDependencies,
@@ -72,6 +78,10 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
    * Loads pod metrics from metrics-server. The views poll it, so it is not
    * requested on a cluster that does not serve it, and requested less and
    * less often while it keeps failing.
+   *
+   * With a namespace only the metrics of that namespace are replaced and the
+   * others are kept. Without one the metrics of every pod are replaced; a user
+   * who may not list them cluster-wide gets those of the selected namespaces.
    */
   async loadKubeMetrics(namespace?: string) {
     if (this.dependencies.isMetricsApiAvailable?.get() === false || !this.kubeMetricsBackoff.canAttempt()) {
@@ -79,14 +89,54 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
     }
 
     try {
-      const metrics = await this.dependencies.podMetricsApi.list({ namespace });
+      if (namespace) {
+        this.mergeKubeMetrics([namespace], (await this.dependencies.podMetricsApi.list({ namespace })) ?? []);
+      } else {
+        try {
+          this.kubeMetrics.replace((await this.dependencies.podMetricsApi.list({ namespace })) ?? []);
+        } catch (error) {
+          if (!isForbidden(error)) {
+            throw error;
+          }
 
-      this.kubeMetrics.replace(metrics ?? []);
+          await this.loadKubeMetricsOfSelectedNamespaces(error);
+        }
+      }
+
       this.kubeMetricsBackoff.succeeded();
     } catch (error) {
       this.kubeMetricsBackoff.failed();
       console.warn("loadKubeMetrics failed", error);
     }
+  }
+
+  private async loadKubeMetricsOfSelectedNamespaces(forbidden: unknown) {
+    const namespaces = [...this.dependencies.context.contextNamespaces];
+
+    if (namespaces.length === 0) {
+      throw forbidden;
+    }
+
+    const results = await Promise.allSettled(
+      namespaces.map((namespace) => this.dependencies.podMetricsApi.list({ namespace })),
+    );
+    const loaded = namespaces.filter((_, index) => results[index].status === "fulfilled");
+
+    if (loaded.length === 0) {
+      throw forbidden;
+    }
+
+    this.mergeKubeMetrics(
+      loaded,
+      results.flatMap((result) => (result.status === "fulfilled" ? (result.value ?? []) : [])),
+    );
+  }
+
+  /** Replaces the metrics of the namespaces and keeps those of the others. */
+  private mergeKubeMetrics(namespaces: string[], metrics: PodMetrics[]) {
+    const replaced = new Set(namespaces);
+
+    this.kubeMetrics.replace([...this.kubeMetrics.filter((metric) => !replaced.has(metric.getNs())), ...metrics]);
   }
 
   // Reverse indexes over the pod list, so that the per-workload lookups

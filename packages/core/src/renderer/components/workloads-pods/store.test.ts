@@ -20,16 +20,16 @@ import type { PodStore, PodStoreDependencies } from "./store";
 
 const podMetricsResource = formatKubeApiResource({ apiName: "pods", group: "metrics.k8s.io" });
 
-const metricsFor = (name: string) =>
+const metricsFor = (name: string, namespace = "default") =>
   new PodMetrics({
     apiVersion: "metrics.k8s.io/v1beta1",
     kind: "PodMetrics",
     metadata: {
       name,
-      namespace: "default",
+      namespace,
       resourceVersion: "1",
       uid: name,
-      selfLink: `/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/${name}`,
+      selfLink: `/apis/metrics.k8s.io/v1beta1/namespaces/${namespace}/pods/${name}`,
     },
     containers: [],
     timestamp: "2026-11-13T00:00:00Z",
@@ -67,6 +67,31 @@ describe("PodStore kube metrics", () => {
 
     expect(listMetrics).toHaveBeenCalledTimes(1);
     expect(podStore.kubeMetrics.map((metrics) => metrics.getName())).toEqual(["some-pod"]);
+  });
+
+  it("keeps the metrics of the other namespaces when it loads one namespace", async () => {
+    listMetrics.mockImplementation(async ({ namespace } = {}) => [metricsFor(`pod-of-${namespace}`, namespace)]);
+
+    await podStore.loadKubeMetrics("a");
+    await podStore.loadKubeMetrics("b");
+    await podStore.loadKubeMetrics("a");
+
+    expect(podStore.kubeMetrics.map((metrics) => metrics.getName()).sort()).toEqual(["pod-of-a", "pod-of-b"]);
+  });
+
+  it("falls back to the selected namespaces when the cluster-wide list is forbidden", async () => {
+    podStore["dependencies"].context = { contextNamespaces: ["a", "b"] } as never;
+    listMetrics.mockImplementation(async ({ namespace } = {}) => {
+      if (!namespace) {
+        throw { code: 403, message: "forbidden" };
+      }
+
+      return namespace === "b" ? [] : [metricsFor(`pod-of-${namespace}`, namespace)];
+    });
+
+    await podStore.loadKubeMetrics();
+
+    expect(podStore.kubeMetrics.map((metrics) => metrics.getName())).toEqual(["pod-of-a"]);
   });
 
   it("does not request the metrics of a cluster that does not serve them", async () => {
