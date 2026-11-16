@@ -24,6 +24,7 @@ const mutatingAdmissionPolicyBindingDetailItemInjectable = getInjectable({
 
 export const isMutatingAdmissionPolicyBinding = kubeObjectMatchesToKindAndApiVersion("MutatingAdmissionPolicyBinding", [
   "v1",
+  "admissionregistration.k8s.io/v1alpha1",
   "admissionregistration.k8s.io/v1beta1",
   "admissionregistration.k8s.io/v1",
 ]);

@@ -25,7 +25,12 @@ const validatingAdmissionPolicyBindingDetailItemInjectable = getInjectable({
 
 export const isValidatingAdmissionPolicyBinding = kubeObjectMatchesToKindAndApiVersion(
   "ValidatingAdmissionPolicyBinding",
-  ["v1", "admissionregistration.k8s.io/v1beta1", "admissionregistration.k8s.io/v1"],
+  [
+    "v1",
+    "admissionregistration.k8s.io/v1alpha1",
+    "admissionregistration.k8s.io/v1beta1",
+    "admissionregistration.k8s.io/v1",
+  ],
 );
 
 export default validatingAdmissionPolicyBindingDetailItemInjectable;
