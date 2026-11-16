@@ -58,6 +58,7 @@ const clusterFrameContextForNamespacedResourcesInjectable = getInjectable({
         cluster.accessibleNamespaces.length === 0 &&
         allNamespaces.get().every((ns) => namespaces.includes(ns)),
       isGlobalWatchEnabled: () => cluster.isGlobalWatchEnabled.get(),
+      isGlobalListEnabled: () => cluster.isGlobalListEnabled.get(),
       get allNamespaces() {
         return allNamespaces.get();
       },

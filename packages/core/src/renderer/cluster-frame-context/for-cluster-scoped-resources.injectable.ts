@@ -13,6 +13,7 @@ const clusterFrameContextForClusterScopedResourcesInjectable = getInjectable({
   instantiate: (): ClusterContext => ({
     // This doesn't matter as it is an optimization for namespaced resources only
     isGlobalWatchEnabled: () => true,
+    isGlobalListEnabled: () => true,
     // This is always the case for cluster scoped resources
     isLoadingAll: () => true,
     allNamespaces: [],

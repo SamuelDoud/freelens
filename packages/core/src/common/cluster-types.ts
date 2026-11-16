@@ -220,4 +220,6 @@ export interface ClusterState {
   resourcesToShow: string[];
   knownResources: KubeApiResource[];
   isGlobalWatchEnabled: boolean;
+  /** Whether the user may list every namespaced resource in all namespaces at once */
+  isGlobalListEnabled: boolean;
 }

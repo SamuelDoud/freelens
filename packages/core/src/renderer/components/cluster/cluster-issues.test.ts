@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { indexFirstWarningById } from "./cluster-issues";
+import { indexFirstWarningById, needsOwnEventsLoad } from "./cluster-issues";
 
 describe("indexFirstWarningById", () => {
   it("gives for every id the warning that find by id gives, for ids that repeat", () => {
@@ -29,5 +29,20 @@ describe("indexFirstWarningById", () => {
 
       expect(index.has("not-there")).toBe(false);
     }
+  });
+});
+
+describe("needsOwnEventsLoad", () => {
+  const context = (selected: string[], all: string[]) => ({
+    contextNamespaces: selected,
+    isLoadingAll: (namespaces: string[]) => all.length > 1 && all.every((ns) => namespaces.includes(ns)),
+  });
+
+  it("leaves the events to the overview when all namespaces are selected", () => {
+    expect(needsOwnEventsLoad(context(["a", "b"], ["a", "b"]))).toBe(false);
+  });
+
+  it("loads the events of all namespaces when only some are selected", () => {
+    expect(needsOwnEventsLoad(context(["a"], ["a", "b"]))).toBe(true);
   });
 });

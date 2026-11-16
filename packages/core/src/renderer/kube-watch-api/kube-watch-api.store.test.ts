@@ -48,6 +48,7 @@ const createEnvironment = ({ namespaces = ["default"], objectsPerNamespace = 3 }
     },
     isLoadingAll: (given: string[]) => allNamespaces.every((namespace) => given.includes(namespace)),
     isGlobalWatchEnabled: () => false,
+    isGlobalListEnabled: () => false,
   };
   const server = new Map<string, KubeObject[]>(
     allNamespaces.map((namespace) => [

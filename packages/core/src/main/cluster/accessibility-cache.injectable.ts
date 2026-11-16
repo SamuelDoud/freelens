@@ -17,7 +17,7 @@ import type { KubeApiResource } from "../../common/rbac";
  * Bumped when the shape of the file changes: a file of another version is
  * ignored, and overwritten by the next refresh.
  */
-export const accessibilityCacheVersion = 1;
+export const accessibilityCacheVersion = 2;
 
 /**
  * Who the answers were given to. Only names and the address of the API server,
@@ -37,6 +37,7 @@ export interface AccessibilityIdentity {
 export interface Accessibility {
   isAdmin: boolean;
   isGlobalWatchEnabled: boolean;
+  isGlobalListEnabled: boolean;
   allowedNamespaces: string[];
   knownResources: KubeApiResource[];
   resourcesToShow: string[];
@@ -81,6 +82,7 @@ const isAccessibility = (value: unknown): value is Accessibility => {
     accessibility !== null &&
     typeof accessibility.isAdmin === "boolean" &&
     typeof accessibility.isGlobalWatchEnabled === "boolean" &&
+    typeof accessibility.isGlobalListEnabled === "boolean" &&
     isStringArray(accessibility.allowedNamespaces) &&
     Array.isArray(accessibility.knownResources) &&
     accessibility.knownResources.every(isKubeApiResource) &&

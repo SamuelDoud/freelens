@@ -12,6 +12,7 @@ import { computed, observableRef } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import apiManagerInjectable from "../../../common/k8s-api/api-manager/manager.injectable";
+import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-frame-context/for-namespaced-resources.injectable";
 import activeThemeInjectable from "../../themes/active.injectable";
 import eventStoreInjectable from "../events/store.injectable";
 import kubeSelectedUrlParamInjectable from "../kube-detail-params/kube-selected-url.injectable";
@@ -27,6 +28,7 @@ import styles from "./cluster-issues.module.scss";
 import type { IComputedValue } from "mobx";
 
 import type { ApiManager } from "../../../common/k8s-api/api-manager";
+import type { ClusterContext } from "../../cluster-frame-context/cluster-frame-context";
 import type { PageParam } from "../../navigation/page-param";
 import type { LensTheme } from "../../themes/lens-theme";
 import type { EventStore } from "../events/store";
@@ -65,6 +67,16 @@ export function indexFirstWarningById<T extends { getId: () => string }>(warning
   return byId;
 }
 
+/**
+ * Whether the issues list has to load the events of all namespaces itself.
+ * The cluster overview that shows it already loads the events of the
+ * selected namespaces, which is all of them when all are selected: loading
+ * them again would list every event twice.
+ */
+export function needsOwnEventsLoad(context: Pick<ClusterContext, "contextNamespaces" | "isLoadingAll">): boolean {
+  return !context.isLoadingAll(context.contextNamespaces);
+}
+
 enum sortBy {
   type = "type",
   object = "object",
@@ -77,6 +89,7 @@ interface Dependencies {
   namespaceStore: NamespaceStore;
   eventStore: EventStore;
   apiManager: ApiManager;
+  context: ClusterContext;
   kubeSelectedUrlParam: PageParam<string>;
   toggleKubeDetailsPane: ToggleKubeDetailsPane;
 }
@@ -95,6 +108,10 @@ class NonInjectedClusterIssues extends React.Component<ClusterIssuesProps & Depe
   }
 
   async componentDidMount() {
+    if (!needsOwnEventsLoad(this.props.context)) {
+      return;
+    }
+
     // The explicit list of namespaces is required to avoid loading items only
     // from the current namespace.
     await this.props.namespaceStore.loadAll({ namespaces: [] });
@@ -243,6 +260,7 @@ export const ClusterIssues = withInjectables<Dependencies, ClusterIssuesProps>(N
     ...props,
     activeTheme: di.inject(activeThemeInjectable),
     apiManager: di.inject(apiManagerInjectable),
+    context: di.inject(clusterFrameContextForNamespacedResourcesInjectable),
     eventStore: di.inject(eventStoreInjectable),
     namespaceStore: di.inject(namespaceStoreInjectable),
     nodeStore: di.inject(nodeStoreInjectable),

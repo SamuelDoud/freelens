@@ -22,6 +22,7 @@ class LookupStore extends KubeObjectStore<KubeObject> {
           },
           hasSelectedAll: false,
           isGlobalWatchEnabled: () => true,
+          isGlobalListEnabled: () => false,
           isLoadingAll: () => true,
         },
         logger: { debug: noop, error: noop, info: noop, silly: noop, warn: noop },

@@ -376,6 +376,7 @@ describe("ClusterConnection activation", () => {
       // only the first one would have started.
       expect(countOf("canI:create")).toBe(1);
       expect(countOf("canI:watch")).toBe(1);
+      expect(countOf("canI:list")).toBe(1);
       expect(countOf("listNamespaces")).toBe(1);
       expect(countOf("requestApiResources")).toBe(1);
 
@@ -399,6 +400,7 @@ describe("ClusterConnection activation", () => {
     const stale: Accessibility = {
       isAdmin: false,
       isGlobalWatchEnabled: false,
+      isGlobalListEnabled: false,
       allowedNamespaces: ["old-namespace"],
       knownResources: [
         { apiName: "pods", kind: "Pod", group: "", version: "v1", namespaced: true },
@@ -409,6 +411,7 @@ describe("ClusterConnection activation", () => {
     const fresh = {
       isAdmin: true,
       isGlobalWatchEnabled: true,
+      isGlobalListEnabled: true,
       allowedNamespaces: ["default"],
       knownResources: [{ apiName: "pods", kind: "Pod", group: "", version: "v1", namespaced: true }],
       resourcesToShow: ["pods"],
@@ -423,6 +426,7 @@ describe("ClusterConnection activation", () => {
     const shown = () => ({
       isAdmin: cluster.isAdmin.get(),
       isGlobalWatchEnabled: cluster.isGlobalWatchEnabled.get(),
+      isGlobalListEnabled: cluster.isGlobalListEnabled.get(),
       allowedNamespaces: [...cluster.allowedNamespaces],
       knownResources: [...cluster.knownResources],
       resourcesToShow: [...cluster.resourcesToShow],
