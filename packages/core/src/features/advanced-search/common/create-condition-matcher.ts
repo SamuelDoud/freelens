@@ -170,11 +170,26 @@ const toTexts = (values: SearchFieldValue | readonly SearchFieldValue[]): string
 /** Whether a condition, read without its `negate`, holds for an item. */
 type ItemTest<I> = (item: I, now: number) => boolean;
 
+const isTextOnNumberField = <I>(condition: SearchCondition, field: SearchField<I>) =>
+  condition.kind === "text" && field.kind === "quantity";
+
 function createItemTest<I>(condition: SearchCondition, field: SearchField<I>): ItemTest<I> | undefined {
   if (condition.kind === "text" && field.kind === "text") {
     const test = createTextTest(condition);
 
     return (item) => toTexts(field.getValues(item)).some(test);
+  }
+
+  // A field that was a text one (restarts) and is a number now: a search saved when it was text
+  // reads the amount as the text it was, so that it finds what it found.
+  if (condition.kind === "text" && field.kind === "quantity") {
+    const test = createTextTest(condition);
+
+    return (item) => {
+      const amount = field.getQuantity(item);
+
+      return amount !== undefined && test(String(amount));
+    };
   }
 
   if (condition.kind === "quantity" && field.kind === "quantity") {
@@ -214,7 +229,11 @@ export function getEffectiveConditionsKey<I>(
     const field = fieldsById.get(condition.field);
 
     // A condition of another kind than its field's gets no test in createItemTest.
-    if (!field || field.kind !== condition.kind || !isConditionInEffect(condition)) {
+    if (
+      !field ||
+      (field.kind !== condition.kind && !isTextOnNumberField(condition, field)) ||
+      !isConditionInEffect(condition)
+    ) {
       continue;
     }
 

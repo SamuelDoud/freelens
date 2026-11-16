@@ -82,7 +82,7 @@ export interface QuantitySearchField<I> {
   readonly title: string;
   readonly kind: "quantity";
   /** What the amount measures, for the hint of the value. */
-  readonly unit: "cpu" | "memory";
+  readonly unit: "cpu" | "memory" | "count";
   /** The amount for an item, in cores or bytes, or `undefined` when it has none. */
   readonly getQuantity: (item: I) => number | undefined;
 }

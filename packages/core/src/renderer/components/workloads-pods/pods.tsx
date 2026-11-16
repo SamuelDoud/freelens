@@ -49,7 +49,7 @@ const podSearchFields: SearchField<Pod>[] = [
   { id: "node", title: "Node", kind: "text", getValues: (pod) => pod.getNodeName() },
   { id: "ip", title: "Pod IP", kind: "text", getValues: (pod) => pod.status?.podIP },
   { id: "qos", title: "QoS", kind: "text", getValues: (pod) => pod.getQosClass() },
-  { id: "restarts", title: "Restarts", kind: "text", getValues: (pod) => pod.getRestartsCount() },
+  { id: "restarts", title: "Restarts", kind: "quantity", unit: "count", getQuantity: (pod) => pod.getRestartsCount() },
   {
     id: "image",
     title: "Container image",

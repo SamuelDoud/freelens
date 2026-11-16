@@ -336,6 +336,10 @@ function valuePlaceholder<I>(condition: SearchCondition, field: SearchField<I> |
   }
 
   if (field?.kind === "quantity") {
+    if (field.unit === "count") {
+      return "Number, e.g. 5";
+    }
+
     return field.unit === "cpu" ? "Cores, e.g. 500m or 2" : "Bytes, e.g. 512Mi or 2Gi";
   }
 

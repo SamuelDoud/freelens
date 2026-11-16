@@ -26,6 +26,7 @@ interface Item {
   namespace: string;
   labels: string[];
   created?: number;
+  restarts?: number;
 }
 
 const fields: SearchField<Item>[] = [
@@ -33,6 +34,7 @@ const fields: SearchField<Item>[] = [
   { id: "namespace", title: "Namespace", kind: "text", getValues: (item) => item.namespace },
   { id: "labels", title: "Labels", kind: "text", getValues: (item) => item.labels },
   { id: "age", title: "Age", kind: "time", getTime: (item) => item.created },
+  { id: "restarts", title: "Restarts", kind: "quantity", unit: "count", getQuantity: (item) => item.restarts },
 ];
 
 let nextId = 0;
@@ -171,6 +173,36 @@ describe("createConditionMatcher", () => {
 
   it("ignores a condition whose kind does not fit its field", () => {
     expect(names([{ ...time("before", "2026-11-12T00:00"), field: "name" }])).toBeUndefined();
+  });
+});
+
+describe("restarts, a number field", () => {
+  const restarts = (operator: QuantitySearchOperator, value: string): SearchCondition => ({
+    ...quantity(operator, value),
+    field: "restarts",
+  });
+  const legacy = (operator: TextSearchOperator, value: string): SearchCondition => ({
+    ...text("restarts", operator, value),
+  });
+  const withRestarts = (conditions: SearchCondition[]) => {
+    const counts = [0, 1, 3, 10, undefined];
+    const matcher = createConditionMatcher(conditions, fields)!;
+
+    return counts.filter((count) => matcher.matches({ name: "pod", namespace: "", labels: [], restarts: count }, 0));
+  };
+
+  it("compares the count with more than, less than and exactly", () => {
+    expect(withRestarts([restarts("moreThan", "2")])).toEqual([3, 10]);
+    expect(withRestarts([restarts("lessThan", "3")])).toEqual([0, 1]);
+    expect(withRestarts([restarts("exactly", "1")])).toEqual([1]);
+    expect(withRestarts([restarts("isSet", "")])).toEqual([0, 1, 3, 10]);
+  });
+
+  it("still reads a condition saved when restarts was a text field as the text of the count", () => {
+    expect(withRestarts([legacy("contains", "1")])).toEqual([1, 10]);
+    expect(withRestarts([legacy("exactly", "3")])).toEqual([3]);
+    expect(withRestarts([legacy("regex", "^1")])).toEqual([1, 10]);
+    expect(getEffectiveConditionsKey([legacy("contains", "1")], fields)).not.toBe("[]");
   });
 });
 
