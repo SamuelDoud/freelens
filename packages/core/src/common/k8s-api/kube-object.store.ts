@@ -258,6 +258,10 @@ export class KubeObjectStore<
   // Bumped by every loadAll and reset: a progressive publish scheduled by
   // an older (or reset) load must not put its items back into the store.
   private loadGeneration = 0;
+  // Bumped by every reset and release, and not by loads: a load that began
+  // before one must not fill the emptied store when it ends, while loads
+  // that merely overlap each merge their own namespaces.
+  private emptiedCount = 0;
   // The watch events an all-namespaces load caught while it listed, for
   // loadAll to apply once it has merged the load's items.
   private loadReplay: { generation: number; events: IKubeWatchEvent<D>[] } | undefined;
@@ -464,8 +468,11 @@ export class KubeObjectStore<
 
       // Keep the all-namespaces marker empty so that subscribe() stays on
       // its single cluster-wide watch; the fan-out below points that
-      // watch at the oldest namespace snapshot instead.
-      this.loadedNamespaces.set(isLoadingAll ? [] : namespaces);
+      // watch at the oldest namespace snapshot instead. Without the
+      // permission to watch cluster-wide, every namespace is watched.
+      const watchedClusterWide = isLoadingAll && this.dependencies.context.isGlobalWatchEnabled();
+
+      this.loadedNamespaces.set(watchedClusterWide ? [] : namespaces);
 
       // The cluster-wide watch that follows an all-namespaces load starts
       // now, before the namespaces are listed, rather than from the oldest
@@ -474,7 +481,7 @@ export class KubeObjectStore<
       // watches by the time the last namespace is listed: the watch was
       // refused as too old, and the store listed everything again, over
       // and over. Watched from now, no namespace has to be listed again.
-      if (isLoadingAll && this.dependencies.context.isGlobalWatchEnabled()) {
+      if (watchedClusterWide) {
         loadWatch = await this.startLoadWatch(reqInit?.signal);
       }
 
@@ -509,7 +516,7 @@ export class KubeObjectStore<
         this.api.setResourceVersion("", caught.resourceVersion);
         this.holdVersion("", caught.resourceVersion);
         this.loadReplay = { generation, events: caught.events };
-      } else if (isLoadingAll && results.every((result) => result.status === "fulfilled")) {
+      } else if (watchedClusterWide && results.every((result) => result.status === "fulfilled")) {
         // Without a watch started early, the pages left the cluster-wide ("") resourceVersion at whichever
         // namespace snapshot was parsed last. The cluster-wide watch must
         // start from the oldest snapshot instead: anything newer could
@@ -524,7 +531,7 @@ export class KubeObjectStore<
         this.holdVersion("", oldestResourceVersion);
       }
 
-      if (!isLoadingAll) {
+      if (!watchedClusterWide) {
         // Each namespace is watched from its own snapshot.
         results.forEach((result, index) => {
           this.holdVersion(
@@ -729,7 +736,9 @@ export class KubeObjectStore<
     const publishIntervalMs = 250;
     const streamCount = streamNames.length;
     const fannedOut = streamCount > 1;
-    const accumulated: K[] = [];
+    let accumulated: K[] = [];
+    // What each stream contributed, to take it back when its list starts over.
+    const streamItems = new Map<string, K[]>();
     const streams = new Map<
       string,
       { loaded: number; remainingItemCount?: number; pages: number; resourceVersion?: string; done: boolean }
@@ -814,9 +823,25 @@ export class KubeObjectStore<
       onPageFor:
         (stream: string) =>
         (page: KubeApiListPage<K>): void => {
-          accumulated.push(...page.items);
-
           const previous = streams.get(stream);
+          const contributed = streamItems.get(stream) ?? [];
+
+          // A later page always raises `loaded`; a first page of the whole
+          // list in its place means the list started over (its continue
+          // token expired), and the items it already gave are given again.
+          if (previous && previous.loaded > 0 && page.loaded <= previous.loaded && page.items.length === page.loaded) {
+            const again = new Set(contributed);
+
+            accumulated = accumulated.filter((item) => !again.has(item));
+            contributed.length = 0;
+          }
+
+          for (const item of page.items) {
+            accumulated.push(item);
+            contributed.push(item);
+          }
+
+          streamItems.set(stream, contributed);
 
           streams.set(stream, {
             loaded: page.loaded,
@@ -896,6 +921,7 @@ export class KubeObjectStore<
     namespaces ??= this.dependencies.context.contextNamespaces;
     this.isLoading = true;
     const generation = ++this.loadGeneration;
+    const emptiedCount = this.emptiedCount;
     const timing = startLoadTiming(this.api.apiBase, generation);
 
     try {
@@ -910,6 +936,10 @@ export class KubeObjectStore<
           timing.firstItems();
         },
       });
+
+      if (emptiedCount !== this.emptiedCount) {
+        return undefined;
+      }
 
       this.mergeLoadedItems(items, merge, namespaces);
 
@@ -1015,6 +1045,7 @@ export class KubeObjectStore<
     // Invalidate progressive publishes of a load still in flight: what it
     // already streamed in must not reappear after the reset.
     this.loadGeneration++;
+    this.emptiedCount++;
     this.heldVersions.clear();
     this.individuallyLoaded.clear();
     super.reset();
@@ -1048,6 +1079,7 @@ export class KubeObjectStore<
     }
 
     this.loadGeneration++;
+    this.emptiedCount++;
     this.heldVersions.clear();
     this.eventsBuffer.clear();
     this.items.replace(this.items.filter((item) => this.individuallyLoaded.has(item.getId())));

@@ -142,6 +142,9 @@ export class KubeWatchApi {
   readonly #sharedWatches = new Map<SubscribableStore, StoreWatch>();
   readonly #lingering = new Map<SubscribableStore, ReturnType<typeof setTimeout>>();
   readonly #ownedWatches = new Map<SubscribableStore, number>();
+  // Who hears of a failed load of a store's shared watch: its present
+  // subscriptions, not only the one that started the watch, which may be gone.
+  readonly #failureListeners = new Map<SubscribableStore, Set<(err: any) => void>>();
 
   constructor(private readonly dependencies: Dependencies) {
     this.#watch = new WatchCount(this.dependencies);
@@ -156,13 +159,28 @@ export class KubeWatchApi {
 
       return () => {
         watch.dispose();
-        this.#ownedWatches.set(store, (this.#ownedWatches.get(store) ?? 1) - 1);
+        const remaining = (this.#ownedWatches.get(store) ?? 1) - 1;
+
+        this.#ownedWatches.set(store, remaining);
+
+        // The linger of the shared watch ended while this view still used the
+        // items, so it is the last one to let them go.
+        if (remaining === 0 && !this.#sharedWatches.has(store) && !this.#lingering.has(store)) {
+          store.release?.();
+        }
       };
     }
 
     // A watch of the selected namespaces is shared by every subscription of
     // the store. The first one starts it, and the last one to be disposed,
     // whichever that is, ends it; no subscription's own controller may.
+    const listeners = getOrInsert(this.#failureListeners, store, new Set<(err: any) => void>());
+    const listener = onLoadFailure && ((err: any) => onLoadFailure(err));
+
+    if (listener) {
+      listeners.add(listener);
+    }
+
     if (this.#watch.inc(store) === 1) {
       const lingering = this.#lingering.get(store);
 
@@ -172,11 +190,21 @@ export class KubeWatchApi {
         this.#lingering.delete(store);
         this.#sharedWatches.get(store)?.resume();
       } else {
-        this.#sharedWatches.set(store, this.watchStore({ store, onLoadFailure }));
+        this.#sharedWatches.set(
+          store,
+          this.watchStore({
+            store,
+            onLoadFailure: onLoadFailure && ((err) => listeners.forEach((each) => each(err))),
+          }),
+        );
       }
     }
 
     return () => {
+      if (listener) {
+        listeners.delete(listener);
+      }
+
       if (this.#watch.dec(store) === 0) {
         this.linger(store);
       }
@@ -277,12 +305,14 @@ export class KubeWatchApi {
      */
     const startGroup = (loadNamespaces: string[]) => {
       const group: WatchGroup = { controller: new WrappedAbortController(parent), unsubscribe: disposer() };
-      // What a load of the whole cluster watches is told by the store; the
-      // watches of some namespaces are named, so that another group's load
-      // in the meantime cannot change which ones they are.
+      // The watches are named, so that another group's or view's load in the
+      // meantime cannot change which ones they are: the whole cluster by
+      // one watch (an empty list) when that is permitted, else each namespace.
       const watchNamespaces =
-        store.api.isNamespaced && loadNamespaces.length > 0 && !clusterContext.isLoadingAll(loadNamespaces)
-          ? loadNamespaces
+        store.api.isNamespaced && loadNamespaces.length > 0
+          ? clusterContext.isLoadingAll(loadNamespaces) && clusterContext.isGlobalWatchEnabled()
+            ? []
+            : loadNamespaces
           : undefined;
 
       groups.push(group);
@@ -316,13 +346,17 @@ export class KubeWatchApi {
       const selected = wantedNamespaces();
       const all = clusterContext.isLoadingAll(selected);
 
-      if (covered?.all && all) {
+      // Only a cluster-wide watch reports a namespace created or deleted
+      // meanwhile; without it every namespace is watched on its own.
+      const clusterWide = clusterContext.isGlobalWatchEnabled();
+
+      if (covered?.all && all && clusterWide) {
         return console.debug(
           `[KUBE-WATCH-API]: Not changing watch for ${store.api.apiBase} because a namespace was created or deleted but all namespaces are selected`,
         );
       }
 
-      if (covered && !covered.all && !all) {
+      if (covered && !(covered.all && clusterWide) && !(all && clusterWide)) {
         const selectedSet = new Set(selected);
         const coveredSet = new Set(covered.namespaces);
 

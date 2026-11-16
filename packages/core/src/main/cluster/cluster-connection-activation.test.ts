@@ -43,6 +43,8 @@ describe("ClusterConnection activation", () => {
   // resource discovery) wait for the test to release them instead of
   // resolving at once, so a test can observe which of them have started.
   let accessibilityResolvers: (() => void)[] | undefined;
+  // When set, the version detection waits for the test to release it.
+  let detectResolvers: (() => void)[] | undefined;
 
   const countOf = (event: string) => events.filter((each) => each === event).length;
 
@@ -76,6 +78,7 @@ describe("ClusterConnection activation", () => {
 
     events = [];
     pendingRestarts = [];
+    detectResolvers = undefined;
 
     di.override(directoryForUserDataInjectable, () => "some-directory-for-user-data");
     di.override(directoryForTempInjectable, () => "some-directory-for-temp");
@@ -153,7 +156,13 @@ describe("ClusterConnection activation", () => {
     di.override(freelensK8sProxyManagerInjectable, () => proxyManagerMock);
     di.override(clusterVersionDetectorInjectable, () => ({
       key: ClusterMetadataKey.VERSION,
-      detect: vi.fn().mockResolvedValue({ value: "v1.28.0", accuracy: 100 }),
+      detect: vi.fn(async () => {
+        if (detectResolvers) {
+          await new Promise<void>((resolve) => detectResolvers?.push(resolve));
+        }
+
+        return { value: "v1.28.0", accuracy: 100 };
+      }),
     }));
     di.override(
       kubeconfigManagerInjectable,
@@ -311,6 +320,33 @@ describe("ClusterConnection activation", () => {
 
       expect(countOf("[CLUSTER]: activate")).toBe(2);
       expect(restartMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("when a status check is already in flight as the cluster is activated", () => {
+    it("waits for the check and goes on to refresh the accessibility", async () => {
+      detectResolvers = [];
+
+      const check = clusterConnection.refresh();
+      const activation = clusterConnection.activate();
+
+      await vi.advanceTimersByTimeAsync(0);
+      await settleRestart(0);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // The check begun before the restart ends, then the activation checks anew.
+      for (let round = 0; round < 2; round++) {
+        for (const resolve of detectResolvers.splice(0)) {
+          resolve();
+        }
+
+        await vi.advanceTimersByTimeAsync(0);
+      }
+
+      await Promise.all([check, activation]);
+
+      expect(countOf("requestApiResources")).toBe(1);
+      expect(countOf("Connected, waiting for view to load ...")).toBe(1);
     });
   });
 

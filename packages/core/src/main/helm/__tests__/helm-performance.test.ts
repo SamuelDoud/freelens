@@ -49,6 +49,18 @@ describe("helm env", () => {
     expect(execHelm).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps the whole value of a variable that contains an equals sign", async () => {
+    const di = getDiForUnitTesting();
+    const execHelm = vi.fn(async () => ok('HELM_REPOSITORY_CACHE="/c/a=b"\nHELM_PLUGINS="/p"\n'));
+
+    di.override(execHelmInjectable, () => execHelm as unknown as ExecHelm);
+
+    expect(await di.inject(getHelmEnvInjectable)()).toEqual({
+      callWasSuccessful: true,
+      response: { HELM_REPOSITORY_CACHE: "/c/a=b", HELM_PLUGINS: "/p" },
+    });
+  });
+
   it("shares a run in progress between concurrent callers", async () => {
     const di = getDiForUnitTesting();
     const execHelm = vi.fn(async () => ok('A="1"'));

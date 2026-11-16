@@ -60,6 +60,7 @@ const createEnvironment = ({ namespaces = ["default"], objectsPerNamespace = 3 }
   const lists: string[] = [];
   const pendingLists = new Map<string, () => void>();
   const holdLists = new Set<string>();
+  const failLists = new Set<string>();
   const watches: Array<{ namespace: string; signal: AbortSignal; opts: WatchOptions }> = [];
   const api = {
     isNamespaced: true,
@@ -83,6 +84,10 @@ const createEnvironment = ({ namespaces = ["default"], objectsPerNamespace = 3 }
         }
 
         reqInit?.signal?.throwIfAborted();
+
+        if (failLists.has(namespace)) {
+          throw new Error(`forbidden: ${namespace}`);
+        }
 
         const items = namespace ? (server.get(namespace) ?? []) : [...server.values()].flat();
         const resourceVersion = String(++version);
@@ -116,12 +121,14 @@ const createEnvironment = ({ namespaces = ["default"], objectsPerNamespace = 3 }
     store,
     kubeWatchApi,
     server,
+    allNamespaces,
     lists,
     watches,
     openWatches: () => watches.filter((watch) => !watch.signal.aborted),
     select: (next: string[]) => runInAction(() => selected.set(next)),
     names: () => store.items.map((item) => `${item.getNs()}/${item.getName()}`).sort(),
     holdList: (namespace: string) => holdLists.add(namespace),
+    failList: (namespace: string) => failLists.add(namespace),
     releaseList: async (namespace: string) => {
       holdLists.delete(namespace);
       pendingLists.get(namespace)?.();
@@ -276,6 +283,36 @@ describe("KubeWatchApi with a store", () => {
     expect(store.getByName(`loaded-${extra - 1}`, "default")).toBeDefined();
   });
 
+  it("frees a large store when the last explicit-namespace view ends after the linger of the shared watch", async () => {
+    const { kubeWatchApi, store, settle } = createEnvironment({ objectsPerNamespace: releaseFromItemCount });
+    const shared = kubeWatchApi.subscribeStores([store]);
+    const explicit = kubeWatchApi.subscribeStores([store], { namespaces: ["default"] });
+
+    await settle();
+    shared();
+    await vi.advanceTimersByTimeAsync(storeLingerMs);
+
+    // the explicit view still uses the items
+    expect(store.items).toHaveLength(releaseFromItemCount);
+
+    explicit();
+
+    expect(store.items).toHaveLength(0);
+    expect(store.isLoaded).toBe(false);
+  });
+
+  it("keeps a large store when an explicit-namespace view ends while the shared watch lingers", async () => {
+    const { kubeWatchApi, store, settle } = createEnvironment({ objectsPerNamespace: releaseFromItemCount });
+    const shared = kubeWatchApi.subscribeStores([store]);
+    const explicit = kubeWatchApi.subscribeStores([store], { namespaces: ["default"] });
+
+    await settle();
+    shared();
+    explicit();
+
+    expect(store.items).toHaveLength(releaseFromItemCount);
+  });
+
   it("keeps the items of a small store when the linger is over", async () => {
     const { kubeWatchApi, store, settle } = createEnvironment();
     const unsubscribe = kubeWatchApi.subscribeStores([store]);
@@ -300,6 +337,89 @@ describe("KubeWatchApi with a store", () => {
     await vi.advanceTimersByTimeAsync(storeLingerMs);
 
     expect(store.items).toHaveLength(0);
+  });
+
+  describe("given a load that failed", () => {
+    it("tells the view that returns during the linger, not the one that left", async () => {
+      const { kubeWatchApi, store, failList, settle } = createEnvironment();
+      const leftBehind = vi.fn();
+      const returning = vi.fn();
+
+      failList("default");
+      const unsubscribe = kubeWatchApi.subscribeStores([store], { onLoadFailure: leftBehind });
+
+      await settle();
+      expect(leftBehind).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+      await vi.advanceTimersByTimeAsync(30_000);
+      kubeWatchApi.subscribeStores([store], { onLoadFailure: returning });
+      await settle();
+
+      expect(returning).toHaveBeenCalledTimes(1);
+      expect(leftBehind).toHaveBeenCalledTimes(1);
+    });
+
+    it("tells a view that joined the shared watch of another", async () => {
+      const { kubeWatchApi, store, failList, select, settle } = createEnvironment();
+      const first = vi.fn();
+      const second = vi.fn();
+
+      kubeWatchApi.subscribeStores([store], { onLoadFailure: first });
+      await settle();
+      kubeWatchApi.subscribeStores([store], { onLoadFailure: second });
+      failList("kube-system");
+      select(["default", "kube-system"]);
+      await settle();
+
+      expect(first).toHaveBeenCalledTimes(1);
+      expect(second).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("given every namespace selected", () => {
+    it("watches each namespace when the user may not watch cluster-wide", async () => {
+      const { kubeWatchApi, store, watches, settle } = createEnvironment({
+        namespaces: ["default", "kube-system", "other"],
+      });
+
+      kubeWatchApi.subscribeStores([store]);
+      await settle();
+
+      expect(watches.map((watch) => watch.namespace).sort()).toEqual(["default", "kube-system", "other"]);
+    });
+
+    it("lists and watches a namespace created later, which no cluster-wide watch reports", async () => {
+      const { kubeWatchApi, store, watches, lists, server, allNamespaces, select, settle } = createEnvironment({
+        namespaces: ["default", "kube-system", "other"],
+      });
+
+      kubeWatchApi.subscribeStores([store]);
+      await settle();
+      server.set("fresh", [objectIn("fresh", "item-0")]);
+      allNamespaces.push("fresh");
+      select(["default", "kube-system", "other", "fresh"]);
+      await settle();
+
+      expect(lists.slice(3)).toEqual(["fresh"]);
+      expect(watches.map((watch) => watch.namespace).sort()).toEqual(["default", "fresh", "kube-system", "other"]);
+    });
+
+    it("keeps the watch of the selection when another view loads one namespace meanwhile", async () => {
+      const { kubeWatchApi, store, watches, holdList, releaseList, settle } = createEnvironment({
+        namespaces: ["default", "kube-system", "other"],
+      });
+
+      holdList("other");
+      kubeWatchApi.subscribeStores([store]);
+      await settle();
+      // the logs dock of another view loads and watches one namespace
+      kubeWatchApi.subscribeStores([store], { namespaces: ["default"] });
+      await settle();
+      await releaseList("other");
+
+      expect(watches.map((watch) => watch.namespace).sort()).toEqual(["default", "default", "kube-system", "other"]);
+    });
   });
 
   describe("given a selection of namespaces that grows", () => {
@@ -353,7 +473,7 @@ describe("KubeWatchApi with a store", () => {
       expect(names()).toContain("kube-system/item-0");
     });
 
-    it("lists the whole selection again when a namespace is removed, and when all are selected", async () => {
+    it("lists the whole selection again when a namespace is removed, and only the added ones when all are selected", async () => {
       const { kubeWatchApi, store, lists, select, settle } = createEnvironment({
         namespaces: ["default", "kube-system"],
       });
@@ -368,8 +488,9 @@ describe("KubeWatchApi with a store", () => {
       select(["default", "kube-system", "other"]);
       await settle();
 
-      // all namespaces: a load of every namespace, as before
-      expect(lists.slice(3).sort()).toEqual(["default", "kube-system", "other"]);
+      // without a cluster-wide watch, all namespaces are watched one by one,
+      // so selecting all only adds the two that were not listed
+      expect(lists.slice(3).sort()).toEqual(["kube-system", "other"]);
     });
 
     it("adds the namespace chosen while the view was away, when it returns, and lists nothing meanwhile", async () => {

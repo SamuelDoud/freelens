@@ -135,6 +135,31 @@ describe("update-entity-metadata", () => {
     });
   });
 
+  it("given a label is removed from the cluster, removes it from the entity and keeps the entity's own", () => {
+    replaceObservableObject(cluster.labels, { "some-label": "some-value", "kept-label": "kept" });
+    entity.metadata.labels = { "some-other-label": "some-other-value" };
+    updateEntityMetadata(entity, cluster);
+
+    replaceObservableObject(cluster.labels, { "kept-label": "kept" });
+    updateEntityMetadata(entity, cluster);
+
+    expect(entity.metadata.labels).toEqual({
+      "kept-label": "kept",
+      "some-other-label": "some-other-value",
+    });
+  });
+
+  it("given the labels did not change, does not replace the entity labels", () => {
+    replaceObservableObject(cluster.labels, { "some-label": "some-value" });
+    updateEntityMetadata(entity, cluster);
+
+    const labels = entity.metadata.labels;
+
+    updateEntityMetadata(entity, cluster);
+
+    expect(entity.metadata.labels).toBe(labels);
+  });
+
   it("given cluster has labels, overwrites entity metadata with cluster labels", () => {
     replaceObservableObject(cluster.labels, {
       "some-label": "some-cluster-value",
