@@ -40,7 +40,9 @@ const getHelmEnvInjectable = getInjectable({
       const env: HelmEnv = {};
 
       lines.forEach((line: string) => {
-        const [key, value] = line.split("=");
+        const separator = line.indexOf("=");
+        const key = separator < 0 ? line : line.slice(0, separator);
+        const value = separator < 0 ? "" : line.slice(separator + 1);
 
         if (key && value) {
           env[key] = value.replace(/"/g, ""); // strip quotas
