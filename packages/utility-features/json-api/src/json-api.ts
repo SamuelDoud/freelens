@@ -6,8 +6,9 @@
 
 import { stringify } from "node:querystring";
 import { EventEmitter } from "@freelensapp/event-emitter";
-import { isObject, isString, json } from "@freelensapp/utilities";
+import { isObject, isString } from "@freelensapp/utilities";
 import { merge } from "es-toolkit/compat";
+import { parseJsonInSlices } from "./parse-in-slices";
 
 import type { Logger } from "@freelensapp/logger";
 import type { Defaulted } from "@freelensapp/utilities";
@@ -252,8 +253,13 @@ export class JsonApi<Data = JsonApiData, Params extends JsonApiParams<Data> = Js
     const { status } = res;
 
     const text = await res.text();
-    const parseResponse = json.parse(text || "{}");
-    const data = parseResponse.callWasSuccessful ? (parseResponse.response as Data) : (text as Data);
+    // Large list responses are parsed in slices so that the thread is not
+    // blocked for long; the result is the one of JSON.parse.
+    const parsed = await parseJsonInSlices(text || "{}").then(
+      (response) => ({ callWasSuccessful: true as const, response }),
+      () => ({ callWasSuccessful: false as const }),
+    );
+    const data = parsed.callWasSuccessful ? (parsed.response as Data) : (text as Data);
 
     if (status >= 200 && status < 300) {
       this.onData.emit(data, res);
