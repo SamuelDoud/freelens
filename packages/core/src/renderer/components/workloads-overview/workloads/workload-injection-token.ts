@@ -15,7 +15,7 @@ export interface Workload {
   resource: KubeApiResourceDescriptor;
   open: () => void;
   amountOfItems: IComputedValue<number>;
-  status: IComputedValue<WorkloadStatus>;
+  status: Pick<IComputedValue<WorkloadStatus>, "get">;
   title: string;
   orderNumber: number;
 }

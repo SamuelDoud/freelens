@@ -8,6 +8,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
 import navigateToDeploymentsInjectable from "../../../../../common/front-end-routing/routes/cluster/workloads/deployments/navigate-to-deployments.injectable";
 import { ResourceNames } from "../../../../utils/rbac";
+import { throttledComputed } from "../../../../utils/throttled-computed";
 import deploymentsStoreInjectable from "../../../workloads-deployments/store.injectable";
 import { workloadInjectionToken } from "../workload-injection-token";
 
@@ -27,7 +28,9 @@ const deploymentsWorkloadInjectable = getInjectable({
 
       amountOfItems: computed(() => store.contextItems.length),
 
-      status: computed(() => store.getStatuses(store.contextItems)),
+      // The statuses read every pod, and the pods change with every watch event, so
+      // the overview recomputes them at most once a second.
+      status: throttledComputed(() => store.getStatuses(store.contextItems), 1000),
 
       title: ResourceNames.deployments,
       orderNumber: 20,

@@ -22,9 +22,11 @@ export type DeploymentStatuses = {
 };
 
 interface NamespaceIndex {
-  readonly pods: Pod[];
-  readonly byLabel: Map<string, Pod[]>;
+  readonly pods: Set<Pod>;
+  readonly byLabel: Map<string, Set<Pod>>;
 }
+
+const emptyPods: Set<Pod> = new Set();
 
 export interface DeploymentStoreDependencies extends KubeObjectStoreDependencies {
   readonly podStore: PodStore;
@@ -52,35 +54,21 @@ export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> 
   getStatuses(deployments: Deployment[] = []) {
     const status = { running: 0, failed: 0, pending: 0 };
 
-    // Pods indexed once per call (built on the first deployment, so an empty
-    // list reads no pods): by namespace, then by "key=value" label. A deployment
-    // tests only the pods that carry its rarest template label instead of every
-    // pod of its namespace. Buckets keep store order.
+    // Brought up to date on the first deployment, so an empty list reads no pods.
     let index: Map<string, NamespaceIndex> | undefined;
-    const labelSets = new Map<Pod, Set<string>>();
-
-    const labelsOf = (pod: Pod) => {
-      let labels = labelSets.get(pod);
-
-      if (!labels) {
-        labels = new Set(pod.getLabels());
-        labelSets.set(pod, labels);
-      }
-
-      return labels;
-    };
 
     for (const deployment of deployments) {
-      index ??= this.indexPods();
+      index ??= this.syncedPodIndex();
 
       const templateLabels = deployment.getTemplateLabels();
       const namespaceIndex = index.get(deployment.getNs());
-      let candidates = namespaceIndex?.pods ?? [];
+      let candidates: Set<Pod> = namespaceIndex?.pods ?? emptyPods;
 
+      // A deployment tests only the pods that carry its rarest template label.
       for (const label of templateLabels) {
-        const withLabel = namespaceIndex?.byLabel.get(label) ?? [];
+        const withLabel = namespaceIndex?.byLabel.get(label) ?? emptyPods;
 
-        if (withLabel.length < candidates.length) {
+        if (withLabel.size < candidates.size) {
           candidates = withLabel;
         }
       }
@@ -89,11 +77,11 @@ export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> 
       let pending = false;
 
       for (const pod of candidates) {
-        if (!templateLabels.every((label) => labelsOf(pod).has(label))) {
+        if (!templateLabels.every((label) => namespaceIndex?.byLabel.get(label)?.has(pod))) {
           continue;
         }
 
-        const phase = pod.getStatus();
+        const phase = this.getPodStatus(pod);
 
         if (phase === PodStatusPhase.FAILED) {
           failed = true;
@@ -117,35 +105,95 @@ export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> 
     return status;
   }
 
-  private indexPods() {
-    const index = new Map<string, NamespaceIndex>();
+  // The pods by namespace, then by "key=value" label, kept between calls. A
+  // pod object is never changed after it is made (a watch event makes a new
+  // one), so a call only adds the pods that appeared since the last one and
+  // removes those that went, instead of reading every pod's labels again.
+  // Only the existence of a failed or pending pod matters, never the order of
+  // the pods, so the buckets are sets.
+  private readonly podIndex = new Map<string, NamespaceIndex>();
+  private readonly indexedPods = new Set<Pod>();
+  private readonly podStatuses = new WeakMap<Pod, string>();
 
-    for (const pod of this.dependencies.podStore.items) {
-      const namespace = pod.getNs();
-      let namespaceIndex = index.get(namespace);
+  private syncedPodIndex() {
+    const items = this.dependencies.podStore.items;
 
-      if (!namespaceIndex) {
-        namespaceIndex = { pods: [], byLabel: new Map() };
-        index.set(namespace, namespaceIndex);
+    // The usual call finds nothing new: one pass of lookups, no copy.
+    if (items.length !== this.indexedPods.size || !items.every((pod) => this.indexedPods.has(pod))) {
+      const present = new Set<Pod>(items);
+
+      for (const pod of this.indexedPods) {
+        if (!present.has(pod)) {
+          this.indexedPods.delete(pod);
+          this.removeFromIndex(pod);
+        }
       }
 
-      namespaceIndex.pods.push(pod);
-
-      for (const label of pod.getLabels()) {
-        const withLabel = namespaceIndex.byLabel.get(label);
-
-        if (withLabel) {
-          // The same string twice in one pod (keys and values containing "=") is one entry.
-          if (withLabel[withLabel.length - 1] !== pod) {
-            withLabel.push(pod);
-          }
-        } else {
-          namespaceIndex.byLabel.set(label, [pod]);
+      for (const pod of present) {
+        if (!this.indexedPods.has(pod)) {
+          this.indexedPods.add(pod);
+          this.addToIndex(pod);
         }
       }
     }
 
-    return index;
+    return this.podIndex;
+  }
+
+  private addToIndex(pod: Pod) {
+    const namespace = pod.getNs();
+    let namespaceIndex = this.podIndex.get(namespace);
+
+    if (!namespaceIndex) {
+      namespaceIndex = { pods: new Set(), byLabel: new Map() };
+      this.podIndex.set(namespace, namespaceIndex);
+    }
+
+    namespaceIndex.pods.add(pod);
+
+    for (const label of pod.getLabels()) {
+      const withLabel = namespaceIndex.byLabel.get(label);
+
+      if (withLabel) {
+        // The same string twice in one pod (keys and values containing "=") is one entry.
+        withLabel.add(pod);
+      } else {
+        namespaceIndex.byLabel.set(label, new Set([pod]));
+      }
+    }
+  }
+
+  private removeFromIndex(pod: Pod) {
+    const namespaceIndex = this.podIndex.get(pod.getNs());
+
+    if (!namespaceIndex) {
+      return;
+    }
+
+    namespaceIndex.pods.delete(pod);
+
+    for (const label of pod.getLabels()) {
+      const withLabel = namespaceIndex.byLabel.get(label);
+
+      if (withLabel?.delete(pod) && withLabel.size === 0) {
+        namespaceIndex.byLabel.delete(label);
+      }
+    }
+
+    if (namespaceIndex.pods.size === 0) {
+      this.podIndex.delete(pod.getNs());
+    }
+  }
+
+  private getPodStatus(pod: Pod) {
+    let phase = this.podStatuses.get(pod);
+
+    if (phase === undefined) {
+      phase = pod.getStatus();
+      this.podStatuses.set(pod, phase);
+    }
+
+    return phase;
   }
 
   getChildPods(deployment: Deployment) {
