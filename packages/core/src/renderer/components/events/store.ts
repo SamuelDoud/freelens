@@ -9,6 +9,7 @@ import autoBind from "auto-bind";
 import { compact, groupBy } from "es-toolkit";
 import { computed } from "mobx";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
+import { capEvents } from "./cap-events";
 
 import type { KubeEventApi } from "@freelensapp/kube-api";
 import type { KubeEvent, KubeObject } from "@freelensapp/kube-object";
@@ -31,6 +32,16 @@ export class EventStore extends KubeObjectStore<KubeEvent, KubeEventApi> {
   ) {
     super(dependencies, api, { limit: 1000, ...opts });
     autoBind(this);
+  }
+
+  // The store holds the recent events of every object, not every event that
+  // ever came by: see capEvents.
+  protected override filterItemsOnLoad(items: KubeEvent[]) {
+    return capEvents(items);
+  }
+
+  protected override limitWatchedItems(items: KubeEvent[]) {
+    return capEvents(items);
   }
 
   protected bindWatchEventsUpdater() {
