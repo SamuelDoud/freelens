@@ -502,6 +502,12 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
         <ItemListLayoutContent<I, PreLoadStores>
           getItems={this.getItems}
           getFilters={this.getFilters}
+          getHasAdvancedSearchFilter={() => this.hasAdvancedSearchFilter}
+          resetAdvancedSearch={() => {
+            if (advancedSearchView) {
+              this.props.advancedSearchState.clear(advancedSearchView.viewKey);
+            }
+          }}
           tableId={this.props.tableId}
           className={this.props.className}
           store={this.props.store}
