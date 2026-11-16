@@ -110,12 +110,20 @@ function VirtualListInner<T extends { getId(): string } | string>({
     return () => setRef(outerRef, null);
   }, [listApi, outerRef]);
 
+  // The item last scrolled to: a list that gets new items, as a busy one does with every watch
+  // event, must not pull the user back to the selection they scrolled away from.
+  const scrolledTo = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    if (selectedItemId) {
+    if (!selectedItemId) {
+      scrolledTo.current = undefined;
+    } else if (listApi && scrolledTo.current !== selectedItemId) {
       const index = items.findIndex((item) => selectedItemId === (typeof item === "string" ? item : item.getId()));
 
+      // The selection can be in the URL before its item has loaded: try again when the items change.
       if (index >= 0) {
-        listApi?.scrollToRow({ index, align: "smart" });
+        listApi.scrollToRow({ index, align: "smart" });
+        scrolledTo.current = selectedItemId;
       }
     }
 
