@@ -22,12 +22,16 @@ describe("job-metrics injectable", () => {
     } as unknown as Job;
 
     di.override(requestPodMetricsForJobsInjectable, () => requestPodMetricsForJobs);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 4000, end: 4100, range: 100 }),
-      },
-      value: { get: () => ({ duration: 300 }) },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 4000, end: 4100, range: 100 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(jobMetricsInjectable, { job });
 

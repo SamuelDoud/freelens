@@ -28,12 +28,16 @@ describe("node-metrics injectable", () => {
     });
 
     di.override(requestClusterMetricsByNodeNamesInjectable, () => requestClusterMetricsByNodeNames);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 100, end: 200, range: 100 }),
-      },
-      value: { get: () => ({ duration: 300 }) },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 100, end: 200, range: 100 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(nodeMetricsInjectable, {
       node,

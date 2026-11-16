@@ -22,12 +22,16 @@ describe("daemon-set-metrics injectable", () => {
     } as unknown as DaemonSet;
 
     di.override(requestPodMetricsForDaemonSetsInjectable, () => requestPodMetricsForDaemonSets);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 5000, end: 5100, range: 100 }),
-      },
-      value: { get: () => ({ duration: 300 }) },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 5000, end: 5100, range: 100 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(daemonSetMetricsInjectable, { daemonSet });
 

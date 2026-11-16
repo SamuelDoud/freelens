@@ -22,12 +22,16 @@ describe("persistent-volume-claim-metrics injectable", () => {
     } as unknown as PersistentVolumeClaim;
 
     di.override(requestPersistentVolumeClaimMetricsInjectable, () => requestPersistentVolumeClaimMetrics);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 1_700_000_000, end: 1_700_000_600, range: 600 }),
-      },
-      value: { get: () => ({ duration: 300 }) },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 1_700_000_000, end: 1_700_000_600, range: 600 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(persistentVolumeClaimMetricsInjectable, {
       persistentVolumeClaim,
