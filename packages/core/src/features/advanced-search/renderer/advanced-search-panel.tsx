@@ -77,7 +77,7 @@ const chipLabel = (condition: SearchCondition, titles: Map<string, string>) => {
   const title = titles.get(condition.field) ?? condition.field;
 
   if (!condition.value.trim() && !takesNoValue(condition)) {
-    return `${describeCondition({ ...condition, value: "" }, title).replace(/\s*("")?$/, "")} …`;
+    return `${describeCondition({ ...condition, value: "" }, title).replace(/\s*(""|\/\/)?$/, "")} …`;
   }
 
   return describeCondition(condition, title);

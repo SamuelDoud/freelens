@@ -127,6 +127,14 @@ describe("advanced search panel", () => {
     expect(getByTestId("advanced-search-chip-1")).toBeTruthy();
   });
 
+  it("labels a regex condition without a value as one still to fill in", () => {
+    const { getByTestId } = render(<AdvancedSearchPanel view={view} />);
+
+    act(() => state.setConditions("v1/Pod", [condition("", { operator: "regex" })]));
+
+    expect(getByTestId("advanced-search-chip-0").textContent).toMatch(/^Name matches regex …(?!.*\/\/)/);
+  });
+
   it("removes a condition with the ✕ of its chip, without opening it", () => {
     state.setConditions("v1/Pod", [condition("api"), condition("web", { id: "c-2" })]);
 
