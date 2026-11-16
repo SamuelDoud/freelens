@@ -5,13 +5,13 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { editor } from "monaco-editor";
 
 import type { MonacoThemeData } from "../components/monaco-editor";
+import type { MonacoModule } from "./monaco-loader";
 
 const addNewMonacoThemeInjectable = getInjectable({
   id: "add-new-monaco-theme",
-  instantiate: () => (data: MonacoThemeData) => editor.defineTheme(data.name, data),
+  instantiate: () => (monaco: MonacoModule, data: MonacoThemeData) => monaco.editor.defineTheme(data.name, data),
   causesSideEffects: true,
 });
 

@@ -7,6 +7,7 @@
 import { getInjectable } from "@ogre-tools/injectable";
 import { customMonacoThemeInjectionToken } from "../../components/monaco-editor";
 import addNewMonacoThemeInjectable from "../../monaco/add-new-theme.injectable";
+import { onMonacoLoaded } from "../../monaco/monaco-loader";
 import { beforeFrameStartsSecondInjectionToken } from "../tokens";
 
 const loadMonacoThemesInjectable = getInjectable({
@@ -16,7 +17,8 @@ const loadMonacoThemesInjectable = getInjectable({
       const customThemes = di.injectMany(customMonacoThemeInjectionToken);
       const addNewMonacoTheme = di.inject(addNewMonacoThemeInjectable);
 
-      customThemes.forEach(addNewMonacoTheme);
+      // Monaco loads on first use, so the themes are defined when it does.
+      onMonacoLoaded((monaco) => customThemes.forEach((theme) => addNewMonacoTheme(monaco, theme)));
     },
   }),
   injectionToken: beforeFrameStartsSecondInjectionToken,

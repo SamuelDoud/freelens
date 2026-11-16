@@ -44,11 +44,10 @@ export type RendererExtensionApiGlobals = {
  * depends on.
  */
 export const installExtensionApiGlobals = (): RendererExtensionApiGlobals => {
-  const globals: RendererExtensionApiGlobals = {
-    Common,
-    Renderer,
-    ...rendererExtensionApiSingletons,
-  };
+  const globals = Object.defineProperties(
+    { Common, Renderer } as RendererExtensionApiGlobals,
+    Object.getOwnPropertyDescriptors(rendererExtensionApiSingletons),
+  );
 
   Object.assign(globalThis, { FreelensExtensionApi: globals });
 

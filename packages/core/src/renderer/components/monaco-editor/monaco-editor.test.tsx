@@ -3,10 +3,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { act } from "@testing-library/react";
 import { editor } from "monaco-editor";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDiForUnitTesting } from "../../getDiForUnitTesting";
+import { getLoadedMonaco, loadMonaco } from "../../monaco/monaco-loader";
 import { renderFor } from "../test-utils/renderFor";
 import { MonacoEditor } from "./monaco-editor";
 
@@ -70,6 +72,35 @@ describe("<MonacoEditor />", () => {
       fakeEditors.push(fakeEditor);
 
       return fakeEditor as unknown as editor.IStandaloneCodeEditor;
+    });
+  });
+
+  // Monaco stays loaded for the rest of the file once something loads it, so
+  // this block has to run before any other that does.
+  describe("before Monaco is loaded", () => {
+    it("shows a placeholder, and creates no editor if unmounted before the load finishes", async () => {
+      expect(getLoadedMonaco()).toBeUndefined();
+
+      const { container, unmount } = render(<MonacoEditor id="some-id" theme="vs" value="some-value" />);
+
+      expect(container.querySelector("[data-test-id=monaco-editor]")?.className).toMatch(/loading/);
+      expect(fakeEditors).toHaveLength(0);
+
+      unmount();
+      await act(() => loadMonaco());
+
+      expect(fakeEditors).toHaveLength(0);
+    });
+
+    it("creates the editor and drops the placeholder once it has loaded", async () => {
+      // The previous test loaded it; mount again, now synchronously.
+      expect(getLoadedMonaco()).toBeDefined();
+
+      const { container } = render(<MonacoEditor id="some-id" theme="vs" value="some-value" />);
+
+      expect(fakeEditors).toHaveLength(1);
+      expect(fakeEditors[0].value).toBe("some-value");
+      expect(container.querySelector("[data-test-id=monaco-editor]")?.className).not.toMatch(/loading/);
     });
   });
 

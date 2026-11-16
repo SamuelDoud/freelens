@@ -56,6 +56,7 @@ import { buildVersionInitializable } from "../../features/vars/build-version/com
 import { extensionCustomResourceInjectionToken } from "../../renderer/components/custom-resource-definitions/extension-custom-resource-injection-token";
 import statusBarItemsInjectable from "../../renderer/components/status-bar/status-bar-items.injectable";
 import { getDiForUnitTesting } from "../../renderer/getDiForUnitTesting";
+import { loadMonaco } from "../../renderer/monaco/monaco-loader";
 import currentlyInClusterFrameInjectable from "../../renderer/routes/currently-in-cluster-frame.injectable";
 import { installExtensionApiGlobals } from "../../test-utils/install-extension-api-globals";
 import extensionInjectable from "../extension-loader/extension/extension.injectable";
@@ -159,7 +160,11 @@ describe("extension contract, against the built fixture extension", () => {
     ["Mobx", Mobx],
     ["MobxReact", MobxReact],
     ["MonacoEditor", MonacoEditor],
-  ])("publishes the host's own instance of %s", (name, hostInstance) => {
+  ])("publishes the host's own instance of %s", async (name, hostInstance) => {
+    // Monaco is loaded on first use; the extension loader loads it before it
+    // evaluates an entry point, which this stands in for.
+    await loadMonaco();
+
     const published = Reflect.get(globalThis, "FreelensExtensionApi") as Record<string, unknown>;
 
     expect(published[name]).toBe(hostInstance);

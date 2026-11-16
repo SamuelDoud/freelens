@@ -5,7 +5,6 @@
  */
 
 import "./components/app.scss";
-import "./monaco/setup-monaco-environment";
 
 import React from "react";
 import ReactDOM from "react-dom";

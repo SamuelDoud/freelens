@@ -38,6 +38,9 @@ global.ResizeObserver = class {
 };
 
 vi.mock("./renderer/components/monaco-editor/monaco-editor");
+// The lazy chunk imports the Monaco workers with `?worker`, which only the
+// bundler resolves; here it is the aliased Monaco mock.
+vi.mock("./renderer/monaco/monaco-chunk", async () => ({ monaco: await import("monaco-editor") }));
 vi.mock("@freelensapp/tooltip", async (importOriginal) => ({
   ...(await importOriginal<typeof K8slensTooltip>()),
   withTooltip: ((Target) =>
