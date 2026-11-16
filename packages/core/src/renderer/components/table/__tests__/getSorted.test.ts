@@ -287,6 +287,70 @@ describe("Table tests", () => {
 
       expect(getSorted(items, (item) => item)).toStrictEqual(getSortedReference(items, (item) => item));
     });
+    describe("number keys of a long list", () => {
+      const specials = [
+        0,
+        -0,
+        Number.NaN,
+        undefined,
+        null,
+        Infinity,
+        -Infinity,
+        5e-324,
+        -5e-324,
+        1e300,
+        -1e300,
+        2 ** 53,
+      ];
+
+      // The stable comparator sort, a key without a value after every other one in both directions.
+      const stableReference = (items: { id: number }[], keyOf: (item: { id: number }) => any, direction: string) => {
+        const sign = direction === "desc" ? -1 : 1;
+        const missing = (key: unknown) => key === undefined || key === null || Number.isNaN(key);
+
+        return items
+          .map((item, index) => ({ index, key: keyOf(item) }))
+          .sort((left, right) => {
+            if (missing(left.key) || missing(right.key)) {
+              return missing(left.key) === missing(right.key) ? 0 : missing(left.key) ? 1 : -1;
+            }
+
+            return sign * (left.key < right.key ? -1 : left.key === right.key ? 0 : 1);
+          })
+          .map(({ index }) => items[index].id);
+      };
+
+      it.each(["asc", "desc"] as const)(
+        "orders like the stable comparator sort, ties and missing values included (%s)",
+        (direction) => {
+          for (let seed = 1; seed <= 25; seed++) {
+            const next = random(seed);
+            const items = Array.from({ length: 300 + Math.floor(next() * 3000) }, (_, id) => ({ id }));
+            const keyOf = (item: { id: number }): any => {
+              const next = random(item.id * 104729 + seed);
+              const pick = next();
+
+              if (pick < 0.25) return specials[Math.floor(next() * specials.length)];
+              if (pick < 0.6) return Math.floor(next() * 20) - 10;
+
+              return (next() - 0.5) * 1e6;
+            };
+
+            expect(getSorted(items, keyOf, direction).map((item) => item.id)).toStrictEqual(
+              stableReference(items, keyOf, direction),
+            );
+          }
+        },
+      );
+
+      it("falls back to the comparator for a mix of numbers and strings", () => {
+        const items = Array.from({ length: 400 }, (_, id) => ({ id }));
+        const keyOf = (item: { id: number }): any => (item.id % 7 === 0 ? "a" : (item.id * 31) % 13);
+
+        expect(getSorted(items, keyOf).map((item) => item.id)).toStrictEqual(stableReference(items, keyOf, "asc"));
+      });
+    });
+
     describe("starting from a previous result", () => {
       type Row = { id: number; key: unknown };
 
