@@ -80,6 +80,27 @@ describe("capEvents", () => {
     expect(capped).toHaveLength(4);
   });
 
+  it("caps the events of objects named without a uid per object, not together", () => {
+    const withoutUid = (name: string, minute: number) => {
+      const event = makeEvent(name, "Normal", minute, minute, "Node");
+
+      event.involvedObject.uid = "";
+
+      return event;
+    };
+    const events = [0, 1, 2].flatMap((i) => [withoutUid("node-a", i), withoutUid("node-b", 10 + i)]);
+
+    expect(capEvents(events, 3, 100)).toBe(events);
+  });
+
+  it("does not throw on an event without an involved object", () => {
+    const event = makeEvent("a", "Normal", 1, 1);
+
+    delete (event as { involvedObject?: unknown }).involvedObject;
+
+    expect(capEvents([event, makeEvent("a", "Normal", 2, 2)], 1, 100)).toHaveLength(2);
+  });
+
   it("keeps the most recently active events overall", () => {
     const events = Array.from({ length: 10 }, (_, i) => makeEvent(`o${i}`, "Normal", i, i));
     const capped = capEvents(events, 5, 4);

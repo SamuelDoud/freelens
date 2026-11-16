@@ -58,6 +58,21 @@ function pinnedWarnings(events: KubeEvent[]): Set<KubeEvent> {
 }
 
 /**
+ * The object an event is about. Some events name their object without its
+ * uid (the uid is empty), and those of different objects must not share one
+ * group, or the per-object cap would drop events of objects that have few.
+ */
+function involvedObjectKey(event: KubeEvent): string {
+  const involved = event.involvedObject as Partial<KubeEvent["involvedObject"]> | undefined;
+
+  if (!involved) {
+    return "";
+  }
+
+  return involved.uid || `${involved.kind ?? ""}/${involved.namespace ?? ""}/${involved.name ?? ""}`;
+}
+
+/**
  * Bounds the events a store holds, and keeps the order of what it keeps.
  *
  * An involved object keeps its `perObject` most recently active events
@@ -74,14 +89,14 @@ export function capEvents(events: KubeEvent[], perObject = maxEventsPerObject, o
   let crowded = false;
 
   for (const event of events) {
-    const uid = event.involvedObject.uid;
-    const group = groups.get(uid);
+    const key = involvedObjectKey(event);
+    const group = groups.get(key);
 
     if (group) {
       group.push(event);
       crowded ||= group.length > perObject;
     } else {
-      groups.set(uid, [event]);
+      groups.set(key, [event]);
     }
   }
 
