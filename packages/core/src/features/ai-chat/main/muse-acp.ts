@@ -163,16 +163,24 @@ export class AiMuseSessions {
       session = undefined;
     }
 
-    if (!session) {
-      session = await this.start(turn);
-      isNew = true;
-    } else if (session.model !== turn.model && turn.model) {
-      await this.request(session, "session/set_config_option", {
-        sessionId: session.sessionId,
-        configId: "model",
-        value: turn.model,
-      });
-      session.model = turn.model;
+    try {
+      if (!session) {
+        session = await this.start(turn);
+        isNew = true;
+      } else if (session.model !== turn.model && turn.model) {
+        await this.request(session, "session/set_config_option", {
+          sessionId: session.sessionId,
+          configId: "model",
+          value: turn.model,
+        });
+        session.model = turn.model;
+      }
+    } catch (error) {
+      // A session that did not get ready would otherwise stay, with its process, for the next turn.
+      this.close(turn.chatId);
+      onEvent({ kind: "done", error: error instanceof Error ? error.message : String(error) });
+
+      return;
     }
 
     session.onEvent = onEvent;
