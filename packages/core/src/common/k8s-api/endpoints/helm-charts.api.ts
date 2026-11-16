@@ -34,13 +34,15 @@ export interface RawHelmChart {
 
 const helmChartMaintainerValidator = Joi.object<HelmChartMaintainer>({
   name: Joi.string().required(),
-  email: Joi.string().required(),
+  // Chart.yaml requires neither of them, and a chart whose maintainer has no email is still a chart.
+  email: Joi.string().optional(),
   url: Joi.string().optional(),
 });
 
 const helmChartDependencyValidator = Joi.object<HelmChartDependency, true, RawHelmChartDependency>({
   name: Joi.string().required(),
-  repository: Joi.string().required(),
+  // An empty repository marks a subchart that is bundled in the chart.
+  repository: Joi.string().allow("").required(),
   condition: Joi.string().optional(),
   version: Joi.string().required(),
   tags: Joi.array()
@@ -56,7 +58,7 @@ const helmChartValidator = Joi.object<HelmChart, true, RawHelmChart>({
   created: Joi.string().required(),
   digest: Joi.string().optional(),
   kubeVersion: Joi.string().optional(),
-  description: Joi.string().default(""),
+  description: Joi.string().allow("").default(""),
   home: Joi.string().optional(),
   engine: Joi.string().optional(),
   icon: Joi.string().optional(),
@@ -115,7 +117,7 @@ export interface HelmChartCreateOpts {
 
 export interface HelmChartMaintainer {
   name: string;
-  email: string;
+  email?: string;
   url?: string;
 }
 
@@ -199,6 +201,7 @@ export class HelmChart implements HelmChartData {
     this.urls = value.urls;
     this.dependencies = value.dependencies;
     this.type = value.type;
+    this.appVersion = value.appVersion;
 
     autoBind(this);
   }
