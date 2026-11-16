@@ -57,7 +57,14 @@ export function withQuantityOperator(condition: SearchCondition, operator: Quant
 }
 
 export function withTextOperator(condition: SearchCondition, operator: TextSearchOperator): SearchCondition {
-  return condition.kind === "text" ? { ...condition, operator } : condition;
+  if (condition.kind !== "text") {
+    return condition;
+  }
+
+  // Ignoring `-` and `_` is only defined for "contains".
+  const { loose, ...strict } = condition;
+
+  return operator === "contains" && loose ? { ...strict, operator, loose } : { ...strict, operator };
 }
 
 /**
@@ -93,4 +100,5 @@ export const quickSearchCondition = (text: string): SearchCondition => ({
   operator: "contains",
   value: text,
   negate: false,
+  loose: true,
 });

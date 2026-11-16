@@ -4,7 +4,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { createConditionMatcher, getConditionError, parseLocalDateTime } from "./create-condition-matcher";
+import {
+  createConditionMatcher,
+  getConditionError,
+  getEffectiveConditionsKey,
+  parseLocalDateTime,
+} from "./create-condition-matcher";
 import { describeCondition } from "./describe-condition";
 import { parseDuration } from "./duration";
 
@@ -166,6 +171,29 @@ describe("createConditionMatcher", () => {
 
   it("ignores a condition whose kind does not fit its field", () => {
     expect(names([{ ...time("before", "2026-11-12T00:00"), field: "name" }])).toBeUndefined();
+  });
+});
+
+describe("a loose condition, as the quick search is saved", () => {
+  const withLoose = (value: string, loose?: boolean) =>
+    ({ ...text("name", "contains", value), loose }) as SearchCondition;
+
+  it("ignores - and _ in the field's text like the quick search does", () => {
+    expect(names([withLoose("apiserver", true)])).toEqual(["api-server"]);
+    expect(names([withLoose("API-SERVER", true)])).toEqual(["api-server"]);
+    // A separator in the query stays literal.
+    expect(names([withLoose("api_server", true)])).toEqual([]);
+  });
+
+  it("leaves a condition without the flag matching the text exactly", () => {
+    expect(names([withLoose("apiserver")])).toEqual([]);
+    expect(names([withLoose("apiserver", false)])).toEqual([]);
+  });
+
+  it("is not the same search as the one without the flag", () => {
+    expect(getEffectiveConditionsKey([withLoose("api", true)], fields)).not.toBe(
+      getEffectiveConditionsKey([withLoose("api")], fields),
+    );
   });
 });
 

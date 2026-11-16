@@ -84,7 +84,9 @@ export function parseLocalDateTime(value: string): number {
 
 type ValueTest = (value: string) => boolean;
 
-function createTextTest({ operator, value }: TextSearchCondition): ValueTest {
+const separators = /[-_]/g;
+
+function createTextTest({ operator, value, loose }: TextSearchCondition): ValueTest {
   if (operator === "regex") {
     const expression = new RegExp(value, "i");
 
@@ -99,6 +101,14 @@ function createTextTest({ operator, value }: TextSearchCondition): ValueTest {
     case "startsWith":
       return (text) => text.toLowerCase().startsWith(query);
     case "contains":
+      if (loose) {
+        return (text) => {
+          const lowered = text.toLowerCase();
+
+          return lowered.includes(query) || lowered.replace(separators, "").includes(query);
+        };
+      }
+
       return (text) => text.toLowerCase().includes(query);
   }
 }
@@ -214,6 +224,7 @@ export function getEffectiveConditionsKey<I>(
       condition.operator,
       condition.negate ? "1" : "0",
       condition.value,
+      condition.kind === "text" && condition.loose ? "loose" : "",
     ]);
   }
 

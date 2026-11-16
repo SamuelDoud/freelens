@@ -39,6 +39,12 @@ interface SearchConditionBase {
 export interface TextSearchCondition extends SearchConditionBase {
   readonly kind: "text";
   readonly operator: TextSearchOperator;
+  /**
+   * For `contains`: match the way the quick search does, where `-` and `_` in the field's text are
+   * ignored (`nginxingress` finds `nginx-ingress`). Set on the condition a quick search is saved
+   * as; a condition the user writes matches the text exactly.
+   */
+  readonly loose?: boolean;
 }
 
 export interface TimeSearchCondition extends SearchConditionBase {
