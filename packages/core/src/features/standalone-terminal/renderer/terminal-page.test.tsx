@@ -4,9 +4,10 @@
  */
 
 import { fireEvent } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import createStandaloneTerminalApiInjectable from "../../../renderer/api/create-standalone-terminal-api.injectable";
 import createTerminalInjectable from "../../../renderer/components/dock/terminal/create-terminal.injectable";
+import { loadTerminal } from "../../../renderer/components/dock/terminal/terminal-loader";
 import { renderFor } from "../../../renderer/components/test-utils/renderFor";
 import { getDiForUnitTesting } from "../../../renderer/getDiForUnitTesting";
 import lensLocalStorageStateInjectable from "../../../renderer/utils/create-storage/state.injectable";
@@ -22,6 +23,11 @@ import type { Terminal } from "../../../renderer/components/dock/terminal/termin
 import type { DiRender } from "../../../renderer/components/test-utils/renderFor";
 
 describe("the terminal page", () => {
+  beforeAll(async () => {
+    // The page connects its sessions once xterm has loaded.
+    await loadTerminal();
+  });
+
   let di: DiContainer;
   let render: DiRender;
   let terminals: Map<string, { attachTo: Mock; detach: Mock; destroy: Mock; onResize: Mock }>;

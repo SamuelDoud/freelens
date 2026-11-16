@@ -14,6 +14,7 @@ import React from "react";
 import activeThemeInjectable from "../../../themes/active.injectable";
 import dockStoreInjectable from "../dock/store.injectable";
 import terminalStoreInjectable from "./store.injectable";
+import { useTerminalLoaded } from "./terminal-loader";
 
 import type { IComputedValue } from "mobx";
 
@@ -81,7 +82,7 @@ class NonInjectedTerminalWindow extends React.Component<TerminalWindowProps & De
   }
 }
 
-export const TerminalWindow = withInjectables<Dependencies, TerminalWindowProps>(NonInjectedTerminalWindow, {
+const InjectedTerminalWindow = withInjectables<Dependencies, TerminalWindowProps>(NonInjectedTerminalWindow, {
   getProps: (di, props) => ({
     ...props,
     dockStore: di.inject(dockStoreInjectable),
@@ -89,3 +90,9 @@ export const TerminalWindow = withInjectables<Dependencies, TerminalWindowProps>
     activeTheme: di.inject(activeThemeInjectable),
   }),
 });
+
+// The terminal is created from xterm, which loads on first use: until then the
+// window is an empty host, so the first terminal of a session shows a moment
+// later.
+export const TerminalWindow = (props: TerminalWindowProps) =>
+  useTerminalLoaded() ? <InjectedTerminalWindow {...props} /> : <div className="TerminalWindow" />;
