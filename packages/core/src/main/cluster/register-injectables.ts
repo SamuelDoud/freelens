@@ -9,6 +9,8 @@
 import clustersThatAreBeingDeletedInjectable from "./are-being-deleted.injectable";
 import broadcastConnectionUpdateInjectable from "./broadcast-connection-update.injectable";
 import clusterConnectionInjectable from "./cluster-connection.injectable";
+import createAuthorizationApiInjectable from "./create-authorization-api.injectable";
+import createCoreApiInjectable from "./create-core-api.injectable";
 import disconnectClustersRemovedFromCatalogInjectable from "./disconnect-clusters-removed-from-catalog.injectable";
 import freelensK8sProxyManagerInjectable from "./freelens-k8s-proxy-manager.injectable";
 import freelensK8sProxyManagersInjectable from "./freelens-k8s-proxy-managers.injectable";
@@ -56,6 +58,16 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(clustersThatAreBeingDeletedInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(createAuthorizationApiInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(createCoreApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

@@ -6,9 +6,7 @@
  * This replaces the webpack-based auto-registration system.
  */
 
-import createAuthorizationApiInjectable from "./create-authorization-api.injectable";
 import createCanIInjectable from "./create-can-i.injectable";
-import createCoreApiInjectable from "./create-core-api.injectable";
 import createRequestNamespaceListPermissionsInjectable from "./create-request-namespace-list-permissions.injectable";
 import createListNamespacesInjectable from "./list-namespaces.injectable";
 import loadKubeconfigInjectable from "./load-kubeconfig.injectable";
@@ -17,17 +15,7 @@ import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
-    di.register(createAuthorizationApiInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
     di.register(createCanIInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(createCoreApiInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

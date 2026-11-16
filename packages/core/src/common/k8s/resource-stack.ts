@@ -5,10 +5,9 @@
  */
 
 import { hasTypedProperty, isObject } from "@freelensapp/utilities";
-import hb from "handlebars";
 import * as yaml from "js-yaml";
 import { getDiForExtensionApi } from "../../extensions/extension-api-di";
-import { defaultYamlDumpOptions } from "../kube-helpers";
+import { defaultYamlDumpOptions } from "../kube-helpers/yaml-dump-options";
 import productNameInjectable from "../vars/product-name.injectable";
 
 import type { Logger } from "@freelensapp/logger";
@@ -116,7 +115,10 @@ export class ResourceStack {
     for (const filename of files) {
       const file = this.dependencies.joinPaths(folderPath, filename);
       const raw = await this.dependencies.readFile(file);
-      const data = (filename.endsWith(".hb") ? hb.compile(raw)(templateContext) : raw).trim();
+      // Loaded on use: only templates need it.
+      const data = (
+        filename.endsWith(".hb") ? (await import("handlebars")).default.compile(raw)(templateContext) : raw
+      ).trim();
 
       if (!data) {
         continue;

@@ -9,9 +9,9 @@ import { KubeConfig } from "@kubernetes/client-node";
 import { newClusters, newContexts, newUsers } from "@kubernetes/client-node/dist/config_types.js";
 import Joi from "joi";
 import * as yaml from "js-yaml";
+import { defaultYamlDumpOptions } from "./kube-helpers/yaml-dump-options";
 
 import type { Cluster, Context, User } from "@kubernetes/client-node";
-import type { DumpOptions } from "js-yaml";
 import type { PartialDeep } from "type-fest";
 
 const clusterSchema = Joi.object({
@@ -188,12 +188,7 @@ function indexFirstByName<T extends { name: string }>(list: T[] | undefined | nu
   };
 }
 
-export const defaultYamlDumpOptions: DumpOptions = {
-  seqNoIndent: true,
-  noRefs: true,
-  quoteStyle: "double",
-  sortKeys: true,
-};
+export { defaultYamlDumpOptions };
 
 /**
  * Pretty format the object as human readable yaml, such as would be on the filesystem

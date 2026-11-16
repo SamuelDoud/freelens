@@ -12,7 +12,7 @@ import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import * as yaml from "js-yaml";
 import { action, computed, observable, runInAction } from "mobx";
 import { createPatch, type Operation } from "rfc6902";
-import { defaultYamlDumpOptions } from "../../../../../common/kube-helpers";
+import { defaultYamlDumpOptions } from "../../../../../common/kube-helpers/yaml-dump-options";
 import editResourceTabStoreInjectable from "../store.injectable";
 import requestKubeResourceInjectable from "./request-kube-resource.injectable";
 import requestPatchKubeResourceInjectable from "./request-patch-kube-resource.injectable";

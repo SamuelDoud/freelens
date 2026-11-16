@@ -5,7 +5,6 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { loadValidatedConfig } from "../kube-helpers";
 import resolveTildeInjectable from "../path/resolve-tilde.injectable";
 import readKubeconfigFileInjectable from "./read-kubeconfig-file.injectable";
 
@@ -22,6 +21,8 @@ const loadValidatedClusterConfigInjectable = getInjectable({
 
     return async (cluster) => {
       const data = await readKubeconfigFile(resolveTilde(cluster.kubeConfigPath.get()));
+
+      const { loadValidatedConfig } = await import("../kube-helpers");
 
       return loadValidatedConfig(data, cluster.contextName.get());
     };

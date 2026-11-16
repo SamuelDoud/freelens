@@ -6,7 +6,7 @@
 import { cssNames } from "@freelensapp/utilities";
 import * as yaml from "js-yaml";
 import { useEffect, useMemo, useState } from "react";
-import { defaultYamlDumpOptions } from "../../../../common/kube-helpers";
+import { defaultYamlDumpOptions } from "../../../../common/kube-helpers/yaml-dump-options";
 import { MonacoEditor } from "../../monaco-editor";
 import { diffLines } from "./diff-lines";
 import styles from "./pod-spec-view.module.scss";

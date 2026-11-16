@@ -5,7 +5,6 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { loadConfigFromString } from "../kube-helpers";
 import resolveTildeInjectable from "../path/resolve-tilde.injectable";
 import readKubeconfigFileInjectable from "./read-kubeconfig-file.injectable";
 
@@ -19,7 +18,13 @@ const loadConfigFromFileInjectable = getInjectable({
     const readKubeconfigFile = di.inject(readKubeconfigFileInjectable);
     const resolveTilde = di.inject(resolveTildeInjectable);
 
-    return async (filePath) => loadConfigFromString(await readKubeconfigFile(resolveTilde(filePath)));
+    return async (filePath) => {
+      // Loaded on use: the Kubernetes client behind it is large, and the
+      // renderer bundle would otherwise carry it from its first moment.
+      const { loadConfigFromString } = await import("../kube-helpers");
+
+      return loadConfigFromString(await readKubeconfigFile(resolveTilde(filePath)));
+    };
   },
 });
 

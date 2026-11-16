@@ -9,9 +9,7 @@ import { disposer, isDefined, isRequestError } from "@freelensapp/utilities";
 import { ApiException, type KubeConfig } from "@kubernetes/client-node";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import { compareStructural, reaction, runInAction } from "mobx";
-import createAuthorizationApiInjectable from "../../common/cluster/create-authorization-api.injectable";
 import createCanIInjectable from "../../common/cluster/create-can-i.injectable";
-import createCoreApiInjectable from "../../common/cluster/create-core-api.injectable";
 import createRequestNamespaceListPermissionsInjectable from "../../common/cluster/create-request-namespace-list-permissions.injectable";
 import createListNamespacesInjectable from "../../common/cluster/list-namespaces.injectable";
 import loadKubeconfigInjectable from "../../common/cluster/load-kubeconfig.injectable";
@@ -23,6 +21,8 @@ import shellEnvironmentReadyInjectable from "../../features/shell-sync/main/shel
 import clusterVersionDetectorInjectable from "../cluster-detectors/cluster-version-detector.injectable";
 import detectClusterMetadataInjectable from "../cluster-detectors/detect-cluster-metadata.injectable";
 import broadcastConnectionUpdateInjectable from "./broadcast-connection-update.injectable";
+import createAuthorizationApiInjectable from "./create-authorization-api.injectable";
+import createCoreApiInjectable from "./create-core-api.injectable";
 import freelensK8sProxyManagerInjectable from "./freelens-k8s-proxy-manager.injectable";
 import { getResourcesToShow } from "./get-resources-to-show";
 import loadProxyKubeconfigInjectable from "./load-proxy-kubeconfig.injectable";
@@ -33,9 +33,7 @@ import requestApiResourcesInjectable from "./request-api-resources.injectable";
 import type { Logger } from "@freelensapp/logger";
 
 import type { Cluster } from "../../common/cluster/cluster";
-import type { CreateAuthorizationApi } from "../../common/cluster/create-authorization-api.injectable";
 import type { CreateCanI } from "../../common/cluster/create-can-i.injectable";
-import type { CreateCoreApi } from "../../common/cluster/create-core-api.injectable";
 import type {
   CreateRequestNamespaceListPermissions,
   RequestNamespaceListPermissions,
@@ -47,6 +45,8 @@ import type { KubeApiResource } from "../../common/rbac";
 import type { DetectClusterMetadata } from "../cluster-detectors/detect-cluster-metadata.injectable";
 import type { FallibleOnlyClusterMetadataDetector } from "../cluster-detectors/token";
 import type { BroadcastConnectionUpdate } from "./broadcast-connection-update.injectable";
+import type { CreateAuthorizationApi } from "./create-authorization-api.injectable";
+import type { CreateCoreApi } from "./create-core-api.injectable";
 import type { FreelensK8sProxyManager } from "./freelens-k8s-proxy-manager.injectable";
 import type { LoadProxyKubeconfig } from "./load-proxy-kubeconfig.injectable";
 import type { ClusterPrometheusHandler } from "./prometheus-handler/prometheus-handler";
