@@ -147,7 +147,7 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
   @computed private get podsByOwnerId(): Map<string, Pod[]> {
     const map = new Map<string, Pod[]>();
 
-    for (const pod of this.items) {
+    for (const pod of this.items.slice()) {
       // metadata directly, not getOwnerRefs(): the index only needs the
       // uids, without the namespace-enriched copies that returns. The set
       // keeps a pod with a repeated owner reference listed once per owner,
@@ -169,7 +169,7 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
   @computed private get podsByNode(): Map<string, Pod[]> {
     const map = new Map<string, Pod[]>();
 
-    for (const pod of this.items) {
+    for (const pod of this.items.slice()) {
       const nodeName = pod.spec?.nodeName;
 
       if (nodeName) {
@@ -189,7 +189,7 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
   @computed private get podsByPvc(): Map<string, Pod[]> {
     const map = new Map<string, Pod[]>();
 
-    for (const pod of this.items) {
+    for (const pod of this.items.slice()) {
       const claimNames = new Set<string>();
 
       for (const volume of pod.getVolumes()) {

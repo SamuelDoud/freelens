@@ -224,7 +224,7 @@ class NonInjectedNodesRoute extends React.Component<Dependencies> {
       return podsByNode;
     }
 
-    for (const pod of podStore.items) {
+    for (const pod of podStore.items.slice()) {
       const nodeName = pod.spec.nodeName;
       const phase = pod.getStatusPhase();
 

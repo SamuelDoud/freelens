@@ -59,7 +59,7 @@ export class ReplicaSetStore extends KubeObjectStore<ReplicaSet, ReplicaSetApi> 
   @computed private get replicaSetsByOwnerId(): Map<string, ReplicaSet[]> {
     const map = new Map<string, ReplicaSet[]>();
 
-    for (const replicaSet of this.items) {
+    for (const replicaSet of this.items.slice()) {
       // The set keeps a replica set with a repeated owner reference listed
       // once per owner, as the filter this replaces did.
       for (const uid of new Set((replicaSet.metadata.ownerReferences ?? []).map((owner) => owner.uid))) {

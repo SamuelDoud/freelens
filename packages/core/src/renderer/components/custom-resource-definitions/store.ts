@@ -34,7 +34,7 @@ export class CustomResourceDefinitionStore extends KubeObjectStore<
   @computed get groups() {
     const groups: Record<string, CustomResourceDefinition[]> = {};
 
-    for (const crd of this.items) {
+    for (const crd of this.items.slice()) {
       (groups[crd.getGroup()] ??= []).push(crd);
     }
 

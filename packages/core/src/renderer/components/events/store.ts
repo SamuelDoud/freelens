@@ -47,7 +47,7 @@ export class EventStore extends KubeObjectStore<KubeEvent, KubeEventApi> {
   @computed get eventsByObjectId(): Map<string, KubeEvent[]> {
     const map = new Map<string, KubeEvent[]>();
 
-    for (const evt of this.items) {
+    for (const evt of this.items.slice()) {
       const uid = evt.involvedObject.uid;
       let bucket = map.get(uid);
 

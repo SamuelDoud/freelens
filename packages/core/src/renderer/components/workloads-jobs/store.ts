@@ -41,7 +41,7 @@ export class JobStore extends KubeObjectStore<Job, JobApi> {
   @computed private get jobsByOwner(): Map<string, Job[]> {
     const map = new Map<string, Job[]>();
 
-    for (const job of this.items) {
+    for (const job of this.items.slice()) {
       // The set keeps a job with a repeated owner reference listed once
       // per owner, as the filter this replaces did.
       const keys = new Set((job.metadata.ownerReferences ?? []).map((ref) => `${job.getNs()}/${ref.kind}/${ref.name}`));

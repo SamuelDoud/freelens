@@ -120,7 +120,7 @@ export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> 
   private indexPods() {
     const index = new Map<string, NamespaceIndex>();
 
-    for (const pod of this.dependencies.podStore.items) {
+    for (const pod of this.dependencies.podStore.items.slice()) {
       const namespace = pod.getNs();
       let namespaceIndex = index.get(namespace);
 

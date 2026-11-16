@@ -3,7 +3,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { PodMetrics } from "@freelensapp/kube-object";
+import { Pod, PodMetrics } from "@freelensapp/kube-object";
+import { autorun, runInAction } from "mobx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForKubeConfigsInjectable from "../../../common/app-paths/directory-for-kube-configs/directory-for-kube-configs.injectable";
 import directoryForUserDataInjectable from "../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
@@ -100,6 +101,61 @@ describe("PodStore kube metrics", () => {
     await podStore.loadKubeMetrics();
 
     expect(listMetrics).not.toHaveBeenCalled();
+  });
+
+  describe("the indexes over the pods", () => {
+    const podOf = (name: string, ownerUid: string, nodeName: string, claim?: string) =>
+      new Pod({
+        apiVersion: "v1",
+        kind: "Pod",
+        metadata: {
+          name,
+          namespace: "default",
+          uid: `uid-${name}`,
+          resourceVersion: "1",
+          selfLink: `/api/v1/namespaces/default/pods/${name}`,
+          ownerReferences: [
+            { uid: ownerUid, name: "owner", kind: "ReplicaSet", apiVersion: "apps/v1" },
+            { uid: ownerUid, name: "owner", kind: "ReplicaSet", apiVersion: "apps/v1" },
+          ],
+        },
+        spec: {
+          nodeName,
+          containers: [],
+          volumes: claim ? [{ name: "v", persistentVolumeClaim: { claimName: claim } }] : [],
+        },
+        status: {},
+      } as unknown as ConstructorParameters<typeof Pod>[0]);
+
+    const lookups = () => [
+      podStore.getPodsByOwnerId("owner-a").map((pod) => pod.getName()),
+      podStore.getPodsByNode("node-1").map((pod) => pod.getName()),
+      podStore.getPodsByPvc("default", "claim").map((pod) => pod.getName()),
+    ];
+
+    it("lists the pods in the order of the store, and follows the store while observed", () => {
+      podStore.isLoaded = true;
+      runInAction(() =>
+        podStore.items.replace([podOf("a", "owner-a", "node-1", "claim"), podOf("b", "owner-b", "node-1")]),
+      );
+
+      const seen: string[][][] = [];
+      const dispose = autorun(() => seen.push(lookups()));
+
+      expect(seen.at(-1)).toEqual([["a"], ["a", "b"], ["a"]]);
+
+      runInAction(() => podStore.items.push(podOf("c", "owner-a", "node-1", "claim")));
+      expect(seen.at(-1)).toEqual([
+        ["a", "c"],
+        ["a", "b", "c"],
+        ["a", "c"],
+      ]);
+
+      runInAction(() => podStore.items.splice(0, 1));
+      expect(seen.at(-1)).toEqual([["c"], ["b", "c"], ["c"]]);
+
+      dispose();
+    });
   });
 
   describe("hiding completed pods", () => {
