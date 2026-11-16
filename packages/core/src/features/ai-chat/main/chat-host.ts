@@ -328,26 +328,32 @@ export class AiChatHost {
       return;
     }
 
-    const mcpUrl = await this.dependencies.mcpUrlFor(chat.id);
-    const turn = {
-      chatId: chat.id,
-      command,
-      prompt: text,
-      model: chat.model,
-      effort: chat.effort,
-      systemPrompt: this.systemPrompt(chat),
-      mcpUrl,
-      mcpToken: this.dependencies.mcpToken(),
-    };
     const onEvent = (event: AiCliEvent) => this.applyCliEvent(chat.id, event);
 
-    if (chat.provider === "muse") {
-      await this.dependencies.muse.prompt(turn, onEvent);
-    } else {
-      this.dependencies.cliTurns.start(
-        { ...turn, provider: chat.provider, resumeSessionId: chat.sessions.get(chat.provider) },
-        onEvent,
-      );
+    try {
+      const mcpUrl = await this.dependencies.mcpUrlFor(chat.id);
+      const turn = {
+        chatId: chat.id,
+        command,
+        prompt: text,
+        model: chat.model,
+        effort: chat.effort,
+        systemPrompt: this.systemPrompt(chat),
+        mcpUrl,
+        mcpToken: this.dependencies.mcpToken(),
+      };
+
+      if (chat.provider === "muse") {
+        await this.dependencies.muse.prompt(turn, onEvent);
+      } else {
+        this.dependencies.cliTurns.start(
+          { ...turn, provider: chat.provider, resumeSessionId: chat.sessions.get(chat.provider) },
+          onEvent,
+        );
+      }
+    } catch (error) {
+      // Without this the chat would stay "running" for good, with nothing said.
+      onEvent({ kind: "done", error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -496,6 +502,11 @@ export class AiChatHost {
   }
 
   private publish(chat: ChatRecord) {
+    // A tool call or an OpenAI turn can end after its chat was closed; the views must not get it back.
+    if (this.chats.get(chat.id) !== chat) {
+      return;
+    }
+
     this.dependencies.sendSnapshot(this.snapshot(chat));
   }
 }
