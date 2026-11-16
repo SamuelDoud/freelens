@@ -12,7 +12,7 @@ import {
   timeSearchOperators,
 } from "../../advanced-search/common/conditions";
 import { findAiTool } from "../common/tools";
-import { describeApiError, formatAge, formatObjectTable, sanitizeObject, truncate } from "./format";
+import { describeApiError, formatAge, formatObjectTable, sanitizeObject, statusColumns, truncate } from "./format";
 import { apiVersionOf, collectionPath, namedViewPaths, objectPath, resolveResource, viewPathOf } from "./resources";
 
 import type { KubeApiResource } from "../../../common/rbac";
@@ -73,6 +73,44 @@ const num = (args: Args, key: string, fallback: number, max: number) => {
   const value = args[key];
 
   return typeof value === "number" && Number.isFinite(value) ? Math.max(1, Math.min(max, Math.floor(value))) : fallback;
+};
+
+/** The lowercased values of a comma-separated list, or undefined when there are none. */
+const valueSet = (text: string | undefined) => {
+  const values = (text ?? "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  return values.length > 0 ? new Set(values) : undefined;
+};
+
+type Columns = Record<string, string | number>;
+
+/** Whether a status ("Ready,SchedulingDisabled" counts as both of its parts) is one of the values. */
+const statusIsOneOf = (columns: Columns, values: Set<string>) => {
+  const status = String(columns.status ?? "").toLowerCase();
+
+  return values.has(status) || status.split(",").some((part) => values.has(part));
+};
+
+/** Fewer ready than wanted ("1/3"), or a node that is not Ready. */
+const isNotReady = (columns: Columns) => {
+  const ready = /^(\d+)\/(\d+)$/.exec(String(columns.ready ?? ""));
+
+  return ready ? Number(ready[1]) < Number(ready[2]) : /^notready/i.test(String(columns.status ?? ""));
+};
+
+const createdAt = (object: RawObject) => Date.parse(object.metadata?.creationTimestamp ?? "") || 0;
+
+const listOrders: Record<string, (left: { object: RawObject; columns: Columns }, right: typeof left) => number> = {
+  name: (left, right) =>
+    String(left.object.metadata?.name ?? "").localeCompare(String(right.object.metadata?.name ?? "")) ||
+    String(left.object.metadata?.namespace ?? "").localeCompare(String(right.object.metadata?.namespace ?? "")),
+  restarts: (left, right) => Number(right.columns.restarts ?? 0) - Number(left.columns.restarts ?? 0),
+  newest: (left, right) => createdAt(right.object) - createdAt(left.object),
+  oldest: (left, right) => createdAt(left.object) - createdAt(right.object),
+  status: (left, right) => String(left.columns.status ?? "").localeCompare(String(right.columns.status ?? "")),
 };
 
 const patchContentTypes: Record<string, string> = {
@@ -220,12 +258,43 @@ export class AiToolExecutor {
               .toLowerCase()
               .includes(nameContains),
         );
-        const shown = items.slice(0, limit);
+        // Filters and the order apply to every object, before the rows are cut to the limit: a
+        // question about the pods that restarted must not see only the first rows of a namespace.
+        const minRestarts =
+          typeof args.minRestarts === "number" && Number.isFinite(args.minRestarts) ? args.minRestarts : undefined;
+        const statusIn = valueSet(str(args, "status"));
+        const statusOut = valueSet(str(args, "statusNot"));
+        const notReady = args.notReady === true;
+        const sortBy = str(args, "sortBy");
+        const order = sortBy === undefined ? undefined : listOrders[sortBy];
+
+        if (sortBy !== undefined && !order) {
+          throw new ToolError(`"sortBy" must be one of ${Object.keys(listOrders).join(", ")}.`);
+        }
+
+        const filtered = minRestarts !== undefined || statusIn || statusOut || notReady;
+        const rows = items
+          .map((object) => ({ object, columns: statusColumns(resource.kind, object) }))
+          .filter(
+            ({ columns }) =>
+              (minRestarts === undefined || Number(columns.restarts ?? 0) >= minRestarts) &&
+              (!statusIn || statusIsOneOf(columns, statusIn)) &&
+              (!statusOut || !statusIsOneOf(columns, statusOut)) &&
+              (!notReady || isNotReady(columns)),
+          );
+
+        if (order) {
+          rows.sort(order);
+        }
+
+        const shown = rows.slice(0, limit).map(({ object }) => object);
         const table = formatObjectTable(resource.kind, shown, now());
 
         return `${items.length} ${resource.kind}${items.length === 1 ? "" : "s"}${namespace ? ` in ${namespace}` : ""}${
-          items.length > shown.length ? `, the first ${shown.length} shown` : ""
-        }${table ? `\n${table}` : ""}`;
+          filtered ? `, ${rows.length} matching` : ""
+        }${order ? `, by ${sortBy}` : ""}${rows.length > shown.length ? `, the first ${shown.length} shown` : ""}${
+          table ? `\n${table}` : ""
+        }`;
       }
 
       case "get_resource": {

@@ -58,7 +58,9 @@ export const aiTools: readonly AiToolSpec[] = [
     name: "list_resources",
     access: "read",
     description:
-      "List objects of a kind as a compact table (name, namespace, age, and status for common kinds). Filter as narrowly as you can.",
+      "List objects of a kind as a compact table (name, namespace, age, and status for common kinds: ready, status, restarts for pods). " +
+      "Filter and sort here, not by reading the rows: every object of the kind is filtered and sorted first, and only then cut to the row limit, " +
+      "so a question such as the pods that restarted or are not ready gets all of them whatever the size of the namespace.",
     inputSchema: {
       type: "object",
       properties: {
@@ -67,6 +69,27 @@ export const aiTools: readonly AiToolSpec[] = [
         labelSelector: { type: "string" },
         fieldSelector: { type: "string", description: 'e.g. "status.phase!=Running" or "spec.nodeName=node-1".' },
         nameContains: { type: "string" },
+        minRestarts: {
+          type: "number",
+          description: "Only objects whose containers restarted at least this many times in total (pods).",
+        },
+        status: {
+          type: "string",
+          description:
+            'Only these values of the status column, comma-separated, any case: "CrashLoopBackOff,Error", "Pending", "NotReady".',
+        },
+        statusNot: { type: "string", description: 'Leave out these values of the status column: "Running,Completed".' },
+        notReady: {
+          type: "boolean",
+          description:
+            "Only objects that are not fully ready: fewer ready than wanted (pods, workloads), or a NotReady node.",
+        },
+        sortBy: {
+          type: "string",
+          enum: ["name", "restarts", "newest", "oldest", "status"],
+          description:
+            'The order of the rows: "restarts" puts the most restarts first. Default: as the API lists them.',
+        },
         limit: { type: "number", description: "At most this many rows (default 100, at most 500)." },
       },
       required: ["kind"],

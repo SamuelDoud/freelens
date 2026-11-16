@@ -42,7 +42,7 @@ function podStatus(pod: RawObject): string {
 }
 
 /** The columns kubectl shows for the common kinds, after name and namespace. */
-function statusColumns(kind: string, object: RawObject): Record<string, string | number> {
+export function statusColumns(kind: string, object: RawObject): Record<string, string | number> {
   const spec = object.spec ?? {};
   const status = object.status ?? {};
 

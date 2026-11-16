@@ -230,4 +230,102 @@ describe("AiToolExecutor", () => {
       /does not serve the kind Gadget/,
     );
   });
+
+  describe("filters and order of list_resources", () => {
+    // 700 pods in name order, as the API lists them; the restarted and failing ones come after the
+    // first 500, which the row limit alone would cut off.
+    const pod = (index: number, { restarts = 0, reason = "", ready = true } = {}) => ({
+      metadata: {
+        name: `collector-${String(index).padStart(3, "0")}`,
+        namespace: "telemetry",
+        creationTimestamp: new Date(now - (700 - index) * 60_000).toISOString(),
+      },
+      spec: { containers: [{}] },
+      status: {
+        phase: "Running",
+        containerStatuses: [
+          { ready, restartCount: restarts, state: reason ? { waiting: { reason } } : { running: {} } },
+        ],
+      },
+    });
+    const pods = Array.from({ length: 700 }, (_, index) => {
+      if (index === 600) return pod(index, { restarts: 3 });
+      if (index === 650) return pod(index, { restarts: 12, reason: "CrashLoopBackOff", ready: false });
+      if (index === 690) return pod(index, { restarts: 1 });
+      if (index === 10) return pod(index, { reason: "ImagePullBackOff", ready: false });
+
+      return pod(index);
+    });
+    const names = (text: string) =>
+      text
+        .split("\n")
+        .slice(2)
+        .map((line) => line.split("\t")[0]);
+
+    beforeEach(() => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({ items: pods });
+    });
+
+    it("finds the pods that restarted past the first 500, most restarts first", async () => {
+      const { text } = await executor.execute(
+        "list_resources",
+        { kind: "Pod", namespace: "telemetry", minRestarts: 1, sortBy: "restarts", limit: 500 },
+        readOnly,
+      );
+
+      expect(text.split("\n")[0]).toBe("700 Pods in telemetry, 3 matching, by restarts");
+      expect(names(text)).toEqual(["collector-650", "collector-600", "collector-690"]);
+    });
+
+    it("filters on the status column, any case, and leaves values out", async () => {
+      const failing = await executor.execute(
+        "list_resources",
+        { kind: "Pod", namespace: "telemetry", status: "crashloopbackoff, ImagePullBackOff" },
+        readOnly,
+      );
+      const notRunning = await executor.execute(
+        "list_resources",
+        { kind: "Pod", namespace: "telemetry", statusNot: "Running" },
+        readOnly,
+      );
+
+      expect(names(failing.text)).toEqual(["collector-010", "collector-650"]);
+      expect(names(notRunning.text)).toEqual(["collector-010", "collector-650"]);
+    });
+
+    it("finds the pods that are not ready, and sorts by age", async () => {
+      const { text } = await executor.execute(
+        "list_resources",
+        { kind: "Pod", namespace: "telemetry", notReady: true, sortBy: "newest" },
+        readOnly,
+      );
+
+      expect(text.split("\n")[0]).toBe("700 Pods in telemetry, 2 matching, by newest");
+      expect(names(text)).toEqual(["collector-650", "collector-010"]);
+    });
+
+    it("cuts to the limit after sorting, and says so", async () => {
+      const { text } = await executor.execute(
+        "list_resources",
+        { kind: "Pod", namespace: "telemetry", sortBy: "oldest", limit: 2 },
+        readOnly,
+      );
+
+      expect(text.split("\n")[0]).toBe("700 Pods in telemetry, by oldest, the first 2 shown");
+      expect(names(text)).toEqual(["collector-000", "collector-001"]);
+    });
+
+    it("lists as before without them", async () => {
+      const { text } = await executor.execute("list_resources", { kind: "Pod", namespace: "telemetry" }, readOnly);
+
+      expect(text.split("\n")[0]).toBe("700 Pods in telemetry, the first 100 shown");
+      expect(names(text)[0]).toBe("collector-000");
+    });
+
+    it("refuses an order it does not know", async () => {
+      const result = await executor.execute("list_resources", { kind: "Pod", sortBy: "cpu" }, readOnly);
+
+      expect(result).toEqual({ ok: false, text: '"sortBy" must be one of name, restarts, newest, oldest, status.' });
+    });
+  });
 });
