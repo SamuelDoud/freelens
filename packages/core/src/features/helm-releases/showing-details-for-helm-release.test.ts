@@ -610,6 +610,7 @@ describe("showing details for helm release", () => {
                         beforeEach(async () => {
                           listClusterHelmReleasesMock.mockClear();
                           requestHelmReleaseConfigurationMock.mockClear();
+                          requestDetailedHelmReleaseMock.mockClear();
 
                           await requestHelmReleaseUpdateMock.resolve({
                             callWasSuccessful: true,
@@ -626,12 +627,53 @@ describe("showing details for helm release", () => {
                           expect(saveButton).not.toHaveClass("waiting");
                         });
 
-                        it("reloads the configuration", () => {
-                          expect(requestHelmReleaseConfigurationMock).toHaveBeenCalledWith(
-                            "some-name",
-                            "some-namespace",
-                            true,
+                        it("reloads the release", () => {
+                          expect(requestDetailedHelmReleaseMock).toHaveBeenCalledWith(
+                            anyObject({ releaseName: "some-name", namespace: "some-namespace" }),
                           );
+                        });
+
+                        describe("when the release has reloaded", () => {
+                          beforeEach(async () => {
+                            await requestDetailedHelmReleaseMock.resolve({
+                              callWasSuccessful: true,
+                              response: {
+                                release: toHelmRelease({
+                                  app_version: "some-app-version",
+                                  chart: "some-chart-1.0.0",
+                                  status: "some-status",
+                                  updated: "2025-01-01T00:00:00+0000",
+                                  revision: "some-new-revision",
+                                  name: "some-name",
+                                  namespace: "some-namespace",
+                                }),
+                                details: {
+                                  name: "some-name",
+                                  namespace: "some-namespace",
+                                  version: 2,
+                                  config: {},
+                                  manifest: "some-manifest",
+                                  info: {
+                                    deleted: "",
+                                    description: "",
+                                    first_deployed: "",
+                                    last_deployed: "",
+                                    notes: "some-notes",
+                                    status: "some-status",
+                                  },
+                                  resources: [],
+                                },
+                              },
+                            });
+                          });
+
+                          it("reloads the configuration", () => {
+                            expect(requestHelmReleaseConfigurationMock).toHaveBeenCalledWith(
+                              "some-name",
+                              "some-namespace",
+                              true,
+                            );
+                          });
                         });
 
                         it("shows success notification", () => {

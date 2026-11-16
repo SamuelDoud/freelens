@@ -161,7 +161,12 @@ export class ReleaseDetailsModel {
         </p>,
       );
 
-      // The update made a new revision: reload the release, its resources and its values.
+      // The update made a new revision: reload the release, its resources and its values. The values are locked
+      // meanwhile, as they are while loading, so that no edit is lost to the reload.
+      runInAction(() => {
+        this.configuration.isLoading.set(true);
+      });
+
       await this.load();
     },
   };
@@ -190,6 +195,7 @@ export class ReleaseDetailsModel {
     if (!result.callWasSuccessful) {
       runInAction(() => {
         this.loadingError.set(result.error);
+        this.configuration.isLoading.set(false);
       });
 
       return;
