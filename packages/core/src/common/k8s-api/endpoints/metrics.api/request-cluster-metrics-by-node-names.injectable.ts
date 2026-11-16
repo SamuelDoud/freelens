@@ -5,6 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import { escapePrometheusRegex } from "./escape-prometheus-regex";
 import requestMetricsInjectable from "./request-metrics.injectable";
 
 import type { MetricData } from "../metrics.api";
@@ -66,7 +67,7 @@ const requestClusterMetricsByNodeNamesInjectable = getInjectable({
       // When empty, cluster-wide metrics aggregate across all nodes,
       // preserving historical data from replaced nodes (see #2409).
       if (nodeNames.length > 0) {
-        opts.nodes = nodeNames.join("|");
+        opts.nodes = nodeNames.map(escapePrometheusRegex).join("|");
       }
       const { metrics = defaultClusterMetricKeys, ...requestParams } = params;
       const query = metrics.reduce(

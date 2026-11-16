@@ -5,6 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import { escapePrometheusRegex } from "./escape-prometheus-regex";
 import requestMetricsInjectable from "./request-metrics.injectable";
 
 import type { DaemonSet } from "@freelensapp/kube-object";
@@ -35,7 +36,9 @@ const requestPodMetricsForDaemonSetsInjectable = getInjectable({
     const requestMetrics = di.inject(requestMetricsInjectable);
 
     return (daemonSets, namespace, selector = "", params) => {
-      const podSelector = daemonSets.map((daemonSet) => `${daemonSet.getName()}-[[:alnum:]]{5}`).join("|");
+      const podSelector = daemonSets
+        .map((daemonSet) => `${escapePrometheusRegex(daemonSet.getName())}-[[:alnum:]]{5}`)
+        .join("|");
       const opts = { category: "pods", pods: podSelector, namespace, selector };
 
       return requestMetrics(

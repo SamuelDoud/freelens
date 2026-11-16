@@ -5,6 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import { escapePrometheusRegex, podTemplateHash } from "./escape-prometheus-regex";
 import requestMetricsInjectable from "./request-metrics.injectable";
 
 import type { Deployment } from "@freelensapp/kube-object";
@@ -36,7 +37,7 @@ const requestPodMetricsForDeploymentsInjectable = getInjectable({
 
     return (deployments, namespace, selector = "", params) => {
       const podSelector = deployments
-        .map((deployment) => `${deployment.getName()}-[[:alnum:]]{9,}-[[:alnum:]]{5}`)
+        .map((deployment) => `${escapePrometheusRegex(deployment.getName())}-${podTemplateHash}-[[:alnum:]]{5}`)
         .join("|");
       const opts = { category: "pods", pods: podSelector, namespace, selector };
 
