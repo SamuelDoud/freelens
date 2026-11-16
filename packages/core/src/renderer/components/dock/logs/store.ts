@@ -203,7 +203,11 @@ export class LogStore {
       return;
     }
 
-    const backoff = getOrInsertWith(this.pollBackoffs, tabId, () => new RetryBackoff({ initialDelayMs: 20_000, maxDelayMs: 60_000 }));
+    const backoff = getOrInsertWith(
+      this.pollBackoffs,
+      tabId,
+      () => new RetryBackoff({ initialDelayMs: 20_000, maxDelayMs: 60_000 }),
+    );
 
     // A tab whose polls keep failing is asked less and less often.
     if (!backoff.canAttempt()) {
