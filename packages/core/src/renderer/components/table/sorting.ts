@@ -29,6 +29,12 @@ export function getSorted<T>(
   rawItems: T[],
   sortingCallback: TableSortCallback<T> | undefined,
   orderBy: TableOrderBy = "asc",
+  /**
+   * The result of an earlier call for a similar list. When most of it is still in the list it is a
+   * sorted run that is merged with the sorted rest instead of sorting everything again. It only
+   * speeds the call up: the result is the same without it.
+   */
+  previous?: readonly T[],
 ): T[] {
   if (typeof sortingCallback !== "function") {
     return rawItems;
@@ -51,14 +57,12 @@ export function getSorted<T>(
   }
 
   const sign: 1 | -1 = orderBy === "desc" ? -1 : 1;
-  const order: number[] = new Array(length);
 
-  for (let i = 0; i < length; i++) {
-    order[i] = i;
-  }
+  // The order of the keys alone, 0 for a tie.
+  let compare: (left: number, right: number) => number;
 
   if (!anyArray) {
-    order.sort((left, right) => compareKeys(keys[left], keys[right], sign));
+    compare = (left, right) => compareKeys(keys[left], keys[right], sign);
   } else {
     // A single value is a key of one part. flat(0) copies an array key without its holes, as
     // [key].flat() did.
@@ -70,7 +74,7 @@ export function getSorted<T>(
       parts[i] = Array.isArray(key) ? key.flat(0) : [key as string | number | undefined];
     }
 
-    order.sort((left, right) => {
+    compare = (left, right) => {
       const leftParts = parts[left];
       const rightParts = parts[right];
       const common = Math.min(leftParts.length, rightParts.length);
@@ -85,9 +89,12 @@ export function getSorted<T>(
 
       // The shorter key first, whichever the direction.
       return leftParts.length - rightParts.length;
-    });
+    };
   }
 
+  const order =
+    (previous && hasUniformStringKeys(keys) && mergeWithPrevious(rawItems, previous, compare)) ||
+    sortIndexes(length, compare);
   const sorted: T[] = new Array(length);
 
   for (let i = 0; i < length; i++) {
@@ -95,6 +102,144 @@ export function getSorted<T>(
   }
 
   return sorted;
+}
+
+/**
+ * Whether the keys are numbers or strings, the same kind at every position of a key, and the first
+ * position of a key a string. Only uniform kinds give a total order, the one the merge relies on:
+ * `<` on a mix of kinds is not transitive. Number keys are left to the plain sort, which is
+ * faster for them than finding the previous run is worth.
+ */
+function hasUniformStringKeys(keys: readonly unknown[]): boolean {
+  const kinds: string[] = [];
+
+  for (const key of keys) {
+    const keyParts: readonly unknown[] = Array.isArray(key) ? key.flat(0) : [key];
+
+    for (let position = 0; position < keyParts.length; position++) {
+      const part = keyParts[position];
+
+      if (isMissing(part)) {
+        continue;
+      }
+
+      const kind = typeof part;
+
+      if (kind !== "number" && kind !== "string") {
+        return false;
+      }
+
+      if (kinds[position] === undefined) {
+        kinds[position] = kind;
+      } else if (kinds[position] !== kind) {
+        return false;
+      }
+    }
+  }
+
+  return kinds[0] === "string";
+}
+
+function sortIndexes(length: number, compare: (left: number, right: number) => number): number[] {
+  const order: number[] = new Array(length);
+
+  for (let i = 0; i < length; i++) {
+    order[i] = i;
+  }
+
+  // Array.prototype.sort is stable, so equal keys stay in input order.
+  return order.sort(compare);
+}
+
+// Below this many items a sort is cheap enough that nothing is worth saving.
+const MERGE_MIN_LENGTH = 512;
+
+// More new items than this fraction of the list and the sort of them costs as much as the full one.
+const MERGE_MAX_NEW_FRACTION = 8;
+
+/**
+ * The indexes of `rawItems` in the order a stable sort by `compare` gives, found by merging the
+ * items that were in `previous` (already in order, if their keys did not change) with the sorted
+ * rest. Undefined when that does not apply: the run is not in order under the current keys, or too
+ * much of the list is new. Both orders are total, key first and then input index, so the merge
+ * gives exactly what the stable sort gives.
+ */
+function mergeWithPrevious<T>(
+  rawItems: readonly T[],
+  previous: readonly T[],
+  compare: (left: number, right: number) => number,
+): number[] | undefined {
+  const length = rawItems.length;
+
+  if (length < MERGE_MIN_LENGTH || previous.length === 0) {
+    return undefined;
+  }
+
+  const indexOf = new Map<T, number>();
+
+  for (let i = 0; i < length; i++) {
+    indexOf.set(rawItems[i], i);
+  }
+
+  // The same item twice in the list has no single index.
+  if (indexOf.size !== length) {
+    return undefined;
+  }
+
+  const inRun = new Uint8Array(length);
+  const run: number[] = [];
+
+  for (let i = 0; i < previous.length; i++) {
+    const index = indexOf.get(previous[i]);
+
+    if (index !== undefined && inRun[index] === 0) {
+      inRun[index] = 1;
+      run.push(index);
+    }
+  }
+
+  const extraCount = length - run.length;
+
+  if (extraCount * MERGE_MAX_NEW_FRACTION > length) {
+    return undefined;
+  }
+
+  // The total order: by key, ties by input index.
+  const before = (left: number, right: number) => {
+    const ordering = compare(left, right);
+
+    return ordering !== 0 ? ordering < 0 : left < right;
+  };
+
+  for (let i = 1; i < run.length; i++) {
+    if (!before(run[i - 1], run[i])) {
+      return undefined;
+    }
+  }
+
+  const extras: number[] = [];
+
+  for (let i = 0; i < length; i++) {
+    if (inRun[i] === 0) {
+      extras.push(i);
+    }
+  }
+
+  extras.sort((left, right) => compare(left, right) || left - right);
+
+  const order: number[] = new Array(length);
+  let runAt = 0;
+  let extraAt = 0;
+
+  for (let i = 0; i < length; i++) {
+    if (extraAt >= extras.length || (runAt < run.length && before(run[runAt], extras[extraAt]))) {
+      order[i] = run[runAt++];
+    } else {
+      order[i] = extras[extraAt++];
+    }
+  }
+
+  return order;
 }
 
 /**

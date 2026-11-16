@@ -241,6 +241,9 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
     return applyHeldPositions(sortedItems, positions, length);
   }
 
+  // The last sort of the items by a column, for getSorted to start from.
+  private lastSorted?: { sort: string; items: Item[] };
+
   // The order of the items and the heights of their rows are worked out once for the same input,
   // not on every render, and inside a computed so that an observable a sort callback or a height
   // callback reads (the metrics of the usage sorts) still makes them current. A computed must not
@@ -288,7 +291,16 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
           return defined;
         }
 
-        const sorted = sortable && sortBy && orderBy ? getSorted(defined, callback, orderBy as TableOrderBy) : defined;
+        let sorted = defined;
+
+        if (sortable && sortBy && orderBy) {
+          // After a watch flush most items are the ones of the last sort, still in order: merge them
+          // with the new ones instead of sorting everything again. Same result, found faster.
+          const previous = this.lastSorted?.sort === sort ? this.lastSorted.items : undefined;
+
+          sorted = getSorted(defined, callback, orderBy as TableOrderBy, previous);
+          this.lastSorted = { sort, items: sorted };
+        }
 
         return this.applyHeldOrder(sorted, hold, sort);
       });
