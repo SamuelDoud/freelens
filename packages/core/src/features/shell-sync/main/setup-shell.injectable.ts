@@ -27,7 +27,11 @@ const setupShellInjectable = getInjectable({
     run: () => {
       const ready = di.inject(shellEnvironmentReadyInjectable);
 
-      void syncShellEnvironment(di).finally(ready.settle);
+      const logger = di.inject(loggerInjectionToken);
+
+      void syncShellEnvironment(di)
+        .catch((error) => logger.error(`[SHELL-SYNC]: failed to sync the shell environment`, error))
+        .finally(ready.settle);
     },
   }),
 
