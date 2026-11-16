@@ -328,4 +328,60 @@ describe("AiToolExecutor", () => {
       expect(result).toEqual({ ok: false, text: '"sortBy" must be one of name, restarts, newest, oldest, status.' });
     });
   });
+
+  describe("logs and events", () => {
+    it("keeps the newest lines of a log that is cut, not the oldest", async () => {
+      const log = Array.from({ length: 1000 }, (_, index) => `line-${String(index).padStart(4, "0")} ${"x".repeat(80)}`)
+        .join("\n")
+        .concat("\n");
+
+      vi.mocked(dependencies.kube.get).mockResolvedValue(log);
+
+      const { ok, text } = await executor.execute(
+        "get_pod_logs",
+        { name: "p", namespace: "a", tailLines: 1000 },
+        readOnly,
+      );
+
+      expect(ok).toBe(true);
+      expect(text).toContain("line-0999");
+      expect(text).not.toContain("line-0000");
+      expect(text.split("\n")[0]).toMatch(/cut/);
+    });
+
+    it("matches the kind of an event query whatever its case", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({ items: [] });
+
+      await executor.execute("get_events", { kind: "deployment", name: "api", namespace: "a" }, readOnly);
+
+      expect(dependencies.kube.get).toHaveBeenCalledWith("/api/v1/namespaces/a/events", {
+        fieldSelector: "involvedObject.kind=Deployment,involvedObject.name=api",
+      });
+    });
+
+    it("does not call a finished pod not ready", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({
+        items: [
+          {
+            metadata: { name: "job-1", namespace: "a" },
+            spec: { containers: [{}] },
+            status: {
+              phase: "Succeeded",
+              containerStatuses: [{ ready: false, state: { terminated: { reason: "Completed" } } }],
+            },
+          },
+          {
+            metadata: { name: "web-1", namespace: "a" },
+            spec: { containers: [{}] },
+            status: { phase: "Running", containerStatuses: [{ ready: false }] },
+          },
+        ],
+      });
+
+      const { text } = await executor.execute("list_resources", { kind: "Pod", notReady: true }, readOnly);
+
+      expect(text).toContain("web-1");
+      expect(text).not.toContain("job-1");
+    });
+  });
 });

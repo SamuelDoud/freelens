@@ -187,6 +187,17 @@ export function truncate(text: string, maxCharacters = 40000): string {
     : `${text.slice(0, maxCharacters)}\n… (${text.length - maxCharacters} more characters cut; narrow the request)`;
 }
 
+/** Like `truncate`, for output whose end matters most: the beginning is cut. */
+export function truncateKeepingEnd(text: string, maxCharacters = 40000): string {
+  if (text.length <= maxCharacters) return text;
+
+  const kept = text.slice(-maxCharacters);
+  // Starts at a whole line.
+  const newline = kept.indexOf("\n");
+
+  return `… (${text.length - kept.length + (newline >= 0 ? newline + 1 : 0)} earlier characters cut; narrow the request)\n${newline >= 0 ? kept.slice(newline + 1) : kept}`;
+}
+
 /** The message of an error the Kubernetes API or JsonApi throws. */
 export function describeApiError(error: unknown): string {
   if (typeof error === "string") return error;
