@@ -12,6 +12,7 @@ import {
   listReleasesFromSecrets,
   maximumListedReleases,
 } from "../list-releases-from-secrets";
+import { parseHelmUpdated } from "../to-helm-release";
 import expectedRows from "./helm-ls-synthetic.json";
 import { releaseBody, syntheticCases, toSecret } from "./synthetic-release-secrets";
 
@@ -184,5 +185,16 @@ describe("formatLastDeployed", () => {
     expect(formatLastDeployed(undefined)).toBe("-");
     expect(formatLastDeployed("")).toBe("-");
     expect(formatLastDeployed("0001-01-01T00:00:00Z")).toBe("-");
+  });
+
+  it("prints a time every consumer parses, in a zone Go names or not", () => {
+    for (const value of [
+      "2026-05-05T05:05:05.12+09:00",
+      "2026-05-05T05:05:05.000000001-03:30",
+      "2026-05-05T05:05:05Z",
+      "2026-05-05T05:05:05+05:45",
+    ]) {
+      expect(parseHelmUpdated(formatLastDeployed(value))).toBe(new Date(value).getTime());
+    }
   });
 });

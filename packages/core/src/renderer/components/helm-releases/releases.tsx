@@ -21,6 +21,7 @@ import helmReleasesRouteParametersInjectable from "./helm-releases-route-paramet
 import { HelmReleaseMenu } from "./release-menu";
 import releasesInjectable from "./releases.injectable";
 import removableReleasesInjectable from "./removable-releases.injectable";
+import { parseHelmUpdated } from "./to-helm-release";
 
 import type { IComputedValue } from "mobx";
 
@@ -182,7 +183,7 @@ class NonInjectedHelmReleases extends Component<Dependencies> {
             <WithTooltip>{release.getVersion()}</WithTooltip>,
             <WithTooltip>{release.appVersion}</WithTooltip>,
             { title: release.getStatus(), className: kebabCase(release.getStatus()) },
-            <WithTooltip tooltip={release.updated ? new Date(release.updated.replace(/\s\w*$/, "")) : undefined}>
+            <WithTooltip tooltip={release.updated ? new Date(parseHelmUpdated(release.updated)) : undefined}>
               {release.getUpdated()}
             </WithTooltip>,
           ]}

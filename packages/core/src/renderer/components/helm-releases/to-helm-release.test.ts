@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { toHelmRelease } from "./to-helm-release";
+import { parseHelmUpdated, toHelmRelease } from "./to-helm-release";
 
 import type { ListedHelmRelease } from "../../../features/helm-releases/common/channels";
 
@@ -29,5 +29,26 @@ describe("toHelmRelease().getChart", () => {
   ])("takes the version off %s", (chart, name) => {
     expect(release(chart).getChart()).toBe(name);
     expect(release(chart).getChart(true)).toBe(chart);
+  });
+});
+
+describe("parseHelmUpdated", () => {
+  const instant = Date.UTC(2026, 4, 5, 5, 5, 5, 120) - 9 * 3600_000;
+
+  it.each([
+    "2026-05-05 05:05:05.12 +0900 JST",
+    "2026-05-05 05:05:05.12 +0900 +09",
+    "2026-05-05 05:05:05.12 +0900 +0900",
+    "2026-05-05 05:05:05.12 +0900",
+  ])("reads %s whatever follows the offset", (updated) => {
+    expect(parseHelmUpdated(updated)).toBe(instant);
+  });
+
+  it("reads UTC", () => {
+    expect(parseHelmUpdated("2026-05-05 05:05:05.12 +0000 UTC")).toBe(Date.UTC(2026, 4, 5, 5, 5, 5, 120));
+  });
+
+  it("does not read a time `helm ls` has none of", () => {
+    expect(parseHelmUpdated("-")).toBeNaN();
   });
 });

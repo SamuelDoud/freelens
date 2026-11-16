@@ -93,4 +93,41 @@ describe("releases", () => {
     expect(await listed).toContain("multi");
     expect(requestListHelmReleases).not.toHaveBeenCalled();
   });
+
+  it("waits for a store that has not started to load, so that a normal start never asks helm", async () => {
+    const { names, requestListHelmReleases, storeState } = setup(syntheticCases(), {
+      isLoaded: false,
+      isLoading: false,
+      failedLoading: false,
+    });
+    const listed = names();
+
+    await Promise.resolve();
+    runInAction(() => {
+      storeState.isLoading = true;
+    });
+    runInAction(() => {
+      storeState.isLoaded = true;
+      storeState.isLoading = false;
+    });
+
+    expect(await listed).toContain("multi");
+    expect(requestListHelmReleases).not.toHaveBeenCalled();
+  });
+
+  it("asks helm when the store does not load in time", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const { names, requestListHelmReleases } = setup([], { isLoaded: false, isLoading: false, failedLoading: false });
+      const listed = names();
+
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(await listed).toEqual(["from-helm"]);
+      expect(requestListHelmReleases).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

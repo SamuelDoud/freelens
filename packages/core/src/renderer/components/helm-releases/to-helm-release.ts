@@ -11,6 +11,14 @@ import { getMillisecondsFromUnixEpoch } from "../../../common/utils/date/get-cur
 import type { HelmRelease } from "../../../common/k8s-api/endpoints/helm-releases.api";
 import type { ListedHelmRelease } from "../../../features/helm-releases/common/channels";
 
+/**
+ * `updated` as a Date's time, in milliseconds. Go prints `2019-11-26 10:58:09 +0300 MSK`, and a zone without an
+ * abbreviation as its offset, `2019-11-26 10:58:09 +0300 +03`; the name after the offset is not part of what Date
+ * parses.
+ */
+export const parseHelmUpdated = (updated: string) =>
+  new Date(updated.replace(/(?<=[+-]\d{4})\s(?:[A-Za-z]+|[+-]\d+)$/, "")).getTime();
+
 export const toHelmRelease = (release: ListedHelmRelease): HelmRelease => ({
   appVersion: release.app_version,
   chart: release.chart,
@@ -60,8 +68,7 @@ export const toHelmRelease = (release: ListedHelmRelease): HelmRelease => ({
   },
 
   getUpdated(humanize = true, compact = true) {
-    const updated = this.updated.replace(/\s\w*$/, ""); // 2019-11-26 10:58:09 +0300 MSK -> 2019-11-26 10:58:09 +0300 to pass into Date()
-    const updatedDate = new Date(updated).getTime();
+    const updatedDate = parseHelmUpdated(this.updated);
     const diff = getMillisecondsFromUnixEpoch() - updatedDate;
 
     if (humanize) {

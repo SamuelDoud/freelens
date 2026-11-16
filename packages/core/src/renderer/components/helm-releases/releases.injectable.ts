@@ -18,6 +18,9 @@ import { createReleaseSummaryCache, listReleasesFromSecrets } from "./list-relea
 import releaseSecretsInjectable from "./release-secrets.injectable";
 import { toHelmRelease } from "./to-helm-release";
 
+/** How long the first list waits for the secret store to load before it asks helm. */
+const waitForSecretsMs = 3000;
+
 const releasesInjectable = getInjectable({
   id: "releases",
 
@@ -37,9 +40,12 @@ const releasesInjectable = getInjectable({
         // Read before anything is awaited, so that a store that finishes loading runs this again.
         void releaseSecrets.get();
 
-        if (secretStore.isLoading && !secretStore.isLoaded) {
-          // The release Secrets are on their way: list from them instead of asking helm.
-          await when(() => !secretStore.isLoading);
+        if (!secretStore.isLoaded && !secretStore.failedLoading) {
+          // The release Secrets are on their way: list from them instead of asking helm. A store that does not load
+          // in time (or at all) leaves the list to helm.
+          await when(() => secretStore.isLoaded || secretStore.failedLoading, { timeout: waitForSecretsMs }).catch(
+            () => undefined,
+          );
         }
 
         if (secretStore.isLoaded && !secretStore.failedLoading) {
