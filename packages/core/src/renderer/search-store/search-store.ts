@@ -28,6 +28,15 @@ export class SearchStore {
   @observable accessor searchQuery = "";
 
   /**
+   * The text of a line as a reader sees it: without the color escape
+   * sequences. Search finds, and the list highlights, in this text, so that a
+   * query cannot match inside an escape sequence or split one.
+   */
+  public static stripEscapes(line: string): string {
+    return line.includes("\u001B") ? line.replace(/\u001B\[[\d;]*m/g, "") : line;
+  }
+
+  /**
    * Array with line numbers, eg [0, 0, 10, 21, 21, 40...]
    *
    * Replaced as a whole on every search, so only the reference is observed.
@@ -59,6 +68,9 @@ export class SearchStore {
     this.occurrences = this.findOccurrences(text ?? [], query);
 
     if (!this.occurrences.length) {
+      // Nothing is active: a stale index would make the next match look jumped to.
+      this.activeOverlayIndex = -1;
+
       return;
     }
 
@@ -85,7 +97,9 @@ export class SearchStore {
     for (let index = 0; index < lines.length; index += 1) {
       regex.lastIndex = 0;
 
-      for (let match = regex.exec(lines[index]); match; match = regex.exec(lines[index])) {
+      const line = SearchStore.stripEscapes(lines[index]);
+
+      for (let match = regex.exec(line); match; match = regex.exec(line)) {
         occurrences.push(index);
 
         // An empty match does not move lastIndex: step over it, as matchAll does.

@@ -17,8 +17,8 @@ import { action, observable, observableRef, reaction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import userPreferencesStateInjectable from "../../../../features/user-preferences/common/state.injectable";
-import { SearchStore } from "../../../search-store/search-store";
 import { VirtualList } from "../../virtual-list";
+import { markMatches, overlayMarkersToHtml } from "./highlight-log-line";
 import { ToBottom } from "./to-bottom";
 
 import type { ForwardedRef } from "react";
@@ -455,42 +455,20 @@ class NonForwardedLogList extends React.Component<
   getLogRow = (rowIndex: number) => {
     const { searchQuery, isActiveOverlay } = this.observableProps.model.searchStore;
     const item = this.logs[rowIndex];
-    const contents: React.ReactElement[] = [];
     const ansiToHtml = (ansi: string) => DOMPurify.sanitize(colorConverter.ansi_to_html(ansi));
-
-    if (searchQuery) {
-      // If search is enabled, replace keyword with backgrounded <span>
-      // Case-insensitive search (lowercasing query and keywords in line)
-      const regex = new RegExp(SearchStore.escapeRegex(searchQuery), "gi");
-      const matches = item.matchAll(regex);
-      const modified = item.replace(regex, (match) => match.toLowerCase());
-      // Splitting text line by keyword
-      const pieces = modified.split(searchQuery.toLowerCase());
-
-      pieces.forEach((piece, index) => {
-        const active = isActiveOverlay(rowIndex, index);
-        const lastItem = index === pieces.length - 1;
-        const overlayValueString = matches.next().value?.[0] ?? "";
-        const overlay = !lastItem ? (
-          <span
-            className={cssNames("overlay", { active })}
-            dangerouslySetInnerHTML={{ __html: ansiToHtml(overlayValueString) }}
-          />
-        ) : null;
-
-        contents.push(
-          <React.Fragment key={piece + index}>
-            <span dangerouslySetInnerHTML={{ __html: ansiToHtml(piece) }} />
-            {overlay}
-          </React.Fragment>,
-        );
-      });
-    }
+    // The matches are found in the text a reader sees, as the search counts them, and the color codes stay
+    // in place around them.
+    const marked = searchQuery
+      ? markMatches(item, searchQuery, (occurrence) => isActiveOverlay(rowIndex, occurrence))
+      : undefined;
+    const html = marked
+      ? DOMPurify.sanitize(overlayMarkersToHtml(colorConverter.ansi_to_html(marked)))
+      : ansiToHtml(item);
 
     return (
       <div className={cssNames("LogRow", { wordWrap: this.showWordWrap })}>
         <div ref={this.onRowRendered(rowIndex)}>
-          {contents.length > 1 ? contents : <span dangerouslySetInnerHTML={{ __html: ansiToHtml(item) }} />}
+          <span dangerouslySetInnerHTML={{ __html: html }} />
           {/* For preserving copy-paste experience and keeping line breaks */}
           <br />
         </div>
