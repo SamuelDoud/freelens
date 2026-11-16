@@ -6,6 +6,7 @@
 
 import { getInjectable } from "@ogre-tools/injectable";
 import { watch } from "chokidar";
+import platformInjectable from "../../vars/platform.injectable";
 import type { Stats } from "node:fs";
 
 import type { SingleOrMany, TypedEventEmitter } from "@freelensapp/utilities";
@@ -148,10 +149,41 @@ export type Watch = <AlwaysStat extends boolean = false>(
   options?: WatcherOptions<AlwaysStat>,
 ) => Watcher<AlwaysStat>;
 
+/** How often files are polled on macOS, in milliseconds, unless a caller asks for its own interval. */
+export const macOsPollingInterval = 1000;
+
+/**
+ * The options chokidar gets on a platform.
+ *
+ * Chokidar 4 and later have no FSEvents backend: on macOS they watch every file with `fs.watch`,
+ * which libuv implements with kqueue, and libuv aborts the whole process when it cannot re-arm a
+ * kqueue watch after an event, as for a file whose volume went away or whose descriptor went bad
+ * over a sleep. On macOS the files are polled instead, which also works on network volumes.
+ */
+export function watchOptionsFor<AlwaysStat extends boolean>(
+  platform: string,
+  options?: WatcherOptions<AlwaysStat>,
+): WatcherOptions<AlwaysStat> | undefined {
+  if (platform !== "darwin") {
+    return options;
+  }
+
+  return {
+    ...options,
+    usePolling: true,
+    interval: options?.interval ?? macOsPollingInterval,
+    binaryInterval: options?.binaryInterval ?? macOsPollingInterval,
+  } as WatcherOptions<AlwaysStat>;
+}
+
 // TODO: Introduce wrapper to allow simpler API
 const watchInjectable = getInjectable({
   id: "watch",
-  instantiate: () => watch as Watch,
+  instantiate: (di): Watch => {
+    const platform = di.inject(platformInjectable);
+
+    return (path, options) => watch(path, watchOptionsFor(platform, options) as never) as never;
+  },
   causesSideEffects: true,
 });
 
