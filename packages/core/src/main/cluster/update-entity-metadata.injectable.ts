@@ -31,11 +31,21 @@ const updateEntityMetadataInjectable = getInjectable({
   id: "update-entity-metadata",
 
   instantiate: (): UpdateEntityMetadata => {
+    // The labels of each cluster applied last, to take back the ones the cluster no longer has.
+    const appliedLabels = new WeakMap<Cluster, Record<string, string | undefined>>();
+
     return (entity, cluster) => {
-      const labels = {
-        ...entity.metadata.labels,
-        ...toJS(cluster.labels),
-      };
+      const clusterLabels = toJS(cluster.labels);
+      const labels = { ...entity.metadata.labels };
+
+      for (const key of Object.keys(appliedLabels.get(cluster) ?? {})) {
+        if (!Object.hasOwn(clusterLabels, key)) {
+          delete labels[key];
+        }
+      }
+
+      Object.assign(labels, clusterLabels);
+      appliedLabels.set(cluster, clusterLabels);
 
       // Replacing equal labels would still notify whoever observes them.
       if (!hasSameLabels(entity.metadata.labels, labels)) {
