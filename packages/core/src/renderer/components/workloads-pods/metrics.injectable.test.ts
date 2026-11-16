@@ -26,6 +26,7 @@ describe("pod-metrics injectable", () => {
       timestamps: {
         get: () => ({ start: 100, end: 200, range: 100 }),
       },
+      value: { get: () => ({ duration: 300 }) },
     }));
 
     const metrics = di.inject(podMetricsInjectable, { pod });

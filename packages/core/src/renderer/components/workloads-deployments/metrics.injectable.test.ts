@@ -26,6 +26,7 @@ describe("deployment-metrics injectable", () => {
       timestamps: {
         get: () => ({ start: 1000, end: 1100, range: 100 }),
       },
+      value: { get: () => ({ duration: 300 }) },
     }));
 
     const metrics = di.inject(deploymentMetricsInjectable, { deployment });

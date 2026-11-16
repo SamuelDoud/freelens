@@ -26,6 +26,7 @@ describe("stateful-set-metrics injectable", () => {
       timestamps: {
         get: () => ({ start: 2000, end: 2100, range: 100 }),
       },
+      value: { get: () => ({ duration: 300 }) },
     }));
 
     const metrics = di.inject(statefulSetMetricsInjectable, { statefulSet });

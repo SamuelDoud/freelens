@@ -26,6 +26,7 @@ describe("daemon-set-metrics injectable", () => {
       timestamps: {
         get: () => ({ start: 5000, end: 5100, range: 100 }),
       },
+      value: { get: () => ({ duration: 300 }) },
     }));
 
     const metrics = di.inject(daemonSetMetricsInjectable, { daemonSet });

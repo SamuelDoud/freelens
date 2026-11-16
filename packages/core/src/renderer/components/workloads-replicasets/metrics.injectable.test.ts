@@ -26,6 +26,7 @@ describe("replica-set-metrics injectable", () => {
       timestamps: {
         get: () => ({ start: 3000, end: 3100, range: 100 }),
       },
+      value: { get: () => ({ duration: 300 }) },
     }));
 
     const metrics = di.inject(replicaSetMetricsInjectable, { replicaSet });

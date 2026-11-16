@@ -26,6 +26,7 @@ describe("job-metrics injectable", () => {
       timestamps: {
         get: () => ({ start: 4000, end: 4100, range: 100 }),
       },
+      value: { get: () => ({ duration: 300 }) },
     }));
 
     const metrics = di.inject(jobMetricsInjectable, { job });

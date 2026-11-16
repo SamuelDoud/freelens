@@ -26,6 +26,7 @@ describe("ingress-metrics injectable", () => {
       timestamps: {
         get: () => ({ start: 1_700_000_000, end: 1_700_000_600, range: 600 }),
       },
+      value: { get: () => ({ duration: 300 }) },
     }));
 
     const metrics = di.inject(ingressMetricsInjectable, {

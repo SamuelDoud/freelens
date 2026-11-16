@@ -26,6 +26,7 @@ describe("namespace-metrics injectable", () => {
       timestamps: {
         get: () => ({ start: 6000, end: 6100, range: 100 }),
       },
+      value: { get: () => ({ duration: 300 }) },
     }));
 
     const metrics = di.inject(namespaceMetricsInjectable, { namespace });
