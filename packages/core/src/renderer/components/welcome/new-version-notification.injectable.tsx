@@ -22,7 +22,14 @@ const newVersionNotificationInjectable = getInjectable({
     const logger = di.inject(loggerInjectionToken);
     const showInfoNotification = di.inject(showInfoNotificationInjectable);
 
+    // The welcome page asks on every visit; the user is told once.
+    let told = false;
+
     return async () => {
+      if (told) {
+        return;
+      }
+
       let newVersion: string | undefined;
 
       try {
@@ -32,6 +39,7 @@ const newVersionNotificationInjectable = getInjectable({
       }
 
       if (newVersion && verkit.isGreaterThan(newVersion, currentVersion)) {
+        told = true;
         showInfoNotification(
           <div className="flex flex-col gap-2">
             <div>
