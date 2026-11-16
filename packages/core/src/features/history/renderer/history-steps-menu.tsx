@@ -38,7 +38,7 @@ const longPressMs = 500;
 export const NonInjectedHistoryStepsMenu = observer(
   ({ direction, children, timeline, controller, clusterName }: HistoryStepsMenuProps & Dependencies) => {
     const [isOpen, setOpen] = useState(false);
-    const pressTimer = useRef<ReturnType<typeof setTimeout>>();
+    const pressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     // Whether the press that is ending opened the menu, whose release must not also be a click on the button
     const openedByPress = useRef(false);
     const id = `history-steps-${direction < 0 ? "back" : "forward"}`;
