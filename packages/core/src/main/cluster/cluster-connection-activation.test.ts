@@ -11,6 +11,7 @@ import createCanIInjectable from "../../common/cluster/create-can-i.injectable";
 import createRequestNamespaceListPermissionsInjectable from "../../common/cluster/create-request-namespace-list-permissions.injectable";
 import createListNamespacesInjectable from "../../common/cluster/list-namespaces.injectable";
 import { ClusterMetadataKey } from "../../common/cluster-types";
+import writeJsonFileInjectable from "../../common/fs/write-json-file.injectable";
 import writeJsonSyncInjectable from "../../common/fs/write-json-sync.injectable";
 import normalizedPlatformInjectable from "../../common/vars/normalized-platform.injectable";
 import addClusterInjectable from "../../features/cluster/storage/common/add.injectable";
@@ -20,6 +21,7 @@ import kubeconfigManagerInjectable from "../kubeconfig-manager/kubeconfig-manage
 import kubectlBinaryNameInjectable from "../kubectl/binary-name.injectable";
 import { Kubectl } from "../kubectl/kubectl";
 import kubectlDownloadingNormalizedArchInjectable from "../kubectl/normalized-arch.injectable";
+import accessibilityCacheInjectable from "./accessibility-cache.injectable";
 import broadcastConnectionUpdateInjectable from "./broadcast-connection-update.injectable";
 import clusterConnectionInjectable from "./cluster-connection.injectable";
 import freelensK8sProxyManagerInjectable from "./freelens-k8s-proxy-manager.injectable";
@@ -28,14 +30,20 @@ import requestApiResourcesInjectable from "./request-api-resources.injectable";
 
 import type { Logger } from "@freelensapp/logger";
 
+import type { DiContainer } from "@ogre-tools/injectable";
 import type { Mock } from "vitest";
 
+import type { Cluster } from "../../common/cluster/cluster";
 import type { KubeconfigManager } from "../kubeconfig-manager/kubeconfig-manager";
+import type { Accessibility, AccessibilityIdentity } from "./accessibility-cache.injectable";
 import type { ClusterConnection } from "./cluster-connection.injectable";
 import type { FreelensK8sProxyManager } from "./freelens-k8s-proxy-manager.injectable";
 
 describe("ClusterConnection activation", () => {
   let clusterConnection: ClusterConnection;
+  let di: DiContainer;
+  let discoveryFails: boolean;
+  let cluster: Cluster;
   let restartMock: Mock<() => Promise<void>>;
   let events: string[];
   let pendingRestarts: { resolve: () => void; reject: (error: Error) => void }[];
@@ -73,12 +81,13 @@ describe("ClusterConnection activation", () => {
   beforeEach(() => {
     vi.useFakeTimers();
 
-    const di = getDiForUnitTesting();
+    di = getDiForUnitTesting();
     const writeJsonSync = di.inject(writeJsonSyncInjectable);
 
     events = [];
     pendingRestarts = [];
     detectResolvers = undefined;
+    discoveryFails = false;
 
     di.override(directoryForUserDataInjectable, () => "some-directory-for-user-data");
     di.override(directoryForTempInjectable, () => "some-directory-for-temp");
@@ -122,6 +131,10 @@ describe("ClusterConnection activation", () => {
     });
     di.override(requestApiResourcesInjectable, () => async () => {
       record("requestApiResources");
+
+      if (discoveryFails) {
+        return { callWasSuccessful: false as const, error: new Error("some-error") };
+      }
 
       if (accessibilityResolvers) {
         await new Promise<void>((resolve) => accessibilityResolvers?.push(resolve));
@@ -189,7 +202,7 @@ describe("ClusterConnection activation", () => {
 
     vi.spyOn(Kubectl.prototype, "ensureKubectl").mockReturnValue(Promise.resolve(true));
 
-    const cluster = di.inject(addClusterInjectable)({
+    cluster = di.inject(addClusterInjectable)({
       id: "test-cluster-id",
       contextName: "test-cluster",
       kubeConfigPath: "/test-kubeconfig.yml",
@@ -374,6 +387,154 @@ describe("ClusterConnection activation", () => {
 
       expect(countOf("Connected, waiting for view to load ...")).toBe(1);
       expect(events.some((event) => event.startsWith("Failed to start connection"))).toBe(false);
+    });
+  });
+
+  describe("with the accessibility of an earlier connection on disk", () => {
+    const identity: AccessibilityIdentity = {
+      contextName: "test-cluster",
+      userName: "test-user",
+      server: "https://192.168.1.1:6443",
+    };
+    const stale: Accessibility = {
+      isAdmin: false,
+      isGlobalWatchEnabled: false,
+      allowedNamespaces: ["old-namespace"],
+      knownResources: [
+        { apiName: "pods", kind: "Pod", group: "", version: "v1", namespaced: true },
+        { apiName: "widgets", kind: "Widget", group: "example.com", version: "v1", namespaced: true },
+      ],
+      resourcesToShow: ["pods"],
+    };
+    const fresh = {
+      isAdmin: true,
+      isGlobalWatchEnabled: true,
+      allowedNamespaces: ["default"],
+      knownResources: [{ apiName: "pods", kind: "Pod", group: "", version: "v1", namespaced: true }],
+      resourcesToShow: ["pods"],
+    };
+    // What the cluster has now, as the mocks above answer it
+    const releaseAll = async () => {
+      while (accessibilityResolvers?.length) {
+        accessibilityResolvers.splice(0).forEach((resolve) => resolve());
+        await vi.advanceTimersByTimeAsync(0);
+      }
+    };
+    const shown = () => ({
+      isAdmin: cluster.isAdmin.get(),
+      isGlobalWatchEnabled: cluster.isGlobalWatchEnabled.get(),
+      allowedNamespaces: [...cluster.allowedNamespaces],
+      knownResources: [...cluster.knownResources],
+      resourcesToShow: [...cluster.resourcesToShow],
+    });
+
+    const startActivation = async () => {
+      accessibilityResolvers = [];
+
+      const activation = clusterConnection.activate();
+      let settled = false;
+
+      activation.then(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(0);
+      await settleRestart(0);
+
+      return { activation, settled: () => settled };
+    };
+
+    it("is connected at once with the cached answers, and shows the cluster's when it has answered", async () => {
+      await di.inject(accessibilityCacheInjectable, cluster).write(identity, stale);
+
+      const { activation, settled } = await startActivation();
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(settled()).toBe(true);
+      expect(cluster.ready.get()).toBe(true);
+      expect(shown()).toEqual(stale);
+      // The cluster is being asked, and has not answered
+      expect(countOf("requestApiResources")).toBe(1);
+
+      await releaseAll();
+      await activation;
+
+      expect(shown()).toEqual(fresh);
+    });
+
+    it("saves the cluster's answers for the next time, and only when they differ", async () => {
+      const cache = di.inject(accessibilityCacheInjectable, cluster);
+      const write = vi.spyOn(cache, "write");
+
+      await cache.write(identity, stale);
+      write.mockClear();
+
+      const { activation } = await startActivation();
+
+      await releaseAll();
+      await activation;
+
+      expect(write).toHaveBeenCalledTimes(1);
+      expect(await cache.read(identity)).toEqual(fresh);
+
+      write.mockClear();
+      const again = (clusterConnection as unknown as { refreshAccessibility(): Promise<void> }).refreshAccessibility();
+
+      await vi.advanceTimersByTimeAsync(0);
+      await releaseAll();
+      await again;
+
+      expect(write).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["another user", { ...identity, userName: "other-user" }],
+      ["another server", { ...identity, server: "https://10.0.0.1:6443" }],
+      ["another context", { ...identity, contextName: "other-context" }],
+    ])("waits for the cluster when the cache is of %s", async (_, other) => {
+      await di.inject(accessibilityCacheInjectable, cluster).write(other, stale);
+
+      const { activation, settled } = await startActivation();
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(settled()).toBe(false);
+      expect(cluster.knownResources.length).toBe(0);
+
+      await releaseAll();
+      await activation;
+
+      expect(shown()).toEqual(fresh);
+    });
+
+    it.each([
+      ["another version", { version: 0, identity, accessibility: stale }],
+      ["no accessibility", { version: 1, identity }],
+      ["resources of the wrong shape", { version: 1, identity, accessibility: { ...stale, knownResources: [{}] } }],
+    ])("ignores a file with %s", async (_, contents) => {
+      await di.inject(writeJsonFileInjectable)(
+        "some-directory-for-user-data/cluster-accessibility/test-cluster-id.json",
+        contents,
+      );
+
+      const { settled } = await startActivation();
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(settled()).toBe(false);
+      expect(cluster.knownResources.length).toBe(0);
+    });
+
+    it("keeps the cached answers when the background refresh finds no resources, and says so", async () => {
+      await di.inject(accessibilityCacheInjectable, cluster).write(identity, stale);
+      discoveryFails = true;
+
+      const { activation } = await startActivation();
+
+      await releaseAll();
+      await activation;
+
+      expect(cluster.knownResources.length).toBe(2);
     });
   });
 });

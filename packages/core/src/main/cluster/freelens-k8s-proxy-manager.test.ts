@@ -95,6 +95,7 @@ describe("freelens-k8s-proxy manager", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     freelensK8sProxyManager.stop();
   });
 
@@ -121,11 +122,43 @@ describe("freelens-k8s-proxy manager", () => {
 
       const nextWatch = await freelensK8sProxyManager.getApiTarget(true);
 
-      expect(nextWatch).not.toBe(watch);
+      expect(nextWatch).toBe(watch);
       expect(dispatcherOf(nextWatch)).toBe(dispatcher);
       expect(createAgent).toHaveBeenCalledTimes(1);
     },
   );
+
+  it("makes the target once for any number of concurrent requests, watches included", async () => {
+    const url = new URL("https://192.168.64.3:8443");
+    const apiUrl = vi.fn(async () => url);
+
+    clusterApiUrl = apiUrl;
+
+    const targets = await Promise.all(
+      Array.from({ length: 50 }, (_, index) => freelensK8sProxyManager.getApiTarget(index % 2 === 0)),
+    );
+
+    expect(apiUrl).toHaveBeenCalledTimes(2); // the start of the proxy, and the target
+    expect(processes).toHaveLength(1);
+    expect(new Set(targets).size).toBe(2);
+
+    await freelensK8sProxyManager.getApiTarget(true);
+    await freelensK8sProxyManager.getApiTarget(false);
+
+    expect(apiUrl).toHaveBeenCalledTimes(2); // the start of the proxy, and the target
+  });
+
+  it("makes the target again when the proxy has exited", async () => {
+    const watch = await freelensK8sProxyManager.getApiTarget(true);
+
+    processes[0].emit("exit", 1, null);
+
+    const next = await freelensK8sProxyManager.getApiTarget(true);
+
+    expect(next).not.toBe(watch);
+    expect(processes).toHaveLength(2);
+    expect((next.target as URL).port).toBe("9002");
+  });
 
   it("destroys the pool on restart, gives the new proxy a new dispatcher, and destroys it only once on repeated stop", async () => {
     const first = await freelensK8sProxyManager.getApiTarget();
@@ -181,7 +214,11 @@ describe("freelens-k8s-proxy manager", () => {
 
     expect(freelensK8sProxyManager.apiUrl?.href).toBe("https://192.168.64.3:8443/");
 
-    clusterApiUrl = async () => new URL("https://some-rancher/k8s/clusters/local");
+    const changed = new URL("https://some-rancher/k8s/clusters/local");
+
+    clusterApiUrl = async () => changed;
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(Date.now() + 1000);
 
     const next = await freelensK8sProxyManager.getApiTarget(true);
 
