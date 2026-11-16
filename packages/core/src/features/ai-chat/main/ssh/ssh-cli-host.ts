@@ -285,16 +285,23 @@ export class SshCliHost implements AiCliHost {
 
     if (!remotePort) {
       // A port the host chooses, forwarded to Freelens's, over the shared connection.
-      remotePort = this.ssh(this.args(["-O", "forward", "-R", `0:127.0.0.1:${localPort}`])).then((result) => {
+      const attempt = this.ssh(this.args(["-O", "forward", "-R", `0:127.0.0.1:${localPort}`])).then((result) => {
         const port = Number(result.stdout.trim().split(/\s+/).pop());
 
         if (result.code !== 0 || !Number.isInteger(port) || port <= 0) {
-          this.forwarded.delete(localPort);
           throw new Error(sshError(result.stderr) || `${this.label} did not open a port to Freelens's tools.`);
         }
 
         return port;
       });
+
+      // A failed attempt, whether ssh ran or not (a timeout, no ssh command), is not kept: the next turn tries again.
+      attempt.catch(() => {
+        if (this.forwarded.get(localPort) === attempt) {
+          this.forwarded.delete(localPort);
+        }
+      });
+      remotePort = attempt;
       this.forwarded.set(localPort, remotePort);
     }
 
