@@ -14,6 +14,7 @@ import aiCliHostInjectable from "./cli-host.injectable";
 import aiCliTurnsInjectable from "./cli-turns.injectable";
 import createAiChatListenerInjectable from "./create-chat-listener.injectable";
 import discoverAiClisAfterLoadInjectable from "./discover-clis-after-load.injectable";
+import getAiChatListenerInjectable from "./get-chat-listener.injectable";
 import getAiDiscoveryListenerInjectable from "./get-discovery-listener.injectable";
 import listAiChatsListenerInjectable from "./list-chats-listener.injectable";
 import aiMcpServerInjectable from "./mcp-server.injectable";
@@ -77,6 +78,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(discoverAiClisAfterLoadInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(getAiChatListenerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

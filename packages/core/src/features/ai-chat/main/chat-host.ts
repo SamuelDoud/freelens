@@ -4,12 +4,14 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { diffAiChat } from "../common/chat-delta";
 import { defaultAiSystemPrompt } from "../common/default-system-prompt";
 import { runOpenAiTurn } from "../common/openai-agent";
 import { defaultAiChatPreferences, isOpenAiConfigured } from "../common/preferences";
 import { findAiTool, getAvailableAiTools } from "../common/tools";
 
 import type { AiChatCommand, AiToolResult, CreateAiChat } from "../common/channels";
+import type { AiChatStateMessage } from "../common/chat-delta";
 import type { AiChatItem, AiChatSettings, AiChatSnapshot, NewAiChatItem } from "../common/chat-state";
 import type { AiCliEvent } from "../common/cli-events";
 import type { OpenAiMessage } from "../common/openai-agent";
@@ -30,7 +32,7 @@ export interface AiChatHostDependencies {
   mcpToken: () => string;
   /** Whether the cluster's frame is open in the main window, where the tools run. */
   hasClusterFrame: (clusterId: string) => boolean;
-  sendSnapshot: (snapshot: AiChatSnapshot) => void;
+  sendState: (message: AiChatStateMessage) => void;
   sendClosed: (chatId: string) => void;
   sendToolCall: (call: {
     callId: string;
@@ -58,6 +60,9 @@ interface ChatRecord {
   allowChanges: boolean;
   running: boolean;
   items: AiChatItem[];
+  /** The number of changes published, and the state the views were last sent. */
+  seq: number;
+  published?: AiChatSnapshot;
   sessions: Map<AiProviderId, string>;
   openAiHistory: OpenAiMessage[];
   abortController?: AbortController;
@@ -104,6 +109,7 @@ export class AiChatHost {
       allowChanges: false,
       running: false,
       items: [],
+      seq: 0,
       sessions: new Map(),
       openAiHistory: [],
       approvals: new Map(),
@@ -515,15 +521,38 @@ export class AiChatHost {
       allowChanges: chat.allowChanges,
       running: chat.running,
       items: [...chat.items],
+      seq: chat.seq,
     };
   }
 
+  /**
+   * Tells the views what changed since they were last told: the whole chat the first time, then the
+   * items added or replaced and the settings changed, which do not grow with the chat. A view that
+   * missed one asks for the whole chat (`get`).
+   */
   private publish(chat: ChatRecord) {
     // A tool call or an OpenAI turn can end after its chat was closed; the views must not get it back.
     if (this.chats.get(chat.id) !== chat) {
       return;
     }
 
-    this.dependencies.sendSnapshot(this.snapshot(chat));
+    const state = this.snapshot(chat);
+
+    if (!chat.published) {
+      chat.published = state;
+      this.dependencies.sendState({ kind: "snapshot", snapshot: state });
+
+      return;
+    }
+
+    const delta = diffAiChat(chat.published, state, chat.seq + 1);
+
+    if (!delta) {
+      return;
+    }
+
+    chat.seq = delta.seq;
+    chat.published = { ...state, seq: delta.seq };
+    this.dependencies.sendState({ kind: "delta", delta });
   }
 }
