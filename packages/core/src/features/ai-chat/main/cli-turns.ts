@@ -64,12 +64,15 @@ export class AiCliTurns {
     // Freelens's MCP server as the host reaches it: itself, or through the SSH connection.
     const mcpUrl = await host.mcpUrl(turn.mcpUrl);
     const newSessionId = turn.resumeSessionId ? undefined : randomUUID();
+    const mcpConfigPath = turn.provider === "claude" ? host.join(workDir, `mcp-${turn.chatId}.json`) : undefined;
+    const removeConfig = () => {
+      // It holds the bearer token: no reason to leave it on the host once the CLI has read it.
+      if (mcpConfigPath) void host.remove(mcpConfigPath).catch(() => {});
+    };
     let args: string[];
     let parse: (line: string) => AiCliEvent[];
 
-    if (turn.provider === "claude") {
-      const mcpConfigPath = host.join(workDir, `mcp-${turn.chatId}.json`);
-
+    if (mcpConfigPath) {
       await host.writeFile(mcpConfigPath, JSON.stringify(buildClaudeMcpConfig(mcpUrl, turn.mcpToken)));
       args = buildClaudeArgs({ ...turn, mcpUrl, mcpConfigPath, newSessionId });
       parse = parseClaudeStreamLine;
@@ -79,6 +82,7 @@ export class AiCliTurns {
     }
 
     if (this.stopped.delete(turn.chatId)) {
+      removeConfig();
       finish("Stopped.");
 
       return;
@@ -86,11 +90,16 @@ export class AiCliTurns {
 
     this.dependencies.logInfo(`[AI-CHAT]: starting ${turn.command} on ${host.label} for chat ${turn.chatId}`);
 
-    const child = await host.spawn(turn.command, args, {
-      cwd: workDir,
-      env: { KUBECONFIG: emptyKubeconfig, [codexMcpTokenVariable]: turn.mcpToken },
-      readsStdin: false,
-    });
+    const child = await host
+      .spawn(turn.command, args, {
+        cwd: workDir,
+        env: { KUBECONFIG: emptyKubeconfig, [codexMcpTokenVariable]: turn.mcpToken },
+        readsStdin: false,
+      })
+      .catch((error) => {
+        removeConfig();
+        throw error;
+      });
 
     this.running.set(turn.chatId, child);
 
@@ -114,11 +123,13 @@ export class AiCliTurns {
 
     child.on("error", (error: NodeJS.ErrnoException) => {
       this.running.delete(turn.chatId);
+      removeConfig();
       finish(error.code === "ENOENT" ? `Freelens could not find "${turn.command}".` : error.message);
     });
 
     child.on("close", (code, signal) => {
       this.running.delete(turn.chatId);
+      removeConfig();
 
       // ssh ends with its own code when stopped, not with the signal.
       if (signal || this.killed.has(child)) {
@@ -129,6 +140,12 @@ export class AiCliTurns {
         finish();
       }
     });
+
+    // Stopped while connecting to the host or starting the process: stop() found nothing to kill.
+    if (this.stopped.delete(turn.chatId)) {
+      this.killed.add(child);
+      child.kill("SIGTERM");
+    }
   }
 
   stop(chatId: string) {
