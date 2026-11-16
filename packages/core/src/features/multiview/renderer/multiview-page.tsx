@@ -136,7 +136,7 @@ const NonInjectedMultiViewPage = observer(
                 onMouseDown={() => setActive(clusterId)}
                 data-testid={`multiview-pane-title-${index}`}
               >
-                <span className={styles.name}>{cluster?.name.get() ?? `Unknown cluster ${clusterId}`}</span>
+                <span className={styles.name}>{cluster?.name.get() ?? `Removed cluster ${clusterId}`}</span>
                 {index === 0 && (
                   <span className={styles.tools}>
                     <span className={styles.viewName}>{`${view.name} · ${layoutLabel}`}</span>

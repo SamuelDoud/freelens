@@ -65,6 +65,10 @@ export function readMultiViews(value: unknown): MultiView[] {
   });
 }
 
+/** The clusters of a multiview that no longer exist, which it keeps until the user removes them */
+export const removedClusterIds = (clusterIds: readonly string[], existingIds: readonly string[]): string[] =>
+  clusterIds.filter((id) => !existingIds.includes(id));
+
 /** A pane's place in the area of a multiview, in percent of it */
 export interface PaneRect {
   readonly left: number;
