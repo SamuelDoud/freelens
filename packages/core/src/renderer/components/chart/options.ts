@@ -80,7 +80,8 @@ export const metricTabOptions: Record<MetricsTab, ChartOptions> = {
               return label ?? "";
             }
 
-            return `${label}: ${value.toPrecision(2)}`;
+            // toPrecision(2) turns 100 or more into an exponent ("1.2e+2") and drops digits of the integer part.
+            return `${label}: ${Math.abs(value) >= 100 ? value.toFixed(0) : value.toPrecision(2)}`;
           },
         },
       },
