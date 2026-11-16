@@ -21,6 +21,13 @@ export interface HistoryController {
   isRestoring: () => boolean;
   /** The last view each cluster reported */
   readonly lastKnown: Map<string, ClusterViewState>;
+  /**
+   * The cluster's frame is gone, to be created anew when its cluster is shown
+   * again: keeps the view it had, to show again once the new frame is up.
+   */
+  deferRestore: (clusterId: string) => void;
+  /** Shows the view kept for a cluster whose frame has just started anew, if one is kept */
+  restorePending: (clusterId: string) => void;
 }
 
 const historyControllerInjectable = getInjectable({
@@ -30,10 +37,29 @@ const historyControllerInjectable = getInjectable({
     const navigate = di.inject(navigateInjectable);
     const send = di.inject(sendMessageToChannelInjectionToken);
     const lastKnown = new Map<string, ClusterViewState>();
+    const pending = new Map<string, ClusterViewState>();
     let restoringUntil = 0;
 
     return {
       lastKnown,
+      deferRestore: (clusterId) => {
+        const state = lastKnown.get(clusterId);
+
+        if (state) {
+          pending.set(clusterId, state);
+        }
+      },
+      restorePending: (clusterId) => {
+        const state = pending.get(clusterId);
+
+        if (!state) {
+          return;
+        }
+
+        pending.delete(clusterId);
+        restoringUntil = Date.now() + restoreSettleMs;
+        send(restoreClusterViewChannel, { clusterId, state });
+      },
       isRestoring: () => Date.now() < restoringUntil,
       go: (delta) => {
         const entry = timeline.go(delta);
@@ -46,6 +72,11 @@ const historyControllerInjectable = getInjectable({
 
         if (entry.clusterId && entry.cluster) {
           lastKnown.set(entry.clusterId, entry.cluster);
+
+          // A frame that is gone is not there to show the step: the one that replaces it will.
+          if (pending.has(entry.clusterId)) {
+            pending.set(entry.clusterId, entry.cluster);
+          }
         }
 
         navigate(entry.rootPath);

@@ -17,6 +17,7 @@ import { registerInjectables as registerSidebarMenuInjectables } from "./sidebar
 import { registerInjectables as registerStartUpInjectables } from "./start-up/register-injectables";
 import { registerInjectables as registerThemeInjectables } from "./theme/register-injectables";
 import { registerInjectables as registerTimezoneInjectables } from "./timezone/register-injectables";
+import { registerInjectables as registerUnloadHiddenClustersInjectables } from "./unload-hidden-clusters/register-injectables";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
@@ -73,6 +74,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerTimezoneInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerUnloadHiddenClustersInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

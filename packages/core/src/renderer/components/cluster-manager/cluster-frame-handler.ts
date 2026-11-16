@@ -27,10 +27,24 @@ interface Dependencies {
   emitClusterVisibility: (clusterId: ClusterId | null) => void;
   /** Tells the frames which clusters are shown, for those not shown to pause the work done for the eye */
   emitShownClusters: (clusterIds: ClusterId[]) => void;
+  /** The clock, for how long a frame has been hidden */
+  now?: () => number;
+}
+
+export interface HiddenView {
+  readonly clusterId: ClusterId;
+  /** When the frame stopped being shown, in milliseconds */
+  readonly hiddenSince: number;
 }
 
 export class ClusterFrameHandler {
   private readonly views = observable.map<string, LensView>();
+  /** The clusters shown now, in the one view or the panes of a multiview */
+  private shown = new Set<ClusterId>();
+  /** Since when each loaded frame that is not shown has been hidden; the frames shown have no entry */
+  private readonly hiddenSince = new Map<ClusterId, number>();
+  /** What ends the watching of a frame for its cluster going away */
+  private readonly stopWatching = new Map<ClusterId, () => void>();
 
   constructor(protected readonly dependencies: Dependencies) {}
 
@@ -77,6 +91,11 @@ export class ClusterFrameHandler {
       { once: true },
     );
     this.views.set(clusterId, { frame: iframe, isLoaded: false });
+
+    if (!this.shown.has(clusterId)) {
+      this.hiddenSince.set(clusterId, this.now());
+    }
+
     parentElem.appendChild(iframe);
 
     this.dependencies.logger.info(`[LENS-VIEW]: waiting cluster to be ready, clusterId=${clusterId}`);
@@ -86,11 +105,12 @@ export class ClusterFrameHandler {
       () => this.dependencies.logger.info(`[LENS-VIEW]: cluster is ready, clusterId=${clusterId}`),
     );
 
-    when(
+    let stopInner: (() => void) | undefined;
+    const stopOuter = when(
       // cluster.disconnect is set to `false` when the cluster starts to connect
       () => !cluster.disconnected.get(),
       () => {
-        when(
+        stopInner = when(
           () => {
             const cluster = this.dependencies.getClusterById(clusterId);
 
@@ -98,21 +118,84 @@ export class ClusterFrameHandler {
           },
           () => {
             this.dependencies.logger.info(`[LENS-VIEW]: remove dashboard, clusterId=${clusterId}`);
-            this.views.delete(clusterId);
-
-            // Must only remove iframe from DOM after it unloads old code. Else it crashes
-            iframe.addEventListener("load", () => parentElem.removeChild(iframe), {
-              once: true,
-            });
-
-            // This causes the old code to be unloaded.
-            iframe.setAttribute("src", "");
-
+            this.removeView(clusterId, iframe, parentElem);
             dispose();
           },
         );
       },
     );
+
+    if (this.views.has(clusterId)) {
+      this.stopWatching.set(clusterId, () => {
+        stopOuter();
+        stopInner?.();
+        dispose();
+      });
+    }
+  }
+
+  private now() {
+    return (this.dependencies.now ?? Date.now)();
+  }
+
+  private removeView(clusterId: ClusterId, iframe: HTMLIFrameElement, parentElem: HTMLElement) {
+    this.views.delete(clusterId);
+    this.hiddenSince.delete(clusterId);
+    this.stopWatching.delete(clusterId);
+
+    // The frame lingers until it has unloaded, and a new one of the cluster may start before that
+    iframe.removeAttribute("id");
+
+    // Must only remove iframe from DOM after it unloads old code. Else it crashes
+    iframe.addEventListener("load", () => parentElem.removeChild(iframe), {
+      once: true,
+    });
+
+    // This causes the old code to be unloaded.
+    iframe.setAttribute("src", "");
+  }
+
+  /** Notes which clusters are shown, and since when each of the others has been hidden */
+  private markShown(clusterIds: ClusterId[]) {
+    this.shown = new Set(clusterIds);
+
+    const now = this.now();
+
+    for (const clusterId of this.views.keys()) {
+      if (this.shown.has(clusterId)) {
+        this.hiddenSince.delete(clusterId);
+      } else if (!this.hiddenSince.has(clusterId)) {
+        this.hiddenSince.set(clusterId, now);
+      }
+    }
+  }
+
+  /** The loaded frames that are not shown, with since when */
+  public getHiddenViews(): HiddenView[] {
+    return [...this.hiddenSince]
+      .filter(([clusterId]) => this.views.get(clusterId)?.isLoaded)
+      .map(([clusterId, hiddenSince]) => ({ clusterId, hiddenSince }));
+  }
+
+  /**
+   * Unloads the frame of a cluster that is not shown, freeing everything it
+   * holds. The cluster stays connected; showing it again creates the frame
+   * anew. Returns whether there was a hidden frame to unload.
+   */
+  @action
+  public evictView(clusterId: ClusterId): boolean {
+    const view = this.views.get(clusterId);
+    const parentElem = document.getElementById("lens-views");
+
+    if (!view || !view.isLoaded || this.shown.has(clusterId) || !parentElem) {
+      return false;
+    }
+
+    this.dependencies.logger.info(`[LENS-VIEW]: evict hidden dashboard, clusterId=${clusterId}`);
+    this.stopWatching.get(clusterId)?.();
+    this.removeView(clusterId, view.frame, parentElem);
+
+    return true;
   }
 
   private prevVisibleClusterChange?: Disposer;
@@ -137,6 +220,7 @@ export class ClusterFrameHandler {
   public setVisibleClusters(panes: { clusterId: ClusterId; rect: PaneRect }[], titleHeight: number): void {
     this.prevVisibleClusterChange?.();
     this.resetPanes();
+    this.markShown(panes.map(({ clusterId }) => clusterId));
     this.dependencies.emitShownClusters(panes.map(({ clusterId }) => clusterId));
     document.getElementById("lens-views")?.classList.add("multiview");
 
@@ -177,6 +261,7 @@ export class ClusterFrameHandler {
     // Clear the previous when ASAP
     this.prevVisibleClusterChange?.();
     this.resetPanes();
+    this.markShown(clusterId ? [clusterId] : []);
     this.dependencies.emitShownClusters(clusterId ? [clusterId] : []);
 
     this.dependencies.logger.info(`[LENS-VIEW]: refreshing iframe views, visible cluster id=${clusterId}`);

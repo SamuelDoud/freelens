@@ -78,6 +78,7 @@ export type PreferenceDescriptors = {
   readonly logViewerPreferences: PreferenceDescription<Partial<LogViewerPreferences>, LogViewerPreferences>;
   readonly terminalCopyOnSelect: PreferenceDescription<boolean>;
   readonly rowClickAction: PreferenceDescription<RowClickAction | undefined, RowClickAction>;
+  readonly unloadHiddenClusters: PreferenceDescription<boolean | undefined, boolean>;
   readonly appearance: PreferenceDescription<Partial<AppearancePreferences> | undefined, AppearancePreferences>;
   readonly multiviews: PreferenceDescription<MultiView[] | undefined, MultiView[]>;
   readonly hiddenTableColumns: PreferenceDescription<[string, string[]][], Map<string, Set<string>>>;
@@ -221,6 +222,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
       rowClickAction: getPreferenceDescriptor<RowClickAction | undefined, RowClickAction>({
         fromStore: (val) => (val === "drawer" ? "drawer" : "expand"),
         toStore: (val) => (val === "expand" ? undefined : val),
+      }),
+      unloadHiddenClusters: getPreferenceDescriptor<boolean | undefined, boolean>({
+        fromStore: (val) => val ?? true,
+        toStore: (val) => (val ? undefined : false),
       }),
       terminalCopyOnSelect: getPreferenceDescriptor<boolean>({
         fromStore: (val) => val ?? false,

@@ -889,6 +889,39 @@ exports[`preferences - navigation to editor preferences > given in preferences, 
                 class="HorizontalLine size-xl"
               />
               <div
+                data-preference-item-test="unload-hidden-clusters"
+              >
+                <section
+                  id="unload-hidden-clusters"
+                >
+                  <div
+                    class="SubTitle"
+                  >
+                    Memory
+                     
+                  </div>
+                  <label
+                    class="Switch"
+                    data-testid="switch"
+                  >
+                    Unload clusters hidden for 10 minutes
+                    <input
+                      checked=""
+                      role="switch"
+                      type="checkbox"
+                    />
+                  </label>
+                  <small
+                    class="hint"
+                  >
+                    A cluster that is not shown is unloaded after a while, or sooner when many are open or memory runs short, and loads again, on the same page, when you open it. Clusters with a terminal, followed logs, unsaved changes, a running chat or a port forward are never unloaded. Turn it off to keep every cluster instant.
+                  </small>
+                </section>
+              </div>
+              <div
+                class="HorizontalLine size-xl"
+              />
+              <div
                 data-preference-item-test="sidebar-menu"
               >
                 <section

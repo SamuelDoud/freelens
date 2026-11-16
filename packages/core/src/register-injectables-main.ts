@@ -29,6 +29,7 @@ import { registerInjectables as registerFeaturesFeaturesFavoritesMainInjectables
 import { registerInjectables as registerFeaturesFeaturesFavoritesInjectables } from "./features/favorites/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesFileSystemProvisionerMainInjectables } from "./features/file-system-provisioner/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesFrameActivityMainInjectables } from "./features/frame-activity/main/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesFrameEvictionMainInjectables } from "./features/frame-eviction/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesHelmReleasesMainInjectables } from "./features/helm-releases/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesHistoryMainInjectables } from "./features/history/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesHotbarInjectables } from "./features/hotbar/register-injectables";
@@ -82,6 +83,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesFavoritesInjectables(di);
   registerFeaturesFeaturesFileSystemProvisionerMainInjectables(di);
   registerFeaturesFeaturesFrameActivityMainInjectables(di);
+  registerFeaturesFeaturesFrameEvictionMainInjectables(di);
   registerFeaturesFeaturesHelmReleasesMainInjectables(di);
   registerFeaturesFeaturesHistoryMainInjectables(di);
   registerFeaturesFeaturesHotbarInjectables(di);
