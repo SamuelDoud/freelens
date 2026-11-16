@@ -27,7 +27,11 @@ describe("the metrics of the objects that were opened", () => {
     di.register(injectable);
     di.override(
       selectedMetricsTimeRangeInjectable,
-      () => ({ timestamps: computed(() => ({ start: 1000, end: 4600, range: 3600 })) }) as never,
+      () =>
+        ({
+          timestamps: computed(() => ({ start: 1000, end: 4600, range: 3600 })),
+          value: computed(() => ({ duration: null })),
+        }) as never,
     );
 
     const open = async (object: TestObject) => {

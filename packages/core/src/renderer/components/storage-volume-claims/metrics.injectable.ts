@@ -17,11 +17,12 @@ const persistentVolumeClaimMetricsInjectable = createTimeRangedMetricsInjectable
   id: "persistent-volume-claim-metrics",
   getObject: ({ persistentVolumeClaim }: PersistentVolumeClaimMetricsInjectableParams) => persistentVolumeClaim,
   getObjectId: (persistentVolumeClaim) => persistentVolumeClaim.getId(),
-  request: ({ di, object: persistentVolumeClaim, start, end, range }) =>
+  request: ({ di, object: persistentVolumeClaim, start, end, range, step }) =>
     di.inject(requestPersistentVolumeClaimMetricsInjectable)(persistentVolumeClaim, {
       start,
       end,
       range,
+      step,
     }),
 });
 

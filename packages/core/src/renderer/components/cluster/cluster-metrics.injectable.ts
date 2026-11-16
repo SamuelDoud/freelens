@@ -8,6 +8,7 @@ import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import { getTailWindow } from "../../../common/k8s-api/endpoints/metrics.api/get-tail-window";
 import requestClusterMetricsByNodeNamesInjectable from "../../../common/k8s-api/endpoints/metrics.api/request-cluster-metrics-by-node-names.injectable";
 import { asyncComputed } from "../../../common/utils/async-computed";
+import { createIncrementalMetrics } from "../resource-metrics/incremental-metrics";
 import selectedMetricsTimeRangeInjectable from "./overview/selected-metrics-time-range.injectable";
 import selectedNodeRoleForMetricsInjectable from "./overview/selected-node-role-for-metrics.injectable";
 
@@ -41,6 +42,21 @@ const clusterOverviewMetricsInjectable = getInjectable({
     const selectedNodeRoleForMetrics = di.inject(selectedNodeRoleForMetricsInjectable);
     const selectedMetricsTimeRange = di.inject(selectedMetricsTimeRangeInjectable);
 
+    // The series over the range are fetched for the end of it only once the
+    // chart has them (see `createIncrementalMetrics`); the node names are part
+    // of what they depend on.
+    let nodeNames: string[] = [];
+    const incrementalSeries = createIncrementalMetrics<Record<string, never>>({
+      request: ({ start, end, range, step }) =>
+        requestClusterMetricsByNodeNames(nodeNames, {
+          start,
+          end,
+          range,
+          step,
+          metrics: seriesMetrics,
+        }) as Promise<Record<string, never>>,
+    });
+
     return asyncComputed<Partial<ClusterMetricData> | undefined>({
       getValueFromObservedPromise: async () => {
         // No clock of its own: the time range ticks every minute while it can
@@ -55,7 +71,7 @@ const clusterOverviewMetricsInjectable = getInjectable({
         // filter is kept to honour the Master/Worker choice.
         const bothRolesPresent =
           selectedNodeRoleForMetrics.hasMasterNodes.get() && selectedNodeRoleForMetrics.hasWorkerNodes.get();
-        const nodeNames = bothRolesPresent ? selectedNodeRoleForMetrics.nodes.get().map((node) => node.getName()) : [];
+        nodeNames = bothRolesPresent ? selectedNodeRoleForMetrics.nodes.get().map((node) => node.getName()) : [];
         const { start, end, range } = selectedMetricsTimeRange.timestamps.get();
 
         const tail = getTailWindow(start, end);
@@ -67,7 +83,13 @@ const clusterOverviewMetricsInjectable = getInjectable({
         // Most of the cost of the overview is in the metrics of the pie charts,
         // which read the last point: they are asked for the end of the range.
         const [series, lastPoints] = await Promise.all([
-          requestClusterMetricsByNodeNames(nodeNames, { start, end, range, metrics: seriesMetrics }),
+          incrementalSeries.fetch({
+            start,
+            end,
+            range,
+            sliding: selectedMetricsTimeRange.value.get().duration != null,
+            key: nodeNames.join("|"),
+          }) as Promise<Partial<ClusterMetricData>>,
           requestClusterMetricsByNodeNames(nodeNames, {
             start: tail.start,
             end,

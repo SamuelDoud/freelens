@@ -49,4 +49,9 @@ export interface AiChatSnapshot extends AiChatSettings {
   readonly allowChanges: boolean;
   readonly running: boolean;
   readonly items: readonly AiChatItem[];
+  /**
+   * How many changes the chat has been through: every change the host publishes is a delta that
+   * brings a view from `seq - 1` to `seq` (see `chat-delta.ts`).
+   */
+  readonly seq: number;
 }

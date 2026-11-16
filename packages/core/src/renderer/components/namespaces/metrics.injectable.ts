@@ -17,11 +17,12 @@ const namespaceMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "namespace-metrics",
   getObject: ({ namespace }: NamespaceMetricsInjectableParams) => namespace,
   getObjectId: (namespace) => namespace.getId(),
-  request: ({ di, object: namespace, start, end, range }) =>
+  request: ({ di, object: namespace, start, end, range, step }) =>
     di.inject(requestPodMetricsInNamespaceInjectable)(namespace.getName(), undefined, {
       start,
       end,
       range,
+      step,
     }),
 });
 

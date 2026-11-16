@@ -6,7 +6,6 @@
 
 import { getInjectable } from "@ogre-tools/injectable";
 import { watch } from "chokidar";
-import platformInjectable from "../../vars/platform.injectable";
 import type { Stats } from "node:fs";
 
 import type { SingleOrMany, TypedEventEmitter } from "@freelensapp/utilities";
@@ -73,20 +72,14 @@ export type WatcherOptions<AlwaysStat extends boolean> = {
   cwd?: string;
 
   /**
-   * Whether to use fs.watchFile (backed by polling), or fs.watch. If polling leads to high CPU
-   * utilization, consider setting this to `false`. It is typically necessary to **set this to
-   * `true` to successfully watch files over a network**, and it may be necessary to successfully
-   * watch files in other non-standard situations. Setting to `true` explicitly on OS X overrides
-   * the `useFsEvents` default.
+   * How the file system is observed. `auto` (the default) uses native watching: one recursive
+   * `fs.watch` per root on macOS and Windows, one `fs.watch` per directory elsewhere, and a finite
+   * `depth` always uses one per directory. `polling` compares `stat` results on a timer, which is
+   * what network shares and other file systems that send no change notifications need; it costs
+   * CPU and a `stat` per watched file per interval. The environment variable `CHOKIDAR_USEPOLLING`
+   * overrides this for the whole process.
    */
-  usePolling?: boolean;
-
-  /**
-   * Whether to use the `fsevents` watching interface if available. When set to `true` explicitly
-   * and `fsevents` is available this supercedes the `usePolling` setting. When set to `false` on
-   * OS X, `usePolling: true` becomes the default.
-   */
-  useFsEvents?: boolean;
+  backend?: "auto" | "native" | "native-recursive" | "polling";
 
   /**
    * If set, limits how many levels of subdirectories will be traversed.
@@ -94,15 +87,15 @@ export type WatcherOptions<AlwaysStat extends boolean> = {
   depth?: number;
 
   /**
-   * Interval of file system polling.
+   * Interval of file system polling in milliseconds. Only for `backend: "polling"`.
    */
-  interval?: number;
+  pollingInterval?: number;
 
   /**
-   * Interval of file system polling for binary files. ([see list of binary extensions](https://gi
-   * thub.com/sindresorhus/binary-extensions/blob/master/binary-extensions.json))
+   * Interval of file system polling for binary files, in milliseconds. Only for `backend:
+   * "polling"`. ([see list of binary extensions](https://github.com/sindresorhus/binary-extensions/blob/master/binary-extensions.json))
    */
-  binaryInterval?: number;
+  pollingBinaryInterval?: number;
 
   /**
    *  Indicates whether to watch files that don't have read permissions if possible. If watching
@@ -112,7 +105,7 @@ export type WatcherOptions<AlwaysStat extends boolean> = {
   ignorePermissionErrors?: boolean;
 
   /**
-   * `true` if `useFsEvents` and `usePolling` are `false`). Automatically filters out artifacts
+   * `true` unless polling, `false` with it. Automatically filters out artifacts
    * that occur when using editors that use "atomic writes" instead of writing directly to the
    * source file. If a file is re-added within 100 ms of being deleted, Chokidar emits a `change`
    * event rather than `unlink` then `add`. If the default of 100 ms does not work well for you,
@@ -149,41 +142,18 @@ export type Watch = <AlwaysStat extends boolean = false>(
   options?: WatcherOptions<AlwaysStat>,
 ) => Watcher<AlwaysStat>;
 
-/** How often files are polled on macOS, in milliseconds, unless a caller asks for its own interval. */
-export const macOsPollingInterval = 1000;
-
-/**
- * The options chokidar gets on a platform.
- *
- * Chokidar 4 and later have no FSEvents backend: on macOS they watch every file with `fs.watch`,
- * which libuv implements with kqueue, and libuv aborts the whole process when it cannot re-arm a
- * kqueue watch after an event, as for a file whose volume went away or whose descriptor went bad
- * over a sleep. On macOS the files are polled instead, which also works on network volumes.
- */
-export function watchOptionsFor<AlwaysStat extends boolean>(
-  platform: string,
-  options?: WatcherOptions<AlwaysStat>,
-): WatcherOptions<AlwaysStat> | undefined {
-  if (platform !== "darwin") {
-    return options;
-  }
-
-  return {
-    ...options,
-    usePolling: true,
-    interval: options?.interval ?? macOsPollingInterval,
-    binaryInterval: options?.binaryInterval ?? macOsPollingInterval,
-  } as WatcherOptions<AlwaysStat>;
-}
-
 // TODO: Introduce wrapper to allow simpler API
+//
+// Chokidar 6 does not watch every file with `fs.watch` as chokidar 4 and 5 did, which on macOS
+// meant a kqueue watch per file, and libuv aborts the process when it cannot re-arm one of
+// those. A directory is watched with `fs.watch`, which libuv serves with FSEvents on macOS,
+// recursively for a root without `depth`; a file is not watched itself, but through its
+// directory, with one extra watch on the file (a kqueue one) that is closed from inside its
+// first event, before libuv would re-arm it. The options of a caller are therefore passed as
+// they are on every platform, and nothing polls on macOS unless the caller asks for it.
 const watchInjectable = getInjectable({
   id: "watch",
-  instantiate: (di): Watch => {
-    const platform = di.inject(platformInjectable);
-
-    return (path, options) => watch(path, watchOptionsFor(platform, options) as never) as never;
-  },
+  instantiate: (): Watch => (path, options) => watch(path, options as never) as never,
   causesSideEffects: true,
 });
 

@@ -33,7 +33,7 @@ export type RequestPodMetrics = (
   namespace: string,
   container?: Container,
   selector?: string,
-  opts?: { start?: number; end?: number; range?: number; metrics?: PodMetricKey[] },
+  opts?: { start?: number; end?: number; range?: number; step?: number; metrics?: PodMetricKey[] },
 ) => Promise<Partial<PodMetricData>>;
 
 const requestPodMetricsInjectable = getInjectable({

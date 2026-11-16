@@ -97,7 +97,6 @@ const userCreateResourceTemplatesInjectable = getInjectable({
        */
       watch(userTemplatesFolder, {
         ignorePermissionErrors: true,
-        usePolling: false,
         awaitWriteFinish: {
           pollInterval: 100,
           stabilityThreshold: 1000,

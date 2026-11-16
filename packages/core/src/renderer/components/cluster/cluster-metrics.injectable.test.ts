@@ -34,7 +34,10 @@ describe("cluster-overview-metrics injectable", () => {
     const nodes = (role === "master" ? masterNodes : workerNodes).map((name) => ({ getName: () => name }));
 
     di.override(requestClusterMetricsByNodeNamesInjectable, () => requestClusterMetricsByNodeNames);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({ timestamps: computed(() => timestamps) }) as never);
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () => ({ timestamps: computed(() => timestamps), value: computed(() => ({ duration: null })) }) as never,
+    );
     di.override(
       selectedNodeRoleForMetricsInjectable,
       () =>
@@ -127,7 +130,10 @@ describe("cluster-overview-metrics injectable and the last-point metrics", () =>
     );
 
     di.override(requestClusterMetricsByNodeNamesInjectable, () => requestClusterMetricsByNodeNames as never);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({ timestamps: computed(() => timestamps) }) as never);
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () => ({ timestamps: computed(() => timestamps), value: computed(() => ({ duration: null })) }) as never,
+    );
     di.override(
       selectedNodeRoleForMetricsInjectable,
       () =>

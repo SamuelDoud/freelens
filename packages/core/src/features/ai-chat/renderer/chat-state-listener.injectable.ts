@@ -10,7 +10,7 @@ import aiChatMirrorInjectable from "./chat-mirror.injectable";
 const aiChatStateListenerInjectable = getMessageChannelListenerInjectable({
   id: "ai-chat-mirror",
   channel: aiChatStateChannel,
-  getHandler: (di) => (snapshot) => di.inject(aiChatMirrorInjectable).update(snapshot),
+  getHandler: (di) => (message) => di.inject(aiChatMirrorInjectable).receive(message),
 });
 
 export default aiChatStateListenerInjectable;

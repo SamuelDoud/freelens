@@ -17,11 +17,12 @@ const statefulSetMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "stateful-set-metrics",
   getObject: ({ statefulSet }: StatefulSetMetricsInjectableParams) => statefulSet,
   getObjectId: (statefulSet) => statefulSet.getId(),
-  request: ({ di, object: statefulSet, start, end, range }) =>
+  request: ({ di, object: statefulSet, start, end, range, step }) =>
     di.inject(requestPodMetricsForStatefulSetsInjectable)([statefulSet], statefulSet.getNs(), undefined, {
       start,
       end,
       range,
+      step,
     }),
 });
 

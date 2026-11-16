@@ -17,11 +17,12 @@ const daemonSetMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "daemon-set-metrics",
   getObject: ({ daemonSet }: DaemonSetMetricsInjectableParams) => daemonSet,
   getObjectId: (daemonSet) => daemonSet.getId(),
-  request: ({ di, object: daemonSet, start, end, range }) =>
+  request: ({ di, object: daemonSet, start, end, range, step }) =>
     di.inject(requestPodMetricsForDaemonSetsInjectable)([daemonSet], daemonSet.getNs(), undefined, {
       start,
       end,
       range,
+      step,
     }),
 });
 

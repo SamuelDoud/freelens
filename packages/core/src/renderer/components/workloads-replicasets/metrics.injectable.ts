@@ -17,11 +17,12 @@ const replicaSetMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "replica-set-metrics",
   getObject: ({ replicaSet }: ReplicaSetMetricsInjectableParams) => replicaSet,
   getObjectId: (replicaSet) => replicaSet.getId(),
-  request: ({ di, object: replicaSet, start, end, range }) =>
+  request: ({ di, object: replicaSet, start, end, range, step }) =>
     di.inject(requestPodMetricsForReplicaSetsInjectable)([replicaSet], replicaSet.getNs(), undefined, {
       start,
       end,
       range,
+      step,
     }),
 });
 

@@ -4,6 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { applyAiChatDelta } from "../common/chat-delta";
 import { defaultAiChatPreferences } from "../common/preferences";
 import { AiChatHost } from "./chat-host";
 
@@ -18,6 +19,7 @@ describe("AiChatHost", () => {
   let dependencies: AiChatHostDependencies;
   let host: AiChatHost;
   let snapshots: AiChatSnapshot[];
+  let views: Map<string, AiChatSnapshot>;
   let frames: Set<string>;
   let cliTurns: { start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn> };
 
@@ -26,6 +28,7 @@ describe("AiChatHost", () => {
   beforeEach(() => {
     preferences = { ...defaultAiChatPreferences };
     snapshots = [];
+    views = new Map();
     frames = new Set(["cluster-1"]);
     cliTurns = { start: vi.fn(), stop: vi.fn() };
     dependencies = {
@@ -39,7 +42,24 @@ describe("AiChatHost", () => {
       mcpUrlFor: async (chatId) => `http://127.0.0.1:1/mcp/${chatId}`,
       mcpToken: () => "token",
       hasClusterFrame: (clusterId) => frames.has(clusterId),
-      sendSnapshot: (snapshot) => snapshots.push(snapshot),
+      // What a view that has been listening since the chat was created shows after each message.
+      sendState: (message) => {
+        if (message.kind === "snapshot") {
+          views.set(message.snapshot.id, message.snapshot);
+          snapshots.push(message.snapshot);
+
+          return;
+        }
+
+        const next = applyAiChatDelta(views.get(message.delta.chatId)!, message.delta);
+
+        if (!next) {
+          throw new Error(`The delta ${message.delta.seq} does not follow the chat`);
+        }
+
+        views.set(next.id, next);
+        snapshots.push(next);
+      },
       sendClosed: vi.fn(),
       sendToolCall: vi.fn(),
       postOpenAi: vi.fn(),

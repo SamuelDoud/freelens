@@ -17,11 +17,12 @@ const podMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "pod-metrics",
   getObject: ({ pod }: PodMetricsInjectableParams) => pod,
   getObjectId: (pod) => pod.getId(),
-  request: ({ di, object: pod, start, end, range }) =>
+  request: ({ di, object: pod, start, end, range, step }) =>
     di.inject(requestPodMetricsInjectable)([pod], pod.getNs(), undefined, "pod, namespace", {
       start,
       end,
       range,
+      step,
       metrics: ["cpuUsage", "memoryUsage", "fsUsage", "fsWrites", "fsReads", "networkReceive", "networkTransmit"],
     }),
 });

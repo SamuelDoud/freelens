@@ -5,6 +5,7 @@
 
 import { getMessageChannel, getRequestChannel } from "@freelensapp/messaging";
 
+import type { AiChatStateMessage } from "./chat-delta";
 import type { AiChatSettings, AiChatSnapshot } from "./chat-state";
 import type { AiDiscovery } from "./discovery";
 import type { AiChatPlacement } from "./preferences";
@@ -42,8 +43,13 @@ export type AiChatCommand =
 
 export const aiChatCommandChannel = getRequestChannel<AiChatCommand, void>("ai-chat-command");
 
-/** A chat changed. */
-export const aiChatStateChannel = getMessageChannel<AiChatSnapshot>("ai-chat-state");
+/** One chat, as it is now: what a view asks for when it missed a change. */
+export const getAiChatChannel = getRequestChannel<{ readonly chatId: string }, AiChatSnapshot | undefined>(
+  "ai-chat-get",
+);
+
+/** A chat is new, or changed: the whole chat the first time, then what changed in it. */
+export const aiChatStateChannel = getMessageChannel<AiChatStateMessage>("ai-chat-state");
 
 /** A chat was closed. */
 export const aiChatClosedChannel = getMessageChannel<{ readonly chatId: string }>("ai-chat-closed");
