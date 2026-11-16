@@ -22,11 +22,16 @@ describe("deployment-metrics injectable", () => {
     } as unknown as Deployment;
 
     di.override(requestPodMetricsForDeploymentsInjectable, () => requestPodMetricsForDeployments);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 1000, end: 1100, range: 100 }),
-      },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 1000, end: 1100, range: 100 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(deploymentMetricsInjectable, { deployment });
 

@@ -14,6 +14,7 @@ import requestHelmChartsInjectable from "../../../common/k8s-api/endpoints/helm-
 import requestHelmChartVersionsInjectable from "../../../common/k8s-api/endpoints/helm-charts.api/request-versions.injectable";
 import requestHelmReleaseConfigurationInjectable from "../../../common/k8s-api/endpoints/helm-releases.api/request-configuration.injectable";
 import listClusterHelmReleasesInjectable from "../../../main/helm/helm-service/list-helm-releases.injectable";
+import secretStoreInjectable from "../../../renderer/components/config-secrets/store.injectable";
 import dockStoreInjectable from "../../../renderer/components/dock/dock/store.injectable";
 import { getApplicationBuilder } from "../../../renderer/components/test-utils/get-application-builder";
 import { advanceFakeTime, testUsingFakeTime } from "../../../test-utils/use-fake-time";
@@ -43,6 +44,11 @@ describe("New Upgrade Helm Chart Dock Tab", () => {
     builder.setEnvironmentToClusterFrame();
 
     builder.beforeWindowStart(({ windowDi }) => {
+      // A cluster with no release Secrets (another storage driver): the releases come from helm.
+      windowDi.override(
+        secretStoreInjectable,
+        () => ({ isLoaded: true, isLoading: false, failedLoading: false, contextItems: [] }) as never,
+      );
       requestHelmReleaseConfigurationMock = asyncFn();
       windowDi.override(requestHelmReleaseConfigurationInjectable, () => requestHelmReleaseConfigurationMock);
 

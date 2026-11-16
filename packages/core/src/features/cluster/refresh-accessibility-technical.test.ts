@@ -144,7 +144,11 @@ describe("Refresh Cluster Accessibility Technical Tests", () => {
       refreshPromise = clusterConnection.refreshAccessibilityAndMetadata();
     });
 
-    it("starts freelensK8sProxy", () => {
+    // The cache of the last answers is looked up before the cluster is asked,
+    // so the proxy starts a few asynchronous steps after the refresh begins.
+    it("starts freelensK8sProxy", async () => {
+      await flushPromises();
+
       expect(freelensK8sProxyMock.run).toBeCalled();
     });
 

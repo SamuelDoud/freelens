@@ -22,11 +22,16 @@ describe("namespace-metrics injectable", () => {
     } as unknown as Namespace;
 
     di.override(requestPodMetricsInNamespaceInjectable, () => requestPodMetricsInNamespace);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 6000, end: 6100, range: 100 }),
-      },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 6000, end: 6100, range: 100 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(namespaceMetricsInjectable, { namespace });
 

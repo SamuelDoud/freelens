@@ -22,11 +22,16 @@ describe("replica-set-metrics injectable", () => {
     } as unknown as ReplicaSet;
 
     di.override(requestPodMetricsForReplicaSetsInjectable, () => requestPodMetricsForReplicaSets);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 3000, end: 3100, range: 100 }),
-      },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 3000, end: 3100, range: 100 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(replicaSetMetricsInjectable, { replicaSet });
 

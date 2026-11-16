@@ -22,11 +22,16 @@ describe("pod-metrics injectable", () => {
     } as unknown as Pod;
 
     di.override(requestPodMetricsInjectable, () => requestPodMetrics);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 100, end: 200, range: 100 }),
-      },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 100, end: 200, range: 100 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(podMetricsInjectable, { pod });
 

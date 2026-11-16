@@ -22,11 +22,16 @@ describe("stateful-set-metrics injectable", () => {
     } as unknown as StatefulSet;
 
     di.override(requestPodMetricsForStatefulSetsInjectable, () => requestPodMetricsForStatefulSets);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 2000, end: 2100, range: 100 }),
-      },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 2000, end: 2100, range: 100 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(statefulSetMetricsInjectable, { statefulSet });
 

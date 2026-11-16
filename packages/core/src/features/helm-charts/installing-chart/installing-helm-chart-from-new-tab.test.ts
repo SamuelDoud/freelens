@@ -17,6 +17,7 @@ import requestHelmChartValuesInjectable from "../../../common/k8s-api/endpoints/
 import requestHelmChartVersionsInjectable from "../../../common/k8s-api/endpoints/helm-charts.api/request-versions.injectable";
 import requestCreateHelmReleaseInjectable from "../../../common/k8s-api/endpoints/helm-releases.api/request-create.injectable";
 import listClusterHelmReleasesInjectable from "../../../main/helm/helm-service/list-helm-releases.injectable";
+import secretStoreInjectable from "../../../renderer/components/config-secrets/store.injectable";
 import dockStoreInjectable from "../../../renderer/components/dock/dock/store.injectable";
 import getRandomInstallChartTabIdInjectable from "../../../renderer/components/dock/install-chart/get-random-install-chart-tab-id.injectable";
 import requestDetailedHelmReleaseInjectable from "../../../renderer/components/helm-releases/release-details/release-details-model/request-detailed-helm-release.injectable";
@@ -60,6 +61,11 @@ describe("installing helm chart from new tab", () => {
     requestCreateHelmReleaseMock = asyncFn();
 
     builder.beforeWindowStart(({ windowDi }) => {
+      // A cluster with no release Secrets (another storage driver): the releases come from helm.
+      windowDi.override(
+        secretStoreInjectable,
+        () => ({ isLoaded: true, isLoading: false, failedLoading: false, contextItems: [] }) as never,
+      );
       windowDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
       windowDi.override(requestDetailedHelmReleaseInjectable, () => requestDetailedHelmReleaseMock);
       windowDi.override(requestHelmChartsInjectable, () => requestHelmChartsMock);

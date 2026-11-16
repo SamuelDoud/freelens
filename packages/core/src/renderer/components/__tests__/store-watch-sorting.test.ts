@@ -52,7 +52,11 @@ const cases = [
   {
     Store: EventStore,
     ObjectType: KubeEvent,
-    extra: (rank: number) => ({ metadata: { creationTimestamp: `2026-01-0${rank}T00:00:00Z` } }),
+    // Events always name the object they are about; the store caps them per object.
+    extra: (rank: number) => ({
+      involvedObject: { uid: "involved" },
+      metadata: { creationTimestamp: `2026-01-0${rank}T00:00:00Z` },
+    }),
   },
   { Store: ClusterRoleStore, ObjectType: ClusterRole, extra: (rank: number) => ({ kind: String(4 - rank) }) },
   {

@@ -22,11 +22,16 @@ describe("ingress-metrics injectable", () => {
     } as unknown as Ingress;
 
     di.override(requestIngressMetricsInjectable, () => requestIngressMetrics);
-    di.override(selectedMetricsTimeRangeInjectable, () => ({
-      timestamps: {
-        get: () => ({ start: 1_700_000_000, end: 1_700_000_600, range: 600 }),
-      },
-    }));
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          timestamps: {
+            get: () => ({ start: 1_700_000_000, end: 1_700_000_600, range: 600 }),
+          },
+          value: { get: () => ({ duration: 300 }) },
+        }) as never,
+    );
 
     const metrics = di.inject(ingressMetricsInjectable, {
       ingress,
