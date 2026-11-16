@@ -99,9 +99,10 @@ AUR) install upstream, not this fork.
 
 Apple silicon (arm64), as a DMG or a ZIP, for macOS 13 or later.
 
-The application is signed ad hoc, not with an Apple Developer ID, so macOS
-refuses to open it the first time. Open it with right-click → Open, or remove
-the quarantine flag after copying it to Applications:
+The application is signed ad hoc and not notarized, so Gatekeeper reports it
+as from an unidentified developer. To open it the first time, use System
+Settings → Privacy & Security → "Open Anyway", or remove the quarantine flag
+after copying it to Applications:
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/Freelens.app
