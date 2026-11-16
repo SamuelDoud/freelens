@@ -83,10 +83,12 @@ describe("PodSpecView", () => {
       },
       spec: { containers: [{ name: "app", image: "app:2" }] },
     } as never);
-    const { rerender } = render(<PodSpecView pod={pod} owner={owner} requestKubeResource={requestKubeResource} />);
+    const { rerender } = render(
+      <PodSpecView pod={pod} owner={owner} requestKubeResource={requestKubeResource as never} />,
+    );
 
     await screen.findByTestId("pod-spec-diff");
-    rerender(<PodSpecView pod={otherPod} owner={otherOwner} requestKubeResource={requestKubeResource} />);
+    rerender(<PodSpecView pod={otherPod} owner={otherOwner} requestKubeResource={requestKubeResource as never} />);
 
     await vi.waitFor(() => expect(requestKubeResource).toHaveBeenCalledWith("/apis/apps/v1/other"));
     expect(await screen.findByTestId("pod-spec-origin")).toHaveTextContent("ReplicaSet other");
