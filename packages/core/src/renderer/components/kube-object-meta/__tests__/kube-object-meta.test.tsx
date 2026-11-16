@@ -197,6 +197,19 @@ describe("<KubeObjectMeta />", () => {
       expect(requestKubeResource).toHaveBeenCalledWith(selfLink);
     });
 
+    it("reads the object once however often the object it shows is replaced", async () => {
+      const { rerender } = renderMeta(createWithManagedFields(entries(false)));
+
+      const item = openEntry(1);
+
+      await within(item).findByRole("textbox");
+      rerender(<KubeObjectMeta object={createWithManagedFields(entries(false))} />);
+      rerender(<KubeObjectMeta object={createWithManagedFields(entries(false))} />);
+      await Promise.resolve();
+
+      expect(requestKubeResource).toHaveBeenCalledTimes(1);
+    });
+
     it("reads nothing until an entry is opened", () => {
       renderMeta(createWithManagedFields(entries(false)));
 
