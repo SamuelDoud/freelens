@@ -154,4 +154,81 @@ describe("DeploymentStore child pods", () => {
 
     expect(deploymentStore.getStatuses(deployments)).toEqual(referenceStatuses(deployments));
   });
+
+  // The implementations before the label index, kept to compare against.
+  const oldGetChildPods = (deployment: Deployment) =>
+    podStore.getByLabel(deployment.getTemplateLabels()).filter((pod) => pod.getNs() === deployment.getNs());
+
+  const oldGetStatuses = (deployments: Deployment[]) => {
+    const status = { running: 0, failed: 0, pending: 0 };
+    const podsByNamespace = new Map<string, Pod[]>();
+
+    for (const pod of podStore.items) {
+      podsByNamespace.set(pod.getNs(), [...(podsByNamespace.get(pod.getNs()) ?? []), pod]);
+    }
+
+    for (const deployment of deployments) {
+      const templateLabels = deployment.getTemplateLabels();
+      const childPods = (podsByNamespace.get(deployment.getNs()) ?? []).filter((pod) => {
+        const podLabels = pod.getLabels();
+
+        return templateLabels.every((label) => podLabels.includes(label));
+      });
+      const statuses = new Set(childPods.map((pod) => pod.getStatus()));
+
+      if (statuses.has(PodStatusPhase.FAILED)) {
+        status.failed++;
+      } else if (statuses.has(PodStatusPhase.PENDING)) {
+        status.pending++;
+      } else {
+        status.running++;
+      }
+    }
+
+    return status;
+  };
+
+  it("gives the same statuses and child pods as the unindexed implementation on generated data", () => {
+    let seed = 12345;
+    const random = (n: number) => {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+
+      return seed % n;
+    };
+    const keys = ["app", "tier", "a=b", "a", "env", "x"];
+    const values = ["web", "db", "b=c", "c", "prod", ""];
+    const phases = ["Running", "Pending", "Failed", "Succeeded", "Unknown"];
+    const namespaces = ["n0", "n1", "n2", "n3"];
+    const randomLabels = (max: number) => {
+      const labels: Record<string, string> = {};
+
+      for (let i = random(max + 1); i > 0; i--) {
+        labels[keys[random(keys.length)]] = values[random(values.length)];
+      }
+
+      return random(10) === 0 ? undefined : labels;
+    };
+
+    for (let round = 0; round < 20; round++) {
+      podStore.items = observable.array(
+        Array.from({ length: 150 }, (_, i) =>
+          makePod(`p${round}-${i}`, namespaces[random(3)], randomLabels(4), phases[random(phases.length)]),
+        ),
+      );
+
+      const deployments = Array.from({ length: 40 }, (_, i) =>
+        makeDeployment(`d${i}`, namespaces[random(namespaces.length)], randomLabels(3)),
+      );
+
+      expect(deploymentStore.getStatuses(deployments)).toEqual(oldGetStatuses(deployments));
+
+      for (const deployment of deployments) {
+        const next = deploymentStore.getChildPods(deployment);
+
+        expect(next).toEqual(oldGetChildPods(deployment));
+        expect(next.map((pod) => pod.getId())).toEqual(oldGetChildPods(deployment).map((pod) => pod.getId()));
+        expect(deploymentStore.getStatuses([deployment])).toEqual(oldGetStatuses([deployment]));
+      }
+    }
+  });
 });

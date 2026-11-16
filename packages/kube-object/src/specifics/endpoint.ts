@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import autoBind from "auto-bind";
 import { KubeObject } from "../kube-object";
 
 import type {
@@ -98,7 +97,6 @@ export class Endpoints extends KubeObject<NamespaceScopedMetadata, void, void> {
 
   constructor({ subsets, ...rest }: EndpointsData) {
     super(rest);
-    autoBind(this);
     this.subsets = subsets;
   }
 

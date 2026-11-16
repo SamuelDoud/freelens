@@ -5,9 +5,9 @@
  */
 
 import { formatDuration, formatRelativeTime, isObject, isString } from "@freelensapp/utilities";
-import autoBind from "auto-bind";
 import { omit } from "es-toolkit/compat";
 import { KubeCreationError } from "./api-types";
+import { bindMethodsLazily } from "./lazily-bound-methods";
 import {
   filterOutResourceApplierAnnotations,
   isJsonApiData,
@@ -120,7 +120,7 @@ export class KubeObject<
     }
 
     Object.assign(this, data);
-    autoBind(this);
+    bindMethodsLazily(new.target);
   }
 
   get selfLink(): string {

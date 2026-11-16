@@ -30,6 +30,10 @@ const getLogFunctionFor = (scenario: keyof Logger, namespace: string | undefined
     const winstonLogger = di.inject(winstonLoggerInjectable);
 
     return (message, ...data) => {
+      // Winston formats before any transport checks its level, so skip the call
+      // when no transport would take the message (this uses the transports' own levels).
+      if (!winstonLogger.isLevelEnabled(scenario)) return;
+
       winstonLogger[scenario](`${prefix}${message}`, ...data);
     };
   };

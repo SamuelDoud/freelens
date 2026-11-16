@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import autoBind from "auto-bind";
 import { KubeObject } from "../kube-object";
 
 import type { KubeJsonApiData, KubeObjectMetadata, KubeObjectScope, NamespaceScopedMetadata } from "../api-types";
@@ -54,7 +53,6 @@ export class Secret extends KubeObject<NamespaceScopedMetadata, void, void> {
 
   constructor({ data = {}, type, ...rest }: SecretData) {
     super(rest);
-    autoBind(this);
 
     this.data = data;
     this.type = type;

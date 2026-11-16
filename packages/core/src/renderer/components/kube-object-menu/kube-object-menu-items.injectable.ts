@@ -33,7 +33,9 @@ const kubeObjectMenuItemsInjectable = getInjectable({
   },
 
   lifecycle: lifecycleEnum.keyedSingleton({
-    getInstanceKey: (di, kubeObject: KubeObject) => kubeObject?.getId(),
+    // The items depend on the kind and apiVersion only, so one instance serves every object of a kind
+    // (a uid-keyed instance would stay in the container for every object ever shown).
+    getInstanceKey: (di, kubeObject: KubeObject) => `${kubeObject?.apiVersion}/${kubeObject?.kind}`,
   }),
 });
 

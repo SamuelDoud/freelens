@@ -3,7 +3,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import autoBind from "auto-bind";
 import { KubeObject } from "../kube-object";
 
 import type { KubeJsonApiData, NamespaceScopedMetadata } from "../api-types";
@@ -26,7 +25,6 @@ export class ControllerRevision extends KubeObject<NamespaceScopedMetadata, void
 
   constructor({ revision = 0, data, ...rest }: ControllerRevisionData) {
     super(rest);
-    autoBind(this);
     this.revision = revision;
     this.data = data;
   }

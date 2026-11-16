@@ -21,6 +21,11 @@ export type DeploymentStatuses = {
   pending: number;
 };
 
+interface NamespaceIndex {
+  readonly pods: Pod[];
+  readonly byLabel: Map<string, Pod[]>;
+}
+
 export interface DeploymentStoreDependencies extends KubeObjectStoreDependencies {
   readonly podStore: PodStore;
 }
@@ -47,51 +52,115 @@ export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> 
   getStatuses(deployments: Deployment[] = []) {
     const status = { running: 0, failed: 0, pending: 0 };
 
-    // Pods grouped by namespace once per call, built on the first deployment
-    // (an empty list reads no pods, as before), so that each deployment tests
-    // only the pods of its own namespace instead of every pod in the cluster.
-    // Each group keeps store order, like getChildPods.
-    let podsByNamespace: Map<string, Pod[]> | undefined;
+    // Pods indexed once per call (built on the first deployment, so an empty
+    // list reads no pods): by namespace, then by "key=value" label. A deployment
+    // tests only the pods that carry its rarest template label instead of every
+    // pod of its namespace. Buckets keep store order.
+    let index: Map<string, NamespaceIndex> | undefined;
+    const labelSets = new Map<Pod, Set<string>>();
 
-    deployments.forEach((deployment) => {
-      if (!podsByNamespace) {
-        podsByNamespace = new Map();
+    const labelsOf = (pod: Pod) => {
+      let labels = labelSets.get(pod);
 
-        for (const pod of this.dependencies.podStore.items) {
-          const namespace = pod.getNs();
-          const pods = podsByNamespace.get(namespace);
+      if (!labels) {
+        labels = new Set(pod.getLabels());
+        labelSets.set(pod, labels);
+      }
 
-          if (pods) {
-            pods.push(pod);
-          } else {
-            podsByNamespace.set(namespace, [pod]);
-          }
+      return labels;
+    };
+
+    for (const deployment of deployments) {
+      index ??= this.indexPods();
+
+      const templateLabels = deployment.getTemplateLabels();
+      const namespaceIndex = index.get(deployment.getNs());
+      let candidates = namespaceIndex?.pods ?? [];
+
+      for (const label of templateLabels) {
+        const withLabel = namespaceIndex?.byLabel.get(label) ?? [];
+
+        if (withLabel.length < candidates.length) {
+          candidates = withLabel;
         }
       }
 
-      const templateLabels = deployment.getTemplateLabels();
-      const childPods = (podsByNamespace.get(deployment.getNs()) ?? []).filter((pod) => {
-        const podLabels = pod.getLabels();
+      let failed = false;
+      let pending = false;
 
-        return templateLabels.every((label) => podLabels.includes(label));
-      });
-      const statuses = new Set(childPods.map((pod) => pod.getStatus()));
+      for (const pod of candidates) {
+        if (!templateLabels.every((label) => labelsOf(pod).has(label))) {
+          continue;
+        }
 
-      if (statuses.has(PodStatusPhase.FAILED)) {
+        const phase = pod.getStatus();
+
+        if (phase === PodStatusPhase.FAILED) {
+          failed = true;
+          break;
+        }
+
+        if (phase === PodStatusPhase.PENDING) {
+          pending = true;
+        }
+      }
+
+      if (failed) {
         status.failed++;
-      } else if (statuses.has(PodStatusPhase.PENDING)) {
+      } else if (pending) {
         status.pending++;
       } else {
         status.running++;
       }
-    });
+    }
 
     return status;
   }
 
+  private indexPods() {
+    const index = new Map<string, NamespaceIndex>();
+
+    for (const pod of this.dependencies.podStore.items) {
+      const namespace = pod.getNs();
+      let namespaceIndex = index.get(namespace);
+
+      if (!namespaceIndex) {
+        namespaceIndex = { pods: [], byLabel: new Map() };
+        index.set(namespace, namespaceIndex);
+      }
+
+      namespaceIndex.pods.push(pod);
+
+      for (const label of pod.getLabels()) {
+        const withLabel = namespaceIndex.byLabel.get(label);
+
+        if (withLabel) {
+          // The same string twice in one pod (keys and values containing "=") is one entry.
+          if (withLabel[withLabel.length - 1] !== pod) {
+            withLabel.push(pod);
+          }
+        } else {
+          namespaceIndex.byLabel.set(label, [pod]);
+        }
+      }
+    }
+
+    return index;
+  }
+
   getChildPods(deployment: Deployment) {
-    return this.dependencies.podStore
-      .getByLabel(deployment.getTemplateLabels())
-      .filter((pod) => pod.getNs() === deployment.getNs());
+    const namespace = deployment.getNs();
+    const templateLabels = deployment.getTemplateLabels();
+
+    // Namespace first: it is a field read, while the labels are built per pod.
+    return this.dependencies.podStore.items.filter((pod) => {
+      if (pod.getNs() !== namespace) {
+        return false;
+      }
+
+      const podLabels = pod.getLabels();
+
+      return templateLabels.every((label) => podLabels.includes(label));
+    });
   }
 }

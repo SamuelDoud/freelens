@@ -3,7 +3,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import autoBind from "auto-bind";
 import { KubeObject } from "../kube-object";
 
 import type { KubeJsonApiData, NamespaceScopedMetadata } from "../api-types";
@@ -33,7 +32,6 @@ export class PodTemplate extends KubeObject<NamespaceScopedMetadata, void, void>
 
   constructor({ template, ...rest }: PodTemplateData) {
     super(rest);
-    autoBind(this);
     this.template = template;
   }
 

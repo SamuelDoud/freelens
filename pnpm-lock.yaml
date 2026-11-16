@@ -1476,9 +1476,6 @@ importers:
       '@freelensapp/utilities':
         specifier: workspace:^
         version: link:../utility-features/utilities
-      auto-bind:
-        specifier: 'catalog:'
-        version: 5.0.1
       es-toolkit:
         specifier: 'catalog:'
         version: 1.52.0

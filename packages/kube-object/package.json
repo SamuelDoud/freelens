@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "@freelensapp/utilities": "workspace:^",
-    "auto-bind": "catalog:",
     "es-toolkit": "catalog:"
   },
   "devDependencies": {
