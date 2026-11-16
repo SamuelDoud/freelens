@@ -8,7 +8,7 @@ import { Icon } from "@freelensapp/icon";
 import { Spinner } from "@freelensapp/spinner";
 import { cssNames, prevDefault } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { observableRef } from "mobx";
+import { computed, observableRef } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import apiManagerInjectable from "../../../common/k8s-api/api-manager/manager.injectable";
@@ -46,6 +46,23 @@ interface Warning {
   selfLink: string;
   renderAge: () => React.ReactElement;
   ageMs: number;
+}
+
+/**
+ * The first warning of every id: what `find` by id gives for each of them.
+ */
+export function indexFirstWarningById<T extends { getId: () => string }>(warnings: readonly T[]): Map<string, T> {
+  const byId = new Map<string, T>();
+
+  for (const warning of warnings) {
+    const id = warning.getId();
+
+    if (!byId.has(id)) {
+      byId.set(id, warning);
+    }
+  }
+
+  return byId;
 }
 
 enum sortBy {
@@ -89,7 +106,9 @@ class NonInjectedClusterIssues extends React.Component<ClusterIssuesProps & Depe
     this.observableProps = this.props;
   }
 
-  get warnings(): Warning[] {
+  // Computed, so that the rows of the table share one list: each of them is
+  // its own observer and used to build the whole list again for itself.
+  @computed get warnings(): Warning[] {
     const { nodeStore, eventStore, apiManager } = this.observableProps;
 
     return [
@@ -116,12 +135,15 @@ class NonInjectedClusterIssues extends React.Component<ClusterIssuesProps & Depe
     ];
   }
 
+  @computed private get warningsById(): Map<string, Warning> {
+    return indexFirstWarningById(this.warnings);
+  }
+
   getTableRow = (uid: string) => {
-    const { warnings } = this;
     // Called from the Table/virtual-list row renderer (a foreign derivation), so read
     // props from the observable snapshot instead of this.props (mobx-react 9).
     const { kubeSelectedUrlParam, toggleKubeDetailsPane: toggleDetails } = this.observableProps;
-    const warning = warnings.find((warn) => warn.getId() == uid);
+    const warning = this.warningsById.get(uid);
 
     if (!warning) {
       return undefined;

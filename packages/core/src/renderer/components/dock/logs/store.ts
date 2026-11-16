@@ -6,6 +6,7 @@
 
 import { getOrInsertWith, interval } from "@freelensapp/utilities";
 import { observable, when } from "mobx";
+import { mapLinesIncremental } from "./map-lines-incremental";
 import {
   compareLogTimestamps,
   getLeadingTimestamp,
@@ -24,11 +25,14 @@ import type { IComputedValue } from "mobx";
 
 import type { TabId } from "../dock/store";
 import type { CallForLogs } from "./call-for-logs.injectable";
+import type { MappedLines } from "./map-lines-incremental";
 import type { LogTabData } from "./tab-store";
 
 type PodLogLine = string;
 
 const logLinesToLoad = 500;
+
+const noLines: ReadonlyMap<string, number> = new Map();
 
 interface Dependencies {
   /** Whether a logs tab can be seen: the frame is active, the dock open and the tab selected */
@@ -38,11 +42,13 @@ interface Dependencies {
 
 /**
  * How far the lines of a pod have been read: the timestamp of the newest line
- * and the lines that carry it, which the next request returns again.
+ * and, for every text, how many lines carry that timestamp with it. The next
+ * request returns them again, and a text that comes back more often than it
+ * was counted is a new line that happens to repeat the one before it.
  */
 interface PodLogsCursor {
   timestamp: string;
-  lines: Set<string>;
+  lines: Map<string, number>;
 }
 
 interface PodLogs {
@@ -51,13 +57,19 @@ interface PodLogs {
 }
 
 export class LogStore {
-  protected podLogs = observable.map<TabId, PodLogLine[]>();
+  // The lines of a tab are replaced as a whole and never changed in place, so
+  // the arrays need no observable copy of their own.
+  protected podLogs = observable.map<TabId, PodLogLine[]>({}, { deep: false });
   protected refreshers = new Map<TabId, IntervalFn>();
   private readonly requests = new Map<TabId, AbortController>();
   private readonly cursors = new Map<TabId, Map<string, PodLogsCursor>>();
   private readonly podColors = new Map<TabId, Map<string, string>>();
   // How many lines every pod has in the tab, by pod id.
   private readonly lineCounts = new Map<TabId, Map<string, number>>();
+  // What the derived arrays were made from the last time, to map only the lines
+  // that are new since. Kept out of mobx on purpose: it is a cache, not state.
+  private readonly withoutTimestamps = new Map<TabId, MappedLines<string, string>>();
+  private readonly timestampSplits = new Map<TabId, MappedLines<string, [string, string]>>();
 
   constructor(private dependencies: Dependencies) {}
 
@@ -358,11 +370,19 @@ export class LogStore {
     for (const { pod, lines } of logsOfPods) {
       const podId = pod.getId();
       let cursor = cursors.get(podId);
+      // The copies of every line the cursor's timestamp had before this
+      // response, and how many of them this response has served so far.
+      let counted = cursor?.lines ?? noLines;
+      const served = new Map<string, number>();
       let isNew = !cursor;
       const newLines: string[] = [];
       // The lines as the API counts them for tailLines: the pieces of a line
       // split on "\r" carry no timestamp.
       let newApiLines = 0;
+
+      if (cursor) {
+        cursor = { timestamp: cursor.timestamp, lines: new Map(cursor.lines) };
+      }
 
       for (const line of lines) {
         const timestamp = getLeadingTimestamp(line);
@@ -370,12 +390,24 @@ export class LogStore {
         if (timestamp) {
           const order = cursor ? compareLogTimestamps(timestamp, cursor.timestamp) : 1;
 
-          isNew = order > 0 || (order === 0 && !cursor?.lines.has(line));
+          if (order > 0) {
+            isNew = true;
+            cursor = { timestamp, lines: new Map([[line, 1]]) };
+            counted = noLines;
+            served.clear();
+            served.set(line, 1);
+          } else if (order === 0 && cursor) {
+            // The n-th copy of a line is new when the cursor had counted fewer.
+            const copy = (served.get(line) ?? 0) + 1;
 
-          if (isNew && cursor && order === 0) {
-            cursor.lines.add(line);
-          } else if (isNew) {
-            cursor = { timestamp, lines: new Set([line]) };
+            served.set(line, copy);
+            isNew = copy > (counted.get(line) ?? 0);
+
+            if (isNew) {
+              cursor.lines.set(line, copy);
+            }
+          } else {
+            isNew = false;
           }
 
           if (isNew) {
@@ -430,11 +462,19 @@ export class LogStore {
   }
 
   getLogsWithoutTimestamps(tabId: TabId): string[] {
-    return this.getLogs(tabId).map(this.removeTimestamps);
+    const mapped = mapLinesIncremental(this.withoutTimestamps.get(tabId), this.getLogs(tabId), this.removeTimestamps);
+
+    this.withoutTimestamps.set(tabId, mapped);
+
+    return mapped.output;
   }
 
   getTimestampSplitLogs(tabId: TabId): [string, string][] {
-    return this.getLogs(tabId).map(this.splitOutTimestamp);
+    const mapped = mapLinesIncremental(this.timestampSplits.get(tabId), this.getLogs(tabId), this.splitOutTimestamp);
+
+    this.timestampSplits.set(tabId, mapped);
+
+    return mapped.output;
   }
 
   /**
@@ -493,6 +533,8 @@ export class LogStore {
     this.cursors.delete(tabId);
     this.podColors.delete(tabId);
     this.lineCounts.delete(tabId);
+    this.withoutTimestamps.delete(tabId);
+    this.timestampSplits.delete(tabId);
   }
 
   reload(

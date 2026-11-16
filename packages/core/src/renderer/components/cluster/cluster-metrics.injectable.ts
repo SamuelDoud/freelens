@@ -5,15 +5,34 @@
  */
 
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
-import { now } from "mobx-utils";
+import { getTailWindow } from "../../../common/k8s-api/endpoints/metrics.api/get-tail-window";
 import requestClusterMetricsByNodeNamesInjectable from "../../../common/k8s-api/endpoints/metrics.api/request-cluster-metrics-by-node-names.injectable";
 import { asyncComputed } from "../../../common/utils/async-computed";
 import selectedMetricsTimeRangeInjectable from "./overview/selected-metrics-time-range.injectable";
 import selectedNodeRoleForMetricsInjectable from "./overview/selected-node-role-for-metrics.injectable";
 
-import type { ClusterMetricData } from "../../../common/k8s-api/endpoints/metrics.api/request-cluster-metrics-by-node-names.injectable";
+import type {
+  ClusterMetricData,
+  ClusterMetricKey,
+} from "../../../common/k8s-api/endpoints/metrics.api/request-cluster-metrics-by-node-names.injectable";
 
-const everyMinute = 60 * 1000;
+// The series the chart plots over the whole range. Every other metric is read
+// at its last point only (the pie charts and the capacity of the chart's axis).
+const seriesMetrics: ClusterMetricKey[] = ["cpuUsage", "memoryUsage"];
+
+const lastPointMetrics: ClusterMetricKey[] = [
+  "memoryRequests",
+  "memoryLimits",
+  "memoryCapacity",
+  "memoryAllocatableCapacity",
+  "cpuRequests",
+  "cpuLimits",
+  "cpuCapacity",
+  "cpuAllocatableCapacity",
+  "podUsage",
+  "podCapacity",
+  "podAllocatableCapacity",
+];
 
 const clusterOverviewMetricsInjectable = getInjectable({
   id: "cluster-overview-metrics",
@@ -24,8 +43,9 @@ const clusterOverviewMetricsInjectable = getInjectable({
 
     return asyncComputed<Partial<ClusterMetricData> | undefined>({
       getValueFromObservedPromise: async () => {
-        now(everyMinute);
-
+        // No clock of its own: the time range ticks every minute while it can
+        // be seen and follows the clock, and a hidden overview or a custom
+        // range asks for the same window again only when that changes.
         // The node name filter is built from the nodes alive right now, while
         // the time range can reach days back: on clusters with node churn the
         // samples of the replaced nodes would be filtered out (see #2409).
@@ -38,11 +58,26 @@ const clusterOverviewMetricsInjectable = getInjectable({
         const nodeNames = bothRolesPresent ? selectedNodeRoleForMetrics.nodes.get().map((node) => node.getName()) : [];
         const { start, end, range } = selectedMetricsTimeRange.timestamps.get();
 
-        return requestClusterMetricsByNodeNames(nodeNames, {
-          start,
-          end,
-          range,
-        });
+        const tail = getTailWindow(start, end);
+
+        if (!tail) {
+          return requestClusterMetricsByNodeNames(nodeNames, { start, end, range });
+        }
+
+        // Most of the cost of the overview is in the metrics of the pie charts,
+        // which read the last point: they are asked for the end of the range.
+        const [series, lastPoints] = await Promise.all([
+          requestClusterMetricsByNodeNames(nodeNames, { start, end, range, metrics: seriesMetrics }),
+          requestClusterMetricsByNodeNames(nodeNames, {
+            start: tail.start,
+            end,
+            step: tail.step,
+            range: end - tail.start,
+            metrics: lastPointMetrics,
+          }),
+        ]);
+
+        return { ...series, ...lastPoints };
       },
       betweenUpdates: "show-latest-value",
     });

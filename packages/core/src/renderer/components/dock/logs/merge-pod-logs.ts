@@ -107,7 +107,24 @@ function tagLine(line: string, podName: string, color: string): string {
 
 interface TimedLine {
   timestamp: string;
+  /** `Date.parse` of the timestamp, read once instead of at every comparison. */
+  milliseconds: number;
   line: string;
+}
+
+/**
+ * `compareLogTimestamps` for lines whose timestamps are already parsed.
+ */
+function compareTimedLines(a: TimedLine, b: TimedLine): number {
+  if (a.timestamp === b.timestamp) {
+    return 0;
+  }
+
+  if (a.milliseconds !== b.milliseconds && !Number.isNaN(a.milliseconds) && !Number.isNaN(b.milliseconds)) {
+    return a.milliseconds < b.milliseconds ? -1 : 1;
+  }
+
+  return a.timestamp < b.timestamp ? -1 : 1;
 }
 
 /**
@@ -116,11 +133,18 @@ interface TimedLine {
  */
 function toTimedLines(lines: readonly string[]): TimedLine[] {
   let timestamp = "";
+  let milliseconds = Number.NaN;
 
   return lines.map((line) => {
-    timestamp = getLeadingTimestamp(line) ?? timestamp;
+    const own = getLeadingTimestamp(line);
 
-    return { timestamp, line };
+    // A continuation keeps the parsed value of the line before it.
+    if (own !== undefined) {
+      timestamp = own;
+      milliseconds = Date.parse(own);
+    }
+
+    return { timestamp, milliseconds, line };
   });
 }
 
@@ -133,7 +157,7 @@ function mergeTimedLines(sources: TimedLine[][]): string[] {
 
     for (const cursor of cursors) {
       // Strictly older only: on a tie the earlier source keeps its turn.
-      if (compareLogTimestamps(cursor.lines[cursor.index].timestamp, winner.lines[winner.index].timestamp) < 0) {
+      if (compareTimedLines(cursor.lines[cursor.index], winner.lines[winner.index]) < 0) {
         winner = cursor;
       }
     }
@@ -181,9 +205,9 @@ export function mergePodLogs(
   const sources = [...linesByPodName.entries()].map(([podName, lines]) => {
     const color = colors?.get(podName) ?? getPodLogColor(podName);
 
-    return toTimedLines(lines).map(({ timestamp, line }) => ({
-      timestamp,
-      line: tagged ? tagLine(line, podName, color) : line,
+    return toTimedLines(lines).map((timed) => ({
+      ...timed,
+      line: tagged ? tagLine(timed.line, podName, color) : timed.line,
     }));
   });
 

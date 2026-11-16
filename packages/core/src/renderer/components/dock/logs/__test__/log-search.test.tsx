@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { act, screen } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import userPreferencesStateInjectable from "../../../../../features/user-preferences/common/state.injectable";
@@ -98,6 +98,43 @@ describe("LogSearch tests", () => {
     await user.keyboard("o");
     await user.click(await screen.findByText("keyboard_arrow_down"));
     expect(scrollToOverlay).toBeCalled();
+  });
+
+  describe("given the timestamps are shown", () => {
+    const rawLogs = ["2026-01-01T00:00:00.123456789Z first", "2026-01-01T00:00:01.123456789Z second"];
+
+    function getTimestampedViewModel() {
+      userPreferencesState.localeTimezone = "Asia/Kolkata";
+
+      return getOnePodViewModel("foobar", userPreferencesState, {
+        getLogTabData: () => getDefaultOnePodLogTabData({ showTimestamps: true }),
+        getLogs: () => rawLogs,
+        getTimestampSplitLogs: () => rawLogs.map((line) => [line.slice(0, 30), line.slice(30)]),
+      });
+    }
+
+    it("finds what the list shows: the timestamps in the time zone of the preferences", async () => {
+      const model = getTimestampedViewModel();
+
+      render(<LogSearch model={model} scrollToOverlay={vi.fn()} />);
+
+      await user.click(await screen.findByPlaceholderText("Search..."));
+      await user.keyboard("+05:30");
+
+      await waitFor(() => expect(model.searchStore.occurrences).toEqual([0, 1]));
+    });
+
+    it("does not find the raw timestamps, which the list does not show", async () => {
+      const model = getTimestampedViewModel();
+
+      render(<LogSearch model={model} scrollToOverlay={vi.fn()} />);
+
+      await user.click(await screen.findByPlaceholderText("Search..."));
+      await user.keyboard("123456789Z");
+
+      await waitFor(() => expect(model.searchStore.searchQuery).toBe("123456789Z"));
+      expect(model.searchStore.occurrences).toEqual([]);
+    });
   });
 
   it("next and previous should be disabled initially", async () => {

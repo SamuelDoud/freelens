@@ -5,7 +5,7 @@
  */
 
 import autoBind from "auto-bind";
-import { action, computed, observable } from "mobx";
+import { action, computed, observable, observableRef } from "mobx";
 
 export class SearchStore {
   /**
@@ -30,9 +30,11 @@ export class SearchStore {
   /**
    * Array with line numbers, eg [0, 0, 10, 21, 21, 40...]
    *
+   * Replaced as a whole on every search, so only the reference is observed.
+   *
    * @observable
    */
-  @observable accessor occurrences: number[] = [];
+  @observableRef accessor occurrences: number[] = [];
 
   /**
    * Index within the occurrences array. Showing where is activeOverlay currently located
@@ -76,7 +78,24 @@ export class SearchStore {
   private findOccurrences(lines: string[], query?: string): number[] {
     const regex = new RegExp(SearchStore.escapeRegex(query), "gi");
 
-    return lines.flatMap((line, index) => Array.from(line.matchAll(regex), () => index));
+    const occurrences: number[] = [];
+
+    // A plain exec loop: matchAll allocates an iterator and a match array for
+    // every line and every occurrence.
+    for (let index = 0; index < lines.length; index += 1) {
+      regex.lastIndex = 0;
+
+      for (let match = regex.exec(lines[index]); match; match = regex.exec(lines[index])) {
+        occurrences.push(index);
+
+        // An empty match does not move lastIndex: step over it, as matchAll does.
+        if (match[0] === "") {
+          regex.lastIndex += 1;
+        }
+      }
+    }
+
+    return occurrences;
   }
 
   /**

@@ -271,6 +271,85 @@ describe("LogStore request lifecycle", () => {
     expect(seen).not.toHaveBeenCalled();
   });
 
+  describe("given a log that grows while it is polled", () => {
+    // A pod that answers as the API does: the lines from the second asked for
+    // on, the first lines of it again included.
+    function serveGrowingLog(log: string[]) {
+      callForLogs.mockImplementation(async (_resource, query) => {
+        const since = query?.sinceTime ? Date.parse(query.sinceTime) : 0;
+        const lines = query?.sinceTime
+          ? log.filter((line) => Date.parse(line.slice(0, line.indexOf(" "))) >= since)
+          : log.slice(-(query?.tailLines ?? 500));
+
+        return lines.join("\n");
+      });
+    }
+
+    function createRandom(seed: number) {
+      let state = seed;
+
+      return (limit: number) => {
+        state = (state * 1664525 + 1013904223) >>> 0;
+
+        return state % limit;
+      };
+    }
+
+    it("shows every line once, whatever the batches in which it arrives", async () => {
+      const random = createRandom(5);
+      const log: string[] = [];
+      let nanoseconds = 0;
+
+      serveGrowingLog(log);
+      log.push("2026-01-01T00:00:00.000000001Z start");
+      await store.load(tabId, computedPods, computedTabData);
+
+      for (let poll = 0; poll < 40; poll += 1) {
+        // Several lines in one second, so that the second asked for holds lines already seen.
+        for (let added = random(6); added >= 0; added -= 1) {
+          nanoseconds += 1 + random(400_000_000);
+          const time = new Date(Date.UTC(2026, 0, 1) + Math.floor(nanoseconds / 1_000_000)).toISOString();
+
+          log.push(`${time.slice(0, -1)}${String(nanoseconds % 1_000_000).padStart(6, "0")}Z line ${log.length}`);
+        }
+
+        await vi.advanceTimersByTimeAsync(10_000);
+
+        expect(store.getLogs(tabId)).toEqual(log);
+      }
+    });
+
+    it("keeps a line that repeats the one before it, with the same timestamp, in a later poll", async () => {
+      const log = ["2026-01-01T00:00:05.250000000Z same", "2026-01-01T00:00:05.250000000Z same"];
+
+      serveGrowingLog(log);
+      await store.load(tabId, computedPods, computedTabData);
+      expect(store.getLogs(tabId)).toEqual(log);
+
+      log.push("2026-01-01T00:00:05.250000000Z same");
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(store.getLogs(tabId)).toEqual(log);
+
+      // The copies that come back with the next request are not new.
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(store.getLogs(tabId)).toEqual(log);
+    });
+
+    it("keeps the copies of a line that arrive in the same response", async () => {
+      const log = [
+        "2026-01-01T00:00:01Z a",
+        "2026-01-01T00:00:01Z a",
+        "2026-01-01T00:00:02Z a",
+        "2026-01-01T00:00:02Z a",
+      ];
+
+      serveGrowingLog(log);
+      await store.load(tabId, computedPods, computedTabData);
+
+      expect(store.getLogs(tabId)).toEqual(log);
+    });
+  });
+
   it("keeps two different lines that carry the same timestamp", async () => {
     const otherLog = "2026-01-01T00:00:00Z second line of that instant";
 

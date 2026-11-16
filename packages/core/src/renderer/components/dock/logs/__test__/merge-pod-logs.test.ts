@@ -257,3 +257,85 @@ describe("stripAnsiColors", () => {
     );
   });
 });
+
+// The merge as it was before the timestamps were parsed once: the oracle.
+function referenceMerge(sources: string[][]): string[] {
+  const timed = sources.map((lines) => {
+    let timestamp = "";
+
+    return lines.map((line) => {
+      timestamp = getLeadingTimestamp(line) ?? timestamp;
+
+      return { timestamp, line };
+    });
+  });
+  const cursors = timed.filter((source) => source.length > 0).map((lines) => ({ lines, index: 0 }));
+  const merged: string[] = [];
+
+  while (cursors.length > 0) {
+    let winner = cursors[0];
+
+    for (const cursor of cursors) {
+      if (compareLogTimestamps(cursor.lines[cursor.index].timestamp, winner.lines[winner.index].timestamp) < 0) {
+        winner = cursor;
+      }
+    }
+
+    merged.push(winner.lines[winner.index].line);
+    winner.index += 1;
+
+    if (winner.index >= winner.lines.length) {
+      cursors.splice(cursors.indexOf(winner), 1);
+    }
+  }
+
+  return merged;
+}
+
+describe("mergePodLogs against the merge that parsed the timestamps in every comparison", () => {
+  function createRandom(seed: number) {
+    let state = seed;
+
+    return (limit: number) => {
+      state = (state * 1664525 + 1013904223) >>> 0;
+
+      return state % limit;
+    };
+  }
+
+  it("gives the same lines for random pods with ties, continuations and timestamps that do not parse", () => {
+    const random = createRandom(3);
+    const base = Date.UTC(2026, 0, 1);
+
+    const makeLine = (index: number): string => {
+      const kind = random(12);
+
+      if (kind === 0) {
+        return `continuation ${index}`;
+      }
+
+      if (kind === 1) {
+        // Leading digits that are not a date: sorted by their text.
+        return `${random(50)}abc not a timestamp`;
+      }
+
+      // Seconds from a small set, so that pods tie; nanoseconds below the millisecond that only the text orders.
+      const iso = new Date(base + random(20) * 1000 + random(3)).toISOString().replace("Z", "");
+
+      return `${iso}${String(random(4)).padStart(6, "0")}Z line ${index}`;
+    };
+
+    for (let round = 0; round < 300; round += 1) {
+      const sources = Array.from({ length: 1 + random(6) }, () => {
+        const lines = Array.from({ length: random(30) }, (_, index) => makeLine(index));
+
+        // Each pod is in order, as the API serves it, apart from the noise above.
+        return lines.sort((a, b) => (getLeadingTimestamp(a) ?? "").localeCompare(getLeadingTimestamp(b) ?? ""));
+      });
+      const podLines = new Map(sources.map((lines, index) => [`pod-${index}`, lines]));
+      const expected = referenceMerge(sources);
+
+      expect(mergePodLogs(podLines, { tagged: false })).toEqual(expected);
+    }
+  });
+});
