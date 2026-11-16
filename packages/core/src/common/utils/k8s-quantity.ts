@@ -38,7 +38,10 @@ function parseQuantityString(value: string): number | undefined {
 
   const [, digits, exponent, suffix = ""] = match;
 
-  return Number(digits) * 10 ** Number(exponent ?? 0) * suffixes.get(suffix)!;
+  const parsed = Number(digits) * 10 ** Number(exponent ?? 0) * suffixes.get(suffix)!;
+
+  // 1e400 overflows to Infinity, which no amount can be compared with.
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 /**

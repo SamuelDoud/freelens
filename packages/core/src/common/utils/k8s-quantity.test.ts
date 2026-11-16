@@ -7,6 +7,10 @@ import { describe, expect, it } from "vitest";
 import { formatCpuQuantity, formatMemoryQuantity, parseQuantity } from "./k8s-quantity";
 
 describe("parseQuantity", () => {
+  it.each(["1e400", "9e999Gi", "Infinity", "NaN", "-1e999"])("rejects %s as not a finite quantity", (value) => {
+    expect(parseQuantity(value)).toBeUndefined();
+  });
+
   it.each([
     ["500m", 0.5],
     ["2", 2],

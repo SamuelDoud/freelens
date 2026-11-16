@@ -8,7 +8,13 @@ import { createConditionMatcher, getConditionError, parseLocalDateTime } from ".
 import { describeCondition } from "./describe-condition";
 import { parseDuration } from "./duration";
 
-import type { SearchCondition, SearchField, TextSearchOperator, TimeSearchOperator } from "./conditions";
+import type {
+  QuantitySearchOperator,
+  SearchCondition,
+  SearchField,
+  TextSearchOperator,
+  TimeSearchOperator,
+} from "./conditions";
 
 interface Item {
   name: string;
@@ -42,6 +48,15 @@ const time = (operator: TimeSearchOperator, value: string, negate = false): Sear
   operator,
   value,
   negate,
+});
+
+const quantity = (operator: QuantitySearchOperator, value: string): SearchCondition => ({
+  id: String(nextId++),
+  kind: "quantity",
+  field: "cpu",
+  operator,
+  value,
+  negate: false,
 });
 
 const at = (value: string) => parseLocalDateTime(value);
@@ -155,6 +170,10 @@ describe("createConditionMatcher", () => {
 });
 
 describe("getConditionError", () => {
+  it("reports a quantity too large to hold", () => {
+    expect(getConditionError(quantity("moreThan", "1e400"))).toBe("Use a quantity such as 500m, 2, 512Mi or 1Gi");
+  });
+
   it("reports an invalid regex, duration or date, and accepts an empty value", () => {
     expect(getConditionError(text("name", "regex", "(a"))).toBeDefined();
     expect(getConditionError(time("olderThan", "2 days"))).toBeDefined();
