@@ -5,7 +5,7 @@
  */
 
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { useState } from "react";
+import { observer } from "mobx-react";
 import activeHotbarInjectable from "../../../features/hotbar/storage/common/active.injectable";
 import { MenuItem } from "../menu";
 
@@ -26,30 +26,26 @@ interface HotbarToggleMenuItemProps {
   removeContent: StrictReactNode;
 }
 
-function NonInjectedHotbarToggleMenuItem({
-  addContent,
-  entity,
-  activeHotbar,
-  removeContent,
-}: Dependencies & HotbarToggleMenuItemProps) {
-  const [itemInHotbar, setItemInHotbar] = useState(activeHotbar.get()?.hasEntity(entity.getId()) ?? false);
+export const NonInjectedHotbarToggleMenuItem = observer(
+  ({ addContent, entity, activeHotbar, removeContent }: Dependencies & HotbarToggleMenuItemProps) => {
+    // Read from the hotbar itself: the entity may be added or removed elsewhere, and an add may find no free cell.
+    const itemInHotbar = activeHotbar.get()?.hasEntity(entity.getId()) ?? false;
 
-  return (
-    <MenuItem
-      onClick={() => {
-        if (itemInHotbar) {
-          activeHotbar.get()?.removeEntity(entity.getId());
-          setItemInHotbar(false);
-        } else {
-          activeHotbar.get()?.addEntity(entity);
-          setItemInHotbar(true);
-        }
-      }}
-    >
-      {itemInHotbar ? removeContent : addContent}
-    </MenuItem>
-  );
-}
+    return (
+      <MenuItem
+        onClick={() => {
+          if (itemInHotbar) {
+            activeHotbar.get()?.removeEntity(entity.getId());
+          } else {
+            activeHotbar.get()?.addEntity(entity);
+          }
+        }}
+      >
+        {itemInHotbar ? removeContent : addContent}
+      </MenuItem>
+    );
+  },
+);
 
 export const HotbarToggleMenuItem = withInjectables<Dependencies, HotbarToggleMenuItemProps>(
   NonInjectedHotbarToggleMenuItem,
