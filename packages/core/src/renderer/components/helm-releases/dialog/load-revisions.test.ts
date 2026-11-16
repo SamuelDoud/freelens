@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { loadRevisions } from "./load-revisions";
+import { defaultRollbackRevision, loadRevisions } from "./load-revisions";
 
 import type { HelmReleaseRevision } from "../../../../common/k8s-api/endpoints/helm-releases.api/request-history.injectable";
 
@@ -56,5 +56,15 @@ describe("loadRevisions", () => {
         () => false,
       ),
     ).toEqual({ status: "stale" });
+  });
+});
+
+describe("defaultRollbackRevision", () => {
+  it("picks the newest revision before the current one", () => {
+    expect(defaultRollbackRevision([revision(3), revision(2), revision(1)], 3)).toEqual(revision(2));
+  });
+
+  it("picks nothing when the current revision is the only one", () => {
+    expect(defaultRollbackRevision([revision(1)], 1)).toBeUndefined();
   });
 });

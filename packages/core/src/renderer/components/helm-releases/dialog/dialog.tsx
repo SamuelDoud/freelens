@@ -16,7 +16,7 @@ import { Dialog } from "../../dialog";
 import { Select } from "../../select";
 import { Wizard, WizardStep } from "../../wizard";
 import rollbackReleaseInjectable from "../rollback-release/rollback-release.injectable";
-import { loadRevisions } from "./load-revisions";
+import { defaultRollbackRevision, loadRevisions } from "./load-revisions";
 import releaseRollbackDialogStateInjectable from "./state.injectable";
 
 import type { ShowCheckedErrorNotification } from "@freelensapp/notifications";
@@ -78,7 +78,7 @@ class NonInjectedReleaseRollbackDialog extends React.Component<ReleaseRollbackDi
     runInAction(() => {
       if (result.status === "loaded") {
         this.revisions.replace(result.revisions);
-        this.revision.set(this.revisions[0]);
+        this.revision.set(defaultRollbackRevision(result.revisions, release.getRevision()));
       }
 
       this.isLoading.set(false);
@@ -139,6 +139,8 @@ class NonInjectedReleaseRollbackDialog extends React.Component<ReleaseRollbackDi
         <WizardStep
           scrollable={false}
           nextLabel="Rollback"
+          // Rolling back to the current revision would only re-apply it.
+          disabledNext={!this.revision.get() || this.revision.get()?.revision === release.getRevision()}
           next={() => this.rollback(release)}
           loading={this.isLoading.get()}
         >

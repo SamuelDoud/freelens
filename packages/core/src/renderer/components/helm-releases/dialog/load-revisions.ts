@@ -32,3 +32,9 @@ export const loadRevisions = async (
     return isStillWanted() ? { status: "failed", error } : { status: "stale" };
   }
 };
+
+/** The newest revision before the current one, which is what a rollback usually wants; none if there is no earlier one. */
+export const defaultRollbackRevision = (
+  revisionsNewestFirst: HelmReleaseRevision[],
+  currentRevision: number,
+): HelmReleaseRevision | undefined => revisionsNewestFirst.find(({ revision }) => revision < currentRevision);
