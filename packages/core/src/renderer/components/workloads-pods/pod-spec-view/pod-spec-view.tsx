@@ -25,6 +25,8 @@ export interface PodSpecViewProps {
 type Mode = "pod" | "controller";
 
 interface ControllerTemplate {
+  /** The controller it was read from: the view is reused for the next pod the panel shows */
+  apiPath: string;
   spec?: unknown;
   /** What owns the controller, such as the Deployment of a ReplicaSet */
   parent?: OwnerReference;
@@ -44,7 +46,8 @@ const kindsWithPodTemplate = new Set(["ReplicaSet", "StatefulSet", "DaemonSet", 
 export function PodSpecView({ pod, owner, requestKubeResource }: PodSpecViewProps) {
   const hasTemplate = Boolean(owner && kindsWithPodTemplate.has(owner.ref.kind));
   const [mode, setMode] = useState<Mode>(hasTemplate ? "controller" : "pod");
-  const [template, setTemplate] = useState<ControllerTemplate>();
+  const [loadedTemplate, setTemplate] = useState<ControllerTemplate>();
+  const template = loadedTemplate?.apiPath === owner?.apiPath ? loadedTemplate : undefined;
   const podYaml = useMemo(() => toYaml(pod.spec), [pod.spec]);
   // The diff table is quadratic in the lines of the spec, so it is made again
   // only when the template or the pod's spec changes, not at every render.
@@ -71,7 +74,7 @@ export function PodSpecView({ pod, owner, requestKubeResource }: PodSpecViewProp
       }
 
       if (!result.callWasSuccessful) {
-        setTemplate({ error: String(result.error) });
+        setTemplate({ apiPath: owner.apiPath, error: String(result.error) });
 
         return;
       }
@@ -81,7 +84,11 @@ export function PodSpecView({ pod, owner, requestKubeResource }: PodSpecViewProp
         getOwnerRefs: () => OwnerReference[];
       };
 
-      setTemplate({ spec: controller?.spec?.template?.spec, parent: controller?.getOwnerRefs()[0] });
+      setTemplate({
+        apiPath: owner.apiPath,
+        spec: controller?.spec?.template?.spec,
+        parent: controller?.getOwnerRefs()[0],
+      });
     })();
 
     return () => {
