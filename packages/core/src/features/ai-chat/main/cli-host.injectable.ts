@@ -10,8 +10,9 @@ import { getInjectable } from "@ogre-tools/injectable";
 import platformInjectable from "../../../common/vars/platform.injectable";
 import spawnInjectable from "../../../main/child-process/spawn.injectable";
 import userPreferencesStateInjectable from "../../user-preferences/common/state.injectable";
-import { defaultAiChatPreferences, usesRemoteHost } from "../common/preferences";
+import { defaultAiChatPreferences } from "../common/preferences";
 import { LocalCliHost } from "./cli-host";
+import { createCliHostSelector } from "./select-cli-host";
 import aiSshAskpassInjectable from "./ssh/ssh-askpass.injectable";
 import { SshCliHost } from "./ssh/ssh-cli-host";
 
@@ -31,36 +32,21 @@ const aiCliHostInjectable = getInjectable({
     const env = () => process.env;
     const platform = di.inject(platformInjectable);
     const local = new LocalCliHost({ spawn, env, platform });
-    let remote: { key: string; host: AiCliHost } | undefined;
 
-    return () => {
-      const preferences = state.aiChat ?? defaultAiChatPreferences;
-
-      if (!usesRemoteHost(preferences)) {
-        return local;
-      }
-
-      const key = JSON.stringify(preferences.remoteHost);
-
-      if (remote?.key !== key) {
-        // Another host, or the same one reached differently: the old connection goes.
-        remote?.host.close();
-        remote = {
-          key,
-          host: new SshCliHost(preferences.remoteHost, {
-            spawn,
-            env,
-            askpass: di.inject(aiSshAskpassInjectable),
-            // Short: the path of a socket is limited to about a hundred characters.
-            controlDir: path.join(homedir(), ".freelens-ssh"),
-            platform,
-            logInfo: (message) => logger.info(message),
-          }),
-        };
-      }
-
-      return remote.host;
-    };
+    return createCliHostSelector({
+      preferences: () => state.aiChat ?? defaultAiChatPreferences,
+      local,
+      createRemote: (remoteHost) =>
+        new SshCliHost(remoteHost, {
+          spawn,
+          env,
+          askpass: di.inject(aiSshAskpassInjectable),
+          // Short: the path of a socket is limited to about a hundred characters.
+          controlDir: path.join(homedir(), ".freelens-ssh"),
+          platform,
+          logInfo: (message) => logger.info(message),
+        }),
+    });
   },
 });
 
