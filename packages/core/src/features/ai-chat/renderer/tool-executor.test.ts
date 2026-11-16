@@ -329,6 +329,53 @@ describe("AiToolExecutor", () => {
     });
   });
 
+  describe("filters on columns a kind lacks", () => {
+    it("says which columns the kind has instead of listing nothing", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({
+        items: [{ metadata: { name: "api", namespace: "a" }, spec: { replicas: 2 }, status: { readyReplicas: 2 } }],
+      });
+
+      const result = await executor.execute("list_resources", { kind: "Deployment", minRestarts: 1 }, readOnly);
+
+      expect(result.ok).toBe(false);
+      expect(result.text).toBe(
+        '"minRestarts" filters the restarts column, which Deployment does not have. Its columns: ready, available.',
+      );
+    });
+  });
+
+  describe("pods with init containers", () => {
+    const pod = (name: string, init: unknown[], phase = "Pending") => ({
+      metadata: { name, namespace: "a" },
+      spec: { containers: [{}], initContainers: [{}, {}] },
+      status: { phase, initContainerStatuses: init },
+    });
+
+    it("shows the status kubectl shows, and filters on it", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({
+        items: [
+          pod("crash", [
+            { state: { terminated: { exitCode: 0 } } },
+            { state: { waiting: { reason: "CrashLoopBackOff" } } },
+          ]),
+          pod("failed", [{ state: { terminated: { exitCode: 1, reason: "Error" } } }, { state: {} }]),
+          pod("slow", [{ state: { terminated: { exitCode: 0 } } }, { state: { running: {} } }]),
+        ],
+      });
+
+      const all = await executor.execute("list_resources", { kind: "Pod" }, readOnly);
+
+      expect(all.text).toContain("crash\ta\t0/1\tInit:CrashLoopBackOff");
+      expect(all.text).toContain("failed\ta\t0/1\tInit:Error");
+      expect(all.text).toContain("slow\ta\t0/1\tInit:1/2");
+
+      const filtered = await executor.execute("list_resources", { kind: "Pod", status: "Init:Error" }, readOnly);
+
+      expect(filtered.text).toContain("failed");
+      expect(filtered.text).not.toContain("crash");
+    });
+  });
+
   describe("logs and events", () => {
     it("keeps the newest lines of a log that is cut, not the oldest", async () => {
       const log = Array.from({ length: 1000 }, (_, index) => `line-${String(index).padStart(4, "0")} ${"x".repeat(80)}`)

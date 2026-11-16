@@ -285,6 +285,28 @@ export class AiToolExecutor {
           throw new ToolError(`"sortBy" must be one of ${Object.keys(listOrders).join(", ")}.`);
         }
 
+        // A filter on a column the kind lacks would match nothing: say which columns there are.
+        const available = new Set([
+          ...Object.keys(statusColumns(resource.kind, {})),
+          ...Object.keys(statusColumns(resource.kind, items[0] ?? {})),
+        ]);
+        const needed: [boolean, string, string[]][] = [
+          [minRestarts !== undefined, "minRestarts", ["restarts"]],
+          [Boolean(statusIn), "status", ["status"]],
+          [Boolean(statusOut), "statusNot", ["status"]],
+          [notReady, "notReady", ["ready", "status"]],
+        ];
+
+        for (const [used, filter, columns] of needed) {
+          if (used && !columns.some((column) => available.has(column))) {
+            throw new ToolError(
+              `"${filter}" filters the ${columns.join(" or ")} column, which ${resource.kind} does not have. Its columns: ${
+                [...available].join(", ") || "none besides name, namespace and age"
+              }.`,
+            );
+          }
+        }
+
         const filtered = minRestarts !== undefined || statusIn || statusOut || notReady;
         const rows = items
           .map((object) => ({ object, columns: statusColumns(resource.kind, object) }))
