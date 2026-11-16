@@ -108,4 +108,43 @@ describe("pod-details-container", () => {
       expect(container.querySelector(".pod-container-title")).toHaveTextContent(/^main$/);
     });
   });
+
+  it("gives a container the anchor that the target container link of an ephemeral container points at", () => {
+    const di = getDiForUnitTesting();
+
+    di.override(portForwardStoreInjectable, () => ({
+      watch: () => disposer(),
+    }));
+
+    const render = renderFor(di);
+    const pod = new Pod({
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name: "test-pod",
+        namespace: "default",
+        resourceVersion: "1",
+        selfLink: "/api/v1/namespaces/default/pods/test-pod",
+        uid: "pod-uid",
+      },
+      spec: {
+        containers: [{ name: "main" }],
+        ephemeralContainers: [{ name: "debugger", targetContainerName: "main" }],
+      },
+      status: {} as PodStatus,
+    });
+    const [main] = pod.getContainersWithType();
+    const debuggerContainer = pod.getAllContainersWithType().find(({ name }) => name === "debugger")!;
+
+    const { container } = render(
+      <>
+        <PodDetailsContainer pod={pod} container={main} />
+        <PodDetailsContainer pod={pod} container={debuggerContainer} />
+      </>,
+    );
+    const link = screen.getByRole("link", { name: "main" });
+    const anchor = link.getAttribute("href")!.slice(1);
+
+    expect(container.querySelector(`[id="${anchor}"]`)).not.toBeNull();
+  });
 });

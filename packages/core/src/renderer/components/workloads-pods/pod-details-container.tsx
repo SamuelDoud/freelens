@@ -98,7 +98,7 @@ class NonInjectedPodDetailsContainer extends React.Component<PodDetailsContainer
 
     if (!pod || !container) return null;
     const { name, image, imagePullPolicy, ports, volumeMounts, command, args, resources, resizePolicy } = container;
-    const id = `pod-container-id-${pod}-${name}`;
+    const id = `pod-container-id-${pod.getName()}-${name}`;
     const targetContainerName = "targetContainerName" in container ? container.targetContainerName : undefined;
     const status = pod.getContainerStatuses().find((status) => status.name === container.name);
     const lastState = status ? Object.keys(status?.lastState ?? {})[0] : "";
