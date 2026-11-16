@@ -1,0 +1,731 @@
+[
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-0",
+    "revision": "1",
+    "updated": "2026-01-10 00:10:10 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-12",
+    "revision": "1",
+    "updated": "2026-04-12 02:22:22 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-15",
+    "revision": "4",
+    "updated": "2026-07-15 05:25:25 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-18",
+    "revision": "3",
+    "updated": "2026-01-18 08:28:28 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-21",
+    "revision": "2",
+    "updated": "2026-04-11 01:31:31 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-24",
+    "revision": "1",
+    "updated": "2026-07-14 04:34:34 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-27",
+    "revision": "4",
+    "updated": "2026-01-17 07:37:37 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-3",
+    "revision": "4",
+    "updated": "2026-04-13 03:13:13 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-30",
+    "revision": "3",
+    "updated": "2026-04-10 00:40:40 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-33",
+    "revision": "2",
+    "updated": "2026-07-13 03:43:43 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-36",
+    "revision": "1",
+    "updated": "2026-01-16 06:46:46 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-39",
+    "revision": "4",
+    "updated": "2026-04-19 09:49:49 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-42",
+    "revision": "3",
+    "updated": "2026-07-12 02:12:52 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-45",
+    "revision": "2",
+    "updated": "2026-01-15 05:15:55 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-48",
+    "revision": "1",
+    "updated": "2026-04-18 08:18:58 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-51",
+    "revision": "4",
+    "updated": "2026-07-11 01:21:12 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-54",
+    "revision": "3",
+    "updated": "2026-01-14 04:24:15 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-57",
+    "revision": "2",
+    "updated": "2026-04-17 07:27:18 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-6",
+    "revision": "3",
+    "updated": "2026-07-16 06:16:16 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "Shared.Name-x",
+    "namespace": "team-9",
+    "revision": "2",
+    "updated": "2026-01-19 09:19:19 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "bad-old",
+    "namespace": "ns-d",
+    "revision": "2",
+    "updated": "2026-03-12 02:12:12 +0000 UTC",
+    "status": "deployed",
+    "chart": "c-2",
+    "app_version": ""
+  },
+  {
+    "name": "empty-time",
+    "namespace": "ns-d",
+    "revision": "1",
+    "updated": "-",
+    "status": "deployed",
+    "chart": "c-1",
+    "app_version": ""
+  },
+  {
+    "name": "failed-latest",
+    "namespace": "ns-a",
+    "revision": "3",
+    "updated": "2026-04-13 03:13:13.123456789 +0530 +0530",
+    "status": "failed",
+    "chart": "f-0.2.0",
+    "app_version": ""
+  },
+  {
+    "name": "frac-0",
+    "namespace": "ns-d",
+    "revision": "1",
+    "updated": "2026-05-05 05:05:05 +0000 UTC",
+    "status": "deployed",
+    "chart": "c-1",
+    "app_version": ""
+  },
+  {
+    "name": "frac-3",
+    "namespace": "ns-d",
+    "revision": "1",
+    "updated": "2026-05-05 05:05:05.12 +0900 +0900",
+    "status": "deployed",
+    "chart": "c-1",
+    "app_version": ""
+  },
+  {
+    "name": "frac-9",
+    "namespace": "ns-d",
+    "revision": "1",
+    "updated": "2026-05-05 05:05:05.000000001 -0330 -0330",
+    "status": "deployed",
+    "chart": "c-1",
+    "app_version": ""
+  },
+  {
+    "name": "gone-kept",
+    "namespace": "ns-b",
+    "revision": "2",
+    "updated": "2026-06-15 05:15:15 +0000 UTC",
+    "status": "uninstalled",
+    "chart": "gone-kept-1.0.1",
+    "app_version": "9"
+  },
+  {
+    "name": "hist",
+    "namespace": "ns-b",
+    "revision": "3",
+    "updated": "2026-07-16 06:16:16 +0100 +0100",
+    "status": "uninstalled",
+    "chart": "h-2.0.1",
+    "app_version": ""
+  },
+  {
+    "name": "multi",
+    "namespace": "ns-a",
+    "revision": "6",
+    "updated": "2026-07-16 06:16:16.5 -0700 -0700",
+    "status": "deployed",
+    "chart": "app-1.6.0",
+    "app_version": "v6"
+  },
+  {
+    "name": "no-chart",
+    "namespace": "ns-d",
+    "revision": "1",
+    "updated": "2026-02-11 01:11:11 +0000 UTC",
+    "status": "deployed",
+    "chart": "MISSING",
+    "app_version": "MISSING"
+  },
+  {
+    "name": "no-metadata",
+    "namespace": "ns-d",
+    "revision": "1",
+    "updated": "2026-02-11 01:11:11 +0000 UTC",
+    "status": "deployed",
+    "chart": "MISSING",
+    "app_version": "MISSING"
+  },
+  {
+    "name": "no-time",
+    "namespace": "ns-d",
+    "revision": "1",
+    "updated": "-",
+    "status": "deployed",
+    "chart": "c-1",
+    "app_version": ""
+  },
+  {
+    "name": "no-version-field",
+    "namespace": "ns-d",
+    "revision": "0",
+    "updated": "2026-02-11 01:11:11 +0000 UTC",
+    "status": "deployed",
+    "chart": "c-1",
+    "app_version": ""
+  },
+  {
+    "name": "pend-install",
+    "namespace": "ns-b",
+    "revision": "2",
+    "updated": "2026-02-11 01:11:11 +0000 UTC",
+    "status": "pending-install",
+    "chart": "pend-install-1.0.1",
+    "app_version": "9"
+  },
+  {
+    "name": "pend-rollback",
+    "namespace": "ns-b",
+    "revision": "2",
+    "updated": "2026-04-13 03:13:13 +0000 UTC",
+    "status": "pending-rollback",
+    "chart": "pend-rollback-1.0.1",
+    "app_version": "9"
+  },
+  {
+    "name": "pend-upgrade",
+    "namespace": "ns-b",
+    "revision": "2",
+    "updated": "2026-03-12 02:12:12 +0000 UTC",
+    "status": "pending-upgrade",
+    "chart": "pend-upgrade-1.0.1",
+    "app_version": "9"
+  },
+  {
+    "name": "plain-json",
+    "namespace": "ns-d",
+    "revision": "1",
+    "updated": "2026-03-12 02:12:12 +0000 UTC",
+    "status": "deployed",
+    "chart": "p-1",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-1",
+    "revision": "2",
+    "updated": "2026-02-11 01:11:11 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-10",
+    "revision": "3",
+    "updated": "2026-02-10 00:20:20 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-11",
+    "revision": "4",
+    "updated": "2026-03-11 01:21:21 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-13",
+    "revision": "2",
+    "updated": "2026-05-13 03:23:23 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-14",
+    "revision": "3",
+    "updated": "2026-06-14 04:24:24 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-16",
+    "revision": "1",
+    "updated": "2026-08-16 06:26:26 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-17",
+    "revision": "2",
+    "updated": "2026-09-17 07:27:27 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-19",
+    "revision": "4",
+    "updated": "2026-02-19 09:29:29 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-2",
+    "revision": "3",
+    "updated": "2026-03-12 02:12:12 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-20",
+    "revision": "1",
+    "updated": "2026-03-10 00:30:30 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-22",
+    "revision": "3",
+    "updated": "2026-05-12 02:32:32 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-23",
+    "revision": "4",
+    "updated": "2026-06-13 03:33:33 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-25",
+    "revision": "2",
+    "updated": "2026-08-15 05:35:35 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-26",
+    "revision": "3",
+    "updated": "2026-09-16 06:36:36 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-28",
+    "revision": "1",
+    "updated": "2026-02-18 08:38:38 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-29",
+    "revision": "2",
+    "updated": "2026-03-19 09:39:39 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-31",
+    "revision": "4",
+    "updated": "2026-05-11 01:41:41 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-32",
+    "revision": "1",
+    "updated": "2026-06-12 02:42:42 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-34",
+    "revision": "3",
+    "updated": "2026-08-14 04:44:44 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-35",
+    "revision": "4",
+    "updated": "2026-09-15 05:45:45 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-37",
+    "revision": "2",
+    "updated": "2026-02-17 07:47:47 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-38",
+    "revision": "3",
+    "updated": "2026-03-18 08:48:48 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-4",
+    "revision": "1",
+    "updated": "2026-05-14 04:14:14 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-40",
+    "revision": "1",
+    "updated": "2026-05-10 00:10:50 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-41",
+    "revision": "2",
+    "updated": "2026-06-11 01:11:51 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-43",
+    "revision": "4",
+    "updated": "2026-08-13 03:13:53 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-44",
+    "revision": "1",
+    "updated": "2026-09-14 04:14:54 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-46",
+    "revision": "3",
+    "updated": "2026-02-16 06:16:56 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-47",
+    "revision": "4",
+    "updated": "2026-03-17 07:17:57 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-49",
+    "revision": "2",
+    "updated": "2026-05-19 09:19:10 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-5",
+    "revision": "2",
+    "updated": "2026-06-15 05:15:15 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-50",
+    "revision": "3",
+    "updated": "2026-06-10 00:20:11 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-52",
+    "revision": "1",
+    "updated": "2026-08-12 02:22:13 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-53",
+    "revision": "2",
+    "updated": "2026-09-13 03:23:14 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-55",
+    "revision": "4",
+    "updated": "2026-02-15 05:25:16 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-56",
+    "revision": "1",
+    "updated": "2026-03-16 06:26:17 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-58",
+    "revision": "3",
+    "updated": "2026-05-18 08:28:19 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-59",
+    "revision": "4",
+    "updated": "2026-06-19 09:29:20 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-7",
+    "revision": "4",
+    "updated": "2026-08-17 07:17:17 -0800 -0800",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "shared",
+    "namespace": "team-8",
+    "revision": "1",
+    "updated": "2026-09-18 08:18:18 +0000 UTC",
+    "status": "deployed",
+    "chart": "s-1.0.0",
+    "app_version": ""
+  },
+  {
+    "name": "superseded-only",
+    "namespace": "ns-b",
+    "revision": "2",
+    "updated": "2026-07-16 06:16:16 +0000 UTC",
+    "status": "superseded",
+    "chart": "superseded-only-1.0.1",
+    "app_version": "9"
+  },
+  {
+    "name": "twelve",
+    "namespace": "ns-c",
+    "revision": "12",
+    "updated": "2026-04-12 02:22:22 +0000 UTC",
+    "status": "deployed",
+    "chart": "t-3.0.0-rc.1+build.5",
+    "app_version": ""
+  },
+  {
+    "name": "uninstalling-r",
+    "namespace": "ns-b",
+    "revision": "2",
+    "updated": "2026-05-14 04:14:14 +0000 UTC",
+    "status": "uninstalling",
+    "chart": "uninstalling-r-1.0.1",
+    "app_version": "9"
+  },
+  {
+    "name": "zero-time",
+    "namespace": "ns-d",
+    "revision": "1",
+    "updated": "-",
+    "status": "deployed",
+    "chart": "c-1",
+    "app_version": ""
+  }
+]
