@@ -64,7 +64,8 @@ export function getPodLogColor(podName: string): string {
  * message, which the API does not re-stamp).
  */
 export function getLeadingTimestamp(line: string): string | undefined {
-  return /^\d+\S+/.exec(line)?.[0];
+  // The date is spelled out: a continuation such as the "50% done" of a progress bar also starts with digits.
+  return /^\d{4}-\d{2}-\d{2}T\S+/.exec(line)?.[0];
 }
 
 /**

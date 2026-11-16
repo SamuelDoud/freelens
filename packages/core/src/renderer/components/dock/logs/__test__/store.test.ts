@@ -608,6 +608,25 @@ describe("LogStore combined logs", () => {
     expect(getCallsFor("pod-a").map(([, query]) => query?.tailLines)).toEqual([500, 503]);
   });
 
+  it("keeps a progress line that starts with a digit as a continuation of its entry", async () => {
+    pods.set([podA]);
+    logsOfPods.set("pod-a", "2026-01-01T00:00:01Z a1\r50% done\n2026-01-01T00:00:02Z a2");
+    await store.load(tabId, computedPods, computedTabData);
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(getLogs()).toEqual(["2026-01-01T00:00:01Z a1", "50% done", "2026-01-01T00:00:02Z a2"]);
+    expect(getCallsFor("pod-a")[1][1]).toMatchObject({ sinceTime: "2026-01-01T00:00:02Z" });
+    expect(store.getLogsWithoutTimestamps(tabId)).toEqual(["a1", "50% done", "a2"]);
+  });
+
+  it("does not add an empty line after every line of a log that ends its lines with \\r\\n", async () => {
+    pods.set([podA]);
+    logsOfPods.set("pod-a", "2026-01-01T00:00:01Z a1\r\n2026-01-01T00:00:02Z a2\r\n2026-01-01T00:00:03Z a3");
+    await store.load(tabId, computedPods, computedTabData);
+
+    expect(getLogs()).toEqual(["2026-01-01T00:00:01Z a1", "2026-01-01T00:00:02Z a2", "2026-01-01T00:00:03Z a3"]);
+  });
+
   it("keeps a tab of a single pod without the limit of a combined tab", async () => {
     callForLogs.mockImplementation(async ({ name }) =>
       Array.from({ length: maxCombinedLogLines }, (_, index) => `2026-01-01T00:00:00Z ${name} ${index}`).join("\n"),

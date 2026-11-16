@@ -322,7 +322,7 @@ export class LogStore {
             signal,
           );
 
-          logsOfPods.push({ pod, lines: result.trimEnd().replace(/\r/g, "\n").split("\n") });
+          logsOfPods.push({ pod, lines: result.trimEnd().replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n") });
         } catch (error) {
           errors.push(error);
         }
@@ -510,7 +510,7 @@ export class LogStore {
   }
 
   splitOutTimestamp(logs: string): [string, string] {
-    const extraction = /^(\d+\S+)(.*)/m.exec(logs);
+    const extraction = /^(\d{4}-\d{2}-\d{2}T\S+)(.*)/m.exec(logs);
 
     if (!extraction || extraction.length < 3) {
       return ["", logs];
@@ -520,11 +520,11 @@ export class LogStore {
   }
 
   getTimestamps(logs: string) {
-    return logs.match(/^\d+\S+/gm);
+    return logs.match(/^\d{4}-\d{2}-\d{2}T\S+/gm);
   }
 
   removeTimestamps(logs: string): string {
-    return logs.replace(/^\d+.*?\s/gm, "");
+    return logs.replace(/^\d{4}-\d{2}-\d{2}T\S+ ?/gm, "");
   }
 
   clearLogs(tabId: TabId): void {
