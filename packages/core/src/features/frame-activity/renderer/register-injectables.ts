@@ -7,6 +7,7 @@
  */
 
 import frameActivityInjectable from "./frame-activity.injectable";
+import requestShownClusterFramesInjectable from "./request-shown-cluster-frames.injectable";
 import shownClusterFramesInjectable from "./shown-cluster-frames.injectable";
 import shownClusterFramesListenerInjectable from "./shown-cluster-frames-listener.injectable";
 
@@ -15,6 +16,11 @@ import type { DiContainerForInjection } from "@ogre-tools/injectable";
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
     di.register(frameActivityInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(requestShownClusterFramesInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

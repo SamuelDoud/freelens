@@ -5,6 +5,7 @@
 
 import { getMessageChannelListenerInjectable, sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { shownClusterFramesChannel } from "../common/channels";
+import lastShownClusterFramesInjectable from "./last-shown-cluster-frames.injectable";
 
 // The frames of a window cannot message each other directly: what one sends
 // reaches the main process, which passes it on to every frame.
@@ -13,8 +14,12 @@ const relayShownClusterFramesInjectable = getMessageChannelListenerInjectable({
   channel: shownClusterFramesChannel,
   getHandler: (di) => {
     const send = di.inject(sendMessageToChannelInjectionToken);
+    const last = di.inject(lastShownClusterFramesInjectable);
 
-    return (clusterIds) => send(shownClusterFramesChannel, clusterIds);
+    return (clusterIds) => {
+      last.clusterIds = clusterIds;
+      send(shownClusterFramesChannel, clusterIds);
+    };
   },
 });
 
