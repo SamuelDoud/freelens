@@ -24,6 +24,7 @@ import setupMobxInjectable from "./setup-mobx.injectable";
 import setupProxyEnvInjectable from "./setup-proxy-env.injectable";
 import setupSessionProxyBypassInjectable from "./setup-session-proxy-bypass.injectable";
 import setupSyncingOfGeneralCatalogEntitiesInjectable from "./setup-syncing-of-general-catalog-entities.injectable";
+import setupV8HeapLimitInjectable from "./setup-v8-heap-limit.injectable";
 import showInitialWindowInjectable from "./show-initial-window.injectable";
 import showLoadingInjectable from "./show-loading.injectable";
 
@@ -102,6 +103,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(setupSyncingOfGeneralCatalogEntitiesInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(setupV8HeapLimitInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
