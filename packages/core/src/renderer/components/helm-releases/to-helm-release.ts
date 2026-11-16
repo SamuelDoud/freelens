@@ -35,10 +35,11 @@ export const toHelmRelease = (release: ListedHelmRelease): HelmRelease => ({
   getChart(withVersion = false) {
     let chart = this.chart;
 
-    if (!withVersion && this.getVersion() != "") {
-      const search = new RegExp(`-${this.getVersion()}`);
+    const version = this.getVersion();
 
-      chart = chart.replace(search, "");
+    // The version is text, not a pattern: "+" and "." in it must match literally.
+    if (!withVersion && version !== "" && chart.endsWith(`-${version}`)) {
+      chart = chart.slice(0, -(version.length + 1));
     }
 
     return chart;
