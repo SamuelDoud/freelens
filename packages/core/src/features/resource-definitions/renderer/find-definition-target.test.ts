@@ -43,6 +43,36 @@ describe("findDefinitionTarget", () => {
     expect(target("other")).toBeUndefined();
     expect(findDefinitionTarget(null)).toBeUndefined();
   });
+
+  it("takes a top-level view, which has no section, for the title of its list", () => {
+    document.body.innerHTML = `
+      <div data-testid="sidebar-item-nodes" data-is-active-test="true">
+        <a data-testid="link-for-sidebar-item-nodes"><span>Nodes</span></a>
+      </div>
+      <div class="header"><h5 class="title" id="nodes-title">Nodes</h5></div>
+    `;
+
+    expect(target("nodes-title")?.id).toBe("sidebar-item-nodes");
+  });
+
+  it("takes the view a title names over the page's, for a list inside another view", () => {
+    document.body.innerHTML = `
+      <div data-testid="sidebar-item-workloads" data-is-active-test="true">
+        <a data-testid="link-for-sidebar-item-workloads"><span>Workloads</span></a>
+        <div data-testid="sidebar-item-workloads-overview" data-is-active-test="true" data-parent-id-test="sidebar-item-workloads">
+          <a data-testid="link-for-sidebar-item-workloads-overview"><span>Overview</span></a>
+        </div>
+      </div>
+      <div data-testid="sidebar-item-events" data-is-active-test="false">
+        <a data-testid="link-for-sidebar-item-events"><i class="Icon material"><span class="icon">access_time</span></i><span>Events</span></a>
+      </div>
+      <div class="header"><h5 class="title" id="events-title">Events</h5></div>
+      <div class="header"><h5 class="title" id="custom-title">Something else</h5></div>
+    `;
+
+    expect(target("events-title")?.id).toBe("sidebar-item-events");
+    expect(target("custom-title")?.id).toBe("sidebar-item-workloads-overview");
+  });
 });
 
 describe("labelOf", () => {

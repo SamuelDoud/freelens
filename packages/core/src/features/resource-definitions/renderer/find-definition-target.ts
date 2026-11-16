@@ -34,9 +34,29 @@ const activeViewOf = (document: Document): Element | undefined => {
     return activeTab;
   }
 
-  const activeItems = document.querySelectorAll("[data-is-active-test=true][data-parent-id-test]");
+  // A child's element is inside its section's, so the last active item is the deepest. Top-level
+  // views (Nodes, Namespaces, Events) have no parent, and count too.
+  const activeItems = document.querySelectorAll('[data-testid^="sidebar-item-"][data-is-active-test="true"]');
 
   return activeItems.length ? activeItems[activeItems.length - 1] : undefined;
+};
+
+/**
+ * The view a list title names, when it is another view than the page's: the Events list inside the
+ * workloads overview is titled "Events", which is a view of the sidebar.
+ */
+const viewNamedBy = (title: Element): string | undefined => {
+  const name = labelOf(title);
+
+  for (const link of title.ownerDocument.querySelectorAll('[data-testid^="link-for-sidebar-item-"]')) {
+    const id = idOfTestId(link.getAttribute("data-testid") ?? "");
+
+    if (isDefinedId(id) && labelOf(link) === name) {
+      return id;
+    }
+  }
+
+  return undefined;
 };
 
 /**
@@ -52,6 +72,12 @@ export function findDefinitionTarget(target: Element | null): DefinitionTarget |
   const title = target.closest(".header .title");
 
   if (title) {
+    const named = viewNamedBy(title);
+
+    if (named) {
+      return { id: named, anchor: title };
+    }
+
     const active = activeViewOf(target.ownerDocument);
     const id = active?.getAttribute("data-testid");
     const resolved = id ? idOfTestId(id) : undefined;
