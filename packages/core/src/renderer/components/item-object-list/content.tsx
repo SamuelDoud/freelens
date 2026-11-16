@@ -11,7 +11,7 @@ import { Spinner } from "@freelensapp/spinner";
 import { cssNames, isDefined, isReactNode, noop, prevDefault, stopPropagation } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
-import { action, isObservableArray, observable, observableRef } from "mobx";
+import { action, computed, isObservableArray, observable } from "mobx";
 import { Observer, observer } from "mobx-react";
 import React from "react";
 import expandedRowsInjectable from "../../../features/inline-details/renderer/expanded-rows.injectable";
@@ -28,6 +28,7 @@ import { MenuActions } from "../menu/menu-actions";
 import { NoItems } from "../no-items";
 import { Table, TableCell, TableHead, TableRow } from "../table";
 import columnResizeStorageInjectable from "./column-resize-storage/storage.injectable";
+import { createObservableProps } from "./observable-props";
 import pageFiltersStoreInjectable from "./page-filters/store.injectable";
 
 import type { ItemObject, TableCellProps } from "@freelensapp/list-layout";
@@ -47,7 +48,11 @@ import type { OpenConfirmDialog } from "../confirm-dialog/open.injectable";
 import type { TableProps, TableRowProps, TableSortCallbacks } from "../table";
 import type { ColumnResizeStorageState } from "./column-resize-storage/storage.injectable";
 import type { ItemListStore } from "./list-layout";
+import type { ObservableProps } from "./observable-props";
 import type { Filter, PageFiltersStore } from "./page-filters/store";
+
+// More than the rows a screen shows, with room to scroll.
+const rowCacheLimit = 500;
 
 interface ResizeState {
   columnId: string;
@@ -122,22 +127,25 @@ export class NonInjectedItemListLayoutContent<
   // (and the showColumn they call) are invoked from foreign derivations — the inner
   // <Observer> render prop and the <Table> row renderer — so they read props from
   // this observable snapshot, refreshed on every update, instead of this.props.
-  @observableRef private accessor observableProps: Readonly<
-    ItemListLayoutContentProps<Item, PreLoadStores> & Dependencies
-  >;
+  private readonly propsBox: ObservableProps<ItemListLayoutContentProps<Item, PreLoadStores> & Dependencies>;
+
+  private get observableProps() {
+    return this.propsBox.current;
+  }
 
   constructor(props: ItemListLayoutContentProps<Item, PreLoadStores> & Dependencies) {
     super(props);
-    this.observableProps = props;
+    this.propsBox = createObservableProps<ItemListLayoutContentProps<Item, PreLoadStores> & Dependencies>(props);
     autoBindReact(this);
     this.loadSavedColumnWidths();
   }
 
   componentDidUpdate() {
-    this.observableProps = this.props;
+    this.propsBox.update(this.props);
   }
 
   componentWillUnmount() {
+    this.rowCache.clear();
     this.cleanupResizeListeners();
   }
 
@@ -486,21 +494,76 @@ export class NonInjectedItemListLayoutContent<
     return items.find((item) => item.getId() === uid);
   }
 
+  // The items that the row customization does not disable, kept for the same items and customization.
+  // A computed, so that what the customization reads still updates it.
+  private enabledItemsMemo?: {
+    items: Item[];
+    customizeTableRowProps: ItemListLayoutContentProps<Item, PreLoadStores>["customizeTableRowProps"];
+    value: IComputedValue<Item[]>;
+  };
+
+  private getEnabledItems(
+    items: Item[],
+    customizeTableRowProps: ItemListLayoutContentProps<Item, PreLoadStores>["customizeTableRowProps"],
+  ): Item[] {
+    const memo = this.enabledItemsMemo;
+
+    if (!memo || memo.items !== items || memo.customizeTableRowProps !== customizeTableRowProps) {
+      this.enabledItemsMemo = {
+        items,
+        customizeTableRowProps,
+        value: computed(() => items.filter((item) => !customizeTableRowProps?.(item).disabled)),
+      };
+    }
+
+    return this.enabledItemsMemo!.value.get();
+  }
+
+  /** Whether a row of these items is open. Walks the open rows, which are few, not the items. */
+  private hasOpenRowIn(expandedRows: ExpandedRows, items: Item[]) {
+    return expandedRows.hasOpen && expandedRows.openIds.some((id) => this.findItemById(items, id) !== undefined);
+  }
+
+  // One <Observer> per row, kept while the row is on screen, with the computed that finds its item.
+  // The row is asked for again whenever the list gets another array of items; handing back the same
+  // element lets React leave its content alone, and the computed tells the observer only when the
+  // row's own item is another object. Whatever else a row shows (selection, details, columns) is
+  // read by the observer, which follows it.
+  private readonly rowCache = new Map<
+    string,
+    { element: React.ReactElement; item: IComputedValue<Item | undefined> }
+  >();
+
   getRow(uid: string) {
-    return (
-      <div key={uid}>
-        <Observer>
-          {() => {
-            // observableProps, not this.props: this <Observer> is its own derivation.
-            const item = this.findItemById(this.observableProps.getItems(), uid);
+    let entry = this.rowCache.get(uid);
 
-            if (!item) return null;
+    if (!entry) {
+      // Only the rows on screen are in the cache; a list that was scrolled through starts over.
+      if (this.rowCache.size >= rowCacheLimit) {
+        this.rowCache.clear();
+      }
 
-            return this.getTableRow(item);
-          }}
-        </Observer>
-      </div>
-    );
+      // observableProps, not this.props: the observer is its own derivation.
+      const item = computed(() => this.findItemById(this.observableProps.getItems(), uid));
+
+      entry = {
+        item,
+        element: (
+          <Observer>
+            {() => {
+              const found = item.get();
+
+              if (!found) return null;
+
+              return this.getTableRow(found);
+            }}
+          </Observer>
+        ),
+      };
+      this.rowCache.set(uid, entry);
+    }
+
+    return <div key={uid}>{entry.element}</div>;
   }
 
   removeItemsDialog(selectedItems: Item[]) {
@@ -592,10 +655,7 @@ export class NonInjectedItemListLayoutContent<
       return null;
     }
 
-    // Only the select-all checkbox needs the enabled items.
-    const enabledItems = isSelectable
-      ? this.props.getItems().filter((item) => !customizeTableRowProps?.(item).disabled)
-      : [];
+    const { getItems } = this.props;
 
     const expandedRows = this.expandedRows;
 
@@ -615,13 +675,18 @@ export class NonInjectedItemListLayoutContent<
         )}
         {isSelectable && (
           <Observer>
-            {() => (
-              <TableCell
-                checkbox
-                isChecked={store.isSelectedAll(enabledItems)}
-                onClick={prevDefault(() => store.toggleSelectionAll(enabledItems))}
-              />
-            )}
+            {() => {
+              // Only the select-all checkbox needs the enabled items, so they are worked out here.
+              const enabledItems = this.getEnabledItems(getItems(), customizeTableRowProps);
+
+              return (
+                <TableCell
+                  checkbox
+                  isChecked={store.isSelectedAll(enabledItems)}
+                  onClick={prevDefault(() => store.toggleSelectionAll(enabledItems))}
+                />
+              );
+            }}
           </Observer>
         )}
         {renderTableHeader.filter(isDefined).map(
@@ -670,8 +735,6 @@ export class NonInjectedItemListLayoutContent<
     const items = getItems();
     const selectedItems = store.pickOnlySelected(items);
     const expandedRows = this.expandedRows;
-    const rowHeights =
-      tableProps.customRowHeights ?? ((item: Item, lineHeight: number, paddings: number) => lineHeight + paddings);
 
     return (
       <div className="items grow shrink-0 basis-0 flex flex-col" ref={this.tableRef}>
@@ -695,13 +758,8 @@ export class NonInjectedItemListLayoutContent<
           className={classNames}
           {...tableProps}
           // An open row makes room for its details, and keeps its place while any is open.
-          customRowHeights={
-            expandedRows
-              ? (item, lineHeight, paddings) =>
-                  rowHeights(item, lineHeight, paddings) + expandedRows.extraHeight(item.getId())
-              : tableProps.customRowHeights
-          }
-          holdOrder={expandedRows ? items.some((item) => expandedRows.isOpen(item.getId())) : undefined}
+          extraRowHeights={expandedRows ? () => expandedRows.extraHeights.get() : tableProps.extraRowHeights}
+          holdOrder={expandedRows ? this.hasOpenRowIn(expandedRows, items) : undefined}
         >
           {this.renderTableHeader()}
           {this.renderItems()}

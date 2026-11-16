@@ -4,8 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { iter } from "./iter";
-import { object } from "./object";
 import { isObject } from "./type-narrowing";
 
 export type IgnoredClassNames = number | symbol | Function;
@@ -22,15 +20,25 @@ export function cssNames(...classNames: IClassName[]): string {
         classNamesEnabled.set(name, true);
       }
     } else if (isObject(className)) {
-      for (const [name, value] of object.entries(className)) {
-        classNamesEnabled.set(name, Boolean(value));
+      for (const name of Object.keys(className)) {
+        classNamesEnabled.set(name, Boolean(className[name]));
       }
     }
   }
 
-  return iter
-    .chain(classNamesEnabled.entries())
-    .filter(([, isActive]) => isActive)
-    .filterMap(([className]) => className.trim())
-    .join(" ");
+  let result = "";
+
+  for (const [name, isActive] of classNamesEnabled) {
+    if (!isActive) {
+      continue;
+    }
+
+    const trimmed = name.trim();
+
+    if (trimmed) {
+      result = result ? `${result} ${trimmed}` : trimmed;
+    }
+  }
+
+  return result;
 }

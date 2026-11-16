@@ -10,13 +10,16 @@ import { cssNames, noop } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
 import { groupBy } from "es-toolkit";
-import { computed, observableRef, untracked } from "mobx";
+import { compareShallow, computed, untracked } from "mobx";
 import { observer } from "mobx-react";
 import { now } from "mobx-utils";
 import React from "react";
 import selectedFilterNamespacesInjectable from "../../../common/k8s-api/selected-filter-namespaces.injectable";
 import { anyFieldId } from "../../../features/advanced-search/common/conditions";
-import { createConditionMatcher } from "../../../features/advanced-search/common/create-condition-matcher";
+import {
+  createConditionMatcher,
+  getEffectiveConditionsKey,
+} from "../../../features/advanced-search/common/create-condition-matcher";
 import { AdvancedSearchPanel } from "../../../features/advanced-search/renderer/advanced-search-panel";
 import advancedSearchStateInjectable from "../../../features/advanced-search/renderer/advanced-search-state.injectable";
 import userPreferencesStateInjectable, {
@@ -25,10 +28,12 @@ import userPreferencesStateInjectable, {
 import { ItemListLayoutContent } from "./content";
 import { ItemListLayoutFilters } from "./filters";
 import { ItemListLayoutHeader } from "./header";
+import { createObservableProps } from "./observable-props";
 import { PageFiltersList } from "./page-filters/list";
 import { FilterType } from "./page-filters/store";
 import pageFiltersStoreInjectable from "./page-filters/store.injectable";
 import { createSearchMatcher } from "./search-matcher";
+import { canSearchByText, filterBySearchText } from "./search-text-cache";
 import itemListLayoutStorageInjectable from "./storage.injectable";
 
 import type { ItemObject, TableCellProps } from "@freelensapp/list-layout";
@@ -47,6 +52,7 @@ import type { AddRemoveButtonsProps } from "../add-remove-buttons";
 import type { ConfirmDialogParams } from "../confirm-dialog";
 import type { SearchInputUrlProps } from "../input";
 import type { TableProps, TableRowProps, TableSortCallbacks } from "../table";
+import type { ObservableProps } from "./observable-props";
 import type { PageFiltersStore } from "./page-filters/store";
 
 export type ListLayoutSearchFilter<I extends ItemObject> = (
@@ -108,6 +114,13 @@ export type ItemListLayoutProps<Item extends ItemObject, PreLoadStores extends b
   preloadStores?: boolean;
   hideFilters?: boolean;
   searchFilters?: ListLayoutSearchFilter<Item>[];
+  /**
+   * Set when every one of `searchFilters` reads nothing but the item it is given, and the item is
+   * replaced by a new object when it changes. The list then keeps the text it searches in for each
+   * item, and a search stops reading every item's texts again. Keep the array of filters the same
+   * between renders for the text to be kept.
+   */
+  searchFiltersArePure?: boolean;
   filterItems?: ListLayoutItemsFilter<Item>[];
 
   /**
@@ -205,16 +218,41 @@ interface Dependencies {
 
 const minuteMilliseconds = 60 * 1000;
 
+interface AdvancedSearchMatcherState<I> {
+  key: string;
+  fields: readonly SearchField<I>[];
+  matcher: ReturnType<typeof createConditionMatcher<I>>;
+}
+
+const noSearchFilters: never[] = [];
+
+// A view built once for the same advancedSearch and searchFilters, so that what depends on its
+// identity (the panel, the matcher and so the items) does not start over on every render.
+const advancedSearchViews = new WeakMap<object, WeakMap<object, AdvancedSearchView<any>>>();
+
 /**
  * The advanced search of a list with its "Any field" field added, or
  * `undefined` when the list has none.
  */
 function getAdvancedSearchView<I extends ItemObject>(
   advancedSearch: AdvancedSearchView<I> | undefined,
-  searchFilters: ListLayoutSearchFilter<I>[] = [],
+  searchFilters: ListLayoutSearchFilter<I>[] = noSearchFilters,
 ): AdvancedSearchView<I> | undefined {
   if (!advancedSearch) {
     return undefined;
+  }
+
+  let bySearchFilters = advancedSearchViews.get(advancedSearch);
+
+  if (!bySearchFilters) {
+    bySearchFilters = new WeakMap();
+    advancedSearchViews.set(advancedSearch, bySearchFilters);
+  }
+
+  const known = bySearchFilters.get(searchFilters);
+
+  if (known) {
+    return known;
   }
 
   const anyField: SearchField<I>[] =
@@ -228,8 +266,11 @@ function getAdvancedSearchView<I extends ItemObject>(
           },
         ]
       : [];
+  const view = { ...advancedSearch, fields: [...advancedSearch.fields, ...anyField] };
 
-  return { ...advancedSearch, fields: [...advancedSearch.fields, ...anyField] };
+  bySearchFilters.set(searchFilters, view);
+
+  return view;
 }
 
 @observer
@@ -242,16 +283,20 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
   // header/filters/content observers invoke the getters below from within their
   // own render reactions. Keep an observable snapshot of props (updated on every
   // update) so those getters can be read reactively from any derivation.
-  @observableRef private accessor observableProps: Readonly<ItemListLayoutProps<I, PreLoadStores> & Dependencies>;
+  private readonly propsBox: ObservableProps<ItemListLayoutProps<I, PreLoadStores> & Dependencies>;
+
+  private get observableProps() {
+    return this.propsBox.current;
+  }
 
   constructor(props: ItemListLayoutProps<I, PreLoadStores> & Dependencies) {
     super(props);
-    this.observableProps = props;
+    this.propsBox = createObservableProps<ItemListLayoutProps<I, PreLoadStores> & Dependencies>(props);
     autoBindReact(this);
   }
 
   componentDidUpdate() {
-    this.observableProps = this.props;
+    this.propsBox.update(this.props);
   }
 
   async componentDidMount() {
@@ -304,7 +349,7 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
   // this.props: mobx-react 9 forbids reading this.props inside a derivation, and
   // the child header/filters/content observers call them from their own render
   // reactions. observableProps keeps the reads reactive across those boundaries.
-  get filters() {
+  @computed({ equals: compareShallow }) get filters() {
     let { activeFilters } = this.observableProps.pageFiltersStore;
     const { searchFilters = [] } = this.observableProps;
 
@@ -315,11 +360,16 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
     return activeFilters;
   }
 
+  // Stable functions, so that a render of this layout does not hand the content new props to react to.
+  private readonly getItems = () => this.items;
+  private readonly getFilters = () => this.filters;
+  private readonly getIsReady = () => this.isReady;
+
   toggleFilters() {
     this.showFilters = !this.showFilters;
   }
 
-  get isReady() {
+  @computed get isReady() {
     return this.observableProps.isReady ?? this.observableProps.store.isLoaded;
   }
 
@@ -340,6 +390,10 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
       const search = this.observableProps.pageFiltersStore.getValues(FilterType.SEARCH)[0] || "";
 
       if (search && searchFilters.length) {
+        if (this.observableProps.searchFiltersArePure && canSearchByText(search)) {
+          return filterBySearchText(items, searchFilters, search);
+        }
+
         const matchesSearch = createSearchMatcher(search);
 
         return items.filter((item) => searchFilters.some((getTexts) => [getTexts(item)].flat().some(matchesSearch)));
@@ -353,14 +407,31 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
     return getAdvancedSearchView(this.observableProps.advancedSearch, this.observableProps.searchFilters);
   }
 
-  @computed get advancedSearchMatcher() {
+  // The matcher is kept while the conditions in effect and the fields stay the same, so that an edit
+  // that changes nothing about the search (an empty condition, a value not finished) does not filter
+  // the items again.
+  @computed({
+    equals: (a: AdvancedSearchMatcherState<I> | undefined, b: AdvancedSearchMatcherState<I> | undefined) =>
+      a === b || (a !== undefined && b !== undefined && a.key === b.key && a.fields === b.fields),
+  })
+  private get advancedSearchMatcherState(): AdvancedSearchMatcherState<I> | undefined {
     const view = this.advancedSearchView;
 
     if (!view) {
       return undefined;
     }
 
-    return createConditionMatcher(this.observableProps.advancedSearchState.getConditions(view.viewKey), view.fields);
+    const conditions = this.observableProps.advancedSearchState.getConditions(view.viewKey);
+
+    return {
+      key: getEffectiveConditionsKey(conditions, view.fields),
+      fields: view.fields,
+      matcher: createConditionMatcher(conditions, view.fields),
+    };
+  }
+
+  get advancedSearchMatcher() {
+    return this.advancedSearchMatcherState?.matcher;
   }
 
   get hasAdvancedSearchFilter() {
@@ -370,7 +441,7 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
   // Computed: the content reads the items once for every row it renders, each
   // row in an observer of its own, so the filters run once for every change of
   // the items or of the filters instead of once for every row.
-  @computed get items() {
+  @computed({ equals: compareShallow }) get items() {
     const filterGroups = groupBy(this.filters, ({ type }) => type);
     const filterItems: ListLayoutItemsFilter<I>[] = [];
 
@@ -404,8 +475,8 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
     return untracked(() => (
       <div className={cssNames("ItemListLayout flex flex-col", this.props.className)} data-testid={dataTestId}>
         <ItemListLayoutHeader
-          getItems={() => this.items}
-          getFilters={() => this.filters}
+          getItems={this.getItems}
+          getFilters={this.getFilters}
           toggleFilters={this.toggleFilters}
           store={this.props.store}
           searchFilters={this.props.searchFilters}
@@ -422,19 +493,19 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
         {advancedSearchView && this.props.showHeader !== false && <AdvancedSearchPanel view={advancedSearchView} />}
 
         <ItemListLayoutFilters
-          getIsReady={() => this.isReady}
-          getFilters={() => this.filters}
+          getIsReady={this.getIsReady}
+          getFilters={this.getFilters}
           getFiltersAreShown={() => this.showFilters}
           hideFilters={this.props.hideFilters ?? false}
         />
 
         <ItemListLayoutContent<I, PreLoadStores>
-          getItems={() => this.items}
-          getFilters={() => this.filters}
+          getItems={this.getItems}
+          getFilters={this.getFilters}
           tableId={this.props.tableId}
           className={this.props.className}
           store={this.props.store}
-          getIsReady={() => this.isReady}
+          getIsReady={this.getIsReady}
           isSelectable={this.props.isSelectable}
           isConfigurable={this.props.isConfigurable}
           copyClassNameFromHeadCells={this.props.copyClassNameFromHeadCells}

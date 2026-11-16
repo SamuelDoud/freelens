@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { action, makeObservable, observable } from "mobx";
+import { action, computed, makeObservable, observable } from "mobx";
 
 export interface ExpandedRowsDependencies {
   now: () => number;
@@ -48,6 +48,11 @@ export class ExpandedRows {
     return [...this.open];
   }
 
+  /** Whether any row is open. */
+  get hasOpen(): boolean {
+    return this.open.size > 0;
+  }
+
   /** Whether the row's details are in the page: open, or still sliding closed. */
   isShown(id: string) {
     return this.open.has(id) || this.progress.has(id);
@@ -59,6 +64,20 @@ export class ExpandedRows {
 
     return progress === undefined ? 0 : Math.round((this.measured.get(id) ?? 0) * easeOut(progress));
   }
+
+  /**
+   * The room of every row that is sliding or open, by id. A list reads this instead of asking for
+   * every row, so that a frame of the slide touches the few rows that move and not all of them.
+   */
+  readonly extraHeights = computed(() => {
+    const heights = new Map<string, number>();
+
+    for (const [id, progress] of this.progress) {
+      heights.set(id, Math.round((this.measured.get(id) ?? 0) * easeOut(progress)));
+    }
+
+    return heights;
+  });
 
   toggle(id: string) {
     if (this.open.has(id)) {

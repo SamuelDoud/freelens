@@ -23,6 +23,21 @@ describe("parseQuantity", () => {
 
   it.each(["", "abc", "5 Gi", "1Xi", "--1"])("refuses %j", (value) => {
     expect(parseQuantity(value)).toBeUndefined();
+    expect(parseQuantity(value)).toBeUndefined();
+  });
+
+  it("answers the same for a string seen again, also past the size of what it keeps", () => {
+    for (let round = 0; round < 2; round++) {
+      for (let index = 0; index < 3000; index++) {
+        expect(parseQuantity(`${index}m`)).toBeCloseTo(index / 1000, 12);
+        expect(parseQuantity(` ${index}Mi `)).toBe(index * 2 ** 20);
+      }
+    }
+
+    expect(parseQuantity(undefined)).toBeUndefined();
+    expect(parseQuantity(null)).toBeUndefined();
+    expect(parseQuantity(5)).toBe(5);
+    expect(parseQuantity(Number.NaN)).toBeUndefined();
   });
 });
 

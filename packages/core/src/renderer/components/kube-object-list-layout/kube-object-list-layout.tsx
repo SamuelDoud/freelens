@@ -12,7 +12,7 @@ import { TooltipPosition } from "@freelensapp/tooltip";
 import { cssNames, hasTypedProperty, isDefined, isObject, isString } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { sortBy } from "es-toolkit/compat";
-import { observable, reaction } from "mobx";
+import { computed, observable, reaction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import { getKubeObjectSearchFields } from "../../../features/advanced-search/renderer/kube-object-search-fields";
@@ -27,13 +27,17 @@ import toggleKubeDetailsPaneInjectable from "../kube-detail-params/toggle-detail
 import { KubeObjectMenu } from "../kube-object-menu";
 import { MenuControls } from "../menu";
 import { NamespaceSelectFilter } from "../namespaces/namespace-select-filter";
+import { getCellOrder } from "./cell-order";
 
 import type { KubeApi } from "@freelensapp/kube-api";
 import type { KubeJsonApiDataFor, KubeObject } from "@freelensapp/kube-object";
 import type { GeneralKubeObjectListLayoutColumn, SpecificKubeListLayoutColumn } from "@freelensapp/list-layout";
 import type { Disposer } from "@freelensapp/utilities";
 
+import type { IComputedValue } from "mobx";
+
 import type { SearchField } from "../../../features/advanced-search/common/conditions";
+import type { AdvancedSearchView } from "../../../features/advanced-search/renderer/advanced-search-panel";
 import type { UserPreferencesState } from "../../../features/user-preferences/common/state.injectable";
 import type { ClusterContext } from "../../cluster-frame-context/cluster-frame-context";
 import type { SubscribableStore, SubscribeStores } from "../../kube-watch-api/kube-watch-api";
@@ -115,12 +119,45 @@ class NonInjectedKubeObjectListLayout<
   private readonly loadErrors = observable.array<string>();
   private readonly menuControls = new Map<string, MenuControls>();
 
-  // Plain getter (not @computed): reads this.props, which mobx-react 9 forbids
-  // inside a derivation. Read from render, reactivity is preserved by the
-  // observer render reaction.
-  get selectedItem() {
-    return this.props.store.getByPath(this.props.kubeSelectedUrlParam.get());
+  // The selected item is looked up in a computed over the store and the URL param it was made for,
+  // not this.props, which mobx-react 9 forbids inside a derivation. The list renders again only when
+  // the item itself changes, not on every change of the store's items.
+  private selectedItemMemo?: {
+    store: KubeItemListStore<K>;
+    kubeSelectedUrlParam: PageParam<string>;
+    value: IComputedValue<K | undefined>;
+  };
+
+  get selectedItem(): K | undefined {
+    const { store, kubeSelectedUrlParam } = this.props;
+    let memo = this.selectedItemMemo;
+
+    if (!memo || memo.store !== store || memo.kubeSelectedUrlParam !== kubeSelectedUrlParam) {
+      memo = this.selectedItemMemo = {
+        store,
+        kubeSelectedUrlParam,
+        value: computed(() => {
+          const path = kubeSelectedUrlParam.get();
+
+          // No path selects nothing: no need to look through the items for it.
+          return path ? store.getByPath(path) : undefined;
+        }),
+      };
+    }
+
+    return memo.value.get();
   }
+
+  // The same views and getter for the same inputs, so that what is handed down does not look new on
+  // every render.
+  private defaultViewMemo?: {
+    api: KubeItemListStore<K>["api"];
+    resourceName: string;
+    searchFields?: SearchField<K>[];
+    view: AdvancedSearchView<K>;
+  };
+
+  private getItemsMemo?: { items?: K[]; store: KubeItemListStore<K>; getItems: () => K[] };
 
   componentDidMount() {
     const { store, dependentStores = [], subscribeStores, clusterFrameContext } = this.props;
@@ -181,6 +218,41 @@ class NonInjectedKubeObjectListLayout<
     this.menuControls.set(id, controls);
   };
 
+  private getDefaultView(resourceName: string): AdvancedSearchView<K> {
+    const { store, searchFields } = this.props;
+    const memo = this.defaultViewMemo;
+
+    if (memo && memo.api === store.api && memo.resourceName === resourceName && memo.searchFields === searchFields) {
+      return memo.view;
+    }
+
+    const view: AdvancedSearchView<K> = {
+      viewKey: `${store.api.apiVersionWithGroup}/${store.api.kind}`,
+      viewTitle: resourceName,
+      fields: [...getKubeObjectSearchFields<K>(store.api.isNamespaced), ...(searchFields ?? [])],
+    };
+
+    this.defaultViewMemo = { api: store.api, resourceName, searchFields, view };
+
+    return view;
+  }
+
+  private getItemsOf(items: K[] | undefined, store: KubeItemListStore<K>): () => K[] {
+    const memo = this.getItemsMemo;
+
+    if (memo && memo.items === items && memo.store === store) {
+      return memo.getItems;
+    }
+
+    // Read captured locals, not this.props: ItemListLayout invokes getItems
+    // from within its own derivation, where mobx-react 9 forbids this.props.
+    const getItems = () => items || store.contextItems;
+
+    this.getItemsMemo = { items, store, getItems };
+
+    return getItems;
+  }
+
   render() {
     const {
       className,
@@ -201,11 +273,7 @@ class NonInjectedKubeObjectListLayout<
       ...layoutProps
     } = this.props;
     const resourceName = this.props.resourceName || ResourceNames[ResourceKindMap[store.api.kind]] || store.api.kind;
-    const advancedSearchView = advancedSearch ?? {
-      viewKey: `${store.api.apiVersionWithGroup}/${store.api.kind}`,
-      viewTitle: resourceName,
-      fields: [...getKubeObjectSearchFields<K>(store.api.isNamespaced), ...searchFields],
-    };
+    const advancedSearchView = advancedSearch ?? this.getDefaultView(resourceName);
     const targetColumns = [...(columns ?? []), ...generalColumns.filter(matchesApiFor(store.api))];
 
     void dependentStores;
@@ -215,6 +283,23 @@ class NonInjectedKubeObjectListLayout<
         sortingCallbacks[col.id] = col.sortingCallBack;
       }
     });
+
+    // The order of the cells depends on how many of them the list gives and on the columns, not on the
+    // item, so it is worked out once for each count and not for every row.
+    const priorityOrders = new Map<number, number[]>();
+    const getPriorityOrder = (contentCount: number) => {
+      let order = priorityOrders.get(contentCount);
+
+      if (!order) {
+        order = getCellOrder(
+          contentCount,
+          targetColumns.map((col) => col.priority),
+        );
+        priorityOrders.set(contentCount, order);
+      }
+
+      return order;
+    };
 
     const headers = sortBy(
       [...(renderTableHeader || []).map((header, index) => ({ priority: 20 - index, header })), ...targetColumns],
@@ -260,9 +345,7 @@ class NonInjectedKubeObjectListLayout<
       <ItemListLayout<K, false>
         className={cssNames("KubeObjectListLayout", className)}
         store={store}
-        // Read captured locals, not this.props: ItemListLayout invokes getItems
-        // from within its own derivation, where mobx-react 9 forbids this.props.
-        getItems={() => items || store.contextItems}
+        getItems={this.getItemsOf(items, store)}
         preloadStores={false} // loading handled in kubeWatchApi.subscribeStores()
         detailsItem={this.selectedItem}
         customizeHeader={[
@@ -303,15 +386,11 @@ class NonInjectedKubeObjectListLayout<
         }}
         sortingCallbacks={sortingCallbacks}
         renderTableHeader={headers}
-        renderTableContents={(item) =>
-          sortBy(
-            [
-              ...renderTableContents(item).map((content, index) => ({ priority: 20 - index, content })),
-              ...targetColumns.map((col) => ({ priority: col.priority, content: col.content(item) })),
-            ],
-            (item) => -item.priority,
-          ).map((value) => value.content)
-        }
+        renderTableContents={(item) => {
+          const contents = [...renderTableContents(item), ...targetColumns.map((col) => col.content(item))];
+
+          return getPriorityOrder(contents.length - targetColumns.length).map((position) => contents[position]);
+        }}
         spinnerTestId="kube-object-list-layout-spinner"
         advancedSearch={advancedSearchView}
         {...layoutProps}

@@ -27,7 +27,7 @@ const makeItems = (count: number) => Array.from({ length: count }, (_, index) =>
 // reading the items as the rows it shows.
 const ROWS = 27;
 
-const makeLayout = (getItems: () => ItemObject[]) => {
+const makeLayout = (getItems: () => ItemObject[], extraProps: Record<string, unknown> = {}) => {
   const search = observable.box("");
   const searchUrlParam = {
     get: () => search.get(),
@@ -43,6 +43,7 @@ const makeLayout = (getItems: () => ItemObject[]) => {
     filterItems: [filterItems],
     renderTableContents: () => [],
     pageFiltersStore: new PageFiltersStore({ searchUrlParam }),
+    ...extraProps,
   } as unknown as LayoutProps;
   const layout = new NonInjectedItemListLayout(props);
 
@@ -117,5 +118,62 @@ describe("<ItemListLayout> items", () => {
     expect(rows.seen).toEqual(everyRow(["uid-0", "uid-1", "uid-2"]));
 
     rows.dispose();
+  });
+
+  it("does not filter again when an update brings the same props", () => {
+    const items = makeItems(10);
+    const { layout, props, filterItems, getSearchTexts } = makeLayout(() => items);
+    const rows = readInRows(layout);
+
+    filterItems.mockClear();
+    getSearchTexts.mockClear();
+    expect(Reflect.set(layout, "props", { ...props })).toBe(true);
+    layout.componentDidUpdate();
+
+    expect(filterItems).not.toHaveBeenCalled();
+    expect(getSearchTexts).not.toHaveBeenCalled();
+
+    rows.dispose();
+  });
+
+  it("keeps the array of items when an update yields the same items", () => {
+    const items = makeItems(10);
+    const { layout, props } = makeLayout(() => items);
+    const seen: ItemObject[][] = [];
+    const stop = autorun(() => seen.push(layout.items));
+
+    expect(Reflect.set(layout, "props", { ...props, getItems: () => [...items] })).toBe(true);
+    layout.componentDidUpdate();
+
+    expect(seen).toHaveLength(1);
+
+    stop();
+  });
+
+  describe("search texts of items", () => {
+    const run = (pure: boolean) => {
+      const items = makeItems(100);
+      const { layout, search, getSearchTexts } = makeLayout(() => items, { searchFiltersArePure: pure });
+      const stop = autorun(() => layout.items);
+      const found: string[][] = [];
+
+      for (const query of ["uid-9", "item-1", "uid_9", "ITEM1", "zzz"]) {
+        runInAction(() => search.set(query));
+        found.push(layout.items.map((item) => item.getId()));
+      }
+
+      stop();
+
+      return { found, reads: getSearchTexts.mock.calls.length };
+    };
+
+    it("finds the same items with or without keeping the texts, and reads them fewer times", () => {
+      const plain = run(false);
+      const kept = run(true);
+
+      expect(kept.found).toEqual(plain.found);
+      expect(plain.reads).toBeGreaterThanOrEqual(500);
+      expect(kept.reads).toBeLessThanOrEqual(200);
+    });
   });
 });

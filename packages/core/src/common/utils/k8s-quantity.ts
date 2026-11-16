@@ -24,6 +24,23 @@ const suffixes = new Map<string, number>([
 
 const quantityRegex = /^([+-]?(?:\d+\.?\d*|\.\d+))(?:[eE]([+-]?\d+))?(n|u|m|k|M|G|T|P|E|Ki|Mi|Gi|Ti|Pi|Ei)?$/;
 
+// The same few strings come up for every pod ("250m", "128Mi"), so the parsed value is kept for
+// the last strings seen. The cache is emptied when it fills, which keeps it small whatever the input.
+const parsedStrings = new Map<string, number | null>();
+const parsedStringsLimit = 1024;
+
+function parseQuantityString(value: string): number | undefined {
+  const match = quantityRegex.exec(value.trim());
+
+  if (!match) {
+    return undefined;
+  }
+
+  const [, digits, exponent, suffix = ""] = match;
+
+  return Number(digits) * 10 ** Number(exponent ?? 0) * suffixes.get(suffix)!;
+}
+
 /**
  * The value of a Kubernetes quantity, such as `500m`, `2`, `1.5Gi`, `128M` or
  * `1e3`: cores for a CPU quantity, bytes for a memory one. `undefined` when it
@@ -34,15 +51,25 @@ export function parseQuantity(value: string | number | undefined | null): number
     return Number.isFinite(value) ? value : undefined;
   }
 
-  const match = quantityRegex.exec(value?.trim() ?? "");
-
-  if (!match) {
+  if (typeof value !== "string") {
     return undefined;
   }
 
-  const [, digits, exponent, suffix = ""] = match;
+  const known = parsedStrings.get(value);
 
-  return Number(digits) * 10 ** Number(exponent ?? 0) * suffixes.get(suffix)!;
+  if (known !== undefined) {
+    return known ?? undefined;
+  }
+
+  const parsed = parseQuantityString(value);
+
+  if (parsedStrings.size >= parsedStringsLimit) {
+    parsedStrings.clear();
+  }
+
+  parsedStrings.set(value, parsed ?? null);
+
+  return parsed;
 }
 
 const trim = (value: number, digits: number) => String(Number(value.toFixed(digits)));

@@ -30,6 +30,7 @@ import type { IComputedValue } from "mobx";
 
 import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { EventStore } from "../events/store";
+import type { ListLayoutSearchFilter } from "../item-object-list/list-layout";
 import type { PodStore } from "./store";
 
 interface Dependencies {
@@ -71,6 +72,15 @@ const podSearchFields: SearchField<Pod>[] = [
   ),
 ];
 
+// The same array on every render keeps the text the list searches in; each filter reads its item only.
+const searchFilters: ListLayoutSearchFilter<Pod>[] = [
+  (pod) => pod.getSearchFields(),
+  (pod) => pod.getStatusMessage(),
+  (pod) => pod.status?.podIP,
+  (pod) => pod.getNodeName(),
+  (pod) => getPodContainerPorts(pod).flatMap((port) => [port.name, port.containerPort, port.protocol]),
+];
+
 const NonInjectedPods = observer((props: Dependencies) => {
   const { columns, eventStore, podStore, usageVisible } = props;
 
@@ -91,13 +101,8 @@ const NonInjectedPods = observer((props: Dependencies) => {
         isConfigurable
         defaultHiddenTableColumns={["ip", "node", "qos", ...podResourceColumnIds]}
         columnsAddedLater={podResourceColumnIds}
-        searchFilters={[
-          (pod) => pod.getSearchFields(),
-          (pod) => pod.getStatusMessage(),
-          (pod) => pod.status?.podIP,
-          (pod) => pod.getNodeName(),
-          (pod) => getPodContainerPorts(pod).flatMap((port) => [port.name, port.containerPort, port.protocol]),
-        ]}
+        searchFilters={searchFilters}
+        searchFiltersArePure
         searchFields={podSearchFields}
         renderHeaderTitle="Pods"
         renderTableHeader={[]}

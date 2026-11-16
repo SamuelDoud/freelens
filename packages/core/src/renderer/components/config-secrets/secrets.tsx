@@ -18,6 +18,9 @@ import openAddSecretDialogInjectable from "./add-dialog/open.injectable";
 import { AddSecretDialog } from "./add-dialog/view";
 import secretStoreInjectable from "./store.injectable";
 
+import type { Secret } from "@freelensapp/kube-object";
+
+import type { ListLayoutSearchFilter } from "../item-object-list/list-layout";
 import type { SecretStore } from "./store";
 
 enum columnId {
@@ -28,6 +31,12 @@ enum columnId {
   type = "type",
   age = "age",
 }
+
+// The same array on every render keeps the text the list searches in; each filter reads its item only.
+const searchFilters: ListLayoutSearchFilter<Secret>[] = [
+  (secret) => secret.getSearchFields(),
+  (secret) => secret.getKeys(),
+];
 
 interface Dependencies {
   secretStore: SecretStore;
@@ -51,7 +60,8 @@ class NonInjectedSecrets extends React.Component<Dependencies> {
             [columnId.type]: (secret) => secret.type,
             [columnId.age]: (secret) => -secret.getCreationTimestamp(),
           }}
-          searchFilters={[(secret) => secret.getSearchFields(), (secret) => secret.getKeys()]}
+          searchFilters={searchFilters}
+          searchFiltersArePure
           renderHeaderTitle="Secrets"
           renderTableHeader={[
             { title: "Name", className: "name", sortBy: columnId.name, id: columnId.name },

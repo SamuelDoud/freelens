@@ -22,6 +22,7 @@ import jobStoreInjectable from "./store.injectable";
 import type { Job } from "@freelensapp/kube-object";
 
 import type { EventStore } from "../events/store";
+import type { ListLayoutSearchFilter } from "../item-object-list/list-layout";
 import type { JobStore } from "./store";
 
 enum columnId {
@@ -100,6 +101,9 @@ const durationTooltip = (job: Job) => {
   );
 };
 
+// The same array on every render keeps the text the list searches in; each filter reads its item only.
+const searchFilters: ListLayoutSearchFilter<Job>[] = [(job) => job.getSearchFields()];
+
 const NonInjectedJobs = observer((props: Dependencies) => {
   const { eventStore, jobStore } = props;
 
@@ -122,7 +126,8 @@ const NonInjectedJobs = observer((props: Dependencies) => {
           [columnId.duration]: (job) => job.getJobDuration(),
           [columnId.age]: (job) => -job.getCreationTimestamp(),
         }}
-        searchFilters={[(job) => job.getSearchFields()]}
+        searchFilters={searchFilters}
+        searchFiltersArePure
         renderHeaderTitle="Jobs"
         renderTableHeader={[
           { title: "Name", className: "name", sortBy: columnId.name, id: columnId.name },

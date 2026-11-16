@@ -67,6 +67,12 @@ export abstract class ItemStore<Item extends ItemObject> {
   }
 
   public pickOnlySelected(items: Item[]): Item[] {
+    // Nothing selected is the usual case. Asking for the size alone also keeps a reader from
+    // subscribing to the membership of every item's id.
+    if (this.selectedItemsIds.size === 0) {
+      return [];
+    }
+
     return items.filter((item) => this.selectedItemsIds.has(item.getId()));
   }
 
