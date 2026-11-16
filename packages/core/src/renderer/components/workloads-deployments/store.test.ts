@@ -231,4 +231,62 @@ describe("DeploymentStore child pods", () => {
       }
     }
   });
+
+  it("follows pods that come and go between calls the way a fresh computation does", () => {
+    let seed = 777;
+    const random = (n: number) => {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+
+      return seed % n;
+    };
+    const labelSets: (Record<string, string> | undefined)[] = [
+      { app: "a" },
+      { app: "a", tier: "web" },
+      { app: "b" },
+      { "a=b": "c" },
+      {},
+      undefined,
+    ];
+    const phases = ["Running", "Pending", "Failed", "Succeeded"];
+    const deployments = [
+      makeDeployment("d1", "n0", { app: "a" }),
+      makeDeployment("d2", "n0", { app: "a", tier: "web" }),
+      makeDeployment("d3", "n1", { app: "b" }),
+      makeDeployment("d4", "n1", {}),
+      makeDeployment("d5", "n2", { "a=b": "c" }),
+      makeDeployment("d6", "n9", { app: "a" }),
+    ];
+    let counter = 0;
+    let current: Pod[] = [];
+
+    for (let round = 0; round < 60; round++) {
+      // A watch flush: some pods deleted, some replaced by a new object, some added.
+      current = current.filter(() => random(4) !== 0);
+      current = current.map((pod) =>
+        random(5) === 0
+          ? makePod(pod.getName(), pod.getNs(), labelSets[random(labelSets.length)], phases[random(phases.length)])
+          : pod,
+      );
+
+      for (let i = random(12); i > 0; i--) {
+        current.push(
+          makePod(`p${counter++}`, `n${random(3)}`, labelSets[random(labelSets.length)], phases[random(phases.length)]),
+        );
+      }
+
+      podStore.items = observable.array(current);
+
+      expect(deploymentStore.getStatuses(deployments)).toEqual(oldGetStatuses(deployments));
+      // a second call with nothing changed takes the unchanged path
+      expect(deploymentStore.getStatuses(deployments)).toEqual(oldGetStatuses(deployments));
+
+      for (const deployment of deployments) {
+        expect(deploymentStore.getStatuses([deployment])).toEqual(oldGetStatuses([deployment]));
+      }
+    }
+
+    podStore.items = observable.array([]);
+
+    expect(deploymentStore.getStatuses(deployments)).toEqual(oldGetStatuses(deployments));
+  });
 });

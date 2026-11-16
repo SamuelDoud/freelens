@@ -911,6 +911,11 @@ export class KubeObjectStore<
     return items;
   }
 
+  /** What the store keeps of its items after a watch flush; a store that bounds its items overrides it. */
+  protected limitWatchedItems(items: K[]): K[] {
+    return items;
+  }
+
   @action
   async loadAll({
     namespaces,
@@ -1436,7 +1441,9 @@ export class KubeObjectStore<
     }
 
     if (changed) {
-      const retained = items.filter((item): item is K => item !== undefined).slice(-this.bufferSize);
+      const retained = this.limitWatchedItems(
+        items.filter((item): item is K => item !== undefined).slice(-this.bufferSize),
+      );
 
       this.items.replace(needsSort ? this.sortItems(retained) : retained);
     }

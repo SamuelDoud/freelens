@@ -3,7 +3,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { PodMetrics } from "@freelensapp/kube-object";
+import { Pod, PodMetrics } from "@freelensapp/kube-object";
+import { cpuUnitsToNumber, unitsToBytes } from "@freelensapp/utilities";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForKubeConfigsInjectable from "../../../common/app-paths/directory-for-kube-configs/directory-for-kube-configs.injectable";
 import directoryForUserDataInjectable from "../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
@@ -143,5 +144,114 @@ describe("PodStore kube metrics", () => {
 
       expect(listMetrics).toHaveBeenCalledTimes(2);
     });
+  });
+});
+
+describe("PodStore getPodKubeMetrics", () => {
+  let podStore: PodStore;
+
+  beforeEach(() => {
+    const di = getDiForUnitTesting();
+
+    di.override(directoryForUserDataInjectable, () => "/some-user-store-path");
+    di.override(directoryForKubeConfigsInjectable, () => "/some-kube-configs");
+    di.override(storesAndApisCanBeCreatedInjectable, () => true);
+    di.override(
+      hostedClusterInjectable,
+      () =>
+        new Cluster({
+          contextName: "some-context-name",
+          id: "some-cluster-id",
+          kubeConfigPath: "/some-path-to-a-kubeconfig",
+        }),
+    );
+
+    podStore = di.inject(podStoreInjectable);
+  });
+
+  const podWith = (name: string, containers: string[]) =>
+    new Pod({
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: { name, namespace: "default", resourceVersion: "1", uid: name, selfLink: `/api/v1/pods/${name}` },
+      spec: { containers: containers.map((container) => ({ name: container, image: "i" })) },
+    } as unknown as ConstructorParameters<typeof Pod>[0]);
+
+  const usageFor = (name: string, containers: { name: string; usage?: Record<string, string> }[]) =>
+    new PodMetrics({
+      apiVersion: "metrics.k8s.io/v1beta1",
+      kind: "PodMetrics",
+      metadata: { name, namespace: "default", resourceVersion: "1", uid: name, selfLink: `/x/${name}` },
+      containers,
+      timestamp: "2026-11-13T00:00:00Z",
+      window: "30s",
+    } as unknown as ConstructorParameters<typeof PodMetrics>[0]);
+
+  // The implementation before the cache, kept to compare against.
+  const reference = (pod: Pod) => {
+    const containers = pod.getContainers();
+    const metrics = podStore.kubeMetricsByPod.get(`${pod.getNs()}/${pod.getName()}`);
+
+    if (!metrics || !metrics.containers || !containers) return { cpu: NaN, memory: NaN };
+
+    return containers.reduce(
+      (total, container) => {
+        const metric = metrics.containers?.find((item) => item.name == container.name);
+        const cpu = (metric?.usage && metric.usage.cpu) || "0";
+        const memory = (metric?.usage && metric.usage.memory) || "0";
+
+        return {
+          cpu: total.cpu + (cpuUnitsToNumber(cpu) ?? 0),
+          memory: total.memory + unitsToBytes(memory),
+        };
+      },
+      { cpu: 0, memory: 0 },
+    );
+  };
+
+  it("gives the values of the uncached computation, and follows a new metrics object or pod", () => {
+    const pods = [podWith("a", ["x", "y"]), podWith("b", ["x"]), podWith("none", ["x"]), podWith("empty", [])];
+
+    podStore.kubeMetrics.replace([
+      usageFor("a", [
+        { name: "x", usage: { cpu: "250m", memory: "128Mi" } },
+        { name: "y", usage: { cpu: "1500000n", memory: "1Gi" } },
+      ]),
+      usageFor("b", [{ name: "other" }]),
+      usageFor("empty", [{ name: "x", usage: { cpu: "1", memory: "1" } }]),
+    ]);
+
+    for (let pass = 0; pass < 2; pass++) {
+      for (const pod of pods) {
+        expect(podStore.getPodKubeMetrics(pod)).toEqual(reference(pod));
+      }
+    }
+
+    expect(podStore.getPodKubeMetrics(pods[0])).toEqual({ cpu: 0.2515, memory: 128 * 1024 ** 2 + 1024 ** 3 });
+    expect(podStore.getPodKubeMetrics(pods[2])).toEqual({ cpu: NaN, memory: NaN });
+
+    podStore.kubeMetrics.replace([usageFor("a", [{ name: "x", usage: { cpu: "2", memory: "1Ki" } }])]);
+
+    for (const pod of pods) {
+      expect(podStore.getPodKubeMetrics(pod)).toEqual(reference(pod));
+    }
+
+    expect(podStore.getPodKubeMetrics(pods[0])).toEqual({ cpu: 2, memory: 1024 });
+
+    const replaced = podWith("a", ["y"]);
+
+    expect(podStore.getPodKubeMetrics(replaced)).toEqual(reference(replaced));
+  });
+
+  it("returns a new object per call", () => {
+    const pod = podWith("a", ["x"]);
+
+    podStore.kubeMetrics.replace([usageFor("a", [{ name: "x", usage: { cpu: "1", memory: "1" } }])]);
+
+    const first = podStore.getPodKubeMetrics(pod);
+
+    first.cpu = 99;
+
+    expect(podStore.getPodKubeMetrics(pod).cpu).toBe(1);
   });
 });
