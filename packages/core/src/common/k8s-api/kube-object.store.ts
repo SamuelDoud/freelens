@@ -285,6 +285,18 @@ export class KubeObjectStore<
   private flushIndex:
     | { writes: number; byUid: Map<string, K>; sorted: boolean | undefined; duplicates: boolean }
     | undefined;
+  // The last list a load stored, see `mergeLoadedItemsIncrementally`.
+  private publishedLoad:
+    | {
+        writes: number;
+        published: K[];
+        items: K[];
+        merge: boolean;
+        requested: string[];
+        namespaces: Set<string>;
+        everyItemHasNamespace: boolean;
+      }
+    | undefined;
 
   constructor(
     protected readonly dependencies: KubeObjectStoreDependencies,
@@ -1021,17 +1033,104 @@ export class KubeObjectStore<
    * keep the previously loaded copies next to the fresh ones.
    */
   private mergeLoadedItems(items: K[], merge: boolean, namespaces: string[]): K[] {
+    const incremental = this.mergeLoadedItemsIncrementally(items, merge, namespaces);
+
+    if (incremental) {
+      return incremental;
+    }
+
     const loadedNamespaces = new Set(namespaces);
+    let everyItemHasNamespace = true;
 
     for (const item of items) {
       const namespace = item.getNs();
 
       if (namespace) {
         loadedNamespaces.add(namespace);
+      } else {
+        everyItemHasNamespace = false;
       }
     }
 
-    return this.mergeItems(items, { merge, namespaces: [...loadedNamespaces] });
+    const merged = this.mergeItems(items, { merge, namespaces: [...loadedNamespaces] });
+
+    // What the next publish of this load can build on: the list just stored
+    // and the items it was made of. Only the stock merge is known to make
+    // exactly that list from those items.
+    this.publishedLoad = this.hasStockMerge()
+      ? {
+          writes: this.trackItems(),
+          published: merged,
+          items,
+          merge,
+          requested: namespaces,
+          namespaces: loadedNamespaces,
+          everyItemHasNamespace,
+        }
+      : undefined;
+
+    return merged;
+  }
+
+  private hasStockMerge(): boolean {
+    const prototype = Object.getPrototypeOf(this);
+
+    return (
+      prototype.mergeItems === KubeObjectStore.prototype.mergeItems &&
+      prototype.filterItemsOnLoad === KubeObjectStore.prototype.filterItemsOnLoad &&
+      prototype.sortItems === (ItemStore.prototype as unknown as { sortItems: unknown }).sortItems
+    );
+  }
+
+  /**
+   * The merge of a load that goes on where the last one of it stopped: `items`
+   * are the items of that merge followed by new ones, and nothing wrote to
+   * `items` since. The new items are sorted among themselves and merged into
+   * the stored list, which gives the list a merge of everything would give
+   * (equal items stay in the order the load delivered them), without
+   * filtering and sorting what the store already holds.
+   */
+  private mergeLoadedItemsIncrementally(items: K[], merge: boolean, namespaces: string[]): K[] | undefined {
+    const last = this.publishedLoad;
+
+    if (
+      !last ||
+      last.writes !== this.trackItems() ||
+      last.merge !== merge ||
+      last.requested !== namespaces ||
+      items.length < last.items.length ||
+      !this.hasStockMerge()
+    ) {
+      return undefined;
+    }
+
+    for (let index = 0; index < last.items.length; index += 1) {
+      if (items[index] !== last.items[index]) {
+        return undefined;
+      }
+    }
+
+    const added = items.slice(last.items.length);
+
+    if (merge && this.api.isNamespaced) {
+      // Items of a namespace the load had not covered, or without one, would
+      // change which of the stored items are replaced.
+      if (!last.everyItemHasNamespace || added.some((item) => !last.namespaces.has(item.getNs() as string))) {
+        return undefined;
+      }
+    }
+
+    const merged = added.length
+      ? new ItemOrder<K>(this.sorting.by, this.sorting.order).merge(last.published, added)
+      : last.published;
+
+    if (added.length) {
+      this.items.replace(merged);
+    }
+
+    this.publishedLoad = { ...last, writes: this.itemsWrites, published: merged, items };
+
+    return merged;
   }
 
   @action

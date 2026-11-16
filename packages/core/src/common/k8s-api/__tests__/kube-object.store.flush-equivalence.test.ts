@@ -59,6 +59,16 @@ class TestStore extends KubeObjectStore<KubeObject> {
     this.eventsBuffer.clear();
     this["updateFromEventsByRebuilding"](events);
   }
+
+  mergeFull(items: KubeObject[], merge: boolean, namespaces: string[]) {
+    this["publishedLoad"] = undefined;
+
+    return this["mergeLoadedItems"](items, merge, namespaces);
+  }
+
+  mergeIncremental(items: KubeObject[], merge: boolean, namespaces: string[]) {
+    return this["mergeLoadedItems"](items, merge, namespaces);
+  }
 }
 
 // A store that overrides `sortItems`, as a subclass of a store can.
@@ -221,3 +231,72 @@ describe.each(Object.keys(variants) as (keyof typeof variants)[])(
     });
   },
 );
+
+describe("the merge of a load that goes on equals the merge of everything", () => {
+  it.each([true, false])("with merge %s, for pages of random items across namespaces", (merge) => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const next = random(seed * 104729);
+      const names = ["a", "b", "c", "d"];
+      const namespaces = ["n1", "n2", "n3"];
+      const full = new TestStore("name");
+      const incremental = new TestStore("name");
+      // Items of a namespace this load does not cover stay in both.
+      const others = ["o1", "o2", "o3"].map(
+        (uid) => new KubeObject(data(uid, 1, names[Math.floor(next() * 4)], 0, "other") as never),
+      );
+
+      full.items.replace(others);
+      incremental.items.replace(others);
+
+      let uid = 0;
+      let accumulated: KubeObject[] = [];
+
+      for (let page = 0; page < 12; page++) {
+        const items = Array.from(
+          { length: Math.floor(next() * 15) },
+          () =>
+            new KubeObject(
+              data(`p${uid++}`, 1, names[Math.floor(next() * 4)], 0, namespaces[Math.floor(next() * 3)]) as never,
+            ),
+        );
+
+        accumulated = [...accumulated, ...items];
+
+        const snapshot = [...accumulated];
+
+        full.mergeFull(snapshot, merge, namespaces);
+        incremental.mergeIncremental(snapshot, merge, namespaces);
+
+        expect(describeItems(incremental)).toEqual(describeItems(full));
+      }
+
+      // The completed load lists the same items in another order, and that
+      // order decides which of equal items comes first.
+      const final = [...accumulated].reverse();
+
+      full.mergeFull(final, merge, namespaces);
+      incremental.mergeIncremental(final, merge, namespaces);
+
+      expect(describeItems(incremental)).toEqual(describeItems(full));
+    }
+  });
+
+  it("falls back to merging everything after something else wrote to the items", () => {
+    const full = new TestStore("name");
+    const incremental = new TestStore("name");
+    const first = ["b", "a"].map((name) => new KubeObject(data(`first-${name}`, 1, name, 0, "n1") as never));
+    const second = [...first, new KubeObject(data("second", 1, "a", 0, "n1") as never)];
+    const stranger = new KubeObject(data("stranger", 1, "0", 0, "n1") as never);
+
+    full.mergeFull(first, true, ["n1"]);
+    incremental.mergeIncremental(first, true, ["n1"]);
+    full.items.push(stranger);
+    incremental.items.push(stranger);
+    full.mergeFull(second, true, ["n1"]);
+    incremental.mergeIncremental(second, true, ["n1"]);
+
+    expect(describeItems(incremental)).toEqual(describeItems(full));
+    // The stranger was in a namespace the load covers, so it is gone.
+    expect(describeItems(incremental).some((entry) => entry.startsWith("stranger"))).toBe(false);
+  });
+});
