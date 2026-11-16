@@ -190,6 +190,14 @@ export class Kubectl {
    */
   protected static readonly preparations = new Map<string, Preparation>();
 
+  /**
+   * The binaries that passed `checkBinary`, by path, check and expected
+   * version, with the identity of the file that passed. Running the binary
+   * costs a process spawn, and an unchanged file passed before. A failure is
+   * never remembered, so a binary that works again is used again.
+   */
+  protected static readonly verifiedBinaries = new Map<string, string>();
+
   constructor(
     protected readonly dependencies: KubectlDependencies,
     clusterVersion: string,
@@ -330,10 +338,19 @@ export class Kubectl {
   }
 
   public async checkBinary(path: string, checkVersion = true) {
-    const exists = await pathExists(path);
+    // The file is identified before it runs, so a replacement during the
+    // check is not taken for the file that passed.
+    const stats = await fs.promises.stat(path, { bigint: true }).catch(() => undefined);
 
-    if (!exists) {
+    if (!stats) {
       return false;
+    }
+
+    const verifiedKey = `${path}\0${checkVersion}\0${this.kubectlVersion}`;
+    const identity = `${stats.ino}:${stats.size}:${stats.mtimeNs}:${stats.ctimeNs}`;
+
+    if (Kubectl.verifiedBinaries.get(verifiedKey) === identity) {
+      return true;
     }
 
     const args = ["version", "--client", "--output", "json"];
@@ -368,6 +385,8 @@ export class Kubectl {
     }
 
     if (!checkVersion) {
+      Kubectl.verifiedBinaries.set(verifiedKey, identity);
+
       return true;
     }
 
@@ -390,6 +409,7 @@ export class Kubectl {
       case this.kubectlVersion:
       case `v${this.kubectlVersion}`:
         this.dependencies.logger.debug(`Local kubectl is version ${this.kubectlVersion}`);
+        Kubectl.verifiedBinaries.set(verifiedKey, identity);
 
         return true;
       default:

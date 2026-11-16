@@ -154,4 +154,37 @@ describe("update-entity-metadata", () => {
     updateEntityMetadata(entity, cluster);
     expect(entity.metadata.name).toEqual("some-cluster-name");
   });
+
+  it("keeps the labels object when the merged labels are unchanged", () => {
+    entity.metadata.labels = { "entity-label": "a" };
+    replaceObservableObject(cluster.labels, { "cluster-label": "b" });
+
+    updateEntityMetadata(entity, cluster);
+
+    const labels = entity.metadata.labels;
+
+    expect(labels).toEqual({ "entity-label": "a", "cluster-label": "b" });
+
+    updateEntityMetadata(entity, cluster);
+
+    expect(entity.metadata.labels).toBe(labels);
+  });
+
+  it("replaces the labels when a cluster label changes or is added", () => {
+    replaceObservableObject(cluster.labels, { "cluster-label": "b" });
+    updateEntityMetadata(entity, cluster);
+
+    const labels = entity.metadata.labels;
+
+    replaceObservableObject(cluster.labels, { "cluster-label": "c" });
+    updateEntityMetadata(entity, cluster);
+
+    expect(entity.metadata.labels).not.toBe(labels);
+    expect(entity.metadata.labels).toEqual({ "cluster-label": "c" });
+
+    replaceObservableObject(cluster.labels, { "cluster-label": "c", other: "d" });
+    updateEntityMetadata(entity, cluster);
+
+    expect(entity.metadata.labels).toEqual({ "cluster-label": "c", other: "d" });
+  });
 });

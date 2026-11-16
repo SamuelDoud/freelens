@@ -33,7 +33,12 @@ const getHelmReleaseInjectable = getInjectable({
       const proxyKubeconfigManager = di.inject(kubeconfigManagerInjectable, cluster);
       const proxyKubeconfig = await proxyKubeconfigManager.ensurePaths();
 
-      const releaseResult = await getHelmReleaseData(releaseName, namespace, proxyKubeconfig);
+      // The two commands do not depend on each other. The data result is
+      // still checked first, so that the error reported is the same.
+      const [releaseResult, resourcesResult] = await Promise.all([
+        getHelmReleaseData(releaseName, namespace, proxyKubeconfig),
+        getHelmReleaseResources(releaseName, namespace, proxyKubeconfig),
+      ]);
 
       if (!releaseResult.callWasSuccessful) {
         return {
@@ -41,8 +46,6 @@ const getHelmReleaseInjectable = getInjectable({
           error: `Failed to get helm release data: ${releaseResult.error}`,
         };
       }
-
-      const resourcesResult = await getHelmReleaseResources(releaseName, namespace, proxyKubeconfig);
 
       if (!resourcesResult.callWasSuccessful) {
         return {

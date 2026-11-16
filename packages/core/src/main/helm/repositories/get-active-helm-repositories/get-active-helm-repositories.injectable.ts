@@ -7,8 +7,8 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import readYamlFileInjectable from "../../../../common/fs/read-yaml-file.injectable";
-import execHelmInjectable from "../../exec-helm/exec-helm.injectable";
 import getHelmEnvInjectable from "../../get-helm-env/get-helm-env.injectable";
+import updateHelmRepositoriesInjectable from "../update-helm-repositories.injectable";
 
 import type { AsyncResult } from "@freelensapp/utilities";
 
@@ -36,7 +36,7 @@ const getActiveHelmRepositoriesInjectable = getInjectable({
 
   instantiate: (di) => {
     const readYamlFile = di.inject(readYamlFileInjectable);
-    const execHelm = di.inject(execHelmInjectable);
+    const updateHelmRepositories = di.inject(updateHelmRepositoriesInjectable);
     const getHelmEnv = di.inject(getHelmEnvInjectable);
     const logger = di.inject(loggerInjectionToken);
 
@@ -79,7 +79,7 @@ const getActiveHelmRepositoriesInjectable = getInjectable({
         };
       }
 
-      const updateResult = await execHelm(["repo", "update"]);
+      const updateResult = await updateHelmRepositories();
 
       if (!updateResult.callWasSuccessful) {
         if (updateResult.error.stderr.includes(internalHelmErrorForNoRepositoriesFound)) {

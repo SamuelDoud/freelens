@@ -8,7 +8,6 @@ import { loggerInjectionToken } from "@freelensapp/logger";
 import { disposer, isDefined, isRequestError } from "@freelensapp/utilities";
 import { ApiException, type KubeConfig } from "@kubernetes/client-node";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
-import { limitAsync } from "es-toolkit";
 import { compareStructural, reaction, runInAction } from "mobx";
 import createAuthorizationApiInjectable from "../../common/cluster/create-authorization-api.injectable";
 import createCanIInjectable from "../../common/cluster/create-can-i.injectable";
@@ -19,13 +18,13 @@ import loadKubeconfigInjectable from "../../common/cluster/load-kubeconfig.injec
 import { ClusterMetadataKey, ClusterStatus } from "../../common/cluster-types";
 import broadcastMessageInjectable from "../../common/ipc/broadcast-message.injectable";
 import { clusterListNamespaceForbiddenChannel } from "../../common/ipc/cluster";
-import { formatKubeApiResource } from "../../common/rbac";
 import { replaceObservableObject } from "../../common/utils/replace-observable-object";
 import shellEnvironmentReadyInjectable from "../../features/shell-sync/main/shell-environment-ready.injectable";
 import clusterVersionDetectorInjectable from "../cluster-detectors/cluster-version-detector.injectable";
 import detectClusterMetadataInjectable from "../cluster-detectors/detect-cluster-metadata.injectable";
 import broadcastConnectionUpdateInjectable from "./broadcast-connection-update.injectable";
 import freelensK8sProxyManagerInjectable from "./freelens-k8s-proxy-manager.injectable";
+import { getResourcesToShow } from "./get-resources-to-show";
 import loadProxyKubeconfigInjectable from "./load-proxy-kubeconfig.injectable";
 import prometheusHandlerInjectable from "./prometheus-handler/prometheus-handler.injectable";
 import removeProxyKubeconfigInjectable from "./remove-proxy-kubeconfig.injectable";
@@ -651,15 +650,7 @@ class ClusterConnection {
     knownResources: KubeApiResource[],
     req: RequestNamespaceListPermissions,
   ) {
-    if (!allowedNamespaces.length) {
-      return [];
-    }
-
-    const requestNamespaceListPermissions = limitAsync(req, 5);
-    const namespaceListPermissions = allowedNamespaces.map(requestNamespaceListPermissions);
-    const canListResources = await Promise.all(namespaceListPermissions);
-
-    return knownResources.filter((resource) => canListResources.some((fn) => fn(resource))).map(formatKubeApiResource);
+    return getResourcesToShow(allowedNamespaces, knownResources, req);
   }
 }
 

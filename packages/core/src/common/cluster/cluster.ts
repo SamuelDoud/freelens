@@ -91,7 +91,7 @@ export class Cluster {
   /**
    * The list of all known resources associated with this cluster
    */
-  readonly knownResources = observable.array<KubeApiResource>();
+  readonly knownResources = observable.array<KubeApiResource>([], { deep: false });
 
   /**
    * The formatting of this is `group.name` or `name` (if in core)

@@ -370,6 +370,64 @@ describe("kubectl", () => {
     });
   });
 
+  describe("checkBinary", () => {
+    const okResult = {
+      callWasSuccessful: true,
+      response: JSON.stringify({ clientVersion: { gitVersion: `v${pinnedVersion}` } }),
+    } as const;
+
+    it("runs an unchanged binary once, and again when the file changes", async () => {
+      const execFile = vi.fn(async () => okResult);
+      const kubectl = new Kubectl({ ...dependencies, execFile }, pinnedVersion);
+
+      await fs.mkdir(path.dirname(binaryPath()), { recursive: true });
+      await fs.writeFile(binaryPath(), content);
+
+      expect(await kubectl.checkBinary(binaryPath())).toBe(true);
+      expect(await kubectl.checkBinary(binaryPath())).toBe(true);
+      expect(execFile).toHaveBeenCalledTimes(1);
+
+      await fs.writeFile(binaryPath(), `${content}more`);
+
+      expect(await kubectl.checkBinary(binaryPath())).toBe(true);
+      expect(execFile).toHaveBeenCalledTimes(2);
+    });
+
+    it("never remembers a failure", async () => {
+      let result: any = { callWasSuccessful: false, error: Object.assign(new Error("broken"), { code: "EIO" }) };
+      const execFile = vi.fn(async () => result);
+      const kubectl = new Kubectl({ ...dependencies, execFile }, pinnedVersion);
+
+      await fs.mkdir(path.dirname(binaryPath()), { recursive: true });
+      await fs.writeFile(binaryPath(), content);
+
+      expect(await kubectl.checkBinary(binaryPath())).toBeUndefined();
+
+      // unlinked by the failed check, written again by the user
+      await fs.writeFile(binaryPath(), content);
+      result = okResult;
+
+      expect(await kubectl.checkBinary(binaryPath())).toBe(true);
+      expect(execFile).toHaveBeenCalledTimes(2);
+    });
+
+    it("checks the version again for another expected version", async () => {
+      const execFile = vi.fn(async () => okResult);
+
+      await fs.mkdir(path.dirname(binaryPath()), { recursive: true });
+      await fs.writeFile(binaryPath(), content);
+
+      expect(await new Kubectl({ ...dependencies, execFile }, pinnedVersion).checkBinary(binaryPath())).toBe(true);
+      expect(
+        await new Kubectl(
+          { ...dependencies, execFile, kubectlVersionMap: new Map([["9.8", "9.8.1"]]) },
+          "9.8.0",
+        ).checkBinary(binaryPath()),
+      ).toBeFalsy();
+      expect(execFile).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("getPath", () => {
     const bundledPath = () => path.join(directory, "bundled", "kubectl");
 

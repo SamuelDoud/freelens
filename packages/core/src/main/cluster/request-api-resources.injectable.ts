@@ -30,7 +30,7 @@ const requestApiResourcesInjectable = getInjectable({
     return async (...args) => {
       const [cluster] = args;
       const broadcastConnectionUpdate = di.inject(broadcastConnectionUpdateInjectable, cluster);
-      const requestKubeApiResources = limitAsync(requestKubeApiResourcesFor(cluster), 5);
+      const requestKubeApiResources = limitAsync(requestKubeApiResourcesFor(cluster), 16);
 
       const groupLists: KubeResourceListGroup[] = [];
 
