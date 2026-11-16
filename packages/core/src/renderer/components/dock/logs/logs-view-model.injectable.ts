@@ -14,6 +14,7 @@ import areLogsPresentInjectable from "./are-logs-present.injectable";
 import downloadAllLogsInjectable from "./download-all-logs.injectable";
 import downloadAllLogsForPodsInjectable from "./download-all-logs-for-pods.injectable";
 import downloadLogsInjectable from "./download-logs.injectable";
+import getLogPollErrorInjectable from "./get-log-poll-error.injectable";
 import getLogTabDataInjectable from "./get-log-tab-data.injectable";
 import getLogsInjectable from "./get-logs.injectable";
 import getLogsWithoutTimestampsInjectable from "./get-logs-without-timestamps.injectable";
@@ -37,6 +38,7 @@ const logsViewModelInjectable = getInjectable({
   instantiate: (di, tabId) =>
     new LogTabViewModel(tabId, {
       getLogs: di.inject(getLogsInjectable),
+      getPollError: di.inject(getLogPollErrorInjectable),
       getLogsWithoutTimestamps: di.inject(getLogsWithoutTimestampsInjectable),
       getTimestampSplitLogs: di.inject(getTimestampSplitLogsInjectable),
       reloadLogs: di.inject(reloadLogsInjectable),

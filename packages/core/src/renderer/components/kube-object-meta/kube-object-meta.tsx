@@ -11,7 +11,7 @@ import { Link } from "@freelensapp/routing";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import * as yaml from "js-yaml";
 import { observer } from "mobx-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import apiManagerInjectable from "../../../common/k8s-api/api-manager/manager.injectable";
 import { defaultYamlDumpOptions } from "../../../common/kube-helpers";
 import requestKubeResourceInjectable from "../dock/edit-resource/edit-resource-model/request-kube-resource.injectable";
@@ -111,6 +111,11 @@ interface ManagedFieldSetProps {
 function ManagedFieldSet({ entry, selfLink, requestKubeResource }: ManagedFieldSetProps) {
   const hasFieldSet = "fieldsV1" in entry;
   const [loaded, setLoaded] = useState<{ fieldsV1?: unknown; error?: string }>();
+  // The request function and the entry are new at every render of the panel, as a watch event replaces the
+  // object: they are read when the request starts, and only what identifies the entry starts another one.
+  const latest = useRef({ entry, requestKubeResource });
+
+  latest.current = { entry, requestKubeResource };
 
   useEffect(() => {
     if (hasFieldSet) {
@@ -120,7 +125,7 @@ function ManagedFieldSet({ entry, selfLink, requestKubeResource }: ManagedFieldS
     let cancelled = false;
 
     void (async () => {
-      const result = await requestKubeResource(selfLink);
+      const result = await latest.current.requestKubeResource(selfLink);
 
       if (cancelled) {
         return;
@@ -132,9 +137,10 @@ function ManagedFieldSet({ entry, selfLink, requestKubeResource }: ManagedFieldS
         return;
       }
 
+      const wanted = latest.current.entry;
       const match = (result.response?.metadata.managedFields ?? [])
         .filter(isManagedFieldsEntry)
-        .find((candidate) => isSameManagedFieldsEntry(candidate, entry));
+        .find((candidate) => isSameManagedFieldsEntry(candidate, wanted));
 
       setLoaded({ fieldsV1: match?.fieldsV1 });
     })();
@@ -142,7 +148,7 @@ function ManagedFieldSet({ entry, selfLink, requestKubeResource }: ManagedFieldS
     return () => {
       cancelled = true;
     };
-  }, [hasFieldSet, selfLink, entry, requestKubeResource]);
+  }, [hasFieldSet, selfLink, entry.manager, entry.operation, entry.apiVersion, entry.subresource]);
 
   if (!hasFieldSet && !loaded) {
     return <span>Loading…</span>;

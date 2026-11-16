@@ -32,6 +32,7 @@ import type { LogTabData } from "./tab-store";
 
 export interface LogTabViewModelDependencies {
   getLogs: (tabId: TabId) => string[];
+  getPollError?: (tabId: TabId) => string | undefined;
   getLogsWithoutTimestamps: (tabId: TabId) => string[];
   getTimestampSplitLogs: (tabId: TabId) => [string, string][];
   getLogTabData: (tabId: TabId) => LogTabData | undefined;
@@ -71,6 +72,8 @@ export class LogTabViewModel {
 
   readonly isLoading = computed(() => this.dependencies.areLogsPresent(this.tabId));
   readonly logs = computed(() => this.dependencies.getLogs(this.tabId));
+  /** Why the last poll for new lines failed; the lines already shown stay */
+  readonly pollError = computed(() => this.dependencies.getPollError?.(this.tabId));
   readonly logsWithoutTimestamps = computed(() => this.dependencies.getLogsWithoutTimestamps(this.tabId));
   readonly timestampSplitLogs = computed(() => this.dependencies.getTimestampSplitLogs(this.tabId));
   readonly logTabData = computed(() => this.dependencies.getLogTabData(this.tabId));

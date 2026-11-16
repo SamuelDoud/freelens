@@ -6,6 +6,7 @@
 
 import { getOrInsertWith, interval } from "@freelensapp/utilities";
 import { observable, when } from "mobx";
+import { RetryBackoff } from "../../../utils/retry-backoff";
 import { mapLinesIncremental } from "./map-lines-incremental";
 import {
   compareLogTimestamps,
@@ -56,12 +57,21 @@ interface PodLogs {
   lines: string[];
 }
 
+function describeError(error: any): string {
+  const detail = error?.error && !(error.message || error.reason || error.code) ? error.error : error;
+
+  return `Failed to load new lines: ${detail?.message ?? detail}`;
+}
+
 export class LogStore {
   // The lines of a tab are replaced as a whole and never changed in place, so
   // the arrays need no observable copy of their own.
   protected podLogs = observable.map<TabId, PodLogLine[]>({}, { deep: false });
   protected refreshers = new Map<TabId, IntervalFn>();
   private readonly requests = new Map<TabId, AbortController>();
+  // Why the last poll of a tab failed. The lines already shown stay; only a first load that fails replaces them.
+  private readonly pollErrors = observable.map<TabId, string>({}, { deep: false });
+  private readonly pollBackoffs = new Map<TabId, RetryBackoff>();
   private readonly cursors = new Map<TabId, Map<string, PodLogsCursor>>();
   private readonly podColors = new Map<TabId, Map<string, string>>();
   // How many lines every pod has in the tab, by pod id.
@@ -110,6 +120,8 @@ export class LogStore {
       (logsOfPods, tagged) => {
         const cursors = new Map<string, PodLogsCursor>();
 
+        this.pollErrors.delete(tabId);
+        this.pollBackoffs.delete(tabId);
         this.cursors.set(tabId, cursors);
         this.lineCounts.set(tabId, new Map());
         this.getRefresher(tabId, computedPods, logTabData).start();
@@ -191,6 +203,17 @@ export class LogStore {
       return;
     }
 
+    const backoff = getOrInsertWith(
+      this.pollBackoffs,
+      tabId,
+      () => new RetryBackoff({ initialDelayMs: 20_000, maxDelayMs: 60_000 }),
+    );
+
+    // A tab whose polls keep failing is asked less and less often.
+    if (!backoff.canAttempt()) {
+      return;
+    }
+
     const cursors = getOrInsertWith(this.cursors, tabId, () => new Map<string, PodLogsCursor>());
 
     await this.loadForTab(
@@ -204,6 +227,9 @@ export class LogStore {
         return cursor ? { sinceTime: this.getSinceTime(cursor.timestamp) } : { tailLines: logLinesToLoad };
       },
       (logsOfPods, tagged) => {
+        backoff.succeeded();
+        this.pollErrors.delete(tabId);
+
         const newLines = this.mergeNewLines(tabId, cursors, logsOfPods, tagged);
 
         const current = this.podLogs.get(tabId);
@@ -223,6 +249,10 @@ export class LogStore {
         // Add newly received logs to bottom.
         this.podLogs.set(tabId, this.limitLines(mergeIntoLogs(current ?? oldLogs, newLines), tagged));
       },
+      (error) => {
+        backoff.failed();
+        this.pollErrors.set(tabId, describeError(error));
+      },
     );
   }
 
@@ -232,6 +262,7 @@ export class LogStore {
     logTabData: IComputedValue<LogTabData | undefined>,
     getParams: (pod: Pod, podCount: number) => Partial<PodLogsQuery>,
     onLoad: (logsOfPods: PodLogs[], tagged: boolean) => void,
+    onError: (error: unknown) => void = (error) => this.handlerError(tabId, error),
   ): Promise<void> {
     // Include the wait for Pod data in the limit, not just the HTTP request.
     if (this.requests.has(tabId)) {
@@ -250,7 +281,7 @@ export class LogStore {
       }
     } catch (error) {
       if (!controller.signal.aborted) {
-        this.handlerError(tabId, error);
+        onError(error);
       }
     } finally {
       // A stopped request must not remove the request started by a newer load.
@@ -322,7 +353,7 @@ export class LogStore {
             signal,
           );
 
-          logsOfPods.push({ pod, lines: result.trimEnd().replace(/\r/g, "\n").split("\n") });
+          logsOfPods.push({ pod, lines: result.trimEnd().replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n") });
         } catch (error) {
           errors.push(error);
         }
@@ -453,6 +484,11 @@ export class LogStore {
     return this.logs.length;
   }
 
+  /** Why the last poll for new lines failed, while the lines already loaded stay. */
+  getPollError(tabId: TabId): string | undefined {
+    return this.pollErrors.get(tabId);
+  }
+
   areLogsPresent(tabId: TabId): boolean {
     return !this.podLogs.has(tabId);
   }
@@ -510,7 +546,7 @@ export class LogStore {
   }
 
   splitOutTimestamp(logs: string): [string, string] {
-    const extraction = /^(\d+\S+)(.*)/m.exec(logs);
+    const extraction = /^(\d{4}-\d{2}-\d{2}T\S+)(.*)/m.exec(logs);
 
     if (!extraction || extraction.length < 3) {
       return ["", logs];
@@ -520,16 +556,18 @@ export class LogStore {
   }
 
   getTimestamps(logs: string) {
-    return logs.match(/^\d+\S+/gm);
+    return logs.match(/^\d{4}-\d{2}-\d{2}T\S+/gm);
   }
 
   removeTimestamps(logs: string): string {
-    return logs.replace(/^\d+.*?\s/gm, "");
+    return logs.replace(/^\d{4}-\d{2}-\d{2}T\S+ ?/gm, "");
   }
 
   clearLogs(tabId: TabId): void {
     this.stopLoadingLogs(tabId);
     this.podLogs.delete(tabId);
+    this.pollErrors.delete(tabId);
+    this.pollBackoffs.delete(tabId);
     this.cursors.delete(tabId);
     this.podColors.delete(tabId);
     this.lineCounts.delete(tabId);

@@ -49,7 +49,7 @@ const provider = {
   kind: "operator",
   name: "Prometheus Operator",
   isConfigurable: true,
-  getQuery: () => "up",
+  getQuery: (_opts: unknown, name: string) => `query_${name}`,
   getPrometheusService: async () => undefined,
 } as unknown as PrometheusProvider;
 
@@ -74,7 +74,12 @@ describe("the metrics route", () => {
       setupPrometheus: () => {},
       getPrometheusDetails: () => getPrometheusDetails(),
     }));
-    di.override(getMetricsInjectable, () => () => getMetrics());
+    di.override(
+      getMetricsInjectable,
+      () =>
+        (...args: unknown[]) =>
+          (getMetrics as (...a: unknown[]) => Promise<unknown>)(...args),
+    );
 
     cluster = new Cluster({ contextName: "some-context", id: "some-cluster-id", kubeConfigPath: "/some/kubeconfig" });
   });
@@ -127,5 +132,35 @@ describe("the metrics route", () => {
     expect(logger.warn).toHaveBeenCalledWith(
       "[METRICS-ROUTE]: failed to get metrics for clusterId=some-cluster-id: Error: No Prometheus service found",
     );
+  });
+
+  it("keeps the metrics whose queries succeed when one query of the batch fails", async () => {
+    const data = { status: "success", data: { resultType: "matrix", result: [{ metric: {}, values: [[1, "2"]] }] } };
+    const duplicate = JSON.stringify({
+      status: "error",
+      errorType: "execution",
+      error: "found duplicate series for the match group",
+    });
+
+    getMetrics = (async (_cluster: unknown, _path: unknown, params: { query: string }) => {
+      if (params.query === "query_bad") {
+        throw await requestError(422, duplicate);
+      }
+
+      return data;
+    }) as never;
+
+    const result = (await di
+      .inject(addMetricsRouteInjectable)
+      .handler({ cluster, payload: { good: {}, bad: {} }, query: new URLSearchParams() } as never)) as {
+      response: Record<string, unknown>;
+    };
+
+    expect(result.response).toEqual({ good: data, bad: {} });
+    expect(logger.warn).toHaveBeenCalledWith("[METRICS-ROUTE]: query failed for clusterId=some-cluster-id", {
+      query: "query_bad",
+      status: 422,
+      response: duplicate,
+    });
   });
 });

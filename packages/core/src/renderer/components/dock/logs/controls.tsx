@@ -24,6 +24,7 @@ export const LogControls = observer(({ model }: LogControlsProps) => {
 
   const logs = model.timestampSplitLogs.get();
   const { showTimestamps, showPrevious: previous, showWordWrap } = tabData;
+  const pollError = model.pollError.get();
   const since = logs.length ? logs[0][0] : null;
 
   const toggleTimestamps = () => {
@@ -46,6 +47,11 @@ export const LogControls = observer(({ model }: LogControlsProps) => {
         {since && (
           <span>
             Logs from <b>{new Date(since).toLocaleString()}</b>
+          </span>
+        )}
+        {pollError && (
+          <span className="text-secondary" data-testid="log-poll-error">
+            {` ${pollError}. Showing the lines loaded so far; retrying.`}
           </span>
         )}
       </div>

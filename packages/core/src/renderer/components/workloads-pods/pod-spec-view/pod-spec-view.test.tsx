@@ -58,4 +58,38 @@ describe("PodSpecView", () => {
 
     expect(diffLinesMock).toHaveBeenCalledTimes(1);
   });
+
+  it("reads the template of the next pod's controller when it is shown in place of the first", async () => {
+    const templateOf = (image: string) => ({
+      callWasSuccessful: true,
+      response: {
+        spec: { template: { spec: { containers: [{ name: "app", image }] } } },
+        getOwnerRefs: () => [],
+      },
+    });
+    const requestKubeResource = vi.fn(async (apiPath: string) =>
+      templateOf(apiPath.endsWith("/other") ? "app:2" : "app:1"),
+    );
+    const otherOwner = { ref: { ...owner.ref, name: "other", uid: "rs2" }, apiPath: "/apis/apps/v1/other" };
+    const otherPod = new Pod({
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        uid: "uid2",
+        name: "other-1",
+        resourceVersion: "1",
+        namespace: "default",
+        selfLink: "/api/v1/pods/other-1",
+      },
+      spec: { containers: [{ name: "app", image: "app:2" }] },
+    } as never);
+    const { rerender } = render(<PodSpecView pod={pod} owner={owner} requestKubeResource={requestKubeResource} />);
+
+    await screen.findByTestId("pod-spec-diff");
+    rerender(<PodSpecView pod={otherPod} owner={otherOwner} requestKubeResource={requestKubeResource} />);
+
+    await vi.waitFor(() => expect(requestKubeResource).toHaveBeenCalledWith("/apis/apps/v1/other"));
+    expect(await screen.findByTestId("pod-spec-origin")).toHaveTextContent("ReplicaSet other");
+    expect(screen.getByTestId("pod-spec-diff")).not.toHaveTextContent("app:1");
+  });
 });

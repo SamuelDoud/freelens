@@ -15,6 +15,7 @@ import createWorkloadLogsTabInjectable from "./create-workload-logs-tab.injectab
 import downloadAllLogsInjectable from "./download-all-logs.injectable";
 import downloadAllLogsForPodsInjectable from "./download-all-logs-for-pods.injectable";
 import downloadLogsInjectable from "./download-logs.injectable";
+import getLogPollErrorInjectable from "./get-log-poll-error.injectable";
 import getLogTabDataInjectable from "./get-log-tab-data.injectable";
 import getLogsInjectable from "./get-logs.injectable";
 import getLogsWithoutTimestampsInjectable from "./get-logs-without-timestamps.injectable";
@@ -75,6 +76,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(downloadLogsInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(getLogPollErrorInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
