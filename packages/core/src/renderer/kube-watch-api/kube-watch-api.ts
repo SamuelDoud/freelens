@@ -27,6 +27,27 @@ import type { ClusterContext } from "../cluster-frame-context/cluster-frame-cont
  */
 export const storeLingerMs = 5 * 60 * 1000;
 
+/**
+ * What the stores that linger may hold between them, so that the views a
+ * user has visited stay loaded without the cluster's lists and watches all
+ * staying with them. When a store that joins them takes the total over any
+ * of these, the one that has lingered longest is ended first (the one that
+ * joined last is the most recently used), and ends through the same path as
+ * a linger that ran out: its watches are aborted and the store is released.
+ *
+ * - kinds: how many stores linger at once;
+ * - items: how many objects they hold in all, so that a huge kind is not
+ *   kept (a store over the budget alone does not linger at all);
+ * - watches: how many watch requests they keep open against the API server;
+ *   a cluster-wide watch counts one, a store watched namespace by namespace
+ *   one for each namespace.
+ */
+export const lingerBudget = {
+  kinds: 16,
+  items: 200_000,
+  watches: 48,
+} as const;
+
 interface SubscribeStoreParams {
   store: SubscribableStore;
   parent: AbortController;
@@ -119,6 +140,8 @@ export interface SubscribableStore {
    * linger is over. A store may keep them, when they are too few to matter.
    */
   release?(): void;
+  /** How many items the store holds, for the budget of the stores that linger */
+  getTotalCount?(): number;
 }
 
 export type SubscribeStores = (stores: SubscribableStore[], opts?: KubeWatchSubscribeStoreOptions) => Disposer;
@@ -126,6 +149,8 @@ export type SubscribeStores = (stores: SubscribableStore[], opts?: KubeWatchSubs
 /** What `watchStore` hands back: the subscription's end, and its pause while lingering */
 interface StoreWatch {
   dispose(): void;
+  /** How many watch requests the subscription has started, or will when its load is done */
+  watchCount(): number;
   /** Keeps the watches but stops reloading for changes of selection or query */
   pause(): void;
   /** Brings a paused watch up to date with what changed meanwhile */
@@ -135,6 +160,8 @@ interface StoreWatch {
 interface WatchGroup {
   readonly controller: AbortController;
   readonly unsubscribe: ReturnType<typeof disposer>;
+  /** How many watch requests the group's subscription opens */
+  readonly watches: number;
 }
 
 export class KubeWatchApi {
@@ -223,19 +250,58 @@ export class KubeWatchApi {
 
     this.#lingering.set(
       store,
-      setTimeout(() => {
-        this.#lingering.delete(store);
-
-        const watch = this.#sharedWatches.get(store);
-
-        this.#sharedWatches.delete(store);
-        watch?.dispose();
-
-        if (!this.#ownedWatches.get(store)) {
-          store.release?.();
-        }
-      }, storeLingerMs),
+      setTimeout(() => this.endLinger(store), storeLingerMs),
     );
+
+    this.enforceLingerBudget();
+  }
+
+  /** Ends the watch of a lingering store and lets it free its items */
+  private endLinger(store: SubscribableStore) {
+    const timer = this.#lingering.get(store);
+
+    if (timer === undefined) {
+      return;
+    }
+
+    clearTimeout(timer);
+    this.#lingering.delete(store);
+
+    const watch = this.#sharedWatches.get(store);
+
+    this.#sharedWatches.delete(store);
+    watch?.dispose();
+
+    if (!this.#ownedWatches.get(store)) {
+      store.release?.();
+    }
+  }
+
+  /** Ends the lingers that have the stores over `lingerBudget`, the longest first */
+  private enforceLingerBudget() {
+    let items = 0;
+    let watches = 0;
+
+    for (const store of this.#lingering.keys()) {
+      items += store.getTotalCount?.() ?? 0;
+      watches += this.#sharedWatches.get(store)?.watchCount() ?? 0;
+    }
+
+    // Map order is the order of joining: the least recently used come first.
+    for (const store of [...this.#lingering.keys()]) {
+      if (
+        this.#lingering.size <= lingerBudget.kinds &&
+        items <= lingerBudget.items &&
+        watches <= lingerBudget.watches
+      ) {
+        return;
+      }
+
+      items -= store.getTotalCount?.() ?? 0;
+      watches -= this.#sharedWatches.get(store)?.watchCount() ?? 0;
+      console.debug(`[KUBE-WATCH-API]: ending the linger of ${store.api.apiBase}, the stores kept are over budget`);
+      this.endLinger(store);
+    }
   }
 
   /**
@@ -304,7 +370,6 @@ export class KubeWatchApi {
      * changes ASAP
      */
     const startGroup = (loadNamespaces: string[]) => {
-      const group: WatchGroup = { controller: new WrappedAbortController(parent), unsubscribe: disposer() };
       // The watches are named, so that another group's or view's load in the
       // meantime cannot change which ones they are: the whole cluster by
       // one watch (an empty list) when that is permitted, else each namespace.
@@ -314,6 +379,12 @@ export class KubeWatchApi {
             ? []
             : loadNamespaces
           : undefined;
+
+      const group: WatchGroup = {
+        controller: new WrappedAbortController(parent),
+        unsubscribe: disposer(),
+        watches: watchNamespaces && watchNamespaces.length > 0 ? watchNamespaces.length : 1,
+      };
 
       groups.push(group);
       loadThenSubscribe(loadNamespaces, watchNamespaces, group).catch(noop);
@@ -417,6 +488,7 @@ export class KubeWatchApi {
         : noop; // don't watch namespaces if namespaces were provided
 
     return {
+      watchCount: () => groups.reduce((sum, group) => sum + group.watches, 0),
       dispose: () => {
         cancelQueryReloading();
         cancelReloading();
