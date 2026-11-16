@@ -296,6 +296,9 @@ export class ResizingAnchor extends React.PureComponent<ResizingAnchorProps> {
   }, 100);
 
   onDragEnd = action(() => {
+    // The last movement may still be waiting in the throttle: deliver it first, so that every
+    // onDrag comes before onEnd and the end sees where the pointer was released.
+    this.onDrag.flush();
     this.props.onEnd();
     document.removeEventListener("mousemove", this.onDrag);
     document.removeEventListener("mouseup", this.onDragEnd);
