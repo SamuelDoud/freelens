@@ -27,6 +27,7 @@ describe("evicting hidden cluster frames", () => {
   let restores: { clusterId: string; state: ClusterViewState }[];
   let history: ReturnType<typeof historyControllerInjectable.instantiate>;
   let heap: number | undefined;
+  let enabled = true;
 
   const makeCluster = () => ({
     id: "",
@@ -52,6 +53,7 @@ describe("evicting hidden cluster frames", () => {
   beforeEach(() => {
     clock = 1_000_000;
     heap = undefined;
+    enabled = true;
     restores = [];
     document.body.innerHTML = '<div id="lens-views"></div>';
     clusters.clear();
@@ -88,6 +90,7 @@ describe("evicting hidden cluster frames", () => {
       deferRestore: history.deferRestore,
       now: () => clock,
       getHeapUsedBytes: () => heap,
+      isEnabled: () => enabled,
     });
   });
 
@@ -124,6 +127,25 @@ describe("evicting hidden cluster frames", () => {
     // the view is restored once only
     frameStarted("a");
     expect(restores).toHaveLength(1);
+  });
+
+  it("evicts nothing, by age, count or heap, when the preference is off", () => {
+    for (const id of ["a", "b", "c"]) {
+      show(id);
+      startFrame(id);
+      eviction.setKeepAlive(id, []);
+    }
+
+    show(null);
+    clock += hiddenFrameEvictionMs * 3;
+    heap = Number.MAX_SAFE_INTEGER;
+    enabled = false;
+
+    expect(eviction.check()).toEqual([]);
+    expect(handler.hasLoadedView("a")).toBe(true);
+
+    enabled = true;
+    expect(eviction.check()).not.toEqual([]);
   });
 
   it("never evicts a frame that is shown", () => {

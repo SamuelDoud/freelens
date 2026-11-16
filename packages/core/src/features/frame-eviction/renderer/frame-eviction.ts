@@ -17,6 +17,8 @@ export interface FrameEvictionDependencies {
   };
   /** Keeps the view of a cluster to show again when its frame has been replaced */
   deferRestore: (clusterId: string) => void;
+  /** The preference "Unload clusters hidden for 10 minutes": when off, no frame is evicted, by age, count or heap */
+  isEnabled?: () => boolean;
   now?: () => number;
   /** The heap in use in the renderer process, where the platform says */
   getHeapUsedBytes?: () => number | undefined;
@@ -41,6 +43,10 @@ export class FrameEviction {
 
   /** Looks at the hidden frames once, and unloads those the limits ask for. Returns the clusters unloaded. */
   check(): string[] {
+    if (this.dependencies.isEnabled && !this.dependencies.isEnabled()) {
+      return [];
+    }
+
     const now = (this.dependencies.now ?? Date.now)();
     const hidden = this.dependencies.frames.getHiddenViews().map(({ clusterId, hiddenSince }) => ({
       clusterId,

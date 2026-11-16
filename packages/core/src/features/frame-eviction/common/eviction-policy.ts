@@ -17,15 +17,15 @@ const MiB = 1024 * 1024;
  */
 export const hiddenFrameEvictionMs = 10 * 60 * 1000;
 
-/** A frame hidden for less than this is left alone by the limits below: the user has only just left it. */
-export const hiddenFrameGraceMs = 60 * 1000;
+/** A frame hidden for less than this is left alone by the limits below: someone moving between several clusters keeps them all instant. */
+export const hiddenFrameGraceMs = 5 * 60 * 1000;
 
 /**
  * How many hidden frames may stay alive, whatever their age. Frames that
  * cannot be evicted count, so with more protected frames than this, every
  * other hidden frame goes as soon as its grace is over.
  */
-export const maxHiddenFrames = 3;
+export const maxHiddenFrames = 5;
 
 /**
  * The heap of the renderer process above which hidden frames go one by one,

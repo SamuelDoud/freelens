@@ -39,8 +39,8 @@ describe("pickFramesToEvict", () => {
   it("evicts the longest hidden above the cap, leaving the newest, after the grace", () => {
     const hidden = Array.from({ length: maxHiddenFrames + 2 }, (_, i) => frame(`f${i}`, hiddenFrameGraceMs + i * 1000));
 
-    // f4 is the longest hidden, then f3
-    expect(pickFramesToEvict({ hidden, now })).toEqual(["f4", "f3"]);
+    // the last two are the longest hidden
+    expect(pickFramesToEvict({ hidden, now })).toEqual([`f${maxHiddenFrames + 1}`, `f${maxHiddenFrames}`]);
   });
 
   it("does not evict by the cap a frame still in its grace", () => {
@@ -51,9 +51,7 @@ describe("pickFramesToEvict", () => {
 
   it("counts protected frames against the cap", () => {
     const hidden = [
-      frame("p1", hiddenFrameGraceMs, ["port forward"]),
-      frame("p2", hiddenFrameGraceMs, ["port forward"]),
-      frame("p3", hiddenFrameGraceMs, ["port forward"]),
+      ...Array.from({ length: maxHiddenFrames }, (_, i) => frame(`p${i}`, hiddenFrameGraceMs, ["port forward"])),
       frame("free", hiddenFrameGraceMs),
     ];
 

@@ -7,6 +7,7 @@ import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import clusterFrameHandlerInjectable from "../../../renderer/components/cluster-manager/cluster-frame-handler.injectable";
 import historyControllerInjectable from "../../history/renderer/history-controller.injectable";
+import userPreferencesStateInjectable from "../../user-preferences/common/state.injectable";
 import { FrameEviction } from "./frame-eviction";
 
 const frameEvictionInjectable = getInjectable({
@@ -14,7 +15,10 @@ const frameEvictionInjectable = getInjectable({
   instantiate: (di) => {
     const history = di.inject(historyControllerInjectable);
 
+    const preferences = di.inject(userPreferencesStateInjectable);
+
     return new FrameEviction({
+      isEnabled: () => preferences.unloadHiddenClusters,
       logger: di.inject(loggerInjectionToken),
       frames: di.inject(clusterFrameHandlerInjectable),
       deferRestore: history.deferRestore,
