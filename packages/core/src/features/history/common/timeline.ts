@@ -22,6 +22,10 @@ const maxEntries = 200;
 const keyOf = ({ rootPath, clusterId, cluster }: TimelineEntry) =>
   JSON.stringify([rootPath, clusterId, cluster && [cluster.path, cluster.namespaces, cluster.expanded]]);
 
+/** Whether two views of a cluster are the same step: they differ at most in their scroll position */
+export const isSameView = (a: ClusterViewState, b: ClusterViewState) =>
+  JSON.stringify([a.path, a.namespaces, a.expanded]) === JSON.stringify([b.path, b.namespaces, b.expanded]);
+
 /**
  * The steps the user took, between pages and within them, in order. Going
  * back and forward moves through them; a new step drops the ones ahead.
