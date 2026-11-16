@@ -8,6 +8,7 @@ import { loggerInjectionToken } from "@freelensapp/logger";
 import { disposer, isDefined, isRequestError } from "@freelensapp/utilities";
 import { ApiException, type KubeConfig } from "@kubernetes/client-node";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
+import { isEqual } from "es-toolkit";
 import { compareStructural, reaction, runInAction } from "mobx";
 import createAuthorizationApiInjectable from "../../common/cluster/create-authorization-api.injectable";
 import createCanIInjectable from "../../common/cluster/create-can-i.injectable";
@@ -22,6 +23,7 @@ import { replaceObservableObject } from "../../common/utils/replace-observable-o
 import shellEnvironmentReadyInjectable from "../../features/shell-sync/main/shell-environment-ready.injectable";
 import clusterVersionDetectorInjectable from "../cluster-detectors/cluster-version-detector.injectable";
 import detectClusterMetadataInjectable from "../cluster-detectors/detect-cluster-metadata.injectable";
+import accessibilityCacheInjectable from "./accessibility-cache.injectable";
 import broadcastConnectionUpdateInjectable from "./broadcast-connection-update.injectable";
 import freelensK8sProxyManagerInjectable from "./freelens-k8s-proxy-manager.injectable";
 import { getResourcesToShow } from "./get-resources-to-show";
@@ -46,6 +48,7 @@ import type { BroadcastMessage } from "../../common/ipc/broadcast-message.inject
 import type { KubeApiResource } from "../../common/rbac";
 import type { DetectClusterMetadata } from "../cluster-detectors/detect-cluster-metadata.injectable";
 import type { FallibleOnlyClusterMetadataDetector } from "../cluster-detectors/token";
+import type { Accessibility, AccessibilityCache, AccessibilityIdentity } from "./accessibility-cache.injectable";
 import type { BroadcastConnectionUpdate } from "./broadcast-connection-update.injectable";
 import type { FreelensK8sProxyManager } from "./freelens-k8s-proxy-manager.injectable";
 import type { LoadProxyKubeconfig } from "./load-proxy-kubeconfig.injectable";
@@ -74,6 +77,7 @@ interface Dependencies {
   loadProxyKubeconfig: LoadProxyKubeconfig;
   removeProxyKubeconfig: RemoveProxyKubeconfig;
   loadKubeconfig: LoadKubeconfig;
+  accessibilityCache: AccessibilityCache;
 }
 
 /**
@@ -428,9 +432,129 @@ class ClusterConnection {
     });
   }
 
+  /** What the cache file holds, as far as this session knows. */
+  private savedAccessibility: Accessibility | undefined;
+
+  /** The refresh that runs after the cached answers were applied, see refreshAccessibility(). */
+  private accessibilityRefresh: Promise<void> | undefined;
+
+  /**
+   * Who the cached answers are for: the context, its user and the server it
+   * points at, as the kubeconfig has them now. `undefined` when they cannot
+   * be read, which leaves the cache out.
+   */
+  private async getAccessibilityIdentity(): Promise<AccessibilityIdentity | undefined> {
+    try {
+      const kubeConfig = await this.dependencies.loadKubeconfig();
+      const contextName = this.cluster.contextName.get();
+      const context = kubeConfig.getContextObject(contextName);
+      const server = context ? kubeConfig.getCluster(context.cluster)?.server : undefined;
+
+      if (!context || !server) {
+        return undefined;
+      }
+
+      return { contextName, userName: context.user, server };
+    } catch {
+      return undefined;
+    }
+  }
+
+  private applyAccessibility(accessibility: Accessibility) {
+    runInAction(() => {
+      this.cluster.isAdmin.set(accessibility.isAdmin);
+      this.cluster.isGlobalWatchEnabled.set(accessibility.isGlobalWatchEnabled);
+      this.cluster.allowedNamespaces.replace(accessibility.allowedNamespaces);
+      this.cluster.knownResources.replace(accessibility.knownResources);
+      this.cluster.resourcesToShow.replace(accessibility.resourcesToShow);
+      this.cluster.ready.set(this.cluster.knownResources.length > 0);
+    });
+  }
+
+  private currentAccessibility(): Accessibility {
+    return {
+      isAdmin: this.cluster.isAdmin.get(),
+      isGlobalWatchEnabled: this.cluster.isGlobalWatchEnabled.get(),
+      allowedNamespaces: [...this.cluster.allowedNamespaces],
+      knownResources: [...this.cluster.knownResources],
+      resourcesToShow: [...this.cluster.resourcesToShow],
+    };
+  }
+
+  /**
+   * Asks the cluster what it serves and what the user may do. On the first
+   * connection after the app starts the answers of the last time, saved on
+   * disk for this context, user and server, are applied at once and the cluster
+   * is asked in the background: the answers are applied again when they differ.
+   * Everywhere else, the call returns once the cluster has answered.
+   */
   private async refreshAccessibility(): Promise<void> {
     this.dependencies.logger.info(`[CLUSTER]: refreshAccessibility`, this.cluster.getMeta());
+
+    // The check that follows a cached start: wait for it, so that callers of
+    // this method still return with the cluster's answers applied.
+    if (this.accessibilityRefresh) {
+      return this.accessibilityRefresh;
+    }
+
+    const identity = await this.getAccessibilityIdentity();
+    const cached =
+      identity && this.cluster.knownResources.length === 0
+        ? await this.dependencies.accessibilityCache.read(identity)
+        : undefined;
+
+    if (cached && cached.knownResources.length > 0) {
+      this.dependencies.logger.info(`[CLUSTER]: using the cached accessibility, refreshing in the background`);
+      this.savedAccessibility = cached;
+      this.applyAccessibility(cached);
+
+      const refresh = this.fetchAndApplyAccessibility(identity, true)
+        .catch((error) => {
+          this.dependencies.logger.warn(`[CLUSTER]: failed to refresh the cached accessibility: ${error}`);
+          this.dependencies.broadcastConnectionUpdate({
+            level: "warning",
+            message: `Failed to refresh cluster accessibility: ${error}`,
+          });
+        })
+        .finally(() => {
+          if (this.accessibilityRefresh === refresh) {
+            this.accessibilityRefresh = undefined;
+          }
+        });
+
+      this.accessibilityRefresh = refresh;
+
+      return;
+    }
+
+    await this.fetchAndApplyAccessibility(identity, false);
+  }
+
+  private async fetchAndApplyAccessibility(identity: AccessibilityIdentity | undefined, inBackground: boolean) {
     const proxyConfig = await this.dependencies.loadProxyKubeconfig();
+    const fresh = await this.fetchAccessibility(proxyConfig);
+
+    if (inBackground && this.cluster.disconnected.get()) {
+      // The user disconnected while the cluster answered: nothing is shown any more
+      return;
+    }
+
+    const changed = !isEqual(fresh, this.currentAccessibility());
+
+    if (!inBackground || changed) {
+      this.applyAccessibility(fresh);
+    }
+
+    // The file is rewritten only when the answers differ from what it holds
+    if (identity && fresh.knownResources.length > 0 && !isEqual(fresh, this.savedAccessibility)) {
+      this.savedAccessibility = fresh;
+      await this.dependencies.accessibilityCache.write(identity, fresh);
+    }
+
+    this.dependencies.logger.debug(`[CLUSTER]: refreshed accessibility data`, this.cluster.getState());
+  }
+
+  private async fetchAccessibility(proxyConfig: KubeConfig): Promise<Accessibility> {
     const api = this.dependencies.createAuthorizationApi(proxyConfig);
     const canI = this.dependencies.createCanI(api);
     const requestNamespaceListPermissions = this.cluster.preferences.skipNamespaceAuthorizationCheck
@@ -463,7 +587,7 @@ class ClusterConnection {
         if (this.cluster.knownResources.length > 0) {
           this.dependencies.logger.warn(`[CLUSTER]: failed to list KUBE resources, sticking with previous list`);
 
-          return this.cluster.knownResources;
+          return [...this.cluster.knownResources];
         }
 
         this.dependencies.logger.warn(
@@ -483,16 +607,7 @@ class ClusterConnection {
       requestNamespaceListPermissions,
     );
 
-    runInAction(() => {
-      this.cluster.isAdmin.set(isAdmin);
-      this.cluster.isGlobalWatchEnabled.set(isGlobalWatchEnabled);
-      this.cluster.allowedNamespaces.replace(allowedNamespaces);
-      this.cluster.knownResources.replace(knownResources);
-      this.cluster.resourcesToShow.replace(resourcesToShow);
-      this.cluster.ready.set(this.cluster.knownResources.length > 0);
-    });
-
-    this.dependencies.logger.debug(`[CLUSTER]: refreshed accessibility data`, this.cluster.getState());
+    return { isAdmin, isGlobalWatchEnabled, allowedNamespaces, knownResources, resourcesToShow };
   }
 
   refreshConnectionStatus(): Promise<void> {
@@ -680,6 +795,7 @@ const clusterConnectionInjectable = getInjectable({
         detectClusterMetadata: di.inject(detectClusterMetadataInjectable),
         loadProxyKubeconfig: di.inject(loadProxyKubeconfigInjectable, cluster),
         loadKubeconfig: di.inject(loadKubeconfigInjectable, cluster),
+        accessibilityCache: di.inject(accessibilityCacheInjectable, cluster),
         removeProxyKubeconfig: di.inject(removeProxyKubeconfigInjectable, cluster),
         requestApiResources: di.inject(requestApiResourcesInjectable),
         createAuthorizationApi: di.inject(createAuthorizationApiInjectable),

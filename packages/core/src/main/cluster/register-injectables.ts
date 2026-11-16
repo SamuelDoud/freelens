@@ -6,6 +6,7 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import accessibilityCacheInjectable from "./accessibility-cache.injectable";
 import clustersThatAreBeingDeletedInjectable from "./are-being-deleted.injectable";
 import broadcastConnectionUpdateInjectable from "./broadcast-connection-update.injectable";
 import clusterConnectionInjectable from "./cluster-connection.injectable";
@@ -34,6 +35,11 @@ import visibleClusterInjectable from "./visible-cluster.injectable";
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
+  try {
+    di.register(accessibilityCacheInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
   try {
     di.register(broadcastConnectionUpdateInjectable);
   } catch (e) {

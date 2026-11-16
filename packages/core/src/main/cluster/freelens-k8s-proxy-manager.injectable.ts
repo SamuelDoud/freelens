@@ -33,14 +33,29 @@ export interface FreelensK8sProxyManager {
 
 interface ApiTarget {
   /**
-   * The port of the proxy process that the target forwards to.
+   * The port of the proxy process that the targets forward to.
    */
   port: number;
+  /**
+   * What the targets were made from: they are made again when the cluster
+   * points at another kubeconfig or context.
+   */
+  kubeConfigPath: string;
+  contextName: string;
+  /** The target of a request, and of a long-running one (watch, follow). */
   options: ServerOptions;
+  longRunningOptions: ServerOptions;
 }
 
 const fourHoursInMs = 4 * 60 * 60 * 1000;
 const thirtySecondsInMs = 30 * 1000;
+
+/**
+ * How often a long-running request looks whether the kubeconfig has changed,
+ * which takes a stat of the file: a cluster opens hundreds of watches at once,
+ * and one look serves them all.
+ */
+const kubeconfigCheckIntervalMs = 1000;
 
 const freelensK8sProxyManagerInjectable = getInjectable({
   id: "freelens-k8s-proxy-manager",
@@ -50,6 +65,9 @@ const freelensK8sProxyManagerInjectable = getInjectable({
 
     let freelensK8sProxy: FreelensK8sProxy | undefined = undefined;
     let apiTarget: ApiTarget | undefined = undefined;
+    /** The target being made, which concurrent requests wait for instead of making their own. */
+    let pendingApiTarget: Promise<ApiTarget> | undefined = undefined;
+    let lastKubeconfigCheck = 0;
     let apiUrl: URL | undefined = undefined;
     let agent: Agent | undefined;
     let dispatcher: Dispatcher | undefined;
@@ -83,7 +101,9 @@ const freelensK8sProxyManagerInjectable = getInjectable({
       return freelensK8sProxy;
     };
 
-    const newApiTarget = async (timeout: number): Promise<ApiTarget> => {
+    const newApiTarget = async (): Promise<ApiTarget> => {
+      const kubeConfigPath = cluster.kubeConfigPath.get();
+      const contextName = cluster.contextName.get();
       // The proxy is created and its start begun before anything is awaited,
       // so a stop() while the API URL is read reaches its exit(), which aborts
       // the start. Awaited first, they would let the start spawn a process
@@ -93,16 +113,25 @@ const freelensK8sProxyManagerInjectable = getInjectable({
       const certificate = await di.inject(freelensK8sProxyCertificateInjectable, hostname);
 
       apiUrl = url;
+      lastKubeconfigCheck = Date.now();
+
+      const target = new URL(`https://127.0.0.1:${port}${path}`);
+      const dispatcher = getDispatcher(certificate.cert);
 
       return {
         port,
-        options: apiTargetOptions({
-          target: new URL(`https://127.0.0.1:${port}${path}`),
-          dispatcher: getDispatcher(certificate.cert),
-          timeout,
-        }),
+        kubeConfigPath,
+        contextName,
+        options: apiTargetOptions({ target, dispatcher, timeout: thirtySecondsInMs }),
+        longRunningOptions: apiTargetOptions({ target, dispatcher, timeout: fourHoursInMs }),
       };
     };
+
+    const isCurrent = (target: ApiTarget) =>
+      freelensK8sProxy?.isRunning === true &&
+      target.port === freelensK8sProxy.port &&
+      target.kubeConfigPath === cluster.kubeConfigPath.get() &&
+      target.contextName === cluster.contextName.get();
 
     const stopServer = () => {
       // Never reuse a connection to a stopped proxy process after a restart.
@@ -113,6 +142,7 @@ const freelensK8sProxyManagerInjectable = getInjectable({
       freelensK8sProxy?.exit();
       freelensK8sProxy = undefined;
       apiTarget = undefined;
+      pendingApiTarget = undefined;
     };
 
     const freelensK8sProxyManager: FreelensK8sProxyManager = {
@@ -120,19 +150,50 @@ const freelensK8sProxyManagerInjectable = getInjectable({
         return apiUrl;
       },
       getApiTarget: async (isLongRunningRequest = false) => {
-        if (isLongRunningRequest) {
-          return (await newApiTarget(fourHoursInMs)).options;
+        // A watch is where a changed API server address of the kubeconfig
+        // reaches the routes of the cluster: clusterApiUrl() gives the same URL
+        // until the file changes.
+        if (isLongRunningRequest && apiTarget && Date.now() - lastKubeconfigCheck >= kubeconfigCheckIntervalMs) {
+          lastKubeconfigCheck = Date.now();
+
+          const url = await clusterApiUrl();
+
+          if (url !== apiUrl) {
+            apiTarget = undefined;
+          }
         }
 
-        // The cached target points at the port of one proxy process. Once that
-        // process has exited, on its own or not, a new target starts a new one,
-        // or points at the one that ensureRunning() or
-        // ensureFreelensK8sProxyUrl() has started in its place.
-        if (!apiTarget || !freelensK8sProxy?.isRunning || apiTarget.port !== freelensK8sProxy.port) {
-          apiTarget = await newApiTarget(thirtySecondsInMs);
+        // The targets point at the port of one proxy process, and are made once
+        // for it, for every request and every watch. Once that process has
+        // exited, on its own or not, a new target starts a new one, or points
+        // at the one that ensureRunning() or ensureFreelensK8sProxyUrl() has
+        // started in its place. Requests that arrive while one is made wait
+        // for it.
+        if (!apiTarget || !isCurrent(apiTarget)) {
+          const pending = (pendingApiTarget ??= newApiTarget().then(
+            (made) => {
+              if (pendingApiTarget === pending) {
+                apiTarget = made;
+                pendingApiTarget = undefined;
+              }
+
+              return made;
+            },
+            (error) => {
+              if (pendingApiTarget === pending) {
+                pendingApiTarget = undefined;
+              }
+
+              throw error;
+            },
+          ));
+
+          const made = await pending;
+
+          return isLongRunningRequest ? made.longRunningOptions : made.options;
         }
 
-        return apiTarget.options;
+        return isLongRunningRequest ? apiTarget.longRunningOptions : apiTarget.options;
       },
       ensureFreelensK8sProxyUrl: async () => {
         const freelensK8sProxy = await ensureServerHelper();
