@@ -119,7 +119,7 @@ const watchKubeconfigFileChangesInjectable = getInjectable({
             // WSL 9p shares do not emit native filesystem change events, so fall
             // back to polling for kubeconfigs stored under `\\wsl.localhost\` or
             // `\\wsl$\` (https://github.com/freelensapp/freelens/issues/2020).
-            usePolling: isWslPath(filePath),
+            backend: isWslPath(filePath) ? "polling" : "auto",
             awaitWriteFinish: {
               pollInterval: 100,
               stabilityThreshold: 1000,
