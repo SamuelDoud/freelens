@@ -453,6 +453,68 @@ describe("KubeApi", () => {
     });
   });
 
+  describe("restarting a watch from the version its caller holds", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("asks the caller again at every restart rather than reading the version the API remembers", async () => {
+      const api = new PodApi({
+        logDebug: vi.fn(),
+        logError: vi.fn(),
+        logInfo: vi.fn(),
+        logWarn: vi.fn(),
+        maybeKubeApi: kubeJsonApi,
+      });
+      const stream = new MockResponseStream();
+      let held = "10";
+      const stopWatch = api.watch({ namespace: "default", getResourceVersion: () => held });
+      await flushPromises();
+
+      const first =
+        "http://127.0.0.1:9999/api-kube/api/v1/namespaces/default/pods?watch=1&resourceVersion=10&allowWatchBookmarks=true&timeoutSeconds=600";
+
+      expect(fetchMock.mock.lastCall?.[0]).toBe(first);
+
+      await fetchMock.resolve(createMockResponseFromStream(first, stream));
+
+      // Another list of the same API moves the remembered version on, past
+      // events (a delete among them) this watch's caller has not seen.
+      api.setResourceVersion("default", "20");
+      api.setResourceVersion("", "20");
+      held = "15";
+
+      vi.useFakeTimers();
+      stream.end();
+      stream.destroy();
+      await vi.advanceTimersByTimeAsync(1500);
+
+      expect(fetchMock.mock.lastCall?.[0]).toBe(first.replace("resourceVersion=10", "resourceVersion=15"));
+
+      stopWatch();
+    });
+
+    it("lets an explicit query version win", async () => {
+      const api = new PodApi({
+        logDebug: vi.fn(),
+        logError: vi.fn(),
+        logInfo: vi.fn(),
+        logWarn: vi.fn(),
+        maybeKubeApi: kubeJsonApi,
+      });
+      const stopWatch = api.watch({
+        namespace: "default",
+        query: { resourceVersion: "7" },
+        getResourceVersion: () => "10",
+      });
+      await flushPromises();
+
+      expect(fetchMock.mock.lastCall?.[0]).toContain("resourceVersion=7&");
+
+      stopWatch();
+    });
+  });
+
   describe("watching with a query", () => {
     it("narrows the watch with it", async () => {
       const api = new PodApi({

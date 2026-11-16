@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeObject } from "@freelensapp/kube-object";
+import { KubeObject, KubeStatus } from "@freelensapp/kube-object";
 import { noop, WrappedAbortController } from "@freelensapp/utilities";
 import { observe } from "mobx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -784,6 +784,29 @@ describe("KubeObjectStore", () => {
       });
     });
 
+    it("loads a namespace holding more objects than a call can take as arguments", async () => {
+      // Spreading a list into push() throws a RangeError from about 120k
+      // arguments on in Node, and from some hundred thousand under Vitest,
+      // whose stack is larger; one shared item keeps the list cheap to build.
+      const count = 1_000_000;
+      const shared = {
+        getNs: () => "big",
+        getName: () => "item",
+        getId: () => "uid",
+      } as unknown as KubeObject;
+      const big = new Array<KubeObject>(count).fill(shared);
+      const small = objectNamed("small", "tiny");
+      const list = vi.fn(({ namespace }: { namespace?: string }) =>
+        Promise.resolve(namespace === "big" ? big : [small]),
+      );
+      const store = new RealLoadItemsKubeObjectStore({ isNamespaced: true, list }, () => false);
+
+      await expect(store.loadAll({ namespaces: ["big", "tiny"] })).resolves.toHaveLength(count + 1);
+
+      expect(store.items).toHaveLength(count + 1);
+      expect(store.isLoaded).toBe(true);
+    });
+
     it("names the namespaces a slow load still waits on once only a few are left", async () => {
       const namespaces = ["ns1", "ns2", "ns3", "ns4", "ns5"];
       const gates = new Map(namespaces.map((namespace) => [namespace, deferred<KubeObject[]>()]));
@@ -1121,6 +1144,211 @@ describe("KubeObjectStore", () => {
 
         expect(ids()).toEqual(["a", "b", "bb", "c", "d"]);
       });
+    });
+  });
+
+  describe("resuming a watch from the version the store holds", () => {
+    const podNamed = (name: string, resourceVersion: string, namespace?: string) =>
+      new KubeObject({
+        apiVersion: "v1",
+        kind: "Foo",
+        metadata: {
+          name,
+          resourceVersion,
+          uid: `uid-${name}`,
+          ...(namespace ? { namespace } : {}),
+          selfLink: `/some/self/link/${name}`,
+        },
+      });
+
+    type WatchOptions = KubeApiWatchOptions<KubeObject, KubeJsonApiDataFor<KubeObject>>;
+
+    /**
+     * An API that remembers one version per namespace for every caller, as
+     * KubeApi does, lists the given objects at a version, and serves a watch
+     * by replaying the events of `history` newer than the version it starts
+     * from.
+     */
+    const createServer = ({ isNamespaced = false } = {}) => {
+      const remembered = new Map<string, string>();
+      const state = {
+        listed: new Map<string, { items: KubeObject[]; version: string }>(),
+        history: [] as Array<{ type: string; object: KubeObject; version: number }>,
+      };
+      const watchOptions: WatchOptions[] = [];
+      const list = vi.fn(
+        async ({ namespace = "", onPage }: { namespace?: string; onPage?: (page: unknown) => void } = {}) => {
+          const { items, version } = state.listed.get(namespace) ?? state.listed.get("") ?? { items: [], version: "1" };
+
+          remembered.set(namespace, version);
+          remembered.set("", version);
+          onPage?.({ items, loaded: items.length, remainingItemCount: 0, resourceVersion: version, done: true });
+
+          return items;
+        },
+      );
+      const startWatch = (opts: WatchOptions) => {
+        watchOptions.push(opts);
+
+        const startVersion = Number(opts.getResourceVersion?.() ?? remembered.get(opts.namespace ?? ""));
+
+        for (const event of state.history.filter((event) => event.version > startVersion)) {
+          opts.callback?.(
+            {
+              type: event.type,
+              object: {
+                ...event.object,
+                metadata: { ...event.object.metadata, resourceVersion: String(event.version) },
+              },
+            } as never,
+            null,
+          );
+        }
+
+        return noop;
+      };
+      const watch = vi.fn((opts: WatchOptions) => startWatch(opts));
+      const api = {
+        isNamespaced,
+        list,
+        watch,
+        getResourceVersion: (namespace = "") => remembered.get(namespace),
+        setResourceVersion: (namespace: string, version: string) => remembered.set(namespace, version),
+      } as unknown as Partial<KubeApi<KubeObject>>;
+
+      return { api, state, remembered, watch, list, watchOptions, startWatch };
+    };
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    });
+
+    it("keeps resuming from what the store holds after another list moves the API's version on", async () => {
+      const { api, state, remembered, watchOptions } = createServer();
+      const store = new RealLoadItemsKubeObjectStore(api);
+
+      state.listed.set("", { items: [podNamed("a", "5"), podNamed("b", "6")], version: "10" });
+      await store.loadAll({});
+      store.subscribe();
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(watchOptions).toHaveLength(1);
+      expect(watchOptions[0].getResourceVersion?.()).toBe("10");
+
+      // An unrelated list of the same API, such as an extension's
+      remembered.set("", "20");
+
+      expect(watchOptions[0].getResourceVersion?.()).toBe("10");
+    });
+
+    it("does not miss a delete when a restarted watch finds the API's version moved past it", async () => {
+      const { api, state, remembered, startWatch, watchOptions } = createServer();
+      const store = new RealLoadItemsKubeObjectStore(api);
+      const [a, b] = [podNamed("a", "5"), podNamed("b", "6")];
+
+      state.listed.set("", { items: [a, b], version: "10" });
+      await store.loadAll({});
+      store.subscribe();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // b is deleted while the stream is down, and an unrelated list then
+      // moves the API's version past the delete.
+      state.history.push({ type: "DELETED", object: b, version: 15 });
+      remembered.set("", "20");
+
+      // KubeApi restarts a dropped watch with the options it started with
+      startWatch(watchOptions[0]);
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(store.items.map((item) => item.getName())).toEqual(["a"]);
+    });
+
+    it("advances with the events and bookmarks it receives, and never back on a replay", async () => {
+      const { api, state, watchOptions } = createServer();
+      const store = new RealLoadItemsKubeObjectStore(api);
+
+      state.listed.set("", { items: [podNamed("a", "5")], version: "10" });
+      await store.loadAll({});
+      store.subscribe();
+      await vi.advanceTimersByTimeAsync(0);
+
+      const [{ callback, onBookmark, getResourceVersion }] = watchOptions;
+      const event = (version: string) =>
+        ({ type: "MODIFIED", object: podNamed("a", version) }) as unknown as Parameters<
+          NonNullable<typeof callback>
+        >[0];
+
+      callback?.(event("12"), null);
+      expect(getResourceVersion?.()).toBe("12");
+
+      onBookmark?.("14");
+      expect(getResourceVersion?.()).toBe("14");
+
+      // a restarted stream replays what it had sent
+      callback?.(event("11"), null);
+      expect(getResourceVersion?.()).toBe("14");
+    });
+
+    it.each([
+      ["an HTTP 410", () => new Response(null, { status: 410 })],
+      [
+        "a 410 status event",
+        () => new KubeStatus({ kind: "Status", apiVersion: "v1", code: 410, status: "Failure" } as never),
+      ],
+    ])("lists again on %s and watches from the new list", async (_name, makeError) => {
+      const { api, state, watch, list, watchOptions } = createServer();
+      const store = new RealLoadItemsKubeObjectStore(api);
+
+      state.listed.set("", { items: [podNamed("a", "5")], version: "10" });
+      await store.loadAll({});
+      store.subscribe();
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(list).toHaveBeenCalledTimes(1);
+
+      state.listed.set("", { items: [podNamed("c", "28")], version: "30" });
+      watchOptions[0].callback?.(null, makeError());
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(list).toHaveBeenCalledTimes(2);
+      expect(watch).toHaveBeenCalledTimes(2);
+      expect(watchOptions[1].getResourceVersion?.()).toBe("30");
+      expect(store.items.map((item) => item.getName())).toEqual(["c"]);
+    });
+
+    it("holds one version per namespace when only some namespaces are loaded", async () => {
+      const { api, state, remembered, watchOptions } = createServer({ isNamespaced: true });
+      const store = new RealLoadItemsKubeObjectStore(api, () => false);
+
+      state.listed.set("ns1", { items: [podNamed("a", "5", "ns1")], version: "10" });
+      state.listed.set("ns2", { items: [podNamed("b", "6", "ns2")], version: "12" });
+      await store.loadAll({ namespaces: ["ns1", "ns2"] });
+      remembered.set("ns1", "99");
+      remembered.set("ns2", "99");
+      store.subscribe();
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(watchOptions.map((opts) => [opts.namespace, opts.getResourceVersion?.()]).sort()).toEqual([
+        ["ns1", "10"],
+        ["ns2", "12"],
+      ]);
+    });
+
+    it("forgets what it held when it is reset, and falls back to the API's version", async () => {
+      const { api, state, remembered } = createServer();
+      const store = new RealLoadItemsKubeObjectStore(api);
+
+      state.listed.set("", { items: [podNamed("a", "5")], version: "10" });
+      await store.loadAll({});
+      store.reset();
+      remembered.set("", "20");
+
+      expect(store["watchedVersion"]("")).toBe("20");
     });
   });
 
