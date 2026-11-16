@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it } from "vitest";
-import { findDefinitionTarget } from "./find-definition-target";
+import { findDefinitionTarget, labelOf } from "./find-definition-target";
 
 describe("findDefinitionTarget", () => {
   beforeEach(() => {
@@ -42,5 +42,23 @@ describe("findDefinitionTarget", () => {
   it("finds nothing for anything else", () => {
     expect(target("other")).toBeUndefined();
     expect(findDefinitionTarget(null)).toBeUndefined();
+  });
+});
+
+describe("labelOf", () => {
+  it("leaves out the text of icons, which is the icon's name", () => {
+    document.body.innerHTML = `
+      <a id="section">
+        <i class="Icon material"><span class="icon" data-icon-name="device_hub">device_hub</span></i>
+        <span>Network</span>
+        <i class="Icon material"><span class="icon" data-icon-name="keyboard_arrow_up">keyboard_arrow_up</span></i>
+      </a>
+      <a id="item"><span>Pods</span></a>
+      <a id="spaced"><span>Pod​ Disruption</span>  <span>Budgets</span></a>
+    `;
+
+    expect(labelOf(document.getElementById("section")!)).toBe("Network");
+    expect(labelOf(document.getElementById("item")!)).toBe("Pods");
+    expect(labelOf(document.getElementById("spaced")!)).toBe("Pod Disruption Budgets");
   });
 });

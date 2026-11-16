@@ -7,7 +7,7 @@ import { withInjectables } from "@ogre-tools/injectable-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./definition-hover.module.scss";
-import { findDefinitionTarget } from "./find-definition-target";
+import { findDefinitionTarget, labelOf } from "./find-definition-target";
 import getResourceDefinitionInjectable from "./get-definition.injectable";
 
 import type { ResourceDefinition } from "../common/definitions";
@@ -61,7 +61,7 @@ const NonInjectedDefinitionHover = ({ getDefinition }: Dependencies) => {
       }
 
       setShown({
-        title: target.anchor.textContent?.replace(/​/g, "").trim() || definition.kind || "",
+        title: labelOf(target.anchor) || definition.kind || "",
         definition,
         ...placeBeside(target.anchor),
       });

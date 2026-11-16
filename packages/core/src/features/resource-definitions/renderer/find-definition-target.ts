@@ -73,3 +73,22 @@ export function findDefinitionTarget(target: Element | null): DefinitionTarget |
 
   return undefined;
 }
+
+/**
+ * The name an element shows, without the text of its icons: a material icon is a ligature, whose
+ * text is the icon's name ("device_hub", "keyboard_arrow_up"), which a section of the sidebar has
+ * beside its label.
+ */
+export function labelOf(element: Element): string {
+  const document = element.ownerDocument;
+  const walker = document.createTreeWalker(element, 4 /* NodeFilter.SHOW_TEXT */);
+  const parts: string[] = [];
+
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.parentElement?.closest(".Icon")) {
+      parts.push(node.textContent ?? "");
+    }
+  }
+
+  return parts.join("").replace(/​/g, "").replace(/\s+/g, " ").trim();
+}
