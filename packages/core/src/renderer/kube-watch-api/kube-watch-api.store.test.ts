@@ -302,6 +302,35 @@ describe("KubeWatchApi with a store", () => {
     expect(store.items).toHaveLength(0);
   });
 
+  describe("given every namespace selected", () => {
+    it("watches each namespace when the user may not watch cluster-wide", async () => {
+      const { kubeWatchApi, store, watches, settle } = createEnvironment({
+        namespaces: ["default", "kube-system", "other"],
+      });
+
+      kubeWatchApi.subscribeStores([store]);
+      await settle();
+
+      expect(watches.map((watch) => watch.namespace).sort()).toEqual(["default", "kube-system", "other"]);
+    });
+
+    it("keeps the watch of the selection when another view loads one namespace meanwhile", async () => {
+      const { kubeWatchApi, store, watches, holdList, releaseList, settle } = createEnvironment({
+        namespaces: ["default", "kube-system", "other"],
+      });
+
+      holdList("other");
+      kubeWatchApi.subscribeStores([store]);
+      await settle();
+      // the logs dock of another view loads and watches one namespace
+      kubeWatchApi.subscribeStores([store], { namespaces: ["default"] });
+      await settle();
+      await releaseList("other");
+
+      expect(watches.map((watch) => watch.namespace).sort()).toEqual(["default", "default", "kube-system", "other"]);
+    });
+  });
+
   describe("given a selection of namespaces that grows", () => {
     it("lists only the added namespace and ends with the items a full load gives", async () => {
       const { kubeWatchApi, store, lists, openWatches, select, names, settle } = createEnvironment();

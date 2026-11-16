@@ -464,8 +464,11 @@ export class KubeObjectStore<
 
       // Keep the all-namespaces marker empty so that subscribe() stays on
       // its single cluster-wide watch; the fan-out below points that
-      // watch at the oldest namespace snapshot instead.
-      this.loadedNamespaces.set(isLoadingAll ? [] : namespaces);
+      // watch at the oldest namespace snapshot instead. Without the
+      // permission to watch cluster-wide, every namespace is watched.
+      const watchedClusterWide = isLoadingAll && this.dependencies.context.isGlobalWatchEnabled();
+
+      this.loadedNamespaces.set(watchedClusterWide ? [] : namespaces);
 
       // The cluster-wide watch that follows an all-namespaces load starts
       // now, before the namespaces are listed, rather than from the oldest
@@ -474,7 +477,7 @@ export class KubeObjectStore<
       // watches by the time the last namespace is listed: the watch was
       // refused as too old, and the store listed everything again, over
       // and over. Watched from now, no namespace has to be listed again.
-      if (isLoadingAll && this.dependencies.context.isGlobalWatchEnabled()) {
+      if (watchedClusterWide) {
         loadWatch = await this.startLoadWatch(reqInit?.signal);
       }
 
@@ -509,7 +512,7 @@ export class KubeObjectStore<
         this.api.setResourceVersion("", caught.resourceVersion);
         this.holdVersion("", caught.resourceVersion);
         this.loadReplay = { generation, events: caught.events };
-      } else if (isLoadingAll && results.every((result) => result.status === "fulfilled")) {
+      } else if (watchedClusterWide && results.every((result) => result.status === "fulfilled")) {
         // Without a watch started early, the pages left the cluster-wide ("") resourceVersion at whichever
         // namespace snapshot was parsed last. The cluster-wide watch must
         // start from the oldest snapshot instead: anything newer could
@@ -524,7 +527,7 @@ export class KubeObjectStore<
         this.holdVersion("", oldestResourceVersion);
       }
 
-      if (!isLoadingAll) {
+      if (!watchedClusterWide) {
         // Each namespace is watched from its own snapshot.
         results.forEach((result, index) => {
           this.holdVersion(

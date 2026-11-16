@@ -277,12 +277,14 @@ export class KubeWatchApi {
      */
     const startGroup = (loadNamespaces: string[]) => {
       const group: WatchGroup = { controller: new WrappedAbortController(parent), unsubscribe: disposer() };
-      // What a load of the whole cluster watches is told by the store; the
-      // watches of some namespaces are named, so that another group's load
-      // in the meantime cannot change which ones they are.
+      // The watches are named, so that another group's or view's load in the
+      // meantime cannot change which ones they are: the whole cluster by
+      // one watch (an empty list) when that is permitted, else each namespace.
       const watchNamespaces =
-        store.api.isNamespaced && loadNamespaces.length > 0 && !clusterContext.isLoadingAll(loadNamespaces)
-          ? loadNamespaces
+        store.api.isNamespaced && loadNamespaces.length > 0
+          ? clusterContext.isLoadingAll(loadNamespaces) && clusterContext.isGlobalWatchEnabled()
+            ? []
+            : loadNamespaces
           : undefined;
 
       groups.push(group);
