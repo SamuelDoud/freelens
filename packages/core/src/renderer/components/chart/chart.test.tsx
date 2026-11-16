@@ -5,8 +5,9 @@
 
 import { render } from "@testing-library/react";
 import { Chart as ChartJS } from "chart.js";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { Chart, ChartKind } from "./chart";
+import { loadChartJs } from "./chartjs-loader";
 
 import type { ChartData } from "./chart";
 
@@ -40,6 +41,10 @@ const usageData = (used: number, free: number, color = "#c93dce"): ChartData => 
 });
 
 describe("Chart", () => {
+  beforeAll(async () => {
+    await loadChartJs();
+  });
+
   beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (this: HTMLCanvasElement) {
       return createFakeContext(this);

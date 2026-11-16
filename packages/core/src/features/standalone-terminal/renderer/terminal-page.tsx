@@ -10,6 +10,7 @@ import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import { useCallback, useEffect, useState } from "react";
+import { useTerminalLoaded } from "../../../renderer/components/dock/terminal/terminal-loader";
 import { Tab, Tabs } from "../../../renderer/components/tabs";
 import { useResizeObserver } from "../../../renderer/hooks";
 import activeThemeInjectable from "../../../renderer/themes/active.injectable";
@@ -33,13 +34,15 @@ const NonInjectedTerminalPage = observer(({ tabsStore, sessionStore, activeTheme
   const [host, setHost] = useState<HTMLDivElement | null>(null);
   const selectedTab = tabsStore.selectedTab;
   const selectedTabId = selectedTab?.id;
+  // xterm loads on first use, and a session is connected only once it is there.
+  const terminalLoaded = useTerminalLoaded();
 
   useEffect(() => {
     tabsStore.ensureTab();
   }, [tabsStore]);
 
   useEffect(() => {
-    if (!selectedTabId || !host) {
+    if (!selectedTabId || !host || !terminalLoaded) {
       return;
     }
 
@@ -52,7 +55,7 @@ const NonInjectedTerminalPage = observer(({ tabsStore, sessionStore, activeTheme
     // Only detached, never destroyed: the shell has to survive navigating away
     // from this page, and is torn down when its tab is closed.
     return () => terminal?.detach();
-  }, [selectedTabId, host, sessionStore]);
+  }, [selectedTabId, host, sessionStore, terminalLoaded]);
 
   const onResize = useCallback(() => {
     if (selectedTabId) {

@@ -5,31 +5,16 @@
  */
 
 import "./chart.scss";
-import "./chartjs-adapter-native";
 
 import { cssNames } from "@freelensapp/utilities";
-import { Chart as ChartJS, registerables, Tooltip } from "chart.js";
 import { merge, remove } from "es-toolkit/compat";
 import React from "react";
 import { Badge } from "../badge";
 import { StatusBrick } from "../status-brick";
+import { getLoadedChartJs, loadChartJs } from "./chartjs-loader";
 
-import type { ChartData as ChartJSData, ChartOptions, ChartType, Plugin, TooltipPositionerFunction } from "chart.js";
+import type { Chart as ChartJS, ChartData as ChartJSData, ChartOptions, ChartType, Plugin } from "chart.js";
 import type { CSSProperties } from "react";
-
-// Register all controllers, elements, scales and plugins once. Individual
-// tree-shaken registrations can be a later optimization.
-ChartJS.register(...registerables);
-
-// Custom tooltip positioner that places the tooltip at the cursor position.
-// Used by both the bar and pie charts via `position: "cursor"`.
-declare module "chart.js" {
-  interface TooltipPositionerMap {
-    cursor: TooltipPositionerFunction<ChartType>;
-  }
-}
-
-Tooltip.positioners.cursor = (_elements, eventPosition) => eventPosition;
 
 // The wrapper accepts loosely typed data and casts it to the strict v4
 // ChartData at the ChartJS boundary (see renderChart). Chart.js v4 parses data
@@ -91,6 +76,8 @@ export class Chart extends React.Component<ChartProps> {
 
   private canvas = React.createRef<HTMLCanvasElement>();
   private chart: ChartJS | null = null;
+  private unmounted = false;
+  private loading = false;
   // ChartJS adds _meta field to any data object passed to it.
   // We clone new data prop into currentChartData to compare props and prevProps
   private currentChartData?: ChartData;
@@ -119,6 +106,7 @@ export class Chart extends React.Component<ChartProps> {
   }
 
   componentWillUnmount() {
+    this.unmounted = true;
     // Destroy the Chart.js instance so its canvas is released. Without this the
     // instance leaks on unmount and a remount hits "Canvas is already in use"
     // (surfaced by React.StrictMode's mount → unmount → mount double-invoke).
@@ -242,6 +230,30 @@ export class Chart extends React.Component<ChartProps> {
     const canvas = this.canvas.current;
 
     if (!canvas) {
+      return;
+    }
+
+    const ChartJS = getLoadedChartJs();
+
+    if (!ChartJS) {
+      // The first chart of the session: the library loads now, and the chart
+      // is created from the props of the moment it arrives.
+      if (!this.loading) {
+        this.loading = true;
+        loadChartJs().then(
+          () => {
+            this.loading = false;
+
+            if (!this.unmounted && !this.chart && this.props.showChart) {
+              this.renderChart();
+            }
+          },
+          () => {
+            this.loading = false;
+          },
+        );
+      }
+
       return;
     }
 
