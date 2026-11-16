@@ -22,6 +22,11 @@ const deviceTaintRuleDetailItemInjectable = getInjectable({
   injectionToken: kubeObjectDetailItemInjectionToken,
 });
 
-export const isDeviceTaintRule = kubeObjectMatchesToKindAndApiVersion("DeviceTaintRule", ["resource.k8s.io/v1"]);
+export const isDeviceTaintRule = kubeObjectMatchesToKindAndApiVersion("DeviceTaintRule", [
+  "resource.k8s.io/v1alpha3",
+  "resource.k8s.io/v1beta1",
+  "resource.k8s.io/v1beta2",
+  "resource.k8s.io/v1",
+]);
 
 export default deviceTaintRuleDetailItemInjectable;

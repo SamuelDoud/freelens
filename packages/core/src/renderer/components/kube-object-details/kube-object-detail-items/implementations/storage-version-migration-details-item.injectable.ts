@@ -23,6 +23,8 @@ const storageVersionMigrationDetailItemInjectable = getInjectable({
 });
 
 export const isStorageVersionMigration = kubeObjectMatchesToKindAndApiVersion("StorageVersionMigration", [
+  "storagemigration.k8s.io/v1alpha1",
+  "storagemigration.k8s.io/v1beta1",
   "storagemigration.k8s.io/v1",
 ]);
 

@@ -123,23 +123,30 @@ export class ReleaseDetailsModel {
         this.configuration.isSaving.set(true);
       });
 
+      let result: Awaited<ReturnType<RequestHelmReleaseUpdate>>;
       const name = this.release.getName();
-      const namespace = this.release.getNs();
-      const helmChartRepo = this.dependencies.helmChartRepo(this.release);
-      const repo = await waitUntilDefined(helmChartRepo.value);
 
-      const data = {
-        chart: this.release.getChart(),
-        repo,
-        version: this.release.getVersion(),
-        values: this.configuration.nonSavedValue.get(),
-      };
+      try {
+        const namespace = this.release.getNs();
+        const helmChartRepo = this.dependencies.helmChartRepo(this.release);
+        const repo = await waitUntilDefined(helmChartRepo.value);
 
-      const result = await this.dependencies.updateRelease(name, namespace, data);
+        const data = {
+          chart: this.release.getChart(),
+          repo,
+          version: this.release.getVersion(),
+          values: this.configuration.nonSavedValue.get(),
+        };
 
-      runInAction(() => {
-        this.configuration.isSaving.set(false);
-      });
+        result = await this.dependencies.updateRelease(name, namespace, data);
+      } catch (error) {
+        result = { callWasSuccessful: false, error };
+      } finally {
+        // An update that throws must not leave the Save button busy.
+        runInAction(() => {
+          this.configuration.isSaving.set(false);
+        });
+      }
 
       if (!result.callWasSuccessful) {
         this.dependencies.showCheckedErrorNotification(result.error, "Unknown error occurred while updating release");
@@ -154,7 +161,13 @@ export class ReleaseDetailsModel {
         </p>,
       );
 
-      await this.loadConfiguration();
+      // The update made a new revision: reload the release, its resources and its values. The values are locked
+      // meanwhile, as they are while loading, so that no edit is lost to the reload.
+      runInAction(() => {
+        this.configuration.isLoading.set(true);
+      });
+
+      await this.load();
     },
   };
 
@@ -182,6 +195,7 @@ export class ReleaseDetailsModel {
     if (!result.callWasSuccessful) {
       runInAction(() => {
         this.loadingError.set(result.error);
+        this.configuration.isLoading.set(false);
       });
 
       return;

@@ -22,6 +22,10 @@ const serviceCidrDetailItemInjectable = getInjectable({
   injectionToken: kubeObjectDetailItemInjectionToken,
 });
 
-export const isServiceCIDR = kubeObjectMatchesToKindAndApiVersion("ServiceCIDR", ["networking.k8s.io/v1"]);
+export const isServiceCIDR = kubeObjectMatchesToKindAndApiVersion("ServiceCIDR", [
+  "networking.k8s.io/v1alpha1",
+  "networking.k8s.io/v1beta1",
+  "networking.k8s.io/v1",
+]);
 
 export default serviceCidrDetailItemInjectable;

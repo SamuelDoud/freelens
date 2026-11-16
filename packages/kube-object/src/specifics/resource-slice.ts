@@ -11,6 +11,8 @@ export interface ResourceSliceDevice {
   name: string;
   attributes?: Partial<Record<string, unknown>>;
   capacity?: Partial<Record<string, unknown>>;
+  /** Before resource.k8s.io/v1 the attributes and capacity sat under `basic`. */
+  basic?: { attributes?: Partial<Record<string, unknown>>; capacity?: Partial<Record<string, unknown>> };
 }
 
 export interface ResourceSliceSpec {
@@ -29,6 +31,6 @@ export class ResourceSlice extends KubeObject<ClusterScopedMetadata, void, Resou
   static readonly apiBase = "/apis/resource.k8s.io/v1/resourceslices";
 
   getDevices(): ResourceSliceDevice[] {
-    return this.spec?.devices ?? [];
+    return (this.spec?.devices ?? []).map(({ basic, ...device }) => (basic ? { ...basic, ...device } : device));
   }
 }

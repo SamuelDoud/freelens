@@ -23,6 +23,8 @@ const volumeAttributesClassDetailItemInjectable = getInjectable({
 });
 
 export const isVolumeAttributesClass = kubeObjectMatchesToKindAndApiVersion("VolumeAttributesClass", [
+  "storage.k8s.io/v1alpha1",
+  "storage.k8s.io/v1beta1",
   "storage.k8s.io/v1",
 ]);
 

@@ -11,6 +11,8 @@ import type { DerivedKubeApiOptions, KubeApiDependencies } from "../kube-api";
 export class StorageVersionMigrationApi extends KubeApi<StorageVersionMigration> {
   constructor(deps: KubeApiDependencies, opts?: DerivedKubeApiOptions) {
     super(deps, {
+      // The group is served as v1beta1 or v1alpha1 on older clusters; use the newest version it serves.
+      checkPreferredVersion: true,
       ...(opts ?? {}),
       objectConstructor: StorageVersionMigration,
     });

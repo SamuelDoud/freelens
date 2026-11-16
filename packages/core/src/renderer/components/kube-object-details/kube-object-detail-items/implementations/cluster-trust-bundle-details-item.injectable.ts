@@ -23,6 +23,8 @@ const clusterTrustBundleDetailItemInjectable = getInjectable({
 });
 
 export const isClusterTrustBundle = kubeObjectMatchesToKindAndApiVersion("ClusterTrustBundle", [
+  "certificates.k8s.io/v1alpha1",
+  "certificates.k8s.io/v1beta1",
   "certificates.k8s.io/v1",
 ]);
 

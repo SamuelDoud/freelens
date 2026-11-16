@@ -22,6 +22,11 @@ const resourceSliceDetailItemInjectable = getInjectable({
   injectionToken: kubeObjectDetailItemInjectionToken,
 });
 
-export const isResourceSlice = kubeObjectMatchesToKindAndApiVersion("ResourceSlice", ["resource.k8s.io/v1"]);
+export const isResourceSlice = kubeObjectMatchesToKindAndApiVersion("ResourceSlice", [
+  "resource.k8s.io/v1alpha3",
+  "resource.k8s.io/v1beta1",
+  "resource.k8s.io/v1beta2",
+  "resource.k8s.io/v1",
+]);
 
 export default resourceSliceDetailItemInjectable;

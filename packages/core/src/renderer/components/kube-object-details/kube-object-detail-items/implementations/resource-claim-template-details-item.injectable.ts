@@ -23,6 +23,9 @@ const resourceClaimTemplateDetailItemInjectable = getInjectable({
 });
 
 export const isResourceClaimTemplate = kubeObjectMatchesToKindAndApiVersion("ResourceClaimTemplate", [
+  "resource.k8s.io/v1alpha3",
+  "resource.k8s.io/v1beta1",
+  "resource.k8s.io/v1beta2",
   "resource.k8s.io/v1",
 ]);
 

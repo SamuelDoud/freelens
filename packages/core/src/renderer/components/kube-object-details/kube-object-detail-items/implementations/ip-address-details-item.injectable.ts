@@ -22,6 +22,10 @@ const ipAddressDetailItemInjectable = getInjectable({
   injectionToken: kubeObjectDetailItemInjectionToken,
 });
 
-export const isIPAddress = kubeObjectMatchesToKindAndApiVersion("IPAddress", ["networking.k8s.io/v1"]);
+export const isIPAddress = kubeObjectMatchesToKindAndApiVersion("IPAddress", [
+  "networking.k8s.io/v1alpha1",
+  "networking.k8s.io/v1beta1",
+  "networking.k8s.io/v1",
+]);
 
 export default ipAddressDetailItemInjectable;

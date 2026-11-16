@@ -29,7 +29,8 @@ const helmChartVersionsInjectable = getInjectable({
   },
 
   lifecycle: lifecycleEnum.keyedSingleton({
-    getInstanceKey: (di, release: HelmRelease) => `${release.namespace}/${release.name}}`,
+    // The chart is part of the key: after an upgrade to another chart the release must not reuse the old chart's versions.
+    getInstanceKey: (di, release: HelmRelease) => `${release.namespace}/${release.name}/${release.getChart()}`,
   }),
 });
 

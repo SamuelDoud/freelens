@@ -105,7 +105,7 @@ class NonInjectedHelmChartDetails extends Component<HelmChartDetailsProps & Depe
           </DrawerItem>
           <DrawerItem name="Maintainers" className="maintainers">
             {selectedChart.getMaintainers().map(({ name, email }) => (
-              <li key={name}>{`${name}<${email}>`}</li>
+              <li key={`${name}<${email ?? ""}>`}>{email ? `${name}<${email}>` : name}</li>
             ))}
           </DrawerItem>
           {selectedChart.getKeywords().length > 0 && (
