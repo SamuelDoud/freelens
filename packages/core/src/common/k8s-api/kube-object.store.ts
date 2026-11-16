@@ -10,8 +10,9 @@ import { KubeStatus } from "@freelensapp/kube-object";
 import { isAbortError, noop, object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
 import autoBind from "auto-bind";
 import { limitAsync } from "es-toolkit";
-import { action, computed, observable, reaction } from "mobx";
+import { action, computed, observable, observe, reaction } from "mobx";
 import { ItemStore } from "../item.store";
+import { ItemOrder } from "./item-order";
 
 import type { FetchRequestInit as RequestInit } from "@freelensapp/json-api";
 import type {
@@ -275,6 +276,27 @@ export class KubeObjectStore<
   // panel that shows such an object reads it from the store without
   // subscribing, so release() keeps them.
   private readonly individuallyLoaded = new Set<string>();
+  // The array `trackItems` listens to and the number of writes it has seen.
+  private trackedItems: unknown;
+  private itemsWrites = 0;
+  // The item of each id in `items`, kept between watch flushes for as long as
+  // `itemsWrites` stays what it was when the flush stamped it, and whether
+  // `items` is known to be in the order of `sortItems`.
+  private flushIndex:
+    | { writes: number; byUid: Map<string, K>; sorted: boolean | undefined; duplicates: boolean }
+    | undefined;
+  // The last list a load stored, see `mergeLoadedItemsIncrementally`.
+  private publishedLoad:
+    | {
+        writes: number;
+        published: K[];
+        items: K[];
+        merge: boolean;
+        requested: string[];
+        namespaces: Set<string>;
+        everyItemHasNamespace: boolean;
+      }
+    | undefined;
 
   constructor(
     protected readonly dependencies: KubeObjectStoreDependencies,
@@ -1029,17 +1051,104 @@ export class KubeObjectStore<
    * keep the previously loaded copies next to the fresh ones.
    */
   private mergeLoadedItems(items: K[], merge: boolean, namespaces: string[]): K[] {
+    const incremental = this.mergeLoadedItemsIncrementally(items, merge, namespaces);
+
+    if (incremental) {
+      return incremental;
+    }
+
     const loadedNamespaces = new Set(namespaces);
+    let everyItemHasNamespace = true;
 
     for (const item of items) {
       const namespace = item.getNs();
 
       if (namespace) {
         loadedNamespaces.add(namespace);
+      } else {
+        everyItemHasNamespace = false;
       }
     }
 
-    return this.mergeItems(items, { merge, namespaces: [...loadedNamespaces] });
+    const merged = this.mergeItems(items, { merge, namespaces: [...loadedNamespaces] });
+
+    // What the next publish of this load can build on: the list just stored
+    // and the items it was made of. Only the stock merge is known to make
+    // exactly that list from those items.
+    this.publishedLoad = this.hasStockMerge()
+      ? {
+          writes: this.trackItems(),
+          published: merged,
+          items,
+          merge,
+          requested: namespaces,
+          namespaces: loadedNamespaces,
+          everyItemHasNamespace,
+        }
+      : undefined;
+
+    return merged;
+  }
+
+  private hasStockMerge(): boolean {
+    const prototype = Object.getPrototypeOf(this);
+
+    return (
+      prototype.mergeItems === KubeObjectStore.prototype.mergeItems &&
+      prototype.filterItemsOnLoad === KubeObjectStore.prototype.filterItemsOnLoad &&
+      prototype.sortItems === (ItemStore.prototype as unknown as { sortItems: unknown }).sortItems
+    );
+  }
+
+  /**
+   * The merge of a load that goes on where the last one of it stopped: `items`
+   * are the items of that merge followed by new ones, and nothing wrote to
+   * `items` since. The new items are sorted among themselves and merged into
+   * the stored list, which gives the list a merge of everything would give
+   * (equal items stay in the order the load delivered them), without
+   * filtering and sorting what the store already holds.
+   */
+  private mergeLoadedItemsIncrementally(items: K[], merge: boolean, namespaces: string[]): K[] | undefined {
+    const last = this.publishedLoad;
+
+    if (
+      !last ||
+      last.writes !== this.trackItems() ||
+      last.merge !== merge ||
+      last.requested !== namespaces ||
+      items.length < last.items.length ||
+      !this.hasStockMerge()
+    ) {
+      return undefined;
+    }
+
+    for (let index = 0; index < last.items.length; index += 1) {
+      if (items[index] !== last.items[index]) {
+        return undefined;
+      }
+    }
+
+    const added = items.slice(last.items.length);
+
+    if (merge && this.api.isNamespaced) {
+      // Items of a namespace the load had not covered, or without one, would
+      // change which of the stored items are replaced.
+      if (!last.everyItemHasNamespace || added.some((item) => !last.namespaces.has(item.getNs() as string))) {
+        return undefined;
+      }
+    }
+
+    const merged = added.length
+      ? new ItemOrder<K>(this.sorting.by, this.sorting.order).merge(last.published, added)
+      : last.published;
+
+    if (added.length) {
+      this.items.replace(merged);
+    }
+
+    this.publishedLoad = { ...last, writes: this.itemsWrites, published: merged, items };
+
+    return merged;
   }
 
   @action
@@ -1394,6 +1503,280 @@ export class KubeObjectStore<
 
     if (!events.length) return;
 
+    // A store that bounds or filters its items after a flush sees the whole
+    // list, so it takes the path that builds it.
+    if (
+      this.bufferSize !== Infinity ||
+      Object.getPrototypeOf(this).limitWatchedItems !== KubeObjectStore.prototype.limitWatchedItems
+    ) {
+      this.updateFromEventsByRebuilding(events);
+
+      return;
+    }
+
+    this.updateFromEventsByKey(events);
+  }
+
+  /**
+   * Counts the writes to `items`, whoever makes them, so that what the store
+   * keeps about its items (the id index, the last published list) can tell
+   * whether it still describes them. Returns the count.
+   */
+  private trackItems(): number {
+    if (this.trackedItems !== this.items) {
+      this.trackedItems = this.items;
+      this.itemsWrites += 1;
+      observe(this.items, () => {
+        this.itemsWrites += 1;
+      });
+    }
+
+    return this.itemsWrites;
+  }
+
+  /**
+   * Applies the events of a flush to the items by id, where the list is
+   * rebuilt only to the extent the events change it: a flush of modified
+   * objects replaces them in place, deletions leave out their items, and
+   * added or re-keyed items are merged into the sorted list instead of
+   * sorting all of it. The result is the list `updateFromEventsByRebuilding`
+   * gives for the same events and the same items.
+   */
+  private updateFromEventsByKey(events: IKubeWatchEvent<D>[]) {
+    const stockSort =
+      Object.getPrototypeOf(this).sortItems === (ItemStore.prototype as unknown as { sortItems: unknown }).sortItems;
+    const writes = this.trackItems();
+    let index = this.flushIndex;
+
+    if (!index || index.writes !== writes) {
+      const byUid = new Map<string, K>();
+      let duplicates = false;
+
+      for (const item of this.items.slice()) {
+        const size = byUid.size;
+
+        byUid.set(item.getId(), item);
+        duplicates ||= byUid.size === size;
+      }
+
+      index = { writes, byUid, sorted: undefined, duplicates };
+      this.flushIndex = index;
+    }
+
+    if (index.duplicates) {
+      // Which of two items with one id an event meets is what the rebuilding
+      // path decides.
+      this.updateFromEventsByRebuilding(events);
+
+      return;
+    }
+
+    const { byUid } = index;
+    // What the events did. Items the list held: the item an event found, and
+    // what became of it (a newer item, or undefined once deleted). Items they
+    // added: in the order of the events, with undefined where one was deleted.
+    const found = new Map<string, { original: K; current: K | undefined }>();
+    const added: (K | undefined)[] = [];
+    const addedAt = new Map<string, number>();
+    let changed = false;
+    let needsSort = false;
+
+    for (const event of events) {
+      if (event.type === "ERROR") continue;
+
+      try {
+        const { type, object } = event;
+        const uid = object.metadata?.uid;
+
+        if (!uid) {
+          this.dependencies.logger.warn("[KUBE-STORE]: watch event did not have defined .metadata.uid, skipping", {
+            event,
+          });
+          continue;
+        }
+
+        const addedIndex = addedAt.get(uid);
+        let entry = addedIndex === undefined ? found.get(uid) : undefined;
+        let item: K | undefined;
+
+        if (addedIndex !== undefined) {
+          item = added[addedIndex];
+        } else if (entry) {
+          item = entry.current;
+        } else {
+          item = byUid.get(uid);
+
+          if (item) {
+            entry = { original: item, current: item };
+          }
+        }
+
+        switch (type) {
+          case "ADDED":
+          case "MODIFIED": {
+            // Kubernetes versions are opaque: equality alone identifies a
+            // replay. Do not construct and bind another copy of the same object.
+            if (
+              item &&
+              object.metadata.resourceVersion &&
+              item.metadata.resourceVersion === object.metadata.resourceVersion
+            ) {
+              break;
+            }
+
+            const newItem = new this.api.objectConstructor(object);
+
+            if (item === undefined) {
+              addedAt.set(uid, added.length);
+              added.push(newItem);
+              needsSort = true;
+            } else {
+              needsSort ||= this.sortKeyChanged(item, newItem);
+
+              if (addedIndex !== undefined) {
+                added[addedIndex] = newItem;
+              } else {
+                entry!.current = newItem;
+                found.set(uid, entry!);
+              }
+            }
+
+            changed = true;
+            break;
+          }
+          case "DELETED":
+            if (item !== undefined) {
+              if (addedIndex !== undefined) {
+                added[addedIndex] = undefined;
+                addedAt.delete(uid);
+              } else {
+                entry!.current = undefined;
+                found.set(uid, entry!);
+              }
+
+              changed = true;
+            }
+            break;
+        }
+      } catch (error) {
+        this.dependencies.logger.error("[KUBE-STORE]: failed to handle event from watch buffer", { error, event });
+      }
+    }
+
+    if (!changed) return;
+
+    const live = added.filter((item): item is K => item !== undefined);
+    // The items to find in the list: what each of them became, null for deleted.
+    const touched = new Map<K, K | null>();
+    let deletions = 0;
+
+    for (const { original, current } of found.values()) {
+      if (current !== original) {
+        touched.set(original, current ?? null);
+        deletions += current ? 0 : 1;
+      }
+    }
+
+    // The index is back once the list is written: a failure in between leaves
+    // none, not one that no longer describes the list.
+    this.flushIndex = undefined;
+
+    for (const [uid, { current }] of found) {
+      if (current) {
+        byUid.set(uid, current);
+      } else {
+        byUid.delete(uid);
+      }
+    }
+
+    for (const item of live) {
+      byUid.set(item.getId(), item);
+    }
+
+    const base: K[] = this.items.slice();
+    const positions: number[] = [];
+
+    for (let position = 0; position < base.length && positions.length < touched.size; position += 1) {
+      if (touched.has(base[position])) {
+        positions.push(position);
+      }
+    }
+
+    if (deletions === 0 && live.length === 0 && !needsSort) {
+      // Objects replaced by newer versions that sort where they did.
+      for (const position of positions) {
+        this.items[position] = touched.get(base[position])!;
+      }
+
+      index.writes = this.itemsWrites;
+      this.flushIndex = index;
+
+      return;
+    }
+
+    // `base` as the rebuilding path sees it before it sorts: replaced items
+    // in place, deleted ones gone, added ones last. `ranks` tell where each of
+    // the items that stay was in `base`.
+    const order = new ItemOrder<K>(this.sorting.by, this.sorting.order);
+    const merging = needsSort && stockSort && (index.sorted ??= order.isSorted(base));
+    const ranks = new Int32Array(base.length);
+    const kept: K[] = [];
+    const moved: { item: K; rank: number }[] = [];
+    const keep = (from: number, to: number) => {
+      for (let position = from; position < to; position += 1) {
+        ranks[kept.length] = position;
+        kept.push(base[position]);
+      }
+    };
+    let from = 0;
+
+    for (const position of positions) {
+      keep(from, position);
+      from = position + 1;
+
+      const item = touched.get(base[position]);
+
+      if (item === null || item === undefined) continue;
+
+      if (merging && this.sortKeyChanged(base[position], item)) {
+        moved.push({ item, rank: position });
+      } else {
+        ranks[kept.length] = position;
+        kept.push(item);
+      }
+    }
+
+    keep(from, base.length);
+
+    let next: K[];
+
+    if (!needsSort) {
+      next = kept;
+    } else if (merging) {
+      live.forEach((item, at) => moved.push({ item, rank: base.length + at }));
+      next = moved.length ? order.mergeRanked(kept, ranks, moved) : kept;
+    } else {
+      next = this.sortItems([...kept, ...live]);
+    }
+
+    if (next.length !== base.length || next.some((item, position) => item !== base[position])) {
+      this.items.replace(next);
+    }
+
+    if (needsSort) {
+      index.sorted = merging || (stockSort ? true : undefined);
+    }
+
+    index.writes = this.itemsWrites;
+    this.flushIndex = index;
+  }
+
+  /**
+   * The flush as it was before it worked by id: the list is copied, the events
+   * applied to the copy, and the whole of it replaced, sorted when an event
+   * added an item or changed a sort key. Stores that bound their list need it.
+   */
+  private updateFromEventsByRebuilding(events: IKubeWatchEvent<D>[]) {
     // Build once per flush, so direct array writes, reloads and resets cannot
     // leave a stale index. Tombstones keep later indices valid after a delete.
     const items: (K | undefined)[] = this.getItems();
