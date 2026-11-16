@@ -40,7 +40,8 @@ export const globalNameForModuleId = (moduleId: string): string =>
  * integration suite, before any extension sees it.
  *
  * An undefined value is checked for the same reason: a module that resolved to
- * nothing publishes a key that is present and useless.
+ * nothing publishes a key that is present and useless. A lazily loaded module,
+ * published through an accessor, is not read.
  */
 export const assertExtensionApiSingletonNames = <TSingletons extends object>(
   singletons: TSingletons,
@@ -54,6 +55,12 @@ export const assertExtensionApiSingletonNames = <TSingletons extends object>(
         `Extension API singleton for "${moduleId}" must be published as "${expectedName}", not "${name}": ` +
           "the name is derived from the module id, and an extension bundle reading the wrong one gets undefined.",
       );
+    }
+
+    // An accessor publishes a module that is loaded on first use; reading it
+    // here would load it, or throw when it cannot be loaded yet.
+    if (Object.getOwnPropertyDescriptor(singletons, name)?.get) {
+      continue;
     }
 
     if (singletons[name] === undefined) {

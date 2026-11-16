@@ -94,6 +94,7 @@ interface Dependencies {
   readonly extensionInstances: ObservableMap<LensExtensionId, LensExtensionInstance>;
   readonly logger: Logger;
   readonly extensionEntryPointName: "main" | "renderer";
+  readonly beforeEntryPointImport?: ReadonlyArray<() => Promise<void>>;
   updateExtensionsState: UpdateExtensionsState;
   getExtension: (instance: LensExtensionInstance) => Extension;
   getRandomId: GetRandomId;
@@ -907,6 +908,10 @@ export class ExtensionLoader {
     try {
       // The specifier is only known at runtime, so the bundler must leave it
       // alone rather than trying to resolve it at build time.
+      for (const prepare of this.dependencies.beforeEntryPointImport ?? []) {
+        await prepare();
+      }
+
       const extensionModule = await import(/* @vite-ignore */ entryPointUrl);
 
       // Load the extension's renderer stylesheet, if any. Extensions are built

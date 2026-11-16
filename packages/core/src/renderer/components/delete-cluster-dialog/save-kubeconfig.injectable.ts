@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { dumpYaml } from "@kubernetes/client-node";
 import { getInjectable } from "@ogre-tools/injectable";
 import * as lockFile from "proper-lockfile";
 import writeFileInjectable from "../../../common/fs/write-file.injectable";
@@ -22,6 +21,7 @@ const saveKubeconfigInjectable = getInjectable({
       const release = await lockFile.lock(filePath);
 
       try {
+        const { dumpYaml } = await import("@kubernetes/client-node");
         const contents = dumpYaml(JSON.parse(config.exportConfig()));
 
         await writeFile(filePath, contents);

@@ -10,14 +10,13 @@ import { isDefined, iter } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { debounce } from "es-toolkit/compat";
 import fse from "fs-extra";
-import { action, computed, observable } from "mobx";
+import { action, computed, observable, runInAction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import * as uuid from "uuid";
 import emitAppEventInjectable from "../../../common/app-event-bus/emit-event.injectable";
 import getCustomKubeConfigFilePathInjectable from "../../../common/app-paths/get-custom-kube-config-directory/get-custom-kube-config-directory.injectable";
 import navigateToCatalogInjectable from "../../../common/front-end-routing/routes/catalog/navigate-to-catalog.injectable";
-import { loadConfigFromString, splitConfig } from "../../../common/kube-helpers";
 import getDirnameOfPathInjectable from "../../../common/path/get-dirname.injectable";
 import { SettingLayout } from "../layout/setting-layout";
 import { MonacoEditor } from "../monaco-editor";
@@ -45,7 +44,10 @@ interface Dependencies {
   showErrorNotification: ShowNotification;
 }
 
-function getContexts(config: KubeConfig): Map<string, Option> {
+function getContexts(
+  splitConfig: typeof import("../../../common/kube-helpers").splitConfig,
+  config: KubeConfig,
+): Map<string, Option> {
   return new Map(
     splitConfig(config).map(({ config, validationResult }) => [
       config.currentContext,
@@ -76,11 +78,14 @@ class NonInjectedAddCluster extends React.Component<Dependencies> {
     return [...this.errors, ...iter.map(this.kubeContexts.values(), ({ error }) => error)].filter(isDefined);
   }
 
-  readonly refreshContexts = debounce(
-    action(() => {
+  readonly refreshContexts = debounce(async () => {
+    // Loaded on use: the Kubernetes client behind it is large.
+    const { loadConfigFromString, splitConfig } = await import("../../../common/kube-helpers");
+
+    runInAction(() => {
       const { config, error } = loadConfigFromString(this.customConfig.trim() || "{}");
 
-      this.kubeContexts.replace(getContexts(config));
+      this.kubeContexts.replace(getContexts(splitConfig, config));
 
       if (error) {
         this.errors.push(error.toString());
@@ -89,9 +94,8 @@ class NonInjectedAddCluster extends React.Component<Dependencies> {
       if (config.contexts.length === 0) {
         this.errors.push('No contexts defined, either missing the "contexts" field, or it is empty.');
       }
-    }),
-    500,
-  );
+    });
+  }, 500);
 
   addClusters = action(async () => {
     this.isWaiting = true;

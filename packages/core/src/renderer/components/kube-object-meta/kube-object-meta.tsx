@@ -13,7 +13,7 @@ import * as yaml from "js-yaml";
 import { observer } from "mobx-react";
 import { useEffect, useRef, useState } from "react";
 import apiManagerInjectable from "../../../common/k8s-api/api-manager/manager.injectable";
-import { defaultYamlDumpOptions } from "../../../common/kube-helpers";
+import { defaultYamlDumpOptions } from "../../../common/kube-helpers/yaml-dump-options";
 import requestKubeResourceInjectable from "../dock/edit-resource/edit-resource-model/request-kube-resource.injectable";
 import { DrawerItem, DrawerItemLabels, DrawerParamToggler } from "../drawer";
 import { DurationAbsoluteTimestamp } from "../events";

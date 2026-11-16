@@ -14,6 +14,17 @@ import { contentTypes } from "../../router/router-content-types";
 
 import type { LensApiRequest } from "../../router/route";
 
+/**
+ * The bundler names every file under `build/assets/` after a hash of its
+ * content (`index-D0VLV1RL.js`), so a name never refers to two different
+ * contents and the browser may keep the file, and the code it compiled from
+ * it, for good. `index.html` and everything else carries no such name and is
+ * sent without cache headers, as before.
+ */
+const hashedAssetPath = /^\/build\/assets\/[^/]+-[A-Za-z0-9_-]{8}\.[A-Za-z0-9]+$/;
+
+const immutableCacheControl = "public, max-age=31536000, immutable";
+
 const prodStaticFileRouteHandlerInjectable = getInjectable({
   id: "prod-static-file-route-handler",
   instantiate: (di) => {
@@ -40,7 +51,11 @@ const prodStaticFileRouteHandlerInjectable = getInjectable({
       const contentType = contentTypes[fileExtension] || contentTypes.txt;
 
       try {
-        return { response: await readFileBuffer(assetFilePath), contentType };
+        const response = await readFileBuffer(assetFilePath);
+
+        return hashedAssetPath.test(filePath)
+          ? { response, contentType, headers: { "Cache-Control": immutableCacheControl } }
+          : { response, contentType };
       } catch (err) {
         logger.error(`failed to find file "${filePath}"`, err);
 

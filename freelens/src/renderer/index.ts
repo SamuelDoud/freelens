@@ -88,4 +88,9 @@ startApplication();
 // nobody here can fix.
 assertExtensionApiSingletonNames(rendererExtensionApiSingletons, rendererExtensionApiSingletonModuleIds);
 
-globalThis.FreelensExtensionApi = { Common, Renderer, ...rendererExtensionApiSingletons };
+// Not spread: `MonacoEditor` is an accessor that reads the lazily loaded
+// module, and a spread would read it now.
+globalThis.FreelensExtensionApi = Object.defineProperties(
+  { Common, Renderer } as typeof globalThis.FreelensExtensionApi,
+  Object.getOwnPropertyDescriptors(rendererExtensionApiSingletons),
+);

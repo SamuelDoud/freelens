@@ -164,7 +164,7 @@ export interface KubeObjectStoreOptions {
    * The largest page of a paginated list: each page asks for twice as many
    * items as the one before, from `pageSize` up to this many.
    *
-   * @default 8000
+   * @default 4000
    */
   maxPageSize?: number;
 }
@@ -288,7 +288,7 @@ export class KubeObjectStore<
     // that want a bound pass bufferSize explicitly.
     this.bufferSize = opts?.bufferSize ?? Infinity;
     this.pageSize = opts?.pageSize ?? 500;
-    this.maxPageSize = Math.max(this.pageSize, opts?.maxPageSize ?? 8000);
+    this.maxPageSize = Math.max(this.pageSize, opts?.maxPageSize ?? 4000);
 
     autoBind(this);
     this.bindWatchEventsUpdater();

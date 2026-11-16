@@ -11,6 +11,7 @@ import fetchInjectable from "../../common/fetch/fetch.injectable";
 import getBasenameOfPathInjectable from "../../common/path/get-basename.injectable";
 import joinPathsInjectable from "../../common/path/join-paths.injectable";
 import updateExtensionsStateInjectable from "../../features/extensions/enabled/common/update-state.injectable";
+import { beforeExtensionEntryPointImportInjectionToken } from "./before-entry-point-import";
 import { extensionEntryPointNameInjectionToken } from "./entry-point-name";
 import extensionInjectable from "./extension/extension.injectable";
 import extensionInstancesInjectable from "./extension-instances.injectable";
@@ -25,6 +26,7 @@ const extensionLoaderInjectable = getInjectable({
       extensionInstances: di.inject(extensionInstancesInjectable),
       getExtension: (instance) => di.inject(extensionInjectable, instance),
       extensionEntryPointName: di.inject(extensionEntryPointNameInjectionToken),
+      beforeEntryPointImport: di.injectMany(beforeExtensionEntryPointImportInjectionToken),
       logger: di.inject(loggerInjectionToken),
       getRandomId: di.inject(getRandomIdInjectionToken),
       joinPaths: di.inject(joinPathsInjectable),

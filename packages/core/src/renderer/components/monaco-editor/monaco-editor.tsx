@@ -16,9 +16,9 @@ import autoBindReact from "auto-bind/react";
 import { debounce, merge } from "es-toolkit/compat";
 import { action, compareShallow, observable, observableRef, reaction } from "mobx";
 import { observer } from "mobx-react";
-import { editor, Uri } from "monaco-editor";
 import React from "react";
 import userPreferencesStateInjectable from "../../../features/user-preferences/common/state.injectable";
+import { getLoadedMonaco, loadMonaco } from "../../monaco/monaco-loader";
 import activeThemeInjectable from "../../themes/active.injectable";
 import getEditorHeightFromLinesCountInjectable from "./get-editor-height-from-lines-number.injectable";
 import styles from "./monaco-editor.module.scss";
@@ -27,8 +27,10 @@ import { type MonacoValidator, monacoValidators } from "./monaco-validators";
 import type { Logger } from "@freelensapp/logger";
 
 import type { IComputedValue } from "mobx";
+import type { editor, Uri } from "monaco-editor";
 
 import type { UserPreferencesState } from "../../../features/user-preferences/common/state.injectable";
+import type { MonacoModule } from "../../monaco/monaco-loader";
 import type { LensTheme } from "../../themes/lens-theme";
 import type { MonacoTheme } from "./monaco-themes";
 
@@ -60,8 +62,8 @@ interface Dependencies {
   logger: Logger;
 }
 
-export function createMonacoUri(id: MonacoEditorId): Uri {
-  return Uri.file(`/monaco-editor/${id}`);
+export function createMonacoUri(monaco: MonacoModule, id: MonacoEditorId): Uri {
+  return monaco.Uri.file(`/monaco-editor/${id}`);
 }
 
 const monacoViewStates = new WeakMap<Uri, editor.ICodeEditorViewState>();
@@ -80,6 +82,9 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
   private dispose = disposer();
 
   @observableRef accessor containerElem: HTMLDivElement | null = null;
+  // Monaco is loaded on first use; null until this editor has it.
+  private monaco: MonacoModule | undefined = undefined;
+
   @observableRef accessor editor: editor.IStandaloneCodeEditor | undefined = undefined;
   @observable accessor dimensions: { width?: number; height?: number } = {};
   @observable accessor unmounting = false;
@@ -123,8 +128,9 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
   }
 
   get model(): editor.ITextModel {
-    const uri = createMonacoUri(this.id);
-    const model = editor.getModel(uri);
+    const monaco = this.monaco!;
+    const uri = createMonacoUri(monaco, this.id);
+    const model = monaco.editor.getModel(uri);
 
     if (model) {
       return model; // already exists
@@ -137,7 +143,7 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
       this.observableProps.logger.error(`[MONACO-EDITOR]: Passed a non-string default value`, { rawValue });
     }
 
-    return editor.createModel(value, language, uri);
+    return monaco.editor.createModel(value, language, uri);
   }
 
   get options(): editor.IStandaloneEditorConstructionOptions {
@@ -147,7 +153,7 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
   private get logMetadata() {
     return {
       editorId: this.id,
-      model: this.model,
+      model: this.monaco ? this.model : undefined,
     };
   }
 
@@ -215,6 +221,32 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
     // development, so a mount has to undo what the previous unmount did.
     this.unmounting = false;
 
+    this.mountWhenMonacoLoaded();
+  }
+
+  private mountWhenMonacoLoaded() {
+    // Already loaded: mount synchronously, as before Monaco was lazy.
+    const loaded = getLoadedMonaco();
+
+    if (loaded) {
+      this.mount(loaded);
+
+      return;
+    }
+
+    loadMonaco().then(
+      (monaco) => this.mount(monaco),
+      (error) => this.logger.error(`[MONACO]: loading failed: ${error}`),
+    );
+  }
+
+  private mount(monaco: MonacoModule) {
+    if (this.unmounting) {
+      return;
+    }
+
+    this.monaco = monaco;
+
     try {
       this.createEditor();
       this.logger.debug(`[MONACO]: editor did mount`, this.logMetadata);
@@ -236,9 +268,10 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
   }
 
   protected createEditor() {
-    if (!this.containerElem || this.editor || this.unmounting) {
+    if (!this.monaco || !this.containerElem || this.editor || this.unmounting) {
       return;
     }
+    const { editor } = this.monaco;
     const { language, readOnly, value: defaultValue } = this.props;
     const { theme } = this;
 
@@ -278,7 +311,10 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
 
     this.dispose.push(
       reaction(() => this.model, this.onModelChange),
-      reaction(() => this.theme, editor.setTheme),
+      reaction(
+        () => this.theme,
+        (theme) => editor.setTheme(theme),
+      ),
       reaction(
         () => this.observableProps.value,
         (value) => this.setValue(value),
@@ -339,7 +375,13 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
   validateLazy = debounce(this.validate, 250);
 
   get initialHeight() {
-    return this.props.getEditorHeightFromLinesCount(this.model.getLineCount());
+    // Before Monaco is loaded there is no model to count lines in; count them
+    // the way Monaco does (\r\n, \r and \n all end a line).
+    const linesCount = this.monaco
+      ? this.model.getLineCount()
+      : (typeof this.props.value === "string" ? this.props.value : "").split(/\r\n|\r|\n/).length;
+
+    return this.props.getEditorHeightFromLinesCount(linesCount);
   }
 
   render() {
@@ -353,7 +395,7 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
     return (
       <div
         data-test-id="monaco-editor"
-        className={cssNames(styles.MonacoEditor, className)}
+        className={cssNames(styles.MonacoEditor, { [styles.loading]: !this.editor }, className)}
         style={css}
         ref={(elem) => {
           this.containerElem = elem;

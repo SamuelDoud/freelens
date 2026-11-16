@@ -39,10 +39,10 @@
 
 import * as Mobx from "mobx";
 import * as MobxReact from "mobx-react";
-import * as MonacoEditor from "monaco-editor";
 import React from "react";
 import * as ReactJsxRuntime from "react/jsx-runtime";
 import ReactDom from "react-dom";
+import { getLoadedMonaco } from "../../renderer/monaco/monaco-loader";
 
 /**
  * The renderer half of the singleton contract, spread onto the global at
@@ -58,7 +58,26 @@ export const rendererExtensionApiSingletons = {
   ReactJsxRuntime,
   Mobx,
   MobxReact,
-  MonacoEditor,
+  /**
+   * The host's Monaco, which is loaded on first use rather than at startup. The
+   * extension loader loads it before it evaluates the entry point of any
+   * renderer extension, so the namespace is there by the time extension code
+   * can read it. Reading it earlier is a host bug and throws instead of handing
+   * out a second, empty Monaco.
+   *
+   * An accessor, so spreading this object reads it: publish the object with
+   * `Object.defineProperties(target, Object.getOwnPropertyDescriptors(...))`
+   * to keep it lazy.
+   */
+  get MonacoEditor(): typeof import("monaco-editor") {
+    const monaco = getLoadedMonaco();
+
+    if (!monaco) {
+      throw new Error("The Monaco editor is read before it was loaded");
+    }
+
+    return monaco;
+  },
 };
 
 /**

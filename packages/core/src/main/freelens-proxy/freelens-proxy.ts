@@ -26,6 +26,7 @@ import type { Cluster } from "../../common/cluster/cluster";
 import type { FreelensK8sProxyManager } from "../cluster/freelens-k8s-proxy-manager.injectable";
 import type { Router } from "../router/router";
 import type { ClusterRouteRedirect } from "./cluster-route-redirect";
+import type { FreelensProxyPreferredPort } from "./freelens-proxy-preferred-port.injectable";
 import type { FreelensProxyToken } from "./freelens-proxy-token.injectable";
 import type { ProxyApiRequestArgs, ShellApiRequestArgs } from "./proxy-functions";
 
@@ -49,6 +50,7 @@ interface Dependencies {
   readonly router: Router;
   readonly proxy: ProxyServer;
   readonly freelensProxyPort: { set: (portNumber: number) => void };
+  readonly preferredPort?: FreelensProxyPreferredPort;
   readonly contentSecurityPolicy: string;
   readonly logger: Logger;
   readonly certificate: SelfSignedCert;
@@ -254,9 +256,9 @@ export class FreelensProxy {
    *
    * Resolves with the port number that was picked
    */
-  private attemptToListen(): Promise<number> {
+  private attemptToListen(requestedPort = 0): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      this.proxyServer.listen(0, "127.0.0.1");
+      this.proxyServer.listen(requestedPort, "127.0.0.1");
 
       this.proxyServer
         .once("listening", () => {
@@ -278,6 +280,7 @@ export class FreelensProxy {
         })
         .once("error", (error) => {
           this.dependencies.logger.info(`[FREELENS-PROXY]: Proxy server failed to start: ${error}`);
+          this.proxyServer.removeAllListeners("listening");
           reject(error);
         });
     });
@@ -290,13 +293,32 @@ export class FreelensProxy {
    */
   async listen(): Promise<void> {
     const seenPorts = new Set<number>();
+    let preferredPort = await this.dependencies.preferredPort?.get();
+
+    if (preferredPort !== undefined && disallowedPorts.has(preferredPort)) {
+      preferredPort = undefined;
+    }
 
     while (true) {
       this.proxyServer?.close();
-      const port = await this.attemptToListen();
+
+      let port: number;
+
+      if (preferredPort !== undefined) {
+        // Try the port of the previous run once, and fall back to one the OS
+        // picks when something else holds it.
+        const requested = preferredPort;
+
+        preferredPort = undefined;
+        port = await this.attemptToListen(requested).catch(() => this.attemptToListen());
+      } else {
+        port = await this.attemptToListen();
+      }
 
       if (!disallowedPorts.has(port)) {
         // We didn't get a port that would result in an ERR_UNSAFE_PORT error, use it
+        await this.dependencies.preferredPort?.save(port);
+
         return;
       }
 
