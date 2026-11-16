@@ -60,6 +60,7 @@ const createEnvironment = ({ namespaces = ["default"], objectsPerNamespace = 3 }
   const lists: string[] = [];
   const pendingLists = new Map<string, () => void>();
   const holdLists = new Set<string>();
+  const failLists = new Set<string>();
   const watches: Array<{ namespace: string; signal: AbortSignal; opts: WatchOptions }> = [];
   const api = {
     isNamespaced: true,
@@ -83,6 +84,10 @@ const createEnvironment = ({ namespaces = ["default"], objectsPerNamespace = 3 }
         }
 
         reqInit?.signal?.throwIfAborted();
+
+        if (failLists.has(namespace)) {
+          throw new Error(`forbidden: ${namespace}`);
+        }
 
         const items = namespace ? (server.get(namespace) ?? []) : [...server.values()].flat();
         const resourceVersion = String(++version);
@@ -123,6 +128,7 @@ const createEnvironment = ({ namespaces = ["default"], objectsPerNamespace = 3 }
     select: (next: string[]) => runInAction(() => selected.set(next)),
     names: () => store.items.map((item) => `${item.getNs()}/${item.getName()}`).sort(),
     holdList: (namespace: string) => holdLists.add(namespace),
+    failList: (namespace: string) => failLists.add(namespace),
     releaseList: async (namespace: string) => {
       holdLists.delete(namespace);
       pendingLists.get(namespace)?.();
@@ -301,6 +307,44 @@ describe("KubeWatchApi with a store", () => {
     await vi.advanceTimersByTimeAsync(storeLingerMs);
 
     expect(store.items).toHaveLength(0);
+  });
+
+  describe("given a load that failed", () => {
+    it("tells the view that returns during the linger, not the one that left", async () => {
+      const { kubeWatchApi, store, failList, settle } = createEnvironment();
+      const leftBehind = vi.fn();
+      const returning = vi.fn();
+
+      failList("default");
+      const unsubscribe = kubeWatchApi.subscribeStores([store], { onLoadFailure: leftBehind });
+
+      await settle();
+      expect(leftBehind).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+      await vi.advanceTimersByTimeAsync(30_000);
+      kubeWatchApi.subscribeStores([store], { onLoadFailure: returning });
+      await settle();
+
+      expect(returning).toHaveBeenCalledTimes(1);
+      expect(leftBehind).toHaveBeenCalledTimes(1);
+    });
+
+    it("tells a view that joined the shared watch of another", async () => {
+      const { kubeWatchApi, store, failList, select, settle } = createEnvironment();
+      const first = vi.fn();
+      const second = vi.fn();
+
+      kubeWatchApi.subscribeStores([store], { onLoadFailure: first });
+      await settle();
+      kubeWatchApi.subscribeStores([store], { onLoadFailure: second });
+      failList("kube-system");
+      select(["default", "kube-system"]);
+      await settle();
+
+      expect(first).toHaveBeenCalledTimes(1);
+      expect(second).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("given every namespace selected", () => {

@@ -142,6 +142,9 @@ export class KubeWatchApi {
   readonly #sharedWatches = new Map<SubscribableStore, StoreWatch>();
   readonly #lingering = new Map<SubscribableStore, ReturnType<typeof setTimeout>>();
   readonly #ownedWatches = new Map<SubscribableStore, number>();
+  // Who hears of a failed load of a store's shared watch: its present
+  // subscriptions, not only the one that started the watch, which may be gone.
+  readonly #failureListeners = new Map<SubscribableStore, Set<(err: any) => void>>();
 
   constructor(private readonly dependencies: Dependencies) {
     this.#watch = new WatchCount(this.dependencies);
@@ -163,6 +166,13 @@ export class KubeWatchApi {
     // A watch of the selected namespaces is shared by every subscription of
     // the store. The first one starts it, and the last one to be disposed,
     // whichever that is, ends it; no subscription's own controller may.
+    const listeners = getOrInsert(this.#failureListeners, store, new Set<(err: any) => void>());
+    const listener = onLoadFailure && ((err: any) => onLoadFailure(err));
+
+    if (listener) {
+      listeners.add(listener);
+    }
+
     if (this.#watch.inc(store) === 1) {
       const lingering = this.#lingering.get(store);
 
@@ -172,11 +182,21 @@ export class KubeWatchApi {
         this.#lingering.delete(store);
         this.#sharedWatches.get(store)?.resume();
       } else {
-        this.#sharedWatches.set(store, this.watchStore({ store, onLoadFailure }));
+        this.#sharedWatches.set(
+          store,
+          this.watchStore({
+            store,
+            onLoadFailure: onLoadFailure && ((err) => listeners.forEach((each) => each(err))),
+          }),
+        );
       }
     }
 
     return () => {
+      if (listener) {
+        listeners.delete(listener);
+      }
+
       if (this.#watch.dec(store) === 0) {
         this.linger(store);
       }
