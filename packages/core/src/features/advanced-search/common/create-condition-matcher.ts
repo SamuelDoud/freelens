@@ -67,14 +67,19 @@ export function parseLocalDateTime(value: string): number {
 
   const [, year, month, day, hours = "0", minutes = "0", seconds = "0"] = match;
 
-  return new Date(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-    Number(hours),
-    Number(minutes),
-    Number(seconds),
-  ).getTime();
+  const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hours), Number(minutes), Number(seconds));
+
+  // Date rolls an impossible day (February 31) over into the next month; the date the user wrote
+  // has to be the one read. Only the day is compared: a time in a daylight-saving gap is real.
+  if (date.getMonth() !== Number(month) - 1 || date.getDate() !== Number(day) || Number(minutes) > 59) {
+    return Number.NaN;
+  }
+
+  if (Number(hours) > 23 || Number(seconds) > 59) {
+    return Number.NaN;
+  }
+
+  return date.getTime();
 }
 
 type ValueTest = (value: string) => boolean;

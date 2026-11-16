@@ -187,6 +187,19 @@ describe("parseLocalDateTime", () => {
     expect(parseLocalDateTime("2026-11-13T07:05")).toBe(new Date(2026, 10, 13, 7, 5).getTime());
     expect(parseLocalDateTime("13/11/2026")).toBeNaN();
   });
+
+  it.each(["2026-02-31", "2026-13-01", "2026-00-10", "2026-04-31", "2026-11-13T24:00", "2026-11-13T07:60"])(
+    "rejects %s as a date that does not exist",
+    (value) => {
+      expect(parseLocalDateTime(value)).toBeNaN();
+      expect(getConditionError({ ...time("before", value) })).toBe("Pick a date and time");
+    },
+  );
+
+  it("reads the last day of a leap February", () => {
+    expect(parseLocalDateTime("2028-02-29")).toBe(new Date(2028, 1, 29).getTime());
+    expect(parseLocalDateTime("2026-02-29")).toBeNaN();
+  });
 });
 
 describe("describeCondition", () => {
