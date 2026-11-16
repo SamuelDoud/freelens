@@ -1,5 +1,5 @@
 import { DragEndEvent, DragStartEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import React, { ReactElement, useEffect, useState } from "react";
+import React, { ReactElement, useState } from "react";
 
 interface OrderableListHookDependencies {
   children: React.ReactElement[];
@@ -17,10 +17,15 @@ const useOrderableListHook = ({ children, onReorder }: OrderableListHookDependen
 
   const [itemIds, setItemIds] = useState(getItemIds());
 
-  useEffect(() => {
+  // The list follows its children, so that a new child shows in the render that got it. An effect
+  // would show the old list for one more commit.
+  const [syncedChildren, setSyncedChildren] = useState(children);
+
+  if (syncedChildren !== children) {
+    setSyncedChildren(children);
     setItems(children);
     setItemIds(getItemIds());
-  }, [children]);
+  }
 
   const onDragStart = (event: DragStartEvent) => {
     const activeIndex = items.findIndex((item) => item.key === event.active.id);

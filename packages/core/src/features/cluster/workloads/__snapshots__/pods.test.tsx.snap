@@ -38,7 +38,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -83,7 +83,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -91,7 +91,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -99,7 +99,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -199,7 +199,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -207,7 +207,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -252,7 +252,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -260,7 +260,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -268,7 +268,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -276,7 +276,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -284,7 +284,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -389,7 +389,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -397,7 +397,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given a n
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1386,7 +1386,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -1431,7 +1431,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1439,7 +1439,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1447,7 +1447,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -1547,7 +1547,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1555,7 +1555,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -1600,7 +1600,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1608,7 +1608,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1616,7 +1616,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1624,7 +1624,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1632,7 +1632,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -1737,7 +1737,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -1745,7 +1745,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given no 
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -2539,7 +2539,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -2584,7 +2584,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -2592,7 +2592,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -2600,7 +2600,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -2700,7 +2700,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -2708,7 +2708,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -2753,7 +2753,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -2761,7 +2761,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -2769,7 +2769,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -2777,7 +2777,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -2785,7 +2785,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             >
               <div
@@ -2890,7 +2890,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
@@ -2898,7 +2898,7 @@ exports[`workloads / pods > when navigating to workloads / pods view > given pod
               aria-disabled="false"
               aria-roledescription="sortable"
               role="button"
-              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              style="pointer-events: auto; opacity: 1;"
               tabindex="0"
             />
             <div
