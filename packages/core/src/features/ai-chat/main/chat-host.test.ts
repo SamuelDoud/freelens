@@ -66,6 +66,12 @@ describe("AiChatHost", () => {
     expect(host.list("other")).toEqual([]);
   });
 
+  it("does not start a chat on the OpenAI-compatible backend when no server is set up", () => {
+    preferences = { ...preferences, defaultProvider: "openai" };
+
+    expect(host.create({ clusterId: "cluster-1", clusterName: "homelab" }).provider).toBe("claude");
+  });
+
   it("refuses a change tool while the chat does not allow changes, without reaching the cluster", async () => {
     const { id } = host.create({ clusterId: "cluster-1", clusterName: "homelab" });
 

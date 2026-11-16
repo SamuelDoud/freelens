@@ -6,6 +6,7 @@
 import { randomUUID } from "node:crypto";
 import { defaultAiSystemPrompt } from "../common/default-system-prompt";
 import { runOpenAiTurn } from "../common/openai-agent";
+import { defaultAiChatPreferences, isOpenAiConfigured } from "../common/preferences";
 import { findAiTool, getAvailableAiTools } from "../common/tools";
 
 import type { AiChatCommand, AiToolResult, CreateAiChat } from "../common/channels";
@@ -86,7 +87,12 @@ export class AiChatHost {
 
   create({ clusterId, clusterName, placement }: CreateAiChat): AiChatSnapshot {
     const preferences = this.dependencies.preferences();
-    const provider = preferences.defaultProvider;
+    // The OpenAI-compatible backend is a choice only while a server is set up; without one a new chat
+    // would fail on its first message.
+    const provider =
+      preferences.defaultProvider === "openai" && !isOpenAiConfigured(preferences)
+        ? defaultAiChatPreferences.defaultProvider
+        : preferences.defaultProvider;
     const chat: ChatRecord = {
       id: randomUUID(),
       clusterId,
