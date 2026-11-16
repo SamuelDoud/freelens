@@ -12,5 +12,9 @@
  */
 export const escapePrometheusRegex = (name: string): string => name.replace(/[.+*?^$()[\]{}|\\]/g, "\\\\$&");
 
-/** The characters of the pod-template-hash that a ReplicaSet name carries: 8 to 10 of the safe alphabet. */
-export const podTemplateHash = "[bcdfghjklmnpqrstvwxz2456789]{8,10}";
+/**
+ * The pod-template-hash that a ReplicaSet name carries: a 32-bit hash written in the safe alphabet,
+ * up to 10 characters, fewer when the hash is small. The alphabet has no vowels, so the next word of
+ * a sibling's name ("api-gateway-…") cannot pass for it.
+ */
+export const podTemplateHash = "[bcdfghjklmnpqrstvwxz2456789]{1,10}";

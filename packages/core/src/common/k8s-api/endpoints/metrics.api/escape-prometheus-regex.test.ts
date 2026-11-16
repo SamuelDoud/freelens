@@ -56,6 +56,8 @@ describe("the pods of a Prometheus query", () => {
     });
 
     expect(matches(selector, "api-5d8f9c7b6-abcde")).toBe(true);
+    // A small hash is written with fewer characters.
+    expect(matches(selector, "api-7c9-abcde")).toBe(true);
     expect(matches(selector, "api-gateway-xxxxxxxxx-5d8f9c7b6-abcde")).toBe(false);
     expect(matches(selector, "api-gateway-xxxxxxxxx-abcde")).toBe(false);
     expect(matches(selector, "api-abcdefghijk-abcde")).toBe(false);
