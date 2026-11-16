@@ -25,3 +25,24 @@ describe("the CPU tooltip", () => {
     expect(cpuLabel(1234.5)).toBe("Usage: 1235");
   });
 });
+
+const labelOf = (tab: "Network" | "Filesystem", id: string, value: number) => {
+  const label = metricTabOptions[tab].plugins?.tooltip?.callbacks?.label as (item: TooltipItem<"line">) => string;
+
+  return label({ dataset: { label: "Series", id }, parsed: { y: value } } as unknown as TooltipItem<"line">);
+};
+
+describe("the tooltips of byte series", () => {
+  it("write a rate per second and a size without it", () => {
+    expect(labelOf("Network", "p-networkReceive", 2048)).toMatch(/\/s$/);
+    expect(labelOf("Filesystem", "fsWrites", 2048)).toMatch(/\/s$/);
+    expect(labelOf("Filesystem", "fsUsage", 2048)).not.toMatch(/\/s$/);
+  });
+
+  it("write the axis of the network tab per second", () => {
+    const callback = metricTabOptions.Network.scales?.y?.ticks?.callback as (value: number) => string;
+
+    expect(callback(2048)).toMatch(/\/s$/);
+    expect(callback(0)).toBe("0");
+  });
+});

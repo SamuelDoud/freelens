@@ -10,6 +10,8 @@ import type { ChartOptions, TooltipItem } from "chart.js";
 
 export type MetricsTab = "CPU" | "Memory" | "Disk" | "Pods" | "Network" | "Filesystem" | "Duration";
 
+const isRateSeries = (id: string | undefined) => /fsReads|fsWrites|networkReceive|networkTransmit/.test(id ?? "");
+
 const memoryLikeOptions: ChartOptions = {
   scales: {
     y: {
@@ -41,7 +43,10 @@ const memoryLikeOptions: ChartOptions = {
             return label ?? "";
           }
 
-          return `${label}: ${bytesToUnits(parseInt(value.toString()), { precision: 3 })}`;
+          // A rate is bytes per second: the same unit as the stats table under the chart.
+          const perSecond = isRateSeries((context.dataset as { id?: string }).id) ? "/s" : "";
+
+          return `${label}: ${bytesToUnits(parseInt(value.toString()), { precision: 3 })}${perSecond}`;
         },
       },
     },
@@ -51,7 +56,20 @@ const memoryLikeOptions: ChartOptions = {
 export const metricTabOptions: Record<MetricsTab, ChartOptions> = {
   Memory: memoryLikeOptions,
   Disk: memoryLikeOptions,
-  Network: memoryLikeOptions,
+  Network: {
+    scales: {
+      y: {
+        ticks: {
+          callback: (value: number | string): string => {
+            const bytes = typeof value === "string" ? parseFloat(value) : value;
+
+            return bytes === 0 ? "0" : `${bytesToUnits(bytes)}/s`;
+          },
+        },
+      },
+    },
+    plugins: memoryLikeOptions.plugins,
+  },
   Filesystem: memoryLikeOptions,
   CPU: {
     scales: {
