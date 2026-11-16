@@ -107,7 +107,10 @@ describe.each(cases)("$Store.name watch sorting", ({ Store, ObjectType, extra })
       expect(sort).not.toHaveBeenCalled();
       store["eventsBuffer"].push({ type: "MODIFIED", object: data("a", 3, "3") } as never);
       store["updateFromEventsBuffer"]();
-      expect(sort).toHaveBeenCalledTimes(1);
+      // A store on the keyed flush merges the re-keyed item into its place in
+      // the sorted list without sorting all of it again; the event store, which
+      // caps its items on every flush, rebuilds and sorts once.
+      expect(sort).toHaveBeenCalledTimes(Store === EventStore ? 1 : 0);
       expect(store.items.map((item) => item.getId())).toEqual(["a", "b"]);
     } finally {
       vi.clearAllTimers();

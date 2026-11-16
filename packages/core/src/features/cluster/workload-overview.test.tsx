@@ -4,8 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import navigateToWorkloadsOverviewInjectable from "../../common/front-end-routing/routes/cluster/workloads/overview/navigate-to-workloads-overview.injectable";
+import { loadChartJs } from "../../renderer/components/chart/chartjs-loader";
 import {
   type ApplicationBuilder,
   getApplicationBuilder,
@@ -16,6 +17,12 @@ import type { RenderResult } from "@testing-library/react";
 describe("workload overview", () => {
   let rendered: RenderResult;
   let builder: ApplicationBuilder;
+
+  // Chart.js loads on the first chart's mount; loaded here, the status charts draw synchronously, as
+  // they do once a session has shown one chart.
+  beforeAll(async () => {
+    await loadChartJs();
+  });
 
   beforeEach(async () => {
     builder = getApplicationBuilder().setEnvironmentToClusterFrame();
