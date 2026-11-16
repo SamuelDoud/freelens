@@ -8,7 +8,6 @@ import "./dialog.scss";
 
 import { showCheckedErrorNotificationInjectable } from "@freelensapp/notifications";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { orderBy } from "es-toolkit/compat";
 import { computed, observable, runInAction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
@@ -17,6 +16,7 @@ import { Dialog } from "../../dialog";
 import { Select } from "../../select";
 import { Wizard, WizardStep } from "../../wizard";
 import rollbackReleaseInjectable from "../rollback-release/rollback-release.injectable";
+import { loadRevisions } from "./load-revisions";
 import releaseRollbackDialogStateInjectable from "./state.injectable";
 
 import type { ShowCheckedErrorNotification } from "@freelensapp/notifications";
@@ -57,15 +57,36 @@ class NonInjectedReleaseRollbackDialog extends React.Component<ReleaseRollbackDi
   };
 
   onOpen = async (release: HelmRelease) => {
-    this.isLoading.set(true);
+    runInAction(() => {
+      this.revisions.clear();
+      this.revision.set(undefined);
+      this.isLoading.set(true);
+    });
 
-    const releases = await this.props.requestHelmReleaseHistory(release.getName(), release.getNs());
+    const result = await loadRevisions(
+      this.props.requestHelmReleaseHistory,
+      release.getName(),
+      release.getNs(),
+      // A reply for a release the dialog has since left must not show up under another one.
+      () => this.props.state.get()?.getId() === release.getId(),
+    );
+
+    if (result.status === "stale") {
+      return;
+    }
 
     runInAction(() => {
-      this.revisions.replace(orderBy(releases, "revision", "desc"));
-      this.revision.set(this.revisions[0]);
+      if (result.status === "loaded") {
+        this.revisions.replace(result.revisions);
+        this.revision.set(this.revisions[0]);
+      }
+
       this.isLoading.set(false);
     });
+
+    if (result.status === "failed") {
+      this.props.showCheckedErrorNotification(result.error, "Unknown error occurred while loading release history");
+    }
   };
 
   rollback = async (release: HelmRelease) => {
