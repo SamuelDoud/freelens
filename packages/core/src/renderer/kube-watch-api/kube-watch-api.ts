@@ -159,7 +159,15 @@ export class KubeWatchApi {
 
       return () => {
         watch.dispose();
-        this.#ownedWatches.set(store, (this.#ownedWatches.get(store) ?? 1) - 1);
+        const remaining = (this.#ownedWatches.get(store) ?? 1) - 1;
+
+        this.#ownedWatches.set(store, remaining);
+
+        // The linger of the shared watch ended while this view still used the
+        // items, so it is the last one to let them go.
+        if (remaining === 0 && !this.#sharedWatches.has(store) && !this.#lingering.has(store)) {
+          store.release?.();
+        }
       };
     }
 

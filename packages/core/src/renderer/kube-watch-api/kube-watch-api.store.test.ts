@@ -283,6 +283,36 @@ describe("KubeWatchApi with a store", () => {
     expect(store.getByName(`loaded-${extra - 1}`, "default")).toBeDefined();
   });
 
+  it("frees a large store when the last explicit-namespace view ends after the linger of the shared watch", async () => {
+    const { kubeWatchApi, store, settle } = createEnvironment({ objectsPerNamespace: releaseFromItemCount });
+    const shared = kubeWatchApi.subscribeStores([store]);
+    const explicit = kubeWatchApi.subscribeStores([store], { namespaces: ["default"] });
+
+    await settle();
+    shared();
+    await vi.advanceTimersByTimeAsync(storeLingerMs);
+
+    // the explicit view still uses the items
+    expect(store.items).toHaveLength(releaseFromItemCount);
+
+    explicit();
+
+    expect(store.items).toHaveLength(0);
+    expect(store.isLoaded).toBe(false);
+  });
+
+  it("keeps a large store when an explicit-namespace view ends while the shared watch lingers", async () => {
+    const { kubeWatchApi, store, settle } = createEnvironment({ objectsPerNamespace: releaseFromItemCount });
+    const shared = kubeWatchApi.subscribeStores([store]);
+    const explicit = kubeWatchApi.subscribeStores([store], { namespaces: ["default"] });
+
+    await settle();
+    shared();
+    explicit();
+
+    expect(store.items).toHaveLength(releaseFromItemCount);
+  });
+
   it("keeps the items of a small store when the linger is over", async () => {
     const { kubeWatchApi, store, settle } = createEnvironment();
     const unsubscribe = kubeWatchApi.subscribeStores([store]);
