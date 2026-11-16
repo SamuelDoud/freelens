@@ -5,7 +5,7 @@
 
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, MenuItem } from "../../../renderer/components/menu";
 import getClusterByIdInjectable from "../../cluster/storage/common/get-by-id.injectable";
 import { describeEntry } from "../common/timeline";
@@ -35,25 +35,40 @@ const longPressMs = 500;
  * Wraps a back or forward button: a right click or a long press on it lists
  * the steps that way, to jump to any of them.
  */
-const NonInjectedHistoryStepsMenu = observer(
+export const NonInjectedHistoryStepsMenu = observer(
   ({ direction, children, timeline, controller, clusterName }: HistoryStepsMenuProps & Dependencies) => {
     const [isOpen, setOpen] = useState(false);
-    const [pressTimer, setPressTimer] = useState<ReturnType<typeof setTimeout>>();
+    const pressTimer = useRef<ReturnType<typeof setTimeout>>();
+    // Whether the press that is ending opened the menu, whose release must not also be a click on the button
+    const openedByPress = useRef(false);
     const id = `history-steps-${direction < 0 ? "back" : "forward"}`;
     const steps = timeline.around(direction);
 
     const cancelPress = () => {
-      clearTimeout(pressTimer);
-      setPressTimer(undefined);
+      clearTimeout(pressTimer.current);
+      pressTimer.current = undefined;
     };
+
+    useEffect(() => cancelPress, []);
 
     return (
       <>
         <span
           id={id}
           onMouseDown={(event) => {
+            openedByPress.current = false;
+
             if (event.button === 0 && steps.length) {
-              setPressTimer(setTimeout(() => setOpen(true), longPressMs));
+              pressTimer.current = setTimeout(() => {
+                openedByPress.current = true;
+                setOpen(true);
+              }, longPressMs);
+            }
+          }}
+          onClickCapture={(event) => {
+            if (openedByPress.current) {
+              openedByPress.current = false;
+              event.stopPropagation();
             }
           }}
           onMouseUp={cancelPress}
