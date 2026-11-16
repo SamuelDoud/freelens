@@ -40,6 +40,36 @@ interface Dependencies {
   legacyOnChannelListen: typeof ipcRendererOn;
 }
 
+/**
+ * What opens the palette: in a cluster frame, that frame's own; in the root frame, the one of the cluster the
+ * page shows, which lives in that cluster's frame, or else the root frame's own.
+ */
+export const getOpenCommandPalette =
+  ({
+    clusterId,
+    matchedClusterId,
+    openHere,
+    broadcast,
+  }: {
+    clusterId: ClusterId | undefined;
+    matchedClusterId: IComputedValue<ClusterId | undefined>;
+    openHere: () => void;
+    broadcast: (channel: string) => void;
+  }) =>
+  () => {
+    if (clusterId) {
+      return openHere();
+    }
+
+    const matchedId = matchedClusterId.get();
+
+    if (matchedId) {
+      broadcast(`command-palette:${matchedId}:open`);
+    } else {
+      openHere();
+    }
+  };
+
 @observer
 class NonInjectedCommandContainer extends React.Component<Dependencies> {
   private readonly disposers: (() => void)[] = [];
@@ -47,17 +77,12 @@ class NonInjectedCommandContainer extends React.Component<Dependencies> {
   componentDidMount() {
     const { clusterId, addWindowEventListener, commandOverlay, matchedClusterId, isMac } = this.props;
 
-    const action = clusterId
-      ? () => commandOverlay.open(<CommandDialog />)
-      : () => {
-          const matchedId = matchedClusterId.get();
-
-          if (matchedId) {
-            broadcastMessage(`command-palette:${matchedClusterId}:open`);
-          } else {
-            commandOverlay.open(<CommandDialog />);
-          }
-        };
+    const action = getOpenCommandPalette({
+      clusterId,
+      matchedClusterId,
+      openHere: () => commandOverlay.open(<CommandDialog />),
+      broadcast: broadcastMessage,
+    });
     const ipcChannel = clusterId ? `command-palette:${clusterId}:open` : "command-palette:open";
 
     this.disposers.push(
