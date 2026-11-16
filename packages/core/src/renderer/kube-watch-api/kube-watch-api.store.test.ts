@@ -116,6 +116,7 @@ const createEnvironment = ({ namespaces = ["default"], objectsPerNamespace = 3 }
     store,
     kubeWatchApi,
     server,
+    allNamespaces,
     lists,
     watches,
     openWatches: () => watches.filter((watch) => !watch.signal.aborted),
@@ -314,6 +315,22 @@ describe("KubeWatchApi with a store", () => {
       expect(watches.map((watch) => watch.namespace).sort()).toEqual(["default", "kube-system", "other"]);
     });
 
+    it("lists and watches a namespace created later, which no cluster-wide watch reports", async () => {
+      const { kubeWatchApi, store, watches, lists, server, allNamespaces, select, settle } = createEnvironment({
+        namespaces: ["default", "kube-system", "other"],
+      });
+
+      kubeWatchApi.subscribeStores([store]);
+      await settle();
+      server.set("fresh", [objectIn("fresh", "item-0")]);
+      allNamespaces.push("fresh");
+      select(["default", "kube-system", "other", "fresh"]);
+      await settle();
+
+      expect(lists.slice(3)).toEqual(["fresh"]);
+      expect(watches.map((watch) => watch.namespace).sort()).toEqual(["default", "fresh", "kube-system", "other"]);
+    });
+
     it("keeps the watch of the selection when another view loads one namespace meanwhile", async () => {
       const { kubeWatchApi, store, watches, holdList, releaseList, settle } = createEnvironment({
         namespaces: ["default", "kube-system", "other"],
@@ -382,7 +399,7 @@ describe("KubeWatchApi with a store", () => {
       expect(names()).toContain("kube-system/item-0");
     });
 
-    it("lists the whole selection again when a namespace is removed, and when all are selected", async () => {
+    it("lists the whole selection again when a namespace is removed, and only the added ones when all are selected", async () => {
       const { kubeWatchApi, store, lists, select, settle } = createEnvironment({
         namespaces: ["default", "kube-system"],
       });
@@ -397,8 +414,9 @@ describe("KubeWatchApi with a store", () => {
       select(["default", "kube-system", "other"]);
       await settle();
 
-      // all namespaces: a load of every namespace, as before
-      expect(lists.slice(3).sort()).toEqual(["default", "kube-system", "other"]);
+      // without a cluster-wide watch, all namespaces are watched one by one,
+      // so selecting all only adds the two that were not listed
+      expect(lists.slice(3).sort()).toEqual(["kube-system", "other"]);
     });
 
     it("adds the namespace chosen while the view was away, when it returns, and lists nothing meanwhile", async () => {

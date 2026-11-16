@@ -318,13 +318,17 @@ export class KubeWatchApi {
       const selected = wantedNamespaces();
       const all = clusterContext.isLoadingAll(selected);
 
-      if (covered?.all && all) {
+      // Only a cluster-wide watch reports a namespace created or deleted
+      // meanwhile; without it every namespace is watched on its own.
+      const clusterWide = clusterContext.isGlobalWatchEnabled();
+
+      if (covered?.all && all && clusterWide) {
         return console.debug(
           `[KUBE-WATCH-API]: Not changing watch for ${store.api.apiBase} because a namespace was created or deleted but all namespaces are selected`,
         );
       }
 
-      if (covered && !covered.all && !all) {
+      if (covered && !(covered.all && clusterWide) && !(all && clusterWide)) {
         const selectedSet = new Set(selected);
         const coveredSet = new Set(covered.namespaces);
 
