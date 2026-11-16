@@ -256,6 +256,37 @@ describe("advanced search panel", () => {
     expect(savedSearches.all).toEqual([]);
   });
 
+  it("warns, and replaces on confirming, when a rename takes the name of another saved search", () => {
+    const save = (name: string) =>
+      savedSearches.save({
+        name,
+        viewKey: "v1/Pod",
+        viewTitle: "Pods",
+        routePath: "/pods",
+        conditions: [condition("a")],
+      });
+
+    save("APIs");
+    save("Web");
+
+    const { getByTestId } = render(<AdvancedSearchControls view={view} />);
+
+    fireEvent.click(getByTestId("icon-for-saved-searches-menu"));
+    fireEvent.click(getByTestId("saved-search-rename-APIs"));
+
+    const rename = render(<>{confirmations[0].message}</>);
+
+    expect(rename.queryByTestId("saved-search-rename-replaces")).toBeNull();
+
+    fireEvent.change(rename.getByTestId("saved-search-rename-input"), { target: { value: "web" } });
+
+    expect(rename.getByTestId("saved-search-rename-replaces").textContent).toContain('"Web"');
+
+    act(() => confirmations[0].ok?.());
+
+    expect(savedSearches.all.map(({ name }) => name)).toEqual(["web"]);
+  });
+
   it("offers a command per saved search in the cluster frame that opens its list with its conditions", () => {
     const saved = savedSearches.save({
       name: "APIs",

@@ -62,9 +62,18 @@ export class SavedSearches {
     return saved;
   }
 
+  /**
+   * Renames a search. Another search of the same view that already has the name is replaced, as
+   * saving under an existing name does, so that a name stays unique within its view.
+   */
   @action
   rename(id: string, name: string) {
-    this.state.savedSearches = this.all.map((search) => (search.id === id ? { ...search, name: name.trim() } : search));
+    const target = this.all.find((search) => search.id === id);
+    const taken = target && this.findByName(target.viewKey, name);
+
+    this.state.savedSearches = this.all
+      .filter((search) => search.id !== taken?.id || taken.id === id)
+      .map((search) => (search.id === id ? { ...search, name: name.trim() } : search));
   }
 
   @action
