@@ -93,6 +93,7 @@ export function getSorted<T>(
   }
 
   const order =
+    (!anyArray && length >= RADIX_MIN_LENGTH && hasOnlyNumberKeys(keys) && radixOrder(keys, sign)) ||
     (previous && hasUniformStringKeys(keys) && mergeWithPrevious(rawItems, previous, compare)) ||
     sortIndexes(length, compare);
   const sorted: T[] = new Array(length);
@@ -107,8 +108,7 @@ export function getSorted<T>(
 /**
  * Whether the keys are numbers or strings, the same kind at every position of a key, and the first
  * position of a key a string. Only uniform kinds give a total order, the one the merge relies on:
- * `<` on a mix of kinds is not transitive. Number keys are left to the plain sort, which is
- * faster for them than finding the previous run is worth.
+ * `<` on a mix of kinds is not transitive. Number keys do not come here: radixOrder sorts them.
  */
 function hasUniformStringKeys(keys: readonly unknown[]): boolean {
   const kinds: string[] = [];
@@ -138,6 +138,111 @@ function hasUniformStringKeys(keys: readonly unknown[]): boolean {
   }
 
   return kinds[0] === "string";
+}
+
+// Below this many items the comparator sort is as fast as the radix sort.
+const RADIX_MIN_LENGTH = 256;
+
+/** Whether every key is a number or has no value, and some key is a number. */
+function hasOnlyNumberKeys(keys: readonly unknown[]): boolean {
+  let any = false;
+
+  for (const key of keys) {
+    if (typeof key === "number") {
+      any = true;
+    } else if (key !== undefined && key !== null) {
+      return false;
+    }
+  }
+
+  return any;
+}
+
+const radixView = new Float64Array(1);
+const radixWords = new Uint32Array(radixView.buffer);
+
+/**
+ * The indexes of number keys in the order a stable sort by them gives: ascending for `sign` 1,
+ * descending for -1, keys without a value (undefined, null, NaN) last either way, equal keys (0 and
+ * -0 too) in input order. An LSD radix sort on the 64 bits of each key, made order-preserving as an
+ * unsigned integer: it does not compare, and it is stable by construction. A pass where every key
+ * has the same digit is skipped, which is most of them for whole-number keys.
+ */
+function radixOrder(keys: readonly unknown[], sign: 1 | -1): Uint32Array {
+  const length = keys.length;
+  const high = new Uint32Array(length);
+  const low = new Uint32Array(length);
+
+  for (let i = 0; i < length; i++) {
+    const key = keys[i];
+
+    if (typeof key !== "number" || key !== key) {
+      high[i] = 0xffffffff;
+      low[i] = 0xffffffff;
+      continue;
+    }
+
+    radixView[0] = key === 0 ? 0 : key;
+
+    let h = radixWords[1];
+    let l = radixWords[0];
+
+    if (h & 0x80000000) {
+      h = ~h >>> 0;
+      l = ~l >>> 0;
+    } else {
+      h = (h ^ 0x80000000) >>> 0;
+    }
+
+    if (sign < 0) {
+      h = ~h >>> 0;
+      l = ~l >>> 0;
+    }
+
+    high[i] = h;
+    low[i] = l;
+  }
+
+  let order = new Uint32Array(length);
+  let spare = new Uint32Array(length);
+  const counts = new Uint32Array(65536);
+
+  for (let i = 0; i < length; i++) {
+    order[i] = i;
+  }
+
+  for (const word of [low, high]) {
+    for (let shift = 0; shift < 32; shift += 16) {
+      counts.fill(0);
+
+      for (let i = 0; i < length; i++) {
+        counts[(word[i] >>> shift) & 0xffff]++;
+      }
+
+      if (counts[(word[0] >>> shift) & 0xffff] === length) {
+        continue;
+      }
+
+      let sum = 0;
+
+      for (let bucket = 0; bucket < 65536; bucket++) {
+        const count = counts[bucket];
+
+        counts[bucket] = sum;
+        sum += count;
+      }
+
+      for (let i = 0; i < length; i++) {
+        const index = order[i];
+
+        spare[counts[(word[index] >>> shift) & 0xffff]++] = index;
+      }
+
+      [order, spare] = [spare, order];
+    }
+  }
+
+  return order;
 }
 
 function sortIndexes(length: number, compare: (left: number, right: number) => number): number[] {
