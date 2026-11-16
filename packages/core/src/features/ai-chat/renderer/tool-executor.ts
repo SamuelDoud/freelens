@@ -12,7 +12,15 @@ import {
   timeSearchOperators,
 } from "../../advanced-search/common/conditions";
 import { findAiTool } from "../common/tools";
-import { describeApiError, formatAge, formatObjectTable, sanitizeObject, statusColumns, truncate } from "./format";
+import {
+  describeApiError,
+  formatAge,
+  formatObjectTable,
+  sanitizeObject,
+  statusColumns,
+  truncate,
+  truncateKeepingEnd,
+} from "./format";
 import { apiVersionOf, collectionPath, namedViewPaths, objectPath, resolveResource, viewPathOf } from "./resources";
 
 import type { KubeApiResource } from "../../../common/rbac";
@@ -88,14 +96,18 @@ const valueSet = (text: string | undefined) => {
 type Columns = Record<string, string | number>;
 
 /** Whether a status ("Ready,SchedulingDisabled" counts as both of its parts) is one of the values. */
+// Kinds without a status column of their own (custom resources, APIService, ...) show the
+// conditions that hold, which the status filters match the same way.
 const statusIsOneOf = (columns: Columns, values: Set<string>) => {
-  const status = String(columns.status ?? "").toLowerCase();
+  const status = String(columns.status ?? columns.conditions ?? "").toLowerCase();
 
   return values.has(status) || status.split(",").some((part) => values.has(part));
 };
 
-/** Fewer ready than wanted ("1/3"), or a node that is not Ready. */
+/** Fewer ready than wanted ("1/3"), or a node that is not Ready. A pod that ran to the end is done, not unready. */
 const isNotReady = (columns: Columns) => {
+  if (/^(completed|succeeded)$/i.test(String(columns.status ?? ""))) return false;
+
   const ready = /^(\d+)\/(\d+)$/.exec(String(columns.ready ?? ""));
 
   return ready ? Number(ready[1]) < Number(ready[2]) : /^notready/i.test(String(columns.status ?? ""));
@@ -149,7 +161,10 @@ export class AiToolExecutor {
     const args: Args = rawArgs && typeof rawArgs === "object" && !Array.isArray(rawArgs) ? (rawArgs as Args) : {};
 
     try {
-      return { ok: true, text: truncate(await this.run(name, args, context)) };
+      const text = await this.run(name, args, context);
+
+      // A log's newest lines are the ones that matter, so a long log loses its beginning.
+      return { ok: true, text: name === "get_pod_logs" ? truncateKeepingEnd(text) : truncate(text) };
     } catch (error) {
       return { ok: false, text: error instanceof ToolError ? error.message : describeApiError(error) };
     }
@@ -272,16 +287,42 @@ export class AiToolExecutor {
           throw new ToolError(`"sortBy" must be one of ${Object.keys(listOrders).join(", ")}.`);
         }
 
+        const allRows = items.map((object) => ({ object, columns: statusColumns(resource.kind, object) }));
+
+        // A filter on a column the kind lacks would match nothing: say which columns there are. The
+        // columns of a custom resource depend on its objects (conditions), so every object counts, and
+        // an empty list answers with no match rather than an error.
+        if (allRows.length > 0) {
+          const available = new Set([
+            ...Object.keys(statusColumns(resource.kind, {})),
+            ...allRows.flatMap(({ columns }) => Object.keys(columns)),
+          ]);
+          const needed: [boolean, string, string[]][] = [
+            [minRestarts !== undefined, "minRestarts", ["restarts"]],
+            [Boolean(statusIn), "status", ["status", "conditions"]],
+            [Boolean(statusOut), "statusNot", ["status", "conditions"]],
+            [notReady, "notReady", ["ready", "status"]],
+          ];
+
+          for (const [used, filter, columns] of needed) {
+            if (used && !columns.some((column) => available.has(column))) {
+              throw new ToolError(
+                `"${filter}" filters the ${columns.join(" or ")} column, which ${resource.kind} does not have. Its columns: ${
+                  [...available].join(", ") || "none besides name, namespace and age"
+                }.`,
+              );
+            }
+          }
+        }
+
         const filtered = minRestarts !== undefined || statusIn || statusOut || notReady;
-        const rows = items
-          .map((object) => ({ object, columns: statusColumns(resource.kind, object) }))
-          .filter(
-            ({ columns }) =>
-              (minRestarts === undefined || Number(columns.restarts ?? 0) >= minRestarts) &&
-              (!statusIn || statusIsOneOf(columns, statusIn)) &&
-              (!statusOut || !statusIsOneOf(columns, statusOut)) &&
-              (!notReady || isNotReady(columns)),
-          );
+        const rows = allRows.filter(
+          ({ columns }) =>
+            (minRestarts === undefined || Number(columns.restarts ?? 0) >= minRestarts) &&
+            (!statusIn || statusIsOneOf(columns, statusIn)) &&
+            (!statusOut || !statusIsOneOf(columns, statusOut)) &&
+            (!notReady || isNotReady(columns)),
+        );
 
         if (order) {
           rows.sort(order);
@@ -305,7 +346,11 @@ export class AiToolExecutor {
 
       case "get_events": {
         const namespace = str(args, "namespace");
-        const kind = str(args, "kind");
+        const requestedKind = str(args, "kind");
+        // The field selector compares the kind exactly: "deployment" must become "Deployment".
+        const kind = requestedKind
+          ? (resolveResource(this.dependencies.knownResources(), requestedKind)?.kind ?? requestedKind)
+          : undefined;
         const objectName = str(args, "name");
         const selectors = [
           ...(kind ? [`involvedObject.kind=${kind}`] : []),

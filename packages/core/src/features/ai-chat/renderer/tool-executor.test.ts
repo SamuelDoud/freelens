@@ -328,4 +328,129 @@ describe("AiToolExecutor", () => {
       expect(result).toEqual({ ok: false, text: '"sortBy" must be one of name, restarts, newest, oldest, status.' });
     });
   });
+
+  describe("filters on columns a kind lacks", () => {
+    it("says which columns the kind has instead of listing nothing", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({
+        items: [{ metadata: { name: "api", namespace: "a" }, spec: { replicas: 2 }, status: { readyReplicas: 2 } }],
+      });
+
+      const result = await executor.execute("list_resources", { kind: "Deployment", minRestarts: 1 }, readOnly);
+
+      expect(result.ok).toBe(false);
+      expect(result.text).toBe(
+        '"minRestarts" filters the restarts column, which Deployment does not have. Its columns: ready, available.',
+      );
+    });
+
+    it("answers an empty list with no match, not an error", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({ items: [] });
+
+      const result = await executor.execute("list_resources", { kind: "Widget", status: "Ready" }, readOnly);
+
+      expect(result).toEqual({ ok: true, text: "0 Widgets, 0 matching" });
+    });
+
+    it("takes the columns of every object, not only the first", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({
+        items: [
+          { metadata: { name: "w1", namespace: "a" } },
+          { metadata: { name: "w2", namespace: "a" }, status: { conditions: [{ type: "Ready", status: "True" }] } },
+        ],
+      });
+
+      const result = await executor.execute("list_resources", { kind: "Widget", status: "Ready" }, readOnly);
+
+      expect(result.ok).toBe(true);
+      expect(result.text.split("\n")[0]).toBe("2 Widgets, 1 matching");
+    });
+  });
+
+  describe("pods with init containers", () => {
+    const pod = (name: string, init: unknown[], phase = "Pending") => ({
+      metadata: { name, namespace: "a" },
+      spec: { containers: [{}], initContainers: [{}, {}] },
+      status: { phase, initContainerStatuses: init },
+    });
+
+    it("shows the status kubectl shows, and filters on it", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({
+        items: [
+          pod("crash", [
+            { state: { terminated: { exitCode: 0 } } },
+            { state: { waiting: { reason: "CrashLoopBackOff" } } },
+          ]),
+          pod("failed", [{ state: { terminated: { exitCode: 1, reason: "Error" } } }, { state: {} }]),
+          pod("slow", [{ state: { terminated: { exitCode: 0 } } }, { state: { running: {} } }]),
+        ],
+      });
+
+      const all = await executor.execute("list_resources", { kind: "Pod" }, readOnly);
+
+      expect(all.text).toContain("crash\ta\t0/1\tInit:CrashLoopBackOff");
+      expect(all.text).toContain("failed\ta\t0/1\tInit:Error");
+      expect(all.text).toContain("slow\ta\t0/1\tInit:1/2");
+
+      const filtered = await executor.execute("list_resources", { kind: "Pod", status: "Init:Error" }, readOnly);
+
+      expect(filtered.text).toContain("failed");
+      expect(filtered.text).not.toContain("crash");
+    });
+  });
+
+  describe("logs and events", () => {
+    it("keeps the newest lines of a log that is cut, not the oldest", async () => {
+      const log = Array.from({ length: 1000 }, (_, index) => `line-${String(index).padStart(4, "0")} ${"x".repeat(80)}`)
+        .join("\n")
+        .concat("\n");
+
+      vi.mocked(dependencies.kube.get).mockResolvedValue(log);
+
+      const { ok, text } = await executor.execute(
+        "get_pod_logs",
+        { name: "p", namespace: "a", tailLines: 1000 },
+        readOnly,
+      );
+
+      expect(ok).toBe(true);
+      expect(text).toContain("line-0999");
+      expect(text).not.toContain("line-0000");
+      expect(text.split("\n")[0]).toMatch(/cut/);
+    });
+
+    it("matches the kind of an event query whatever its case", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({ items: [] });
+
+      await executor.execute("get_events", { kind: "deployment", name: "api", namespace: "a" }, readOnly);
+
+      expect(dependencies.kube.get).toHaveBeenCalledWith("/api/v1/namespaces/a/events", {
+        fieldSelector: "involvedObject.kind=Deployment,involvedObject.name=api",
+      });
+    });
+
+    it("does not call a finished pod not ready", async () => {
+      vi.mocked(dependencies.kube.get).mockResolvedValue({
+        items: [
+          {
+            metadata: { name: "job-1", namespace: "a" },
+            spec: { containers: [{}] },
+            status: {
+              phase: "Succeeded",
+              containerStatuses: [{ ready: false, state: { terminated: { reason: "Completed" } } }],
+            },
+          },
+          {
+            metadata: { name: "web-1", namespace: "a" },
+            spec: { containers: [{}] },
+            status: { phase: "Running", containerStatuses: [{ ready: false }] },
+          },
+        ],
+      });
+
+      const { text } = await executor.execute("list_resources", { kind: "Pod", notReady: true }, readOnly);
+
+      expect(text).toContain("web-1");
+      expect(text).not.toContain("job-1");
+    });
+  });
 });

@@ -149,12 +149,16 @@ interface MuseSession {
  */
 export class AiMuseSessions {
   private readonly sessions = new Map<string, MuseSession>();
+  /** Chats stopped before their session was ready to be cancelled */
+  private readonly stopRequested = new Set<string>();
 
   constructor(private readonly dependencies: AiMuseSessionsDependencies) {}
 
   async prompt(turn: MuseTurn, onEvent: (event: AiCliEvent) => void): Promise<void> {
     let session = this.sessions.get(turn.chatId);
     let isNew = false;
+
+    this.stopRequested.delete(turn.chatId);
 
     // The effort is fixed when the process starts; the model can change in a running session.
     if (session && session.effort !== turn.effort) {
@@ -163,16 +167,31 @@ export class AiMuseSessions {
       session = undefined;
     }
 
-    if (!session) {
-      session = await this.start(turn);
-      isNew = true;
-    } else if (session.model !== turn.model && turn.model) {
-      await this.request(session, "session/set_config_option", {
-        sessionId: session.sessionId,
-        configId: "model",
-        value: turn.model,
-      });
-      session.model = turn.model;
+    try {
+      if (!session) {
+        session = await this.start(turn);
+        isNew = true;
+      } else if (session.model !== turn.model && turn.model) {
+        await this.request(session, "session/set_config_option", {
+          sessionId: session.sessionId,
+          configId: "model",
+          value: turn.model,
+        });
+        session.model = turn.model;
+      }
+    } catch (error) {
+      // A session that did not get ready would otherwise stay, with its process, for the next turn.
+      this.close(turn.chatId);
+      onEvent({ kind: "done", error: error instanceof Error ? error.message : String(error) });
+
+      return;
+    }
+
+    // Stopped while the process and its session were being made: nothing to cancel then, so no prompt.
+    if (this.stopRequested.delete(turn.chatId)) {
+      onEvent({ kind: "done", error: "Stopped." });
+
+      return;
     }
 
     session.onEvent = onEvent;
@@ -202,6 +221,8 @@ export class AiMuseSessions {
 
     if (session?.sessionId) {
       this.notify(session, "session/cancel", { sessionId: session.sessionId });
+    } else {
+      this.stopRequested.add(chatId);
     }
   }
 
@@ -225,25 +246,30 @@ export class AiMuseSessions {
     // Freelens's MCP server as the host reaches it: itself, or through the SSH connection.
     const mcpUrl = await host.mcpUrl(turn.mcpUrl);
     const workspace = await prepareMuseWorkspace(host, workDir, turn.chatId, mcpUrl);
-    const child = await host.spawn(
-      turn.command,
-      [
-        "acp",
-        "--no-session-log",
-        // Reads the workspace's .mcp.json, for this run only.
-        "--trust-workspace",
-        "--disable-shell",
-        "--disable-write",
-        "--disable-request-user-input",
-        ...(turn.model ? ["--model", turn.model] : []),
-        ...(turn.effort ? ["-c", `reasoning_effort=${JSON.stringify(turn.effort)}`] : []),
-      ],
-      {
-        cwd: workspace,
-        env: { KUBECONFIG: emptyKubeconfig, [museMcpAuthVariable]: `Bearer ${turn.mcpToken}` },
-        readsStdin: true,
-      },
-    );
+    const child = await host
+      .spawn(
+        turn.command,
+        [
+          "acp",
+          "--no-session-log",
+          // Reads the workspace's .mcp.json, for this run only.
+          "--trust-workspace",
+          "--disable-shell",
+          "--disable-write",
+          "--disable-request-user-input",
+          ...(turn.model ? ["--model", turn.model] : []),
+          ...(turn.effort ? ["-c", `reasoning_effort=${JSON.stringify(turn.effort)}`] : []),
+        ],
+        {
+          cwd: workspace,
+          env: { KUBECONFIG: emptyKubeconfig, [museMcpAuthVariable]: `Bearer ${turn.mcpToken}` },
+          readsStdin: true,
+        },
+      )
+      .catch((error) => {
+        void host.remove(workspace).catch(() => {});
+        throw error;
+      });
     const session: MuseSession = {
       child,
       host,
@@ -289,6 +315,9 @@ export class AiMuseSessions {
     if (this.sessions.get(chatId) === session) {
       this.sessions.delete(chatId);
     }
+
+    // The process is gone on its own: its workspace has no more use.
+    void session.host.remove(session.workspace).catch(() => {});
 
     for (const { reject } of session.pending.values()) {
       reject(new Error(message));

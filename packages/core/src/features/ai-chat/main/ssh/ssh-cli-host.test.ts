@@ -46,6 +46,31 @@ const hostWith = (spawnSsh: Spawn) =>
   );
 
 describe("SshCliHost", () => {
+  it("forwards the MCP port again after an attempt that never ran ssh", async () => {
+    let forwards = 0;
+    const spawnSsh = ((_command: string, args: string[]) => {
+      const child = new EventEmitter() as ChildProcess;
+      const stdout = new EventEmitter();
+      const isForward = args.includes("forward");
+
+      Object.assign(child, { stdout, stderr: new EventEmitter(), stdin: { end: () => {} }, kill: () => true });
+      setImmediate(() => {
+        if (isForward && forwards++ === 0) {
+          child.emit("error", Object.assign(new Error("spawn ssh EAGAIN"), { code: "EAGAIN" }));
+        } else {
+          stdout.emit("data", Buffer.from(isForward ? "40123\n" : ""));
+          child.emit("exit", 0);
+        }
+      });
+
+      return child;
+    }) as unknown as Spawn;
+    const host = hostWith(spawnSsh);
+
+    await expect(host.mcpUrl("http://127.0.0.1:5000/mcp/c")).rejects.toThrow("EAGAIN");
+    await expect(host.mcpUrl("http://127.0.0.1:5000/mcp/c")).resolves.toBe("http://127.0.0.1:40123/mcp/c");
+  });
+
   it("names the host after the options and before the command to run there", async () => {
     const { calls, spawnSsh } = fakeSsh(() => ({ code: 0, stdout: "/home/me/.local/bin/claude\n" }));
 

@@ -31,6 +31,30 @@ const createdAge = (object: RawObject, nowMs: number) => {
   return Number.isFinite(created) ? formatAge(created, nowMs) : "";
 };
 
+/** What kubectl shows while init containers have not all finished: Init:Error, Init:0/2, ... */
+function initStatus(pod: RawObject): string | undefined {
+  const statuses: RawObject[] = pod.status?.initContainerStatuses ?? [];
+  const specs: RawObject[] = pod.spec?.initContainers ?? [];
+
+  for (const [index, status] of statuses.entries()) {
+    const { terminated, waiting, running } = status.state ?? {};
+
+    if (terminated?.exitCode === 0) continue;
+    // A sidecar that runs on is not holding the pod back.
+    if (specs[index]?.restartPolicy === "Always" && running) continue;
+
+    if (terminated) {
+      return `Init:${terminated.reason || (terminated.signal ? `Signal:${terminated.signal}` : `ExitCode:${terminated.exitCode}`)}`;
+    }
+
+    if (waiting?.reason && waiting.reason !== "PodInitializing") return `Init:${waiting.reason}`;
+
+    return `Init:${index}/${specs.length || statuses.length}`;
+  }
+
+  return undefined;
+}
+
 function podStatus(pod: RawObject): string {
   const statuses: RawObject[] = pod.status?.containerStatuses ?? [];
   const waiting = statuses.find((status) => status.state?.waiting?.reason)?.state.waiting.reason;
@@ -38,7 +62,14 @@ function podStatus(pod: RawObject): string {
 
   if (pod.metadata?.deletionTimestamp) return "Terminating";
 
-  return waiting ?? (pod.status?.phase === "Running" ? "Running" : (terminated ?? pod.status?.phase ?? ""));
+  const init = initStatus(pod);
+
+  if (init) return init;
+
+  return (
+    waiting ??
+    (pod.status?.phase === "Running" ? "Running" : (terminated ?? pod.status?.reason ?? pod.status?.phase ?? ""))
+  );
 }
 
 /** The columns kubectl shows for the common kinds, after name and namespace. */
@@ -185,6 +216,17 @@ export function truncate(text: string, maxCharacters = 40000): string {
   return text.length <= maxCharacters
     ? text
     : `${text.slice(0, maxCharacters)}\n… (${text.length - maxCharacters} more characters cut; narrow the request)`;
+}
+
+/** Like `truncate`, for output whose end matters most: the beginning is cut. */
+export function truncateKeepingEnd(text: string, maxCharacters = 40000): string {
+  if (text.length <= maxCharacters) return text;
+
+  const kept = text.slice(-maxCharacters);
+  // Starts at a whole line.
+  const newline = kept.indexOf("\n");
+
+  return `… (${text.length - kept.length + (newline >= 0 ? newline + 1 : 0)} earlier characters cut; narrow the request)\n${newline >= 0 ? kept.slice(newline + 1) : kept}`;
 }
 
 /** The message of an error the Kubernetes API or JsonApi throws. */

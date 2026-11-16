@@ -3,6 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import path from "node:path";
 import {
   initialAiDiscovery,
   parseClaudeModels,
@@ -283,7 +284,12 @@ export class AiCliDiscovery {
           };
           const timer = setTimeout(() => {
             child.kill?.();
-            finish({ code: null, timedOut: true });
+
+            if (!settled) {
+              settled = true;
+              // Not an answer: "not signed in" or "no models" would be wrong.
+              reject(new Error(`${path.basename(command)} ${args.join(" ")} did not answer in ${timeoutMs / 1000} s.`));
+            }
           }, timeoutMs);
 
           child.on("error", (error) => {

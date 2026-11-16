@@ -66,6 +66,12 @@ describe("AiChatHost", () => {
     expect(host.list("other")).toEqual([]);
   });
 
+  it("does not start a chat on the OpenAI-compatible backend when no server is set up", () => {
+    preferences = { ...preferences, defaultProvider: "openai" };
+
+    expect(host.create({ clusterId: "cluster-1", clusterName: "homelab" }).provider).toBe("claude");
+  });
+
   it("refuses a change tool while the chat does not allow changes, without reaching the cluster", async () => {
     const { id } = host.create({ clusterId: "cluster-1", clusterName: "homelab" });
 
@@ -211,5 +217,63 @@ describe("AiChatHost", () => {
 
     expect(host.get(id)).toBeUndefined();
     expect(dependencies.sendClosed).toHaveBeenCalledWith(id);
+  });
+
+  it("does not bring a closed chat back when its running tool call ends", async () => {
+    const { id } = host.create({ clusterId: "cluster-1", clusterName: "homelab" });
+    let callId = "";
+
+    vi.mocked(dependencies.sendToolCall).mockImplementation((call) => {
+      callId = call.callId;
+    });
+
+    const running = host.callTool(id, "list_resources", { kind: "Pod" });
+
+    await host.command({ type: "close", chatId: id });
+
+    const published = snapshots.length;
+
+    host.resolveToolResult(callId, { ok: true, text: "3 Pods" });
+    await running;
+
+    expect(snapshots).toHaveLength(published);
+  });
+
+  it("ends a turn that could not start, with the reason in the chat", async () => {
+    dependencies.mcpUrlFor = async () => {
+      throw new Error("listen EADDRINUSE");
+    };
+    host = new AiChatHost(dependencies);
+
+    const { id } = host.create({ clusterId: "cluster-1", clusterName: "homelab" });
+
+    await host.command({ type: "send", chatId: id, text: "hi" });
+
+    expect(last().running).toBe(false);
+    expect(last().items[1]).toMatchObject({ kind: "notice", tone: "error", text: "listen EADDRINUSE" });
+  });
+
+  it("ends a Muse turn whose process could not start", async () => {
+    vi.mocked(dependencies.muse.prompt).mockRejectedValue(new Error("spawn muse ENOENT"));
+    preferences = { ...preferences, defaultProvider: "muse" };
+
+    const { id } = host.create({ clusterId: "cluster-1", clusterName: "homelab" });
+
+    await host.command({ type: "send", chatId: id, text: "hi" });
+
+    expect(last().running).toBe(false);
+    expect(last().items[1]).toMatchObject({ kind: "notice", tone: "error", text: "spawn muse ENOENT" });
+  });
+
+  it("refuses a backend change and a new chat while a turn runs, saying so in the chat", async () => {
+    const { id } = host.create({ clusterId: "cluster-1", clusterName: "homelab" });
+
+    await host.command({ type: "send", chatId: id, text: "hi" });
+    await host.command({ type: "settings", chatId: id, settings: { provider: "codex", model: "m", effort: "" } });
+    await host.command({ type: "clear", chatId: id });
+
+    expect(last()).toMatchObject({ provider: "claude", running: true });
+    expect(last().items.map((item) => item.kind)).toEqual(["user", "notice", "notice"]);
+    expect(last().items[1]).toMatchObject({ tone: "error" });
   });
 });

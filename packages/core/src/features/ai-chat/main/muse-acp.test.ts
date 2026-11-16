@@ -3,8 +3,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { describe, expect, it } from "vitest";
-import { choosePermissionOption, parseMuseUpdate } from "./muse-acp";
+import { EventEmitter } from "node:events";
+import { PassThrough } from "node:stream";
+import { describe, expect, it, vi } from "vitest";
+import { AiMuseSessions, choosePermissionOption, parseMuseUpdate } from "./muse-acp";
+
+import type { AiCliHost } from "./cli-host";
 
 const options = [
   { optionId: "allow", kind: "allow_once" },
@@ -69,5 +73,130 @@ describe("prepareMuseWorkspace", () => {
         },
       },
     });
+  });
+});
+
+describe("AiMuseSessions", () => {
+  it("lets go of a process whose session could not start, and says why", async () => {
+    const stdin = new PassThrough();
+    const stdout = new PassThrough();
+    const child = Object.assign(new EventEmitter(), { stdin, stdout, stderr: new PassThrough(), kill: vi.fn() });
+
+    // Answers the first request, initialize, with an error.
+    stdin.on("data", (chunk: Buffer) => {
+      const { id } = JSON.parse(chunk.toString().split("\n")[0]);
+
+      stdout.write(`${JSON.stringify({ jsonrpc: "2.0", id, error: { message: "unsupported protocol" } })}\n`);
+    });
+
+    const host = {
+      workDir: async () => ({ workDir: "/w", emptyKubeconfig: "/w/k" }),
+      mcpUrl: async (url: string) => url,
+      join: (...parts: string[]) => parts.join("/"),
+      mkdir: async () => {},
+      writeFile: async () => {},
+      remove: vi.fn(async () => {}),
+      spawn: async () => child,
+      label: "this computer",
+    } as unknown as AiCliHost;
+    const sessions = new AiMuseSessions({ host: () => host, logWarn: () => {} });
+    const events: unknown[] = [];
+
+    await sessions.prompt(
+      {
+        chatId: "c",
+        command: "muse",
+        prompt: "hi",
+        model: "",
+        effort: "",
+        systemPrompt: "",
+        mcpUrl: "http://127.0.0.1:1/mcp/c",
+        mcpToken: "t",
+      },
+      (event) => events.push(event),
+    );
+
+    expect(events).toEqual([{ kind: "done", error: "unsupported protocol" }]);
+    expect(child.kill).toHaveBeenCalled();
+    expect(host.remove).toHaveBeenCalled();
+  });
+
+  const makeHost = (child: unknown) =>
+    ({
+      workDir: async () => ({ workDir: "/w", emptyKubeconfig: "/w/k" }),
+      mcpUrl: async (url: string) => url,
+      join: (...parts: string[]) => parts.join("/"),
+      mkdir: async () => {},
+      writeFile: async () => {},
+      remove: vi.fn(async () => {}),
+      spawn: async () => child,
+      label: "this computer",
+    }) as unknown as AiCliHost;
+  const museTurn = {
+    chatId: "c",
+    command: "muse",
+    prompt: "hi",
+    model: "",
+    effort: "",
+    systemPrompt: "",
+    mcpUrl: "http://127.0.0.1:1/mcp/c",
+    mcpToken: "t",
+  };
+
+  it("removes the workspace of a process that exited on its own", async () => {
+    const stdin = new PassThrough();
+    const child = Object.assign(new EventEmitter(), {
+      stdin,
+      stdout: new PassThrough(),
+      stderr: new PassThrough(),
+      kill: vi.fn(),
+    });
+    const host = makeHost(child);
+    const sessions = new AiMuseSessions({ host: () => host, logWarn: () => {} });
+    const events: unknown[] = [];
+    const prompted = sessions.prompt(museTurn, (event) => events.push(event));
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    child.emit("close", 1);
+    await prompted;
+
+    expect(events).toEqual([{ kind: "done", error: "Muse exited." }]);
+    expect(host.remove).toHaveBeenCalledWith("/w/muse-c");
+  });
+
+  it("honours Stop pressed while the session is being created, without sending the prompt", async () => {
+    const stdin = new PassThrough();
+    const stdout = new PassThrough();
+    const child = Object.assign(new EventEmitter(), { stdin, stdout, stderr: new PassThrough(), kill: vi.fn() });
+    const methods: string[] = [];
+
+    stdin.on("data", (chunk: Buffer) => {
+      for (const line of chunk.toString().split("\n").filter(Boolean)) {
+        const { id, method } = JSON.parse(line);
+
+        methods.push(method);
+
+        if (id !== undefined) {
+          setTimeout(
+            () =>
+              stdout.write(
+                `${JSON.stringify({ jsonrpc: "2.0", id, result: method === "session/new" ? { sessionId: "s" } : {} })}\n`,
+              ),
+            10,
+          );
+        }
+      }
+    });
+
+    const sessions = new AiMuseSessions({ host: () => makeHost(child), logWarn: () => {} });
+    const events: unknown[] = [];
+    const prompted = sessions.prompt(museTurn, (event) => events.push(event));
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    sessions.stop("c");
+    await prompted;
+
+    expect(events).toEqual([{ kind: "done", error: "Stopped." }]);
+    expect(methods).not.toContain("session/prompt");
   });
 });

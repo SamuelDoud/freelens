@@ -28,7 +28,6 @@ export interface CliTurnArgs {
 export function buildClaudeArgs(args: CliTurnArgs): string[] {
   return [
     "-p",
-    args.prompt,
     "--output-format",
     "stream-json",
     "--verbose",
@@ -50,6 +49,9 @@ export function buildClaudeArgs(args: CliTurnArgs): string[] {
       : args.newSessionId
         ? ["--session-id", args.newSessionId]
         : []),
+    // A message that starts with "-" (a list item, "-1 is it?") would otherwise be read as a flag.
+    "--",
+    args.prompt,
   ];
 }
 
@@ -94,6 +96,8 @@ export function buildCodexArgs(args: CliTurnArgs): string[] {
     'approval_policy="never"',
     ...(args.model ? ["-m", args.model] : []),
     ...(args.effort ? ["-c", `model_reasoning_effort=${tomlString(args.effort)}`] : []),
+    // A message that starts with "-" (a list item, "-1 is it?") would otherwise be read as a flag.
+    "--",
     prompt,
   ];
 }

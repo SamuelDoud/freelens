@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { runOpenAiTurn } from "./openai-agent";
+import { runOpenAiTurn, shortenOldToolResults } from "./openai-agent";
 import { getAvailableAiTools } from "./tools";
 
 import type { OpenAiMessage } from "./openai-agent";
@@ -92,5 +92,44 @@ describe("runOpenAiTurn", () => {
         },
       ),
     ).rejects.toThrow(/model not loaded/);
+  });
+});
+
+describe("shortenOldToolResults", () => {
+  const exchange = (id: string, size: number): OpenAiMessage[] => [
+    { role: "user", content: `question ${id}` },
+    {
+      role: "assistant",
+      content: null,
+      tool_calls: [{ id, type: "function", function: { name: "t", arguments: "{}" } }],
+    },
+    { role: "tool", tool_call_id: id, content: `${id}:`.padEnd(size, "x") },
+    { role: "assistant", content: `answer ${id}` },
+  ];
+
+  it("shortens the oldest tool results past the budget and leaves the latest turn whole", () => {
+    const history = [...exchange("a", 5000), ...exchange("b", 5000), ...exchange("c", 5000)];
+    const latest = structuredClone(history.slice(8));
+
+    shortenOldToolResults(history, 8000);
+
+    const results = history.filter((message) => message.role === "tool").map((message) => message.content);
+
+    expect(results[0]).toMatch(/^a:x+\n… \(shortened: \d+ more characters/);
+    expect(results[0].length).toBeLessThan(600);
+    expect(results[2]).toHaveLength(5000);
+    expect(history.slice(8)).toEqual(latest);
+    expect(history.filter((message) => message.role !== "tool").map((message) => message.content)).toContain(
+      "answer a",
+    );
+  });
+
+  it("changes nothing under the budget", () => {
+    const history = [...exchange("a", 500), ...exchange("b", 500)];
+    const before = structuredClone(history);
+
+    shortenOldToolResults(history, 100_000);
+
+    expect(history).toEqual(before);
   });
 });

@@ -28,7 +28,11 @@ describe("buildClaudeArgs", () => {
     expect(valueOf(args, "--setting-sources")).toBe("");
     expect(valueOf(args, "--system-prompt")).toBe("You are Freelens.");
     expect(valueOf(args, "--output-format")).toBe("stream-json");
-    expect(valueOf(args, "-p")).toBe("which pods fail?");
+    expect(args.slice(-2)).toEqual(["--", "which pods fail?"]);
+  });
+
+  it("keeps a message that starts with a dash from being read as a flag", () => {
+    expect(buildClaudeArgs({ ...turn, prompt: "- first\n- second" }).slice(-2)).toEqual(["--", "- first\n- second"]);
   });
 
   it("starts a new session or resumes the chat's one", () => {
@@ -79,6 +83,12 @@ describe("buildCodexArgs", () => {
     expect(first[first.length - 1]).toMatch(/^You are Freelens\.[\s\S]*which pods fail\?$/);
     expect(next.slice(0, 3)).toEqual(["exec", "resume", "th-1"]);
     expect(next[next.length - 1]).toBe("which pods fail?");
+  });
+
+  it("keeps a message that starts with a dash from being read as a flag", () => {
+    const args = buildCodexArgs({ ...turn, prompt: "-1 is it?", resumeSessionId: "th-1" });
+
+    expect(args.slice(-2)).toEqual(["--", "-1 is it?"]);
   });
 
   it("passes the model with -m and the effort as model_reasoning_effort", () => {

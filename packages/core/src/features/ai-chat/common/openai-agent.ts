@@ -34,6 +34,38 @@ export interface OpenAiTurn {
   effort: string;
 }
 
+// The conversation sent to the server stays under about 50k tokens: past this many characters the
+// oldest tool results are shortened, the latest turn always whole.
+export const historyBudgetCharacters = 200_000;
+const shortenedToolResultCharacters = 400;
+
+const sizeOf = (message: OpenAiMessage) =>
+  (typeof message.content === "string" ? message.content.length : 0) +
+  ("tool_calls" in message && message.tool_calls ? JSON.stringify(message.tool_calls).length : 0);
+
+/**
+ * Shortens the oldest tool results of a history, in place, until it fits the budget. Everything
+ * from the latest user message on is left alone, and so are the people's and the model's words.
+ */
+export function shortenOldToolResults(history: OpenAiMessage[], budget = historyBudgetCharacters) {
+  let total = history.reduce((sum, message) => sum + sizeOf(message), 0);
+  const latestUser = history.findLastIndex((message) => message.role === "user");
+
+  for (let index = 0; index < latestUser && total > budget; index++) {
+    const message = history[index];
+
+    if (message.role !== "tool" || message.content.length <= shortenedToolResultCharacters) {
+      continue;
+    }
+
+    const dropped = message.content.length - shortenedToolResultCharacters;
+    const content = `${message.content.slice(0, shortenedToolResultCharacters)}\n… (shortened: ${dropped} more characters of this older result were dropped; ask again if needed)`;
+
+    total -= message.content.length - content.length;
+    history[index] = { ...message, content };
+  }
+}
+
 // A turn that keeps calling tools without answering is stopped here.
 const maxSteps = 25;
 
@@ -55,6 +87,7 @@ const parseArguments = (raw: string): unknown => {
  */
 export async function runOpenAiTurn(turn: OpenAiTurn, dependencies: OpenAiTurnDependencies): Promise<void> {
   turn.history.push({ role: "user", content: turn.prompt });
+  shortenOldToolResults(turn.history);
 
   for (let step = 0; step < maxSteps; step++) {
     if (dependencies.isStopped()) {
