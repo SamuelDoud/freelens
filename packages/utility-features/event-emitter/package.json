@@ -1,6 +1,6 @@
 {
   "name": "@freelensapp/event-emitter",
-  "version": "2.5.0-rc.0",
+  "version": "2.5.0-rc.1",
   "private": true,
   "description": "Event emitter",
   "homepage": "https://freelens.app",
