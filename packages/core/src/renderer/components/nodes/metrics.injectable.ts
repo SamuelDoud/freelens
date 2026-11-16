@@ -37,11 +37,12 @@ const nodeMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "node-metrics",
   getObject: ({ node }: NodeMetricsInjectableParams) => node,
   getObjectId: (node) => node.getId(),
-  request: ({ di, object: node, start, end, range }) =>
+  request: ({ di, object: node, start, end, range, step }) =>
     di.inject(requestClusterMetricsByNodeNamesInjectable)([node.getName()], {
       start,
       end,
       range,
+      step,
       metrics: nodeMetricKeys,
     }),
 });

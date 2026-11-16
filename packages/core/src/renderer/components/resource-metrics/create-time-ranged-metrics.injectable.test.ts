@@ -71,6 +71,7 @@ describe("createTimeRangedMetricsInjectable", () => {
           timestamps: {
             get: timestampsGet,
           },
+          value: { get: () => ({ duration: null }) },
         }) as never,
     );
 
@@ -120,6 +121,7 @@ describe("createTimeRangedMetricsInjectable", () => {
       selectedMetricsTimeRangeInjectable,
       () =>
         ({
+          value: { get: () => ({ duration: null }) },
           timestamps: {
             get: () => ({ start: 2000, end: 2100, range: 100 }),
           },
@@ -138,5 +140,63 @@ describe("createTimeRangedMetricsInjectable", () => {
 
     expect(metricsForObjectAAgain).toBe(metricsForObjectA);
     expect(metricsForObjectB).not.toBe(metricsForObjectA);
+  });
+});
+
+describe("createTimeRangedMetricsInjectable polling a sliding window", () => {
+  it("asks for the end of the window with the step of the whole window once it has the rest", async () => {
+    const di = getDiForUnitTesting();
+    const requests: { start: number; end: number; range: number; step?: number }[] = [];
+    let now = 1_700_000_000;
+    const injectable = createTimeRangedMetricsInjectable<{ object: TestObject }, TestObject, unknown>({
+      id: "test-time-ranged-metrics-sliding",
+      getObject: ({ object }) => object,
+      getObjectId: (resource) => resource.getId(),
+      request: async ({ start, end, range, step }) => {
+        requests.push({ start, end, range, step });
+
+        return {
+          cpu: {
+            status: "success",
+            data: {
+              resultType: "matrix",
+              result: [
+                {
+                  metric: {},
+                  values: Array.from({ length: Math.floor((end - start) / (step ?? 60)) + 1 }, (_, index) => [
+                    start + index * (step ?? 60),
+                    "1",
+                  ]),
+                },
+              ],
+            },
+          },
+        };
+      },
+    });
+
+    di.register(injectable);
+    di.override(
+      selectedMetricsTimeRangeInjectable,
+      () =>
+        ({
+          value: { get: () => ({ duration: 3600 }) },
+          timestamps: { get: () => ({ start: now - 3600, end: now, range: 3600 }) },
+        }) as never,
+    );
+
+    di.inject(injectable, { object: { getId: () => "sliding" } });
+    const configuration = asyncComputedMock.mock.calls.at(-1)?.[0] as {
+      getValueFromObservedPromise: () => Promise<unknown>;
+    };
+
+    await configuration.getValueFromObservedPromise();
+    now += 60;
+    await configuration.getValueFromObservedPromise();
+
+    expect(requests[0]).toEqual({ start: 1_700_000_000 - 3600, end: 1_700_000_000, range: 3600, step: undefined });
+    expect(requests[1].step).toBe(60);
+    expect(requests[1].end).toBe(1_700_000_060);
+    expect(requests[1].start).toBeGreaterThan(requests[0].start);
   });
 });

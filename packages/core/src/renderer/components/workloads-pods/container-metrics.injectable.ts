@@ -18,11 +18,12 @@ const podContainerMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "pod-container-metrics",
   getObject: ({ pod, container }: PodContainerParams) => ({ pod, container }),
   getObjectId: ({ pod, container }) => `${pod.getId()}-${container.name}`,
-  request: ({ di, object: { pod, container }, start, end, range }) =>
+  request: ({ di, object: { pod, container }, start, end, range, step }) =>
     di.inject(requestPodMetricsInjectable)([pod], pod.getNs(), container, "pod, container, namespace", {
       start,
       end,
       range,
+      step,
       // The requests and limits drawn as reference lines come from the pod spec.
       metrics: ["cpuUsage", "memoryUsage", "fsUsage", "fsWrites", "fsReads"],
     }),

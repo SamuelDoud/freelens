@@ -17,11 +17,12 @@ const ingressMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "ingress-metrics",
   getObject: ({ ingress }: IngressMetricsInjectableParams) => ingress,
   getObjectId: (ingress) => ingress.getId(),
-  request: ({ di, object: ingress, start, end, range }) =>
+  request: ({ di, object: ingress, start, end, range, step }) =>
     di.inject(requestIngressMetricsInjectable)(ingress.getName(), ingress.getNs(), {
       start,
       end,
       range,
+      step,
     }),
 });
 

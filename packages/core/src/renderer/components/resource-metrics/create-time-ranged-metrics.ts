@@ -6,6 +6,7 @@
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import { asyncComputed } from "../../../common/utils/async-computed";
 import selectedMetricsTimeRangeInjectable from "../cluster/overview/selected-metrics-time-range.injectable";
+import { createIncrementalMetrics } from "./incremental-metrics";
 
 import type { DiContainer, DiContainerForInjection, Injectable } from "@ogre-tools/injectable";
 
@@ -17,6 +18,8 @@ interface RequestContext<ObjectType> {
   start: number;
   end: number;
   range: number;
+  /** Set when only the end of the window is asked for: pass it on to the metrics API */
+  step?: number;
 }
 
 interface TimeRangedMetricsInjectableConfig<Params, ObjectType, Value> {
@@ -79,22 +82,31 @@ export const createTimeRangedMetricsInjectable = <Params, ObjectType, Value>({
       const object = getObject(params);
       const key = `${id}:${getObjectId(object)}`;
 
+      // Every poll of a sliding window asks for the end of it only, and the
+      // points before are kept (see `createIncrementalMetrics`).
+      const incremental = createIncrementalMetrics<Record<string, never>>({
+        request: ({ start, end, range, step }) =>
+          request({ di, object, start, end, range, step }) as Promise<Record<string, never>>,
+      });
+
       const metrics: IReleasableAsyncComputed<Value> = asyncComputed<Value>({
         getValueFromObservedPromise: async () => {
           const { start, end, range } = selectedMetricsTimeRange.timestamps.get();
 
-          return request({
-            di,
-            object,
+          return incremental.fetch({
             start,
             end,
             range,
-          });
+            sliding: selectedMetricsTimeRange.value.get().duration != null,
+          }) as Promise<Value>;
         },
         betweenUpdates: "show-latest-value",
       });
 
-      releasers.set(key, metrics.release);
+      releasers.set(key, () => {
+        incremental.reset();
+        metrics.release();
+      });
 
       return metrics;
     },

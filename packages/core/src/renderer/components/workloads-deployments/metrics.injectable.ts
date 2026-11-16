@@ -17,11 +17,12 @@ const deploymentMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "deployment-metrics",
   getObject: ({ deployment }: DeploymentMetricsInjectableParams) => deployment,
   getObjectId: (deployment) => deployment.getId(),
-  request: ({ di, object: deployment, start, end, range }) =>
+  request: ({ di, object: deployment, start, end, range, step }) =>
     di.inject(requestPodMetricsForDeploymentsInjectable)([deployment], deployment.getNs(), undefined, {
       start,
       end,
       range,
+      step,
     }),
 });
 

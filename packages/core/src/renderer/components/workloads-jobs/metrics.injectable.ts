@@ -17,11 +17,12 @@ const jobMetricsInjectable = createTimeRangedMetricsInjectable({
   id: "job-metrics",
   getObject: ({ job }: JobMetricsInjectableParams) => job,
   getObjectId: (job) => job.getId(),
-  request: ({ di, object: job, start, end, range }) =>
+  request: ({ di, object: job, start, end, range, step }) =>
     di.inject(requestPodMetricsForJobsInjectable)([job], job.getNs(), undefined, {
       start,
       end,
       range,
+      step,
     }),
 });
 
