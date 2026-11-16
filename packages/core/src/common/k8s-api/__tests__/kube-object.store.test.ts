@@ -1019,7 +1019,8 @@ describe("KubeObjectStore", () => {
       store["updateFromEventsBuffer"]();
 
       expect(store.items.map((item) => item.getId())).toEqual(["a", "aa", "b", "c", "d"]);
-      expect(sort).toHaveBeenCalledTimes(1);
+      // The item is merged into the sorted list: the list is not sorted again.
+      expect(sort).not.toHaveBeenCalled();
     });
 
     it("does not sort a status-only modification", () => {
@@ -1039,7 +1040,7 @@ describe("KubeObjectStore", () => {
       store["updateFromEventsBuffer"]();
 
       expect(store.items.map((item) => item.getId())).toEqual(["a", "c", "d", "b"]);
-      expect(sort).toHaveBeenCalledTimes(1);
+      expect(sort).not.toHaveBeenCalled();
     });
 
     it("ignores ERROR events without publishing items", () => {
