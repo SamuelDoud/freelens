@@ -7,10 +7,14 @@
 import { prometheusProviderInjectionToken } from "@freelensapp/prometheus";
 import { getInjectable } from "@ogre-tools/injectable";
 import { runInAction } from "mobx";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForUserDataInjectable from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import { Cluster } from "../../common/cluster/cluster";
 import writeJsonFileInjectable from "../../common/fs/write-json-file.injectable";
+import {
+  prometheusDiscoveryTtlMs,
+  prometheusFailedDiscoveryTtlMs,
+} from "../cluster/prometheus-handler/prometheus-handler";
 import prometheusHandlerInjectable from "../cluster/prometheus-handler/prometheus-handler.injectable";
 import createFreelensK8sProxyInjectable from "../freelens-k8s-proxy/create-freelens-k8s-proxy.injectable";
 import freelensProxyPortInjectable from "../freelens-proxy/freelens-proxy-port.injectable";
@@ -98,6 +102,89 @@ describe("PrometheusHandler", () => {
       contextName,
       id: "some-cluster-id",
       kubeConfigPath,
+    });
+  });
+
+  describe("finding the Prometheus service", () => {
+    let searches: number;
+    let fails: boolean;
+
+    beforeEach(() => {
+      searches = 0;
+      fails = false;
+      vi.useFakeTimers({ toFake: ["Date"] });
+      runInAction(() => {
+        di.register(
+          getInjectable({
+            id: "test-prometheus-provider-counting",
+            injectionToken: prometheusProviderInjectionToken,
+            instantiate: () => ({
+              ...createTestPrometheusProvider("counting", ServiceResult.Success),
+              getPrometheusService: async () => {
+                searches += 1;
+
+                if (fails) {
+                  throw new Error("no prometheus");
+                }
+
+                return { kind: "counting", namespace: "monitoring", port: 9090, service: "prometheus" };
+              },
+            }),
+          }),
+        );
+      });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("searches once for repeated and concurrent requests", async () => {
+      const handler = di.inject(prometheusHandlerInjectable, cluster);
+
+      await Promise.all([handler.getPrometheusDetails(), handler.getPrometheusDetails()]);
+      const details = await handler.getPrometheusDetails();
+
+      expect(searches).toBe(1);
+      expect(details.prometheusPath).toBe("monitoring/services/prometheus:9090");
+    });
+
+    it("searches again once the found service is old", async () => {
+      const handler = di.inject(prometheusHandlerInjectable, cluster);
+
+      await handler.getPrometheusDetails();
+      vi.advanceTimersByTime(prometheusDiscoveryTtlMs - 1);
+      await handler.getPrometheusDetails();
+      expect(searches).toBe(1);
+
+      vi.advanceTimersByTime(1);
+      await handler.getPrometheusDetails();
+      expect(searches).toBe(2);
+    });
+
+    it("retries a failed search after a shorter time", async () => {
+      const handler = di.inject(prometheusHandlerInjectable, cluster);
+
+      fails = true;
+      await expect(handler.getPrometheusDetails()).rejects.toThrowError();
+      await expect(handler.getPrometheusDetails()).rejects.toThrowError();
+      expect(searches).toBe(1);
+
+      fails = false;
+      vi.advanceTimersByTime(prometheusFailedDiscoveryTtlMs);
+      await expect(handler.getPrometheusDetails()).resolves.toBeDefined();
+      expect(searches).toBe(2);
+    });
+
+    it("does not search when the service is set in the cluster's preferences", async () => {
+      cluster.preferences.prometheusProvider = { type: "counting" };
+      cluster.preferences.prometheus = { namespace: "ns", service: "svc", port: 80, prefix: "" };
+      const handler = di.inject(prometheusHandlerInjectable, cluster);
+
+      const details = await handler.getPrometheusDetails();
+
+      expect(searches).toBe(0);
+      expect(details.prometheusPath).toBe("ns/services/svc:80");
     });
   });
 

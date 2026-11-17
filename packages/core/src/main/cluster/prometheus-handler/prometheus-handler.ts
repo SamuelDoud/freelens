@@ -43,6 +43,9 @@ export interface ClusterPrometheusHandler {
 
 // Build the Kubernetes service-proxy path. If HTTPS is requested, use the
 // "https:" prefix before the service name per K8s API conventions.
+export const prometheusDiscoveryTtlMs = 5 * 60_000;
+export const prometheusFailedDiscoveryTtlMs = 60_000;
+
 const ensurePrometheusPath = (service: PrometheusService, useHttps?: boolean) =>
   `${service.namespace}/services/${useHttps ? "https:" : ""}${service.service}:${service.port}`;
 
@@ -79,6 +82,12 @@ export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster])
     return prometheusProviders.get();
   };
 
+  // Every metrics request needs the Prometheus service, and finding it lists the cluster's services for
+  // each potential provider. The result is kept for a while, per provider setting; concurrent requests
+  // share one search, and a failed search (no Prometheus yet) is kept for a shorter time, so that one
+  // installed later is found within a minute.
+  let discovery: { key: string; at: number; failed: boolean; service: Promise<PrometheusService> } | undefined;
+
   const getPrometheusService = async (): Promise<PrometheusService> => {
     setupPrometheus(cluster.preferences);
 
@@ -91,6 +100,28 @@ export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster])
       };
     }
 
+    const key = prometheusProvider ?? "";
+    const now = Date.now();
+
+    if (
+      discovery &&
+      discovery.key === key &&
+      now - discovery.at < (discovery.failed ? prometheusFailedDiscoveryTtlMs : prometheusDiscoveryTtlMs)
+    ) {
+      return discovery.service;
+    }
+
+    const entry = { key, at: now, failed: false, service: findPrometheusService() };
+
+    discovery = entry;
+    entry.service.catch(() => {
+      entry.failed = true;
+    });
+
+    return entry.service;
+  };
+
+  const findPrometheusService = async (): Promise<PrometheusService> => {
     const providers = listPotentialProviders();
     const proxyConfig = await loadProxyKubeconfig();
     const apiClient = proxyConfig.makeApiClient(CoreV1Api);
