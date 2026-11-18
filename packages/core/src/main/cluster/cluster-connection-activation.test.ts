@@ -391,6 +391,18 @@ describe("ClusterConnection activation", () => {
     });
   });
 
+  describe("a refresh of accessibility and metadata", () => {
+    it("is skipped for a cluster that is disconnected", async () => {
+      expect(cluster.disconnected.get()).toBe(true);
+
+      await clusterConnection.refreshAccessibilityAndMetadata();
+
+      expect(countOf("canI:create")).toBe(0);
+      expect(countOf("listNamespaces")).toBe(0);
+      expect(countOf("requestApiResources")).toBe(0);
+    });
+  });
+
   describe("with the accessibility of an earlier connection on disk", () => {
     const identity: AccessibilityIdentity = {
       contextName: "test-cluster",
