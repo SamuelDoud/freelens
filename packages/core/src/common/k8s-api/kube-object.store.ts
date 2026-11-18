@@ -12,6 +12,7 @@ import autoBind from "auto-bind";
 import { limitAsync } from "es-toolkit";
 import { action, computed, observable, observe, reaction } from "mobx";
 import { ItemStore } from "../item.store";
+import { KeyedItemIndex } from "../keyed-item-index";
 import { ItemOrder } from "./item-order";
 
 import type { FetchRequestInit as RequestInit } from "@freelensapp/json-api";
@@ -34,54 +35,55 @@ import type { PartialDeep } from "type-fest";
 import type { ClusterContext } from "../../renderer/cluster-frame-context/cluster-frame-context";
 
 /**
+ * The maps behind `getById` and `getByPath`, which outlive the snapshots they
+ * describe: each is brought to the next snapshot by what changed between the
+ * two, so that a flush of a few objects does not read the key of every item of
+ * a large store.
+ */
+class ItemLookupIndexes<K extends KubeObject> {
+  readonly byId = new KeyedItemIndex<K>((item) => item.getId());
+  readonly byPath = new KeyedItemIndex<K>((item) => item.selfLink);
+}
+
+/**
  * Answers `getById` and `getByPath` for one state of a store's items. The
  * first call of each kind scans like `Array.prototype.find`, so a single call
- * costs what it always did; from the second call on, a map is built once and
- * every further call is a lookup. The map keeps the first of items that share
- * a key, as `find` does.
+ * costs what it always did; from the second call on, a map is built and every
+ * further call is a lookup. The map keeps the first of items that share a
+ * key, as `find` does, and stays with the store: a later state of the items
+ * brings it up to date from the difference, not from scratch.
  */
 class ItemLookups<K extends KubeObject> {
-  private byId: Map<string, K> | undefined;
-  private byPath: Map<string, K> | undefined;
   private idCalls = 0;
   private pathCalls = 0;
 
-  constructor(private readonly snapshot: K[]) {}
+  constructor(
+    private readonly snapshot: K[],
+    private readonly indexes: ItemLookupIndexes<K>,
+  ) {}
 
   getById(id: string): K | undefined {
-    if (!this.byId) {
-      if (this.idCalls++ === 0) {
-        return this.snapshot.find((item) => item.getId() === id);
-      }
+    const { byId } = this.indexes;
 
-      this.byId = new Map();
-
-      for (const item of this.snapshot) {
-        const key = item.getId();
-
-        if (!this.byId.has(key)) this.byId.set(key, item);
-      }
+    if (!byId.isBuilt && this.idCalls++ === 0) {
+      return this.snapshot.find((item) => item.getId() === id);
     }
 
-    return this.byId.get(id);
+    byId.sync(this.snapshot, true);
+
+    return byId.get(id)?.item;
   }
 
   getByPath(path: string): K | undefined {
-    if (!this.byPath) {
-      if (this.pathCalls++ === 0) {
-        return this.snapshot.find((item) => item.selfLink === path);
-      }
+    const { byPath } = this.indexes;
 
-      this.byPath = new Map();
-
-      for (const item of this.snapshot) {
-        const key = item.selfLink;
-
-        if (!this.byPath.has(key)) this.byPath.set(key, item);
-      }
+    if (!byPath.isBuilt && this.pathCalls++ === 0) {
+      return this.snapshot.find((item) => item.selfLink === path);
     }
 
-    return this.byPath.get(path);
+    byPath.sync(this.snapshot, true);
+
+    return byPath.get(path)?.item;
   }
 }
 
@@ -319,7 +321,10 @@ export class KubeObjectStore<
   // Kept alive because getById and getByPath are also called outside
   // reactions, where a plain computed would start over on every call. It is
   // replaced whenever `items` changes in any way, so readers re-run as before.
-  private readonly itemLookups = computed(() => new ItemLookups<K>(this.items.slice()), { keepAlive: true });
+  private readonly itemLookups = computed(() => new ItemLookups<K>(this.items.slice(), this.lookupIndexes), {
+    keepAlive: true,
+  });
+  private readonly lookupIndexes = new ItemLookupIndexes<K>();
 
   // TODO: Circular dependency: KubeObjectStore -> ClusterFrameContext -> NamespaceStore -> KubeObjectStore
   @computed get contextItems(): K[] {
