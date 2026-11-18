@@ -21,6 +21,15 @@
     overflow: unset;
   }
 
+  // The rows of a virtual list come and go as it scrolls. Containment keeps the style, layout and
+  // paint work of a row that mounts inside the row, instead of invalidating the rows around it. It
+  // goes on the row's cells, not on the wrapper that holds the details of an open row: whatever a
+  // cell shows is cut at the row's edge, which its cells do already (overflow: hidden), and a
+  // popup of the details is not.
+  &.virtual .TableRow {
+    contain: layout paint style;
+  }
+
   &.selectable {
     .TableHead,
     .TableRow {

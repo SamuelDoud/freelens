@@ -862,6 +862,8 @@ export class NonInjectedItemListLayoutContent<
           selectable={hasDetailsView}
           sortable={sortingCallbacks}
           getTableRow={this.getRow}
+          // Each row is an <Observer> of its own (see getRow): the list has nothing to track.
+          trackRowObservables={false}
           renderRow={virtual ? undefined : this.renderRow}
           items={items}
           selectedItemId={selectedItemId}
