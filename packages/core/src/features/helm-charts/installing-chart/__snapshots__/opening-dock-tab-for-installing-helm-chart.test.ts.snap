@@ -699,7 +699,7 @@ exports[`opening dock tab for installing helm chart > given application is start
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -1600,7 +1600,7 @@ exports[`opening dock tab for installing helm chart > given application is start
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -2501,7 +2501,7 @@ exports[`opening dock tab for installing helm chart > given application is start
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -3459,7 +3459,7 @@ exports[`opening dock tab for installing helm chart > given application is start
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -4566,7 +4566,7 @@ exports[`opening dock tab for installing helm chart > given application is start
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -5683,7 +5683,7 @@ exports[`opening dock tab for installing helm chart > given application is start
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -6790,7 +6790,7 @@ exports[`opening dock tab for installing helm chart > given application is start
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -7901,7 +7901,7 @@ exports[`opening dock tab for installing helm chart > given application is start
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -9071,7 +9071,7 @@ exports[`opening dock tab for installing helm chart > given application is start
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"

@@ -600,7 +600,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -1501,7 +1501,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -2667,7 +2667,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -3659,7 +3659,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -4910,7 +4910,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -6130,7 +6130,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -7345,7 +7345,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -8560,7 +8560,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -9797,7 +9797,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -11048,7 +11048,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -12263,7 +12263,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -13533,7 +13533,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -14563,7 +14563,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -15625,7 +15625,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -16710,7 +16710,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -18189,7 +18189,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -19233,7 +19233,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -20502,7 +20502,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -21717,7 +21717,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -22932,7 +22932,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -24094,7 +24094,7 @@ exports[`installing helm chart from new tab > given tab for installing chart was
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"

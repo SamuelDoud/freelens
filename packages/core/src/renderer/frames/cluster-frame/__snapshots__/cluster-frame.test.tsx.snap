@@ -647,7 +647,7 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -1362,7 +1362,7 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -2101,7 +2101,7 @@ exports[`<ClusterFrame /> > given cluster without list nodes, but with namespace
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"

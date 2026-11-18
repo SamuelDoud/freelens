@@ -14,6 +14,7 @@
   color: var(--textColorPrimary);
   font: inherit;
   cursor: pointer;
+  position: relative;
 
   &:hover {
     border-color: var(--primary);
@@ -25,27 +26,43 @@
   font-size: var(--font-size-small);
 }
 
-// A soft aura in the theme's primary color until the chat is first opened.
+// The aura in the theme's primary color until the chat is first opened. It is a pseudo-element with a
+// static shadow: only its opacity ever animates, which the compositor does without painting a frame.
+// (Animating box-shadow itself repaints on every frame, for as long as the button glows.)
 .glowing {
   border-color: var(--primary);
   color: var(--primary);
-  animation: aiChatGlow 1.8s ease-in-out infinite;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    box-shadow: 0 0 10px 4px color-mix(in srgb, var(--primary) 70%, transparent);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+// Pulses a few times to catch the eye, then settles on the static aura above. Set only while the
+// button can be seen (see ai-chat-button.tsx), so it never runs in a hidden cluster frame.
+.pulsing::after {
+  animation: aiChatGlow 1.8s ease-in-out 4;
 }
 
 @keyframes aiChatGlow {
   0%,
   100% {
-    box-shadow: 0 0 2px 1px color-mix(in srgb, var(--primary) 45%, transparent);
+    opacity: 0.25;
   }
 
   50% {
-    box-shadow: 0 0 10px 4px color-mix(in srgb, var(--primary) 70%, transparent);
+    opacity: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glowing {
+  .pulsing::after {
     animation: none;
-    box-shadow: 0 0 6px 2px color-mix(in srgb, var(--primary) 60%, transparent);
   }
 }

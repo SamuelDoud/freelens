@@ -926,7 +926,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -2189,7 +2189,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -3452,7 +3452,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -4776,7 +4776,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -6100,7 +6100,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -7670,7 +7670,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -9240,7 +9240,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -10535,7 +10535,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -11830,7 +11830,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -13402,7 +13402,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -15024,7 +15024,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -16296,7 +16296,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -17622,7 +17622,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -18885,7 +18885,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -20209,7 +20209,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -21533,7 +21533,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -22857,7 +22857,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -24157,7 +24157,7 @@ exports[`showing details for helm release > given application is started > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"

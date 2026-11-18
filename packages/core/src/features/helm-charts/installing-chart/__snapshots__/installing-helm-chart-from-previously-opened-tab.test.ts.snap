@@ -653,7 +653,7 @@ exports[`installing helm chart from previously opened tab > given tab for instal
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -1378,7 +1378,7 @@ exports[`installing helm chart from previously opened tab > given tab for instal
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"

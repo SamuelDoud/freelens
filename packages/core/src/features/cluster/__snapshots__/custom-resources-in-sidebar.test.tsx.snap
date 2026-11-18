@@ -652,7 +652,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -1402,7 +1402,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -2115,7 +2115,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -2865,7 +2865,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -3661,7 +3661,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -4411,7 +4411,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -5192,7 +5192,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -6019,7 +6019,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
