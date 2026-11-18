@@ -12,7 +12,7 @@ import autoBind from "auto-bind";
 import { limitAsync } from "es-toolkit";
 import { action, computed, observable, observe, reaction } from "mobx";
 import { ItemStore } from "../item.store";
-import { KeyedItemIndex } from "../keyed-item-index";
+import { diffByIdentity, KeyedItemIndex } from "../keyed-item-index";
 import { ItemOrder } from "./item-order";
 
 import type { FetchRequestInit as RequestInit } from "@freelensapp/json-api";
@@ -85,6 +85,68 @@ class ItemLookups<K extends KubeObject> {
 
     return byPath.get(path)?.item;
   }
+}
+
+function sameMembers(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+  if (a.size !== b.size) return false;
+
+  for (const member of a) {
+    if (!b.has(member)) return false;
+  }
+
+  return true;
+}
+
+/**
+ * `items.filter(keep)`, given `prevResult` as `prevItems.filter(keep)`, where
+ * `keep` depends on an item alone. An item that stayed is in the result when
+ * it was in the previous one, which the objects tell without reading them;
+ * only the items that were added are asked. Undefined when the two lists
+ * differ too much to compare that way.
+ */
+function refilterByDifference<K>(
+  prevItems: readonly K[],
+  prevResult: readonly K[],
+  items: readonly K[],
+  keep: (item: K) => boolean,
+): K[] | undefined {
+  const segments = diffByIdentity(prevItems, items, Math.max(64, items.length >> 2));
+
+  if (!segments) return undefined;
+
+  const result: K[] = [];
+  let kept = 0;
+  let position = 0;
+  let prevPosition = 0;
+
+  const passUnchanged = (to: number) => {
+    for (; position < to; position += 1) {
+      const item = items[position];
+
+      if (prevResult[kept] === item) {
+        result.push(item);
+        kept += 1;
+      }
+    }
+  };
+
+  for (const { prevFrom, prevTo, nextFrom, nextTo } of segments) {
+    passUnchanged(nextFrom);
+
+    for (prevPosition = prevFrom; prevPosition < prevTo; prevPosition += 1) {
+      if (prevResult[kept] === prevItems[prevPosition]) kept += 1;
+    }
+
+    for (position = nextFrom; position < nextTo; position += 1) {
+      const item = items[position];
+
+      if (keep(item)) result.push(item);
+    }
+  }
+
+  passUnchanged(items.length);
+
+  return result;
 }
 
 export type OnLoadFailure = (error: unknown) => void;
@@ -329,13 +391,26 @@ export class KubeObjectStore<
   // TODO: Circular dependency: KubeObjectStore -> ClusterFrameContext -> NamespaceStore -> KubeObjectStore
   @computed get contextItems(): K[] {
     const namespaces = new Set(this.dependencies.context.contextNamespaces);
-
-    return this.items.filter((item) => {
+    const items = this.items.slice();
+    const isInContext = (item: K) => {
       const itemNamespace = item.getNs();
 
       return !itemNamespace /* cluster-wide */ || namespaces.has(itemNamespace);
-    });
+    };
+    const last = this.lastContextItems;
+    const result =
+      (last && sameMembers(last.namespaces, namespaces)
+        ? refilterByDifference(last.items, last.result, items, isInContext)
+        : undefined) ?? items.filter(isInContext);
+
+    this.lastContextItems = { namespaces, items, result };
+
+    return result;
   }
+
+  // What the last evaluation of `contextItems` saw and gave. The next one starts from it, and reads
+  // the namespace of the items that changed instead of every item.
+  private lastContextItems: { namespaces: Set<string>; items: K[]; result: K[] } | undefined;
 
   getTotalCount(): number {
     return this.contextItems.length;

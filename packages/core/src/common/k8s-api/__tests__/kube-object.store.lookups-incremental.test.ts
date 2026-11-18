@@ -191,6 +191,39 @@ describe("KubeObjectStore lookups and context items, incremental against per-sta
     }
   });
 
+  it("reads the namespace of the items that changed, not of every item", () => {
+    const store = new LookupStore();
+    const items = Array.from({ length: 2000 }, (_, i) => make(i, 1));
+
+    runInAction(() => store.items.replace(items));
+    expect(store.contextItems.length).toBe(items.filter((item) => !item.getNs()).length);
+
+    let reads = 0;
+    const getNs = KubeObject.prototype.getNs;
+
+    // Count through a replaced prototype method.
+    KubeObject.prototype.getNs = function (this: KubeObject) {
+      reads += 1;
+
+      return getNs.call(this);
+    };
+
+    try {
+      runInAction(() => {
+        for (let at = 0; at < items.length; at += 100) {
+          store.items[at] = make(at, 2);
+        }
+      });
+
+      const result = store.contextItems;
+
+      expect(result.length).toBe(oldContextItems(store.items.slice(), []).length);
+      expect(reads).toBeLessThan(items.length / 20);
+    } finally {
+      KubeObject.prototype.getNs = getNs;
+    }
+  });
+
   it("lets a reader that used a lookup run again when items change, as before", () => {
     const store = new LookupStore();
     const seen: (KubeObject | undefined)[] = [];
