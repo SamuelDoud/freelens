@@ -456,6 +456,21 @@ class NonInjectedNodesRoute extends React.Component<Dependencies> {
       <TabLayout>
         <KubeObjectListLayout
           isConfigurable
+          columnKeepOrder={[
+            columnId.name,
+            columnId.status,
+            columnId.cpu,
+            columnId.memory,
+            columnId.pods,
+            columnId.disk,
+            columnId.age,
+            columnId.roles,
+            columnId.version,
+            columnId.internalIp,
+            columnId.conditions,
+            columnId.schedulable,
+            columnId.taints,
+          ]}
           defaultHiddenTableColumns={[
             columnId.pods,
             columnId.instanceType,

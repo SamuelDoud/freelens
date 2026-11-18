@@ -138,6 +138,11 @@ export type ItemListLayoutProps<Item extends ItemObject, PreLoadStores extends b
   // items list configuration
   isReady?: boolean; // show loading indicator while not ready
   isSelectable?: boolean; // show checkbox in rows for selecting items
+  /**
+   * The ids of the columns, the ones to keep longest first, for when the table is too narrow for all
+   * of them. Columns it does not name come after, in display order.
+   */
+  columnKeepOrder?: string[];
   isConfigurable?: boolean;
   defaultHiddenTableColumns?: string[];
   /**
@@ -514,6 +519,7 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
           getIsReady={this.getIsReady}
           isSelectable={this.props.isSelectable}
           isConfigurable={this.props.isConfigurable}
+          columnKeepOrder={this.props.columnKeepOrder}
           copyClassNameFromHeadCells={this.props.copyClassNameFromHeadCells}
           sortingCallbacks={this.props.sortingCallbacks}
           tableProps={this.props.tableProps}

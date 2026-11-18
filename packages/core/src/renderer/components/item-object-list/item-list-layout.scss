@@ -63,3 +63,19 @@
     color: var(--checkbox-color);
   }
 }
+
+// The menu icon of a list that left columns out for lack of width carries a dot.
+.TableCell.menu .Icon.hasColumnsHiddenForSpace {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+}

@@ -70,6 +70,16 @@ class NonInjectedServices extends React.Component<Dependencies> {
       <SiblingsInTabLayout>
         <KubeObjectListLayout
           isConfigurable
+          columnKeepOrder={[
+            columnId.name,
+            columnId.type,
+            columnId.namespace,
+            columnId.clusterIp,
+            columnId.ports,
+            columnId.age,
+            columnId.status,
+            columnId.externalIp,
+          ]}
           tableId="network_services"
           className="Services"
           store={this.props.serviceStore}
