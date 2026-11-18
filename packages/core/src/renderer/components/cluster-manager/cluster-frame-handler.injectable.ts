@@ -9,6 +9,7 @@ import { sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
 import getClusterByIdInjectable from "../../../features/cluster/storage/common/get-by-id.injectable";
 import { shownClusterFramesChannel } from "../../../features/frame-activity/common/channels";
+import { clusterFrameRemovedChannel } from "../../../features/frame-recovery/common/channels";
 import { ClusterFrameHandler } from "./cluster-frame-handler";
 import emitClusterVisibilityInjectable from "./emit-cluster-visibility.injectable";
 
@@ -17,6 +18,8 @@ const clusterFrameHandlerInjectable = getInjectable({
   instantiate: (di) =>
     new ClusterFrameHandler({
       emitClusterVisibility: di.inject(emitClusterVisibilityInjectable),
+      emitFrameRemoved: (clusterId) =>
+        di.inject(sendMessageToChannelInjectionToken)(clusterFrameRemovedChannel, { clusterId }),
       emitShownClusters: (clusterIds) =>
         di.inject(sendMessageToChannelInjectionToken)(shownClusterFramesChannel, clusterIds),
       getClusterById: di.inject(getClusterByIdInjectable),

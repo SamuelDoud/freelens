@@ -28,6 +28,7 @@ export const shell: any = "shell";
 export const Tray: any = "Tray";
 export const webContents: any = "webContents";
 export const webFrame: any = "webFrame";
+export const webFrameMain: any = "webFrameMain";
 
 export default new Proxy(
   {},
