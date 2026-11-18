@@ -79,6 +79,7 @@ export type PreferenceDescriptors = {
   readonly terminalCopyOnSelect: PreferenceDescription<boolean>;
   readonly rowClickAction: PreferenceDescription<RowClickAction | undefined, RowClickAction>;
   readonly unloadHiddenClusters: PreferenceDescription<boolean | undefined, boolean>;
+  readonly processPerCluster: PreferenceDescription<boolean | undefined, boolean>;
   readonly appearance: PreferenceDescription<Partial<AppearancePreferences> | undefined, AppearancePreferences>;
   readonly multiviews: PreferenceDescription<MultiView[] | undefined, MultiView[]>;
   readonly hiddenTableColumns: PreferenceDescription<[string, string[]][], Map<string, Set<string>>>;
@@ -224,6 +225,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
         toStore: (val) => (val === "expand" ? undefined : val),
       }),
       unloadHiddenClusters: getPreferenceDescriptor<boolean | undefined, boolean>({
+        fromStore: (val) => val ?? true,
+        toStore: (val) => (val ? undefined : false),
+      }),
+      processPerCluster: getPreferenceDescriptor<boolean | undefined, boolean>({
         fromStore: (val) => val ?? true,
         toStore: (val) => (val ? undefined : false),
       }),

@@ -29,7 +29,17 @@ interface Dependencies {
   emitShownClusters: (clusterIds: ClusterId[]) => void;
   /** The clock, for how long a frame has been hidden */
   now?: () => number;
+  /** Tells the main process that the frame of a cluster has been taken out, so that it stops looking for it */
+  emitFrameRemoved?: (clusterId: ClusterId) => void;
 }
+
+type Shown =
+  | { readonly kind: "one"; readonly clusterId: ClusterId }
+  | {
+      readonly kind: "many";
+      readonly panes: { clusterId: ClusterId; rect: PaneRect }[];
+      readonly titleHeight: number;
+    };
 
 export interface HiddenView {
   readonly clusterId: ClusterId;
@@ -45,6 +55,8 @@ export class ClusterFrameHandler {
   private readonly hiddenSince = new Map<ClusterId, number>();
   /** What ends the watching of a frame for its cluster going away */
   private readonly stopWatching = new Map<ClusterId, () => void>();
+  /** What was last asked to be shown, to show again a frame that has been replaced */
+  private lastShown?: Shown;
 
   constructor(protected readonly dependencies: Dependencies) {}
 
@@ -138,10 +150,19 @@ export class ClusterFrameHandler {
     return (this.dependencies.now ?? Date.now)();
   }
 
-  private removeView(clusterId: ClusterId, iframe: HTMLIFrameElement, parentElem: HTMLElement) {
+  private removeView(clusterId: ClusterId, iframe: HTMLIFrameElement, parentElem: HTMLElement, gone = false) {
     this.views.delete(clusterId);
     this.hiddenSince.delete(clusterId);
     this.stopWatching.delete(clusterId);
+    this.dependencies.emitFrameRemoved?.(clusterId);
+
+    if (gone) {
+      // Its renderer process is gone: there is no old code to unload.
+      iframe.removeAttribute("id");
+      iframe.remove();
+
+      return;
+    }
 
     // The frame lingers until it has unloaded, and a new one of the cluster may start before that
     iframe.removeAttribute("id");
@@ -198,6 +219,37 @@ export class ClusterFrameHandler {
     return true;
   }
 
+  /**
+   * Replaces the frame of a cluster whose renderer process has crashed or been
+   * killed, for a new one on the same cluster: at once when the cluster is
+   * shown, else when it is next shown. Returns whether there was a frame.
+   */
+  @action
+  public restartView(clusterId: ClusterId): boolean {
+    const view = this.views.get(clusterId);
+    const parentElem = document.getElementById("lens-views");
+
+    if (!view || !view.isLoaded || !parentElem) {
+      return false;
+    }
+
+    this.dependencies.logger.warn(`[LENS-VIEW]: the frame of clusterId=${clusterId} is gone, replacing it`);
+    this.stopWatching.get(clusterId)?.();
+    this.removeView(clusterId, view.frame, parentElem, true);
+
+    if (this.shown.has(clusterId) && this.lastShown) {
+      this.initView(clusterId);
+
+      if (this.lastShown.kind === "one") {
+        this.setVisibleCluster(this.lastShown.clusterId);
+      } else {
+        this.setVisibleClusters(this.lastShown.panes, this.lastShown.titleHeight);
+      }
+    }
+
+    return true;
+  }
+
   private prevVisibleClusterChange?: Disposer;
 
   /** Undoes the panes of a multiview: frames fill the area again, one at a time. */
@@ -220,6 +272,7 @@ export class ClusterFrameHandler {
   public setVisibleClusters(panes: { clusterId: ClusterId; rect: PaneRect }[], titleHeight: number): void {
     this.prevVisibleClusterChange?.();
     this.resetPanes();
+    this.lastShown = { kind: "many", panes, titleHeight };
     this.markShown(panes.map(({ clusterId }) => clusterId));
     this.dependencies.emitShownClusters(panes.map(({ clusterId }) => clusterId));
     document.getElementById("lens-views")?.classList.add("multiview");
@@ -261,6 +314,7 @@ export class ClusterFrameHandler {
     // Clear the previous when ASAP
     this.prevVisibleClusterChange?.();
     this.resetPanes();
+    this.lastShown = clusterId ? { kind: "one", clusterId } : undefined;
     this.markShown(clusterId ? [clusterId] : []);
     this.dependencies.emitShownClusters(clusterId ? [clusterId] : []);
 

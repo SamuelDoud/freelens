@@ -32,6 +32,11 @@ export const maxHiddenFrames = 5;
  * the longest hidden first, whatever their age. The renderer of a 64-bit
  * Electron stops at about 4 GiB, and a frame holding 100k pods takes more than
  * 1 GiB of it, so at 2 GiB the next list that loads can still fit.
+ *
+ * With a process per cluster the figure is the memory the renderer processes
+ * take together, the window's included, as the main process counts it
+ * (working set, which is more than the JS heap); with one shared process it is
+ * that process's heap.
  */
 export const hiddenFrameHeapLimitBytes = 2048 * MiB;
 
@@ -49,7 +54,7 @@ export interface HiddenFrame {
 export interface EvictionInput {
   readonly hidden: readonly HiddenFrame[];
   readonly now: number;
-  /** The heap in use in the renderer, when the platform says */
+  /** The memory the renderers take, when the platform says: their heap, or their processes together */
   readonly heapUsedBytes?: number;
 }
 

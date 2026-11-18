@@ -31,6 +31,19 @@ const NonInjectedUnloadHiddenClusters = observer(({ state }: Dependencies) => (
       loads again, on the same page, when you open it. Clusters with a terminal, followed logs, unsaved changes, a
       running chat or a port forward are never unloaded. Turn it off to keep every cluster instant.
     </small>
+    <Switch
+      checked={state.processPerCluster}
+      onChange={() => {
+        state.processPerCluster = !state.processPerCluster;
+      }}
+    >
+      Run each cluster in its own process
+    </Switch>
+    <small className="hint">
+      A busy cluster, such as one loading a large list, then no longer slows the window or the other clusters, and
+      clusters you are not looking at work on other cores. It takes about 100 MB more for each open cluster; turn it off
+      on a machine short of memory. Takes effect after Freelens restarts.
+    </small>
   </section>
 ));
 
