@@ -31,6 +31,7 @@ import { Table, TableCell, TableHead, TableRow } from "../table";
 import columnResizeStorageInjectable from "./column-resize-storage/storage.injectable";
 import { createObservableProps } from "./observable-props";
 import pageFiltersStoreInjectable from "./page-filters/store.injectable";
+import { rowsCannotBeDisabled } from "./row-customization";
 
 import type { ItemObject, TableCellProps } from "@freelensapp/list-layout";
 import type { IClassName, StrictReactNode } from "@freelensapp/utilities";
@@ -538,6 +539,11 @@ export class NonInjectedItemListLayoutContent<
     items: Item[],
     customizeTableRowProps: ItemListLayoutContentProps<Item, PreLoadStores>["customizeTableRowProps"],
   ): Item[] {
+    // A customization that says it never disables a row leaves every item enabled: there is nothing to ask of each.
+    if (customizeTableRowProps && rowsCannotBeDisabled in customizeTableRowProps) {
+      return items;
+    }
+
     const memo = this.enabledItemsMemo;
 
     if (!memo || memo.items !== items || memo.customizeTableRowProps !== customizeTableRowProps) {

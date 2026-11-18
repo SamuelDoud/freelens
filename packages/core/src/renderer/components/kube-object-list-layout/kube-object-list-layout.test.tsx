@@ -174,4 +174,59 @@ describe("kube-object-list-layout", () => {
       expect(sortByName).not.toHaveBeenCalled();
     });
   });
+
+  describe("select-all checkbox", () => {
+    const makePod = (name: string) =>
+      new Pod({
+        apiVersion: "v1",
+        kind: "Pod",
+        metadata: { name, resourceVersion: "1", uid: name, selfLink: `/api/v1/pods/${name}` },
+        spec: { containers: [{ name: "c", image: "i" }] },
+        status: { phase: "Running" },
+      } as unknown as ConstructorParameters<typeof Pod>[0]);
+
+    const renderSelectable = (customizeTableRowProps?: (pod: Pod) => { disabled?: boolean }) => {
+      const pods = ["a", "b", "c"].map((name) => makePod(name));
+      const toggleSelectionAll = vi.spyOn(podStore, "toggleSelectionAll");
+
+      runInAction(() => {
+        podStore.isLoaded = true;
+        podStore.items.replace(pods);
+      });
+      selectedPath.set("");
+
+      const result = render(
+        <KubeObjectListLayout
+          className="Pods"
+          store={podStore}
+          tableId="workloads_pods"
+          renderHeaderTitle="Pods"
+          isSelectable
+          renderTableHeader={[{ title: "Name", className: "name", id: "name" }]}
+          renderTableContents={(pod) => [pod.getName()]}
+          customizeTableRowProps={customizeTableRowProps}
+        />,
+      );
+
+      act(() => {
+        (
+          result.container.querySelector(".TableHead input[type=checkbox], .TableHead .Checkbox") as HTMLElement
+        ).click();
+      });
+
+      return { pods, toggleSelectionAll };
+    };
+
+    it("selects every item when the layout has no row customization", () => {
+      const { pods, toggleSelectionAll } = renderSelectable();
+
+      expect(toggleSelectionAll).toHaveBeenCalledWith(pods);
+    });
+
+    it("leaves out the items that the row customization disables", () => {
+      const { pods, toggleSelectionAll } = renderSelectable((pod) => ({ disabled: pod.getName() === "b" }));
+
+      expect(toggleSelectionAll).toHaveBeenCalledWith([pods[0], pods[2]]);
+    });
+  });
 });

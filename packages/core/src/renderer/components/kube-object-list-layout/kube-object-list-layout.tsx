@@ -22,6 +22,7 @@ import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-f
 import subscribeStoresInjectable from "../../kube-watch-api/subscribe-stores.injectable";
 import { ResourceKindMap, ResourceNames } from "../../utils/rbac";
 import { ItemListLayout } from "../item-object-list/list-layout";
+import { rowsCannotBeDisabled } from "../item-object-list/row-customization";
 import kubeSelectedUrlParamInjectable from "../kube-detail-params/kube-selected-url.injectable";
 import toggleKubeDetailsPaneInjectable from "../kube-detail-params/toggle-details.injectable";
 import { KubeObjectMenu } from "../kube-object-menu";
@@ -348,6 +349,11 @@ class NonInjectedKubeObjectListLayout<
       };
     };
 
+    // Only what the caller's customization returns can disable a row.
+    const rowCustomization = customizeTableRowProps
+      ? getTableRowCustomizations
+      : Object.assign(getTableRowCustomizations, { [rowsCannotBeDisabled]: true as const });
+
     return (
       <ItemListLayout<K, false>
         className={cssNames("KubeObjectListLayout", className)}
@@ -401,7 +407,7 @@ class NonInjectedKubeObjectListLayout<
         spinnerTestId="kube-object-list-layout-spinner"
         advancedSearch={advancedSearchView}
         {...layoutProps}
-        customizeTableRowProps={getTableRowCustomizations}
+        customizeTableRowProps={rowCustomization}
       />
     );
   }

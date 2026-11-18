@@ -6,6 +6,7 @@
 import { isObservableArray, observable, runInAction } from "mobx";
 import { describe, expect, it, vi } from "vitest";
 import { NonInjectedItemListLayoutContent } from "../content";
+import { rowsCannotBeDisabled } from "../row-customization";
 
 import type { ItemObject } from "@freelensapp/list-layout";
 
@@ -321,5 +322,30 @@ describe("<ItemListLayoutContent> row lookup, incremental against an index for e
 
     // A rebuild reads 3000 ids. The change is 30 replacements and one addition.
     expect(reads).toBeLessThan(150);
+  });
+});
+
+describe("<ItemListLayoutContent> select-all checkbox, when no row can be disabled", () => {
+  it("hands the items on as they are, without asking the customization about each", () => {
+    const items = [makeItem("a"), makeItem("b")];
+    const toggleSelectionAll = vi.fn();
+    const customizeTableRowProps = Object.assign(
+      vi.fn(() => ({ disabled: true })),
+      { [rowsCannotBeDisabled]: true as const },
+    );
+    const component = new NonInjectedItemListLayoutContent(
+      makeProps({
+        getItems: () => items,
+        isSelectable: true,
+        customizeTableRowProps,
+        store: { isSelectedAll: () => false, toggleSelectionAll },
+      }),
+    );
+    const cell = (component.renderTableHeader() as any).props.children[1].props.children().props;
+
+    cell.onClick({ preventDefault: () => {}, stopPropagation: () => {} });
+
+    expect(toggleSelectionAll).toHaveBeenCalledWith(items);
+    expect(customizeTableRowProps).not.toHaveBeenCalled();
   });
 });
