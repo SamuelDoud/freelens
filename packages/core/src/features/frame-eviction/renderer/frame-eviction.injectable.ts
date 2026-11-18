@@ -22,7 +22,7 @@ const frameEvictionInjectable = getInjectable({
       logger: di.inject(loggerInjectionToken),
       frames: di.inject(clusterFrameHandlerInjectable),
       deferRestore: history.deferRestore,
-      // Only Chromium has it; the limit by heap is left out where it is missing.
+      // The heap of this process, the window's. Only Chromium has it; the limit by heap is left out where it is missing.
       getHeapUsedBytes: () =>
         (globalThis.performance as { memory?: { usedJSHeapSize?: number } }).memory?.usedJSHeapSize,
     });

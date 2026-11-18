@@ -21,6 +21,7 @@ import setupHardwareAccelerationInjectable from "./setup-hardware-acceleration.i
 import setupHostnamesInjectable from "./setup-hostnames.injectable";
 import setupImmerInjectable from "./setup-immer.injectable";
 import setupMobxInjectable from "./setup-mobx.injectable";
+import setupProcessPerClusterInjectable from "./setup-process-per-cluster.injectable";
 import setupProxyEnvInjectable from "./setup-proxy-env.injectable";
 import setupSessionProxyBypassInjectable from "./setup-session-proxy-bypass.injectable";
 import setupSyncingOfGeneralCatalogEntitiesInjectable from "./setup-syncing-of-general-catalog-entities.injectable";
@@ -88,6 +89,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(setupMobxInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(setupProcessPerClusterInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

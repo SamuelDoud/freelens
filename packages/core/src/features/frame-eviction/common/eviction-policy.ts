@@ -32,6 +32,12 @@ export const maxHiddenFrames = 5;
  * the longest hidden first, whatever their age. The renderer of a 64-bit
  * Electron stops at about 4 GiB, and a frame holding 100k pods takes more than
  * 1 GiB of it, so at 2 GiB the next list that loads can still fit.
+ *
+ * It is the heap of the process the frame handler runs in, the window's. The
+ * cluster frames share it only when they have no process of their own
+ * (the preference "Run each cluster in its own process" is off); otherwise each
+ * has a limit of its own, and the age and count limits above are what keeps
+ * hidden clusters from piling up.
  */
 export const hiddenFrameHeapLimitBytes = 2048 * MiB;
 

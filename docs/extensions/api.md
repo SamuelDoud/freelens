@@ -66,6 +66,17 @@ The singletons of [C3](#c3-host-provided-singletons) ride on the same object
 rather than on globals of their own: one object to publish, one place in the
 contract, and it is what the shim already reads.
 
+**The window and each cluster's frame are separate JavaScript contexts, and
+usually separate operating-system processes.** Each cluster frame runs in a
+renderer process of its own (the preference "Run each cluster in its own
+process", on by default), so a global, a module-level variable and, in a
+node-integrated renderer, `process.env` or a native addon's state are not shared between the window's code and a
+cluster frame's, nor between two cluster frames. Share state through the main
+process (`Main.Ipc` / `Renderer.Ipc`, an `ExtensionStore`), as the host does. A
+frame id alone, as `LensMainExtension#navigate(pageId, params, frameId)` takes
+it, names a frame only within its process: when two cluster frames have the same
+id, the one that is shown is used.
+
 `@freelensapp/extensions` is a thin shim that re-exports that global, so the
 members resolve identically whether an extension inlines the shim or marks it
 external. The import specifier does not change from v1:

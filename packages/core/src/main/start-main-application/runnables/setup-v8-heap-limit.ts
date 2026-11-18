@@ -6,9 +6,11 @@
 const megabyte = 1024 * 1024;
 
 // V8's default old-space limit is a quarter of the physical memory, so a
-// machine with 8 GiB gets 2 GiB. Every cluster frame shares one renderer
-// process, and a large cluster (100k pods and their derived data) can need
-// more than that and end in an out-of-memory crash with memory to spare.
+// machine with 8 GiB gets 2 GiB. The cluster frames share one renderer
+// process unless each has its own (the preference "Run each cluster in its own
+// process", on by default), and a large cluster (100k pods and their derived
+// data) can need more than that and end in an out-of-memory crash with memory
+// to spare. Each renderer process gets the limit.
 //
 // The ceiling is not ours to raise: Electron's V8 keeps its heap in a 4 GiB
 // cage, and a larger value is clamped (measured: `--max-old-space-size` of

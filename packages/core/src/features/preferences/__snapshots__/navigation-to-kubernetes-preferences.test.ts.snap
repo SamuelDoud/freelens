@@ -916,6 +916,22 @@ exports[`preferences - navigation to kubernetes preferences > given in preferenc
                   >
                     A cluster that is not shown is unloaded after a while, or sooner when many are open or memory runs short, and loads again, on the same page, when you open it. Clusters with a terminal, followed logs, unsaved changes, a running chat or a port forward are never unloaded. Turn it off to keep every cluster instant.
                   </small>
+                  <label
+                    class="Switch"
+                    data-testid="switch"
+                  >
+                    Run each cluster in its own process
+                    <input
+                      checked=""
+                      role="switch"
+                      type="checkbox"
+                    />
+                  </label>
+                  <small
+                    class="hint"
+                  >
+                    A busy cluster, such as one loading a large list, then no longer slows the window or the other clusters, and clusters you are not looking at work on other cores. It takes about 100 MB more for each open cluster; turn it off on a machine short of memory. Takes effect after Freelens restarts.
+                  </small>
                 </section>
               </div>
               <div
