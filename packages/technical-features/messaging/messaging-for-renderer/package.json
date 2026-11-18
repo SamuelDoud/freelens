@@ -1,6 +1,6 @@
 {
   "name": "@freelensapp/messaging-for-renderer",
-  "version": "2.5.0-rc.2",
+  "version": "2.5.0-rc.3",
   "private": true,
   "description": "Implementations for 'messaging' in Electron renderer",
   "homepage": "https://freelens.app",

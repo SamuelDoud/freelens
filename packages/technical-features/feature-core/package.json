@@ -1,6 +1,6 @@
 {
   "name": "@freelensapp/feature-core",
-  "version": "2.5.0-rc.2",
+  "version": "2.5.0-rc.3",
   "private": true,
   "description": "Code that is common to all Features and those registering them.",
   "homepage": "https://freelens.app",
