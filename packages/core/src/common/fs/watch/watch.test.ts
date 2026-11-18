@@ -10,63 +10,71 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import watchInjectable from "./watch.injectable";
+import watchInjectable, { macOsPollingInterval, watchOptionsFor } from "./watch.injectable";
 
 import type { FSWatcher } from "chokidar";
 
-const watch = watchInjectable.instantiate(undefined as never);
+// The file tests watch natively, as on Linux; the macOS block checks what macOS gets.
+const watch = watchInjectable.instantiate({ inject: () => "linux" } as never);
 
 const require = createRequire(import.meta.url);
 
 describe("watch", () => {
   /**
-   * On macOS a file is watched with a kqueue watch, which libuv aborts the process on when it
-   * cannot re-arm it, and a directory with FSEvents. Chokidar 6 watches directories and, for a
-   * file, its directory, so nothing polls there; these pin what it picks for the options the
-   * application passes.
+   * On macOS libuv serves `fs.watch` of a file with kqueue, and aborts the process when it cannot
+   * re-arm that watch (the file's volume ejected, or a network share gone stale). Watchers poll
+   * there unless a caller asks for native watching by name. These pin what chokidar does with the
+   * options macOS gets, in a process that says it is a Mac, as chokidar reads the platform when it
+   * is loaded.
    */
   describe("on macOS", () => {
-    // Chokidar reads the platform when it is loaded, so it is loaded in a process that says it is a Mac.
     const optionsOf = async (options: Record<string, unknown>) => {
       const script = `
         Object.defineProperty(process, "platform", { value: "darwin" });
         const { FSWatcher } = await import(${JSON.stringify(pathToFileURL(require.resolve("chokidar")).href)});
         const watcher = new FSWatcher(${JSON.stringify(options)});
-        const { backend, usePolling, backendStrategy, atomic } = watcher.options;
+        const { backend, usePolling, backendStrategy } = watcher.options;
         await watcher.close();
-        console.log(JSON.stringify({ backend, usePolling, backendStrategy, atomic }));
+        console.log(JSON.stringify({ backend, usePolling, backendStrategy }));
       `;
 
       return JSON.parse(execFileSync(process.execPath, ["--input-type=module", "-e", script], { encoding: "utf8" }));
     };
+    const polling = { backend: "polling", usePolling: true, backendStrategy: "polling" };
 
-    it("does not poll, and watches a directory tree with one recursive watch", async () => {
-      expect(await optionsOf({ ignoreInitial: false, atomic: 150, awaitWriteFinish: { pollInterval: 100 } })).toEqual({
-        backend: "auto",
-        usePolling: false,
-        backendStrategy: "native-recursive-preferred",
-        atomic: 150,
-      });
-    });
+    it("polls a watcher whose caller does not choose, at the default interval", async () => {
+      const options = watchOptionsFor("darwin", { ignoreInitial: false, depth: 1 });
 
-    it("watches a limited depth with one watch per directory, not per file", async () => {
-      for (const depth of [0, 1, 3]) {
-        expect(await optionsOf({ depth })).toEqual({
-          backend: "auto",
-          usePolling: false,
-          backendStrategy: "native-per-directory",
-          atomic: true,
-        });
-      }
-    });
-
-    it("polls when a caller asks for it, as for a share that sends no change notifications", async () => {
-      expect(await optionsOf({ backend: "polling", pollingInterval: 250 })).toEqual({
+      expect(options).toMatchObject({
         backend: "polling",
-        usePolling: true,
-        backendStrategy: "polling",
-        atomic: false,
+        pollingInterval: macOsPollingInterval,
+        pollingBinaryInterval: macOsPollingInterval,
+        depth: 1,
       });
+      expect(await optionsOf(options as never)).toEqual(polling);
+      expect(await optionsOf(watchOptionsFor("darwin", undefined) as never)).toEqual(polling);
+    });
+
+    it("polls a caller that asks for automatic watching, as the kubeconfig sync does", async () => {
+      expect(await optionsOf(watchOptionsFor("darwin", { backend: "auto" }) as never)).toEqual(polling);
+    });
+
+    it("keeps the interval a caller gives", () => {
+      expect(watchOptionsFor("darwin", { pollingInterval: 250 })).toMatchObject({
+        backend: "polling",
+        pollingInterval: 250,
+      });
+    });
+
+    it("keeps native watching a caller asks for by name", () => {
+      expect(watchOptionsFor("darwin", { backend: "native" })).toEqual({ backend: "native" });
+    });
+
+    it("leaves the options of other platforms as they are", () => {
+      for (const platform of ["linux", "win32"]) {
+        expect(watchOptionsFor(platform, { backend: "auto", depth: 1 })).toEqual({ backend: "auto", depth: 1 });
+        expect(watchOptionsFor(platform, undefined)).toBeUndefined();
+      }
     });
   });
 

@@ -6,6 +6,7 @@
 
 import { getInjectable } from "@ogre-tools/injectable";
 import { watch } from "chokidar";
+import platformInjectable from "../../vars/platform.injectable";
 import type { Stats } from "node:fs";
 
 import type { SingleOrMany, TypedEventEmitter } from "@freelensapp/utilities";
@@ -142,18 +143,43 @@ export type Watch = <AlwaysStat extends boolean = false>(
   options?: WatcherOptions<AlwaysStat>,
 ) => Watcher<AlwaysStat>;
 
+export const macOsPollingInterval = 1000;
+
+/**
+ * The options a watcher gets on a platform. On macOS a watcher polls unless its caller asks for
+ * native watching by name (`backend: "native"` or `"native-recursive"`).
+ *
+ * libuv serves `fs.watch` of a file on macOS with kqueue, and aborts the whole process when it
+ * cannot re-arm such a watch, which happens when the file's volume goes away: a disk image or USB
+ * drive ejected, or a network share (NFS, SMB) that goes stale across sleep or a network change.
+ * Chokidar 6 still watches a single file that way (a kubeconfig file synced on its own), and the
+ * application aborted with it overnight on a Mac syncing a kubeconfig on an NFS home. Polling
+ * reads `stat` and never arms a kqueue watch, so nothing can abort.
+ */
+export function watchOptionsFor<AlwaysStat extends boolean>(
+  platform: string,
+  options?: WatcherOptions<AlwaysStat>,
+): WatcherOptions<AlwaysStat> | undefined {
+  if (platform !== "darwin" || (options?.backend !== undefined && options.backend !== "auto")) {
+    return options;
+  }
+
+  return {
+    ...options,
+    backend: "polling",
+    pollingInterval: options?.pollingInterval ?? macOsPollingInterval,
+    pollingBinaryInterval: options?.pollingBinaryInterval ?? macOsPollingInterval,
+  } as WatcherOptions<AlwaysStat>;
+}
+
 // TODO: Introduce wrapper to allow simpler API
-//
-// Chokidar 6 does not watch every file with `fs.watch` as chokidar 4 and 5 did, which on macOS
-// meant a kqueue watch per file, and libuv aborts the process when it cannot re-arm one of
-// those. A directory is watched with `fs.watch`, which libuv serves with FSEvents on macOS,
-// recursively for a root without `depth`; a file is not watched itself, but through its
-// directory, with one extra watch on the file (a kqueue one) that is closed from inside its
-// first event, before libuv would re-arm it. The options of a caller are therefore passed as
-// they are on every platform, and nothing polls on macOS unless the caller asks for it.
 const watchInjectable = getInjectable({
   id: "watch",
-  instantiate: (): Watch => (path, options) => watch(path, options as never) as never,
+  instantiate: (di): Watch => {
+    const platform = di.inject(platformInjectable);
+
+    return (path, options) => watch(path, watchOptionsFor(platform, options) as never) as never;
+  },
   causesSideEffects: true,
 });
 
