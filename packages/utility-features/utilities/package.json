@@ -1,6 +1,6 @@
 {
   "name": "@freelensapp/utilities",
-  "version": "2.5.0-rc.3",
+  "version": "2.5.0",
   "private": true,
   "description": "A collection of useful types",
   "homepage": "https://freelens.app",

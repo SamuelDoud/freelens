@@ -1,6 +1,6 @@
 {
   "name": "freelens",
-  "version": "2.5.0-rc.3",
+  "version": "2.5.0",
   "private": true,
   "description": "Freelens - Free IDE for Kubernetes",
   "keywords": [],
