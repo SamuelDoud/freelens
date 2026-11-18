@@ -194,6 +194,16 @@ class NonInjectedEvents extends React.Component<Dependencies & EventsProps> {
       <KubeObjectListLayout
         {...layoutProps}
         isConfigurable
+        columnKeepOrder={[
+          columnId.message,
+          columnId.type,
+          columnId.object,
+          columnId.namespace,
+          columnId.age,
+          columnId.lastSeen,
+          columnId.count,
+          columnId.source,
+        ]}
         tableId="events"
         store={eventStore}
         className={cssNames("Events", className, { compact })}

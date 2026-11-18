@@ -81,6 +81,26 @@ const searchFilters: ListLayoutSearchFilter<Pod>[] = [
   (pod) => getPodContainerPorts(pod).flatMap((port) => [port.name, port.containerPort, port.protocol]),
 ];
 
+// What a narrow table keeps longest, first to last; the display order is the priority of the columns.
+const podColumnKeepOrder = [
+  "name",
+  "status",
+  "namespace",
+  "warning",
+  "restarts",
+  "age",
+  "cpuUsage",
+  "memoryUsage",
+  "node",
+  "owners",
+  "containers",
+  "ports",
+  "ip",
+  "qos",
+  ...podResourceColumnIds,
+  "logs",
+];
+
 const NonInjectedPods = observer((props: Dependencies) => {
   const { columns, eventStore, podStore, usageVisible } = props;
 
@@ -99,6 +119,7 @@ const NonInjectedPods = observer((props: Dependencies) => {
         dependentStores={[eventStore]} // status icon component uses event store
         tableId="workloads_pods"
         isConfigurable
+        columnKeepOrder={podColumnKeepOrder}
         defaultHiddenTableColumns={["ip", "node", "qos", ...podResourceColumnIds]}
         columnsAddedLater={podResourceColumnIds}
         searchFilters={searchFilters}

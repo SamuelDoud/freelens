@@ -44,7 +44,7 @@ describe("getColumnsHiddenForSpace", () => {
   });
 
   it("drops the lowest priorities first as the table narrows", () => {
-    expect(hiddenAt(970)).toEqual(["logs"]);
+    expect(hiddenAt(940)).toEqual(["logs"]);
     expect(hiddenAt(900)).toEqual(["status", "logs"]);
     expect(hiddenAt(800)).toEqual(["age", "status", "logs"]);
     expect(hiddenAt(450)).toEqual(["containers", "ports", "restarts", "owners", "age", "status", "logs"]);
@@ -80,8 +80,8 @@ describe("getColumnsHiddenForSpace", () => {
   });
 
   it("takes the cells outside the headers off the room", () => {
-    expect(hiddenAt(970, podHeaders, [], 0)).toEqual(["logs"]);
-    expect(hiddenAt(970, podHeaders, [], 84)).toEqual(["status", "logs"]);
+    expect(hiddenAt(940, podHeaders, [], 0)).toEqual(["logs"]);
+    expect(hiddenAt(940, podHeaders, [], 84)).toEqual(["status", "logs"]);
   });
 
   it("hides a cell that shows with another column together with it", () => {
@@ -104,6 +104,98 @@ describe("getColumnsHiddenForSpace", () => {
 
     expect(hiddenAt(340, headers)).toEqual([]);
     expect(hiddenAt(330, headers)).toEqual(["age"]);
+  });
+});
+
+// The pods list as it is by default, in the order of its priorities: the columns the user hides by
+// default (IP, node, QoS and the resources) are not in it.
+const defaultPodHeaders: TableCellProps[] = [
+  { id: "name", title: "Name" },
+  { id: "warning", title: "" },
+  { id: "namespace", title: "Namespace" },
+  { id: "containers", title: "Containers" },
+  { id: "ports", title: "Ports" },
+  { id: "cpuUsage", title: "CPU" },
+  { id: "memoryUsage", title: "Memory" },
+  { id: "restarts", title: "Restarts" },
+  { id: "owners", title: "Controlled By" },
+  { id: "age", title: "Age" },
+  { id: "status", title: "Status" },
+  { id: "logs", title: undefined },
+];
+const podKeepOrder = [
+  "name",
+  "status",
+  "namespace",
+  "warning",
+  "restarts",
+  "age",
+  "cpuUsage",
+  "memoryUsage",
+  "node",
+  "owners",
+  "containers",
+  "ports",
+  "ip",
+  "qos",
+  "cpuRequest",
+  "cpuLimit",
+  "memoryRequest",
+  "memoryLimit",
+  "logs",
+];
+
+describe("getColumnsHiddenForSpace with a keep order", () => {
+  // The columns that show, in display order.
+  const shownAt = (width: number) => {
+    const hidden = getColumnsHiddenForSpace({
+      headers: defaultPodHeaders,
+      width,
+      isHiddenByUser: () => false,
+      extraWidth: 56,
+      keepOrder: podKeepOrder,
+    });
+
+    return defaultPodHeaders.map((header) => header.id!).filter((id) => !hidden.has(id));
+  };
+
+  it("keeps the name and the status of a pod in a 450 px table", () => {
+    expect(shownAt(450)).toEqual(["name", "status"]);
+  });
+
+  it("adds the namespace and the warning icon at 600 px", () => {
+    expect(shownAt(600)).toEqual(["name", "warning", "namespace", "status"]);
+  });
+
+  it("adds restarts, age and CPU at 800 px, ahead of containers and controlled by", () => {
+    expect(shownAt(800)).toEqual(["name", "warning", "namespace", "cpuUsage", "restarts", "age", "status"]);
+  });
+
+  it("shows every default column when the table is wide", () => {
+    expect(shownAt(1920)).toEqual(defaultPodHeaders.map((header) => header.id));
+  });
+
+  it("keeps the display order of the columns it shows", () => {
+    const shown = shownAt(800);
+
+    expect(shown).toEqual(defaultPodHeaders.map((header) => header.id!).filter((id) => shown.includes(id)));
+  });
+
+  it("ranks the columns a keep order does not name after the ones it names, in display order", () => {
+    const headers: TableCellProps[] = [
+      { id: "name", title: "Name" },
+      { id: "a", title: "A" },
+      { id: "b", title: "B" },
+      { id: "c", title: "C" },
+    ];
+    const hidden = getColumnsHiddenForSpace({
+      headers,
+      width: 86 + 160 + 180,
+      isHiddenByUser: () => false,
+      keepOrder: ["c"],
+    });
+
+    expect([...hidden]).toEqual(["b"]);
   });
 });
 

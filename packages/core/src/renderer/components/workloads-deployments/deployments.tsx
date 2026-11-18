@@ -66,6 +66,17 @@ class NonInjectedDeployments extends React.Component<Dependencies> {
       <SiblingsInTabLayout>
         <KubeObjectListLayout
           isConfigurable
+          columnKeepOrder={[
+            columnId.name,
+            columnId.ready,
+            columnId.namespace,
+            columnId.age,
+            columnId.replicas,
+            columnId.available,
+            columnId.updated,
+            columnId.desired,
+            columnId.condition,
+          ]}
           tableId="workload_deployments"
           className="Deployments"
           store={deploymentStore}

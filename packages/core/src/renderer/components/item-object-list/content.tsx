@@ -85,6 +85,8 @@ export interface ItemListLayoutContentProps<Item extends ItemObject, PreLoadStor
   getIsReady: () => boolean; // show loading indicator while not ready
   isSelectable?: boolean; // show checkbox in rows for selecting items
   isConfigurable?: boolean;
+  /** The columns to keep longest when the table is too narrow, first to last; see `ItemListLayoutProps`. */
+  columnKeepOrder?: string[];
   copyClassNameFromHeadCells?: boolean;
   sortingCallbacks?: TableSortCallbacks<Item>;
   tableProps?: Partial<TableProps<Item>>; // low-level table configuration
@@ -152,6 +154,7 @@ export class NonInjectedItemListLayoutContent<
         isTableColumnHidden,
         isSelectable,
         inlineDetails,
+        columnKeepOrder,
       } = this.observableProps;
 
       if (!isConfigurable || !tableId) {
@@ -161,6 +164,7 @@ export class NonInjectedItemListLayoutContent<
       return getColumnsHiddenForSpace({
         headers: renderTableHeader,
         width: this.tableWidth,
+        keepOrder: columnKeepOrder,
         isHiddenByUser: ({ id, showWithColumn }) => isTableColumnHidden(tableId, id, showWithColumn),
         extraWidth: (isSelectable ? checkboxCellWidth : 0) + (inlineDetails ? expansionCellsWidth : 0),
       });

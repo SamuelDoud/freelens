@@ -26,7 +26,7 @@ export function getColumnMinWidth(header: TableCellProps): number {
     return minNameColumnWidth;
   }
 
-  return typeof header.title === "string" ? minColumnWidth : minIconColumnWidth;
+  return typeof header.title === "string" && header.title !== "" ? minColumnWidth : minIconColumnWidth;
 }
 
 export interface FitColumnsOptions {
@@ -36,6 +36,12 @@ export interface FitColumnsOptions {
   width: number | undefined;
   /** Whether the user's own setting hides a column. */
   isHiddenByUser: (header: TableCellProps) => boolean;
+  /**
+   * The ids of the columns, the ones to keep longest first. It ranks the columns for fitting only,
+   * the display order stays that of `headers`. Columns it does not name come after the ones it
+   * names, in the order of `headers`.
+   */
+  keepOrder?: readonly string[];
   /** The width the cells outside the headers take, such as the checkbox of a row. */
   extraWidth?: number;
 }
@@ -54,6 +60,7 @@ export function getColumnsHiddenForSpace({
   width,
   isHiddenByUser,
   extraWidth = 0,
+  keepOrder = [],
 }: FitColumnsOptions): ReadonlySet<string> {
   const hidden = new Set<string>();
 
@@ -63,6 +70,11 @@ export function getColumnsHiddenForSpace({
 
   const shown = headers.filter((header): header is TableCellProps => !!header && !isHiddenByUser(header));
   const columns = shown.filter((header) => header.id && !header.showWithColumn);
+  const rank = (header: TableCellProps) => {
+    const index = keepOrder.indexOf(header.id!);
+
+    return index < 0 ? keepOrder.length : index;
+  };
   const followers = new Map<string, TableCellProps[]>();
   let budget = width - tableChromeWidth - extraWidth;
 
@@ -82,15 +94,20 @@ export function getColumnsHiddenForSpace({
 
   const cost = (header: TableCellProps) =>
     getColumnMinWidth(header) + (followers.get(header.id!) ?? []).reduce((sum, f) => sum + getColumnMinWidth(f), 0);
-  const anchor = columns.find((header) => header.id === "name") ?? columns[0];
+  const byKeepOrder = columns
+    .map((header, position) => ({ header, position }))
+    .sort((a, b) => rank(a.header) - rank(b.header) || a.position - b.position)
+    .map(({ header }) => header);
+  // The anchor takes the room the name column has, whichever column it is.
+  const anchor = columns.find((header) => header.id === "name") ?? byKeepOrder[0];
 
   if (anchor) {
-    budget -= cost(anchor);
+    budget -= Math.max(cost(anchor), minNameColumnWidth);
   }
 
   let full = false;
 
-  for (const header of columns) {
+  for (const header of byKeepOrder) {
     if (header === anchor) {
       continue;
     }
