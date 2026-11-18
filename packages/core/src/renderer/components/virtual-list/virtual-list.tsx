@@ -28,6 +28,14 @@ export interface VirtualListProps<T extends { getId(): string } | string> {
   readyOffset?: number;
   selectedItemId?: string;
   getRow?: (uid: T extends string ? number : string) => React.ReactElement | undefined | null;
+  /**
+   * Whether `getRow` reads observables while it makes a row, so that the row has to be made again when
+   * they change. A `getRow` that hands back an element which observes what it shows (an `<Observer>`)
+   * has nothing for the list to track, and the list then skips a reaction per row on screen.
+   *
+   * @default true
+   */
+  trackRowObservables?: boolean;
   onScroll?: UIEventHandler<HTMLDivElement>;
   outerRef?: React.Ref<HTMLDivElement>;
 
@@ -68,6 +76,7 @@ function VirtualListInner<T extends { getId(): string } | string>({
   readyOffset = 10,
   selectedItemId,
   getRow,
+  trackRowObservables = true,
   onScroll,
   outerRef,
   fixedHeight,
@@ -141,7 +150,7 @@ function VirtualListInner<T extends { getId(): string } | string>({
     <div className={cssNames("VirtualList", className)}>
       <List<RowData<T>>
         className="list"
-        rowComponent={Row as never}
+        rowComponent={(trackRowObservables ? ObservedRow : PlainRow) as never}
         rowCount={items.length}
         rowHeight={rowHeight}
         rowProps={{ items, getRow }}
@@ -171,17 +180,22 @@ interface RowData<T extends { getId(): string } | string> {
   getRow?: (uid: T extends string ? number : string) => React.ReactElement | undefined | null;
 }
 
-const Row = observer(
-  <T extends { getId(): string } | string>({ index, style, items, getRow }: RowComponentProps<RowData<T>>) => {
-    const item = items[index];
-    const row = getRow?.((typeof item == "string" ? index : item.getId()) as never);
+const PlainRow = <T extends { getId(): string } | string>({
+  index,
+  style,
+  items,
+  getRow,
+}: RowComponentProps<RowData<T>>) => {
+  const item = items[index];
+  const row = getRow?.((typeof item == "string" ? index : item.getId()) as never);
 
-    if (!row) return null;
+  if (!row) return null;
 
-    const typedRow = row as React.ReactElement<TableRowProps<T>>;
+  const typedRow = row as React.ReactElement<TableRowProps<T>>;
 
-    return React.cloneElement(typedRow, {
-      style: Object.assign({}, typedRow.props.style, style),
-    });
-  },
-);
+  return React.cloneElement(typedRow, {
+    style: Object.assign({}, typedRow.props.style, style),
+  });
+};
+
+const ObservedRow = observer(PlainRow);

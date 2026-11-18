@@ -130,6 +130,14 @@ export interface TableProps<Item> extends React.DOMAttributes<HTMLDivElement> {
    */
   holdOrder?: boolean;
   getTableRow?: (uid: string) => React.ReactElement<TableRowProps<Item>> | undefined | null;
+  /**
+   * Whether {@link TableProps.getTableRow} reads observables while it makes a row. Pass `false` when
+   * the row it returns observes what it shows itself, so that the virtual list needs no reaction of
+   * its own for each row.
+   *
+   * @default true
+   */
+  trackRowObservables?: boolean;
   renderRow?: (item: Item, index: number) => React.ReactElement<TableRowProps<Item>> | undefined | null;
 }
 
@@ -435,6 +443,7 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
       rowPadding,
       items = [],
       getTableRow,
+      trackRowObservables,
       selectedItemId,
       className,
       virtualHeight,
@@ -490,6 +499,7 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
           items={sortedItems}
           rowHeights={rowHeights}
           getRow={getTableRow}
+          trackRowObservables={trackRowObservables}
           selectedItemId={selectedItemId}
           className={className}
           fixedHeight={virtualHeight}

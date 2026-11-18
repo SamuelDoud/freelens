@@ -7,7 +7,6 @@
 import { withTooltip } from "@freelensapp/tooltip";
 import { cssNames } from "@freelensapp/utilities";
 import { action, observable } from "mobx";
-import { observer } from "mobx-react";
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./badge.module.scss";
 
@@ -33,56 +32,53 @@ const badgeMeta = observable({
   hasTextSelected: false,
 });
 
+// Not an observer: badgeMeta is only read inside the mouse-up action, never while rendering, so
+// there is nothing for a reaction to track. A list shows a badge in most of its cells, and a
+// reaction per badge is a cost of every row that scrolls into view.
 export const Badge = withTooltip(
-  observer(
-    ({
-      small,
-      flat,
-      label,
-      expandable = true,
-      disabled,
-      scrollable,
-      className,
-      children,
-      ...elemProps
-    }: BadgeProps) => {
-      const elem = useRef<HTMLDivElement>(null);
-      const [isExpanded, setIsExpanded] = useState(false);
-      const [isExpandable, setIsExpandable] = useState(false);
+  ({ small, flat, label, expandable = true, disabled, scrollable, className, children, ...elemProps }: BadgeProps) => {
+    const elem = useRef<HTMLDivElement>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpandable, setIsExpandable] = useState(false);
 
-      useEffect(() => {
-        const { clientWidth = 0, scrollWidth = 0 } = elem.current ?? {};
+    useEffect(() => {
+      // A badge that cannot expand has no reason to read its layout.
+      if (!expandable) {
+        setIsExpandable(false);
+        return;
+      }
 
-        setIsExpandable(expandable && clientWidth < scrollWidth);
-      }, [expandable, elem.current]);
+      const { clientWidth = 0, scrollWidth = 0 } = elem.current ?? {};
 
-      const onMouseUp = action(() => {
-        if (!isExpandable || badgeMeta.hasTextSelected) {
-          badgeMeta.hasTextSelected = false;
-        } else {
-          setIsExpanded(!isExpanded);
-        }
-      });
+      setIsExpandable(expandable && clientWidth < scrollWidth);
+    }, [expandable, elem.current]);
 
-      return (
-        <div
-          {...elemProps}
-          className={cssNames(styles.badge, className, {
-            [styles.small]: small,
-            [styles.flat]: flat,
-            [styles.clickable]: Boolean(elemProps.onClick) || isExpandable,
-            [styles.interactive]: isExpandable,
-            [styles.isExpanded]: isExpanded,
-            [styles.disabled]: disabled,
-            [styles.scrollable]: scrollable,
-          })}
-          onMouseUp={onMouseUp}
-          ref={elem}
-        >
-          {label}
-          {children}
-        </div>
-      );
-    },
-  ),
+    const onMouseUp = action(() => {
+      if (!isExpandable || badgeMeta.hasTextSelected) {
+        badgeMeta.hasTextSelected = false;
+      } else {
+        setIsExpanded(!isExpanded);
+      }
+    });
+
+    return (
+      <div
+        {...elemProps}
+        className={cssNames(styles.badge, className, {
+          [styles.small]: small,
+          [styles.flat]: flat,
+          [styles.clickable]: Boolean(elemProps.onClick) || isExpandable,
+          [styles.interactive]: isExpandable,
+          [styles.isExpanded]: isExpanded,
+          [styles.disabled]: disabled,
+          [styles.scrollable]: scrollable,
+        })}
+        onMouseUp={onMouseUp}
+        ref={elem}
+      >
+        {label}
+        {children}
+      </div>
+    );
+  },
 );
