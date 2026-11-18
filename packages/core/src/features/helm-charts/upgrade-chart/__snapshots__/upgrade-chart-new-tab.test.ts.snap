@@ -873,7 +873,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -1923,7 +1923,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -2973,7 +2973,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -4130,7 +4130,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -5270,7 +5270,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -6567,7 +6567,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"
@@ -7813,7 +7813,7 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
               </div>
               <button
                 aria-label="AI chat"
-                class="aiChatButton glowing"
+                class="aiChatButton glowing pulsing"
                 data-glowing="true"
                 data-testid="dock-ai-chat-button"
                 title="AI chat"

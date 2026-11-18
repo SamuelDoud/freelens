@@ -690,7 +690,7 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -1441,7 +1441,7 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -2238,7 +2238,7 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -2911,7 +2911,7 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -3537,7 +3537,7 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -4334,7 +4334,7 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
@@ -5085,7 +5085,7 @@ exports[`cluster - sidebar and tab navigation for core > given core registration
             </div>
             <button
               aria-label="AI chat"
-              class="aiChatButton glowing"
+              class="aiChatButton glowing pulsing"
               data-glowing="true"
               data-testid="dock-ai-chat-button"
               title="AI chat"
