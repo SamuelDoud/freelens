@@ -144,6 +144,20 @@ export function nodeFilterAdditive(opts: Record<string, string>, label: string):
   return opts.nodes ? `,${label}=~"${opts.nodes}"` : "";
 }
 
+/**
+ * The requests of the pods that still hold their resources on a node: pods in
+ * the Pending or Running phase. The series of a completed pod stays in
+ * kube-state-metrics, and `kubectl describe node` leaves it out of the
+ * allocated resources. Matching on namespace and pod keeps a finished pod from
+ * counting when a running pod of the same name lives in another namespace.
+ *
+ * @example
+ *   `sum(${activePodRequests("memory", nodeFilterAdditive(opts, "node"))}) by (component)`
+ */
+export function activePodRequests(resource: "cpu" | "memory", additiveFilter: string): string {
+  return `kube_pod_container_resource_requests{resource="${resource}"${additiveFilter}} * on (namespace, pod) group_left() max by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Running"} == 1)`;
+}
+
 export const prometheusProviderInjectionToken = getInjectionToken<PrometheusProvider>({
   id: "prometheus-provider",
 });
