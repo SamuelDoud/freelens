@@ -14,6 +14,7 @@ import autoBindReact from "auto-bind/react";
 import { action, computed, isObservableArray, observable } from "mobx";
 import { Observer, observer } from "mobx-react";
 import React from "react";
+import { KeyedItemIndex } from "../../../common/keyed-item-index";
 import expandedRowsInjectable from "../../../features/inline-details/renderer/expanded-rows.injectable";
 import styles from "../../../features/inline-details/renderer/inline-details.module.scss";
 import { InlineRowExpansion } from "../../../features/inline-details/renderer/inline-row-expansion";
@@ -53,6 +54,8 @@ import type { Filter, PageFiltersStore } from "./page-filters/store";
 
 // More than the rows a screen shows, with room to scroll.
 const rowCacheLimit = 500;
+// How many positions around the last known one a row looks for its item before it searches the array.
+const locateReach = 4096;
 
 interface ResizeState {
   columnId: string;
@@ -454,9 +457,35 @@ export class NonInjectedItemListLayoutContent<
     );
   }
 
-  // Resolving every row with a linear search makes a non-virtual list quadratic. The index is
-  // built once per items array; the first of several items with the same id wins, as with find().
-  private itemIndex?: { items: Item[]; length: number; byId: Map<string, number> };
+  // Resolving every row with a linear search makes a non-virtual list quadratic, and an index built
+  // again for every items array makes a flush cost the size of the list. The index is carried from one
+  // items array to the next by what changed between them (see KeyedItemIndex); the first of several
+  // items with the same id wins, as with find().
+  private readonly itemIndex = new KeyedItemIndex<Item>((item) => item.getId());
+  private indexedItems?: Item[];
+  private indexedLength = 0;
+
+  private syncItemIndex(items: Item[]) {
+    this.itemIndex.sync(items);
+    this.indexedItems = items;
+    this.indexedLength = items.length;
+  }
+
+  /** Where `item` is in `items`, looking around `hint` first, where it usually still is or is close to. */
+  private locate(items: Item[], item: Item, hint: number): number {
+    if (items[hint] === item) {
+      return hint;
+    }
+
+    const reach = Math.min(locateReach, items.length);
+
+    for (let distance = 1; distance <= reach; distance++) {
+      if (items[hint - distance] === item) return hint - distance;
+      if (items[hint + distance] === item) return hint + distance;
+    }
+
+    return items.indexOf(item);
+  }
 
   private findItemById(items: Item[], uid: string): Item | undefined {
     // An observable array can change in place, so it keeps the plain search.
@@ -465,34 +494,33 @@ export class NonInjectedItemListLayoutContent<
     }
 
     for (let attempt = 0; attempt < 2; attempt++) {
-      if (this.itemIndex?.items !== items || this.itemIndex.length !== items.length) {
-        const byId = new Map<string, number>();
-
-        items.forEach((item, index) => {
-          const id = item.getId();
-
-          if (!byId.has(id)) {
-            byId.set(id, index);
-          }
-        });
-
-        this.itemIndex = { items, length: items.length, byId };
+      if (this.indexedItems !== items || this.indexedLength !== items.length) {
+        this.syncItemIndex(items);
       }
 
-      const index = this.itemIndex.byId.get(uid);
+      const entry = this.itemIndex.get(uid);
 
-      if (index === undefined) {
-        break;
+      if (!entry) {
+        // Not in the array the index was made from. An array changed in place under the same length
+        // is another array: look again after the index follows it.
+        if (attempt === 0 && this.itemIndex.differsFrom(items)) {
+          this.syncItemIndex(items);
+          continue;
+        }
+
+        return undefined;
       }
 
-      const item = items[index];
+      const at = this.locate(items, entry.item, entry.index);
 
-      // An array changed in place under the same length leaves the index stale: rebuild it.
-      if (item.getId() === uid) {
-        return item;
+      if (at >= 0) {
+        entry.index = at;
+
+        return entry.item;
       }
 
-      this.itemIndex = undefined;
+      // The item is gone from an array changed in place: the index is stale.
+      this.syncItemIndex(items);
     }
 
     return items.find((item) => item.getId() === uid);
