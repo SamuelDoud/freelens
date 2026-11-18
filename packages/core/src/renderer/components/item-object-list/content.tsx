@@ -29,6 +29,7 @@ import { MenuActions } from "../menu/menu-actions";
 import { NoItems } from "../no-items";
 import { Table, TableCell, TableHead, TableRow } from "../table";
 import columnResizeStorageInjectable from "./column-resize-storage/storage.injectable";
+import { checkboxCellWidth, expansionCellsWidth, getColumnsHiddenForSpace } from "./columns-fitting-width";
 import { createObservableProps } from "./observable-props";
 import pageFiltersStoreInjectable from "./page-filters/store.injectable";
 import { rowsCannotBeDisabled } from "./row-customization";
@@ -52,6 +53,11 @@ import type { ColumnResizeStorageState } from "./column-resize-storage/storage.i
 import type { ItemListStore } from "./list-layout";
 import type { ObservableProps } from "./observable-props";
 import type { Filter, PageFiltersStore } from "./page-filters/store";
+
+const noHiddenColumns: ReadonlySet<string> = new Set();
+
+const sameSet = (a: ReadonlySet<string>, b: ReadonlySet<string>) =>
+  a.size === b.size && [...a].every((id) => b.has(id));
 
 // More than the rows a screen shows, with room to scroll.
 const rowCacheLimit = 500;
@@ -130,6 +136,41 @@ export class NonInjectedItemListLayoutContent<
 
   @observable private accessor columnFlexGrow = new Map<string, number>();
   @observable private accessor resizeGuideX: number | null = null;
+  /** The width of the table in pixels, once it is measured. */
+  @observable private accessor tableWidth: number | undefined = undefined;
+  private tableObserver?: ResizeObserver;
+
+  // The columns left out because the table is too narrow for them, on top of the ones the user hides.
+  // It reads the props through observableProps: a computed is a derivation, where this.props is
+  // forbidden. Equal sets are the same value, so the rows render again only when the columns change.
+  private readonly hiddenForSpaceComputed = computed<ReadonlySet<string>>(
+    () => {
+      const {
+        isConfigurable,
+        tableId,
+        renderTableHeader = [],
+        isTableColumnHidden,
+        isSelectable,
+        inlineDetails,
+      } = this.observableProps;
+
+      if (!isConfigurable || !tableId) {
+        return noHiddenColumns;
+      }
+
+      return getColumnsHiddenForSpace({
+        headers: renderTableHeader,
+        width: this.tableWidth,
+        isHiddenByUser: ({ id, showWithColumn }) => isTableColumnHidden(tableId, id, showWithColumn),
+        extraWidth: (isSelectable ? checkboxCellWidth : 0) + (inlineDetails ? expansionCellsWidth : 0),
+      });
+    },
+    { equals: sameSet },
+  );
+
+  get hiddenForSpace(): ReadonlySet<string> {
+    return this.hiddenForSpaceComputed.get();
+  }
 
   // mobx-react 9 forbids reading this.props inside a derivation. getRow/getTableRow
   // (and the showColumn they call) are invoked from foreign derivations — the inner
@@ -152,7 +193,28 @@ export class NonInjectedItemListLayoutContent<
     this.propsBox.update(this.props);
   }
 
+  componentDidMount() {
+    const element = this.tableRef.current;
+
+    if (element && typeof ResizeObserver !== "undefined") {
+      this.tableObserver = new ResizeObserver((entries) => {
+        const width = entries[entries.length - 1]?.contentRect.width;
+
+        if (width !== undefined) {
+          this.setTableWidth(Math.round(width));
+        }
+      });
+      this.tableObserver.observe(element);
+    }
+  }
+
+  @action
+  private setTableWidth(width: number) {
+    this.tableWidth = width;
+  }
+
   componentWillUnmount() {
+    this.tableObserver?.disconnect();
     this.rowCache.clear();
     this.cleanupResizeListeners();
   }
@@ -378,7 +440,8 @@ export class NonInjectedItemListLayoutContent<
     // Inline column-visibility check from the captured snapshot; this.showColumn
     // reads this.props, which is forbidden here (foreign derivation).
     const isColumnShown = ({ id: columnId, showWithColumn }: TableCellProps) =>
-      !isConfigurable || !tableId || !isTableColumnHidden(tableId, columnId, showWithColumn);
+      (!isConfigurable || !tableId || !isTableColumnHidden(tableId, columnId, showWithColumn)) &&
+      !(columnId && this.hiddenForSpace.has(columnId));
 
     // The key matters for a non-virtual list, where <Table> renders these rows
     // as a list; the virtual one wraps each in a keyed <div> (getRow).
@@ -829,16 +892,37 @@ export class NonInjectedItemListLayoutContent<
   showColumn({ id: columnId, showWithColumn }: TableCellProps): boolean {
     const { tableId, isConfigurable } = this.props;
 
+    return (
+      (!isConfigurable || !tableId || !this.props.isTableColumnHidden(tableId, columnId, showWithColumn)) &&
+      !(columnId && this.hiddenForSpace.has(columnId))
+    );
+  }
+
+  /** Whether the user's own setting shows a column, whatever the room is. */
+  private isShownByUser({ id: columnId, showWithColumn }: TableCellProps): boolean {
+    const { tableId, isConfigurable } = this.props;
+
     return !isConfigurable || !tableId || !this.props.isTableColumnHidden(tableId, columnId, showWithColumn);
   }
 
   renderColumnVisibilityMenu(tableId: string) {
     const { renderTableHeader = [] } = this.props;
 
+    const hiddenForSpace = this.hiddenForSpace;
+
     return (
       <MenuActions
         id="menu-actions-for-item-object-list-content"
         className="ItemListLayoutVisibilityMenu"
+        triggerIcon={
+          hiddenForSpace.size > 0
+            ? {
+                material: "more_vert",
+                className: "hasColumnsHiddenForSpace",
+                tooltip: `${hiddenForSpace.size} ${hiddenForSpace.size === 1 ? "column is" : "columns are"} hidden: not enough width`,
+              }
+            : undefined
+        }
         toolbar={false}
         autoCloseOnSelect={false}
       >
@@ -849,8 +933,17 @@ export class NonInjectedItemListLayoutContent<
           .map((cellProps) => (
             <MenuItem key={cellProps.id} className="input">
               <Checkbox
-                label={cellProps.title ?? `<${cellProps.className}>`}
-                value={this.showColumn(cellProps)}
+                label={
+                  hiddenForSpace.has(cellProps.id) && this.isShownByUser(cellProps) ? (
+                    <>
+                      {cellProps.title ?? `<${cellProps.className}>`}
+                      <span className="hiddenForSpace"> (not enough width)</span>
+                    </>
+                  ) : (
+                    (cellProps.title ?? `<${cellProps.className}>`)
+                  )
+                }
+                value={this.isShownByUser(cellProps)}
                 onChange={() => this.props.toggleTableColumnVisibility(tableId, cellProps.id)}
               />
             </MenuItem>
