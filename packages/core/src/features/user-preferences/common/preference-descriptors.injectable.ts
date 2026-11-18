@@ -77,6 +77,7 @@ export type PreferenceDescriptors = {
   readonly aiChat: PreferenceDescription<unknown, AiChatPreferences>;
   readonly logViewerPreferences: PreferenceDescription<Partial<LogViewerPreferences>, LogViewerPreferences>;
   readonly terminalCopyOnSelect: PreferenceDescription<boolean>;
+  readonly experimentalRowsPodsList: PreferenceDescription<boolean | undefined, boolean>;
   readonly rowClickAction: PreferenceDescription<RowClickAction | undefined, RowClickAction>;
   readonly unloadHiddenClusters: PreferenceDescription<boolean | undefined, boolean>;
   readonly processPerCluster: PreferenceDescription<boolean | undefined, boolean>;
@@ -233,6 +234,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
         toStore: (val) => (val ? undefined : false),
       }),
       terminalCopyOnSelect: getPreferenceDescriptor<boolean>({
+        fromStore: (val) => val ?? false,
+        toStore: (val) => (!val ? undefined : val),
+      }),
+      experimentalRowsPodsList: getPreferenceDescriptor<boolean | undefined, boolean>({
         fromStore: (val) => val ?? false,
         toStore: (val) => (!val ? undefined : val),
       }),

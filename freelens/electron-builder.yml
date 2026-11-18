@@ -262,6 +262,9 @@ linux:
       to: ./${arch}/freelens-k8s-proxy
     - from: binaries/client/linux/${arch}/helm
       to: ./${arch}/helm
+    ## Prototype: built by rows-service/build.sh, not downloaded
+    - from: binaries/client/linux/${arch}/freelens-rows
+      to: ./${arch}/freelens-rows
   publish: null
 
 appImage:

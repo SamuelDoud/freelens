@@ -66,6 +66,9 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
         state.syncKubeconfigEntries = descriptors.syncKubeconfigEntries.fromStore(preferences.syncKubeconfigEntries);
         state.terminalConfig = descriptors.terminalConfig.fromStore(preferences.terminalConfig);
         state.terminalCopyOnSelect = descriptors.terminalCopyOnSelect.fromStore(preferences.terminalCopyOnSelect);
+        state.experimentalRowsPodsList = descriptors.experimentalRowsPodsList.fromStore(
+          preferences.experimentalRowsPodsList,
+        );
         state.rowClickAction = descriptors.rowClickAction.fromStore(preferences.rowClickAction);
         state.unloadHiddenClusters = descriptors.unloadHiddenClusters.fromStore(preferences.unloadHiddenClusters);
         state.processPerCluster = descriptors.processPerCluster.fromStore(preferences.processPerCluster);
@@ -105,6 +108,7 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
             syncKubeconfigEntries: descriptors.syncKubeconfigEntries.toStore(state.syncKubeconfigEntries),
             terminalConfig: descriptors.terminalConfig.toStore(state.terminalConfig),
             terminalCopyOnSelect: descriptors.terminalCopyOnSelect.toStore(state.terminalCopyOnSelect),
+            experimentalRowsPodsList: descriptors.experimentalRowsPodsList.toStore(state.experimentalRowsPodsList),
             rowClickAction: descriptors.rowClickAction.toStore(state.rowClickAction),
             unloadHiddenClusters: descriptors.unloadHiddenClusters.toStore(state.unloadHiddenClusters),
             processPerCluster: descriptors.processPerCluster.toStore(state.processPerCluster),

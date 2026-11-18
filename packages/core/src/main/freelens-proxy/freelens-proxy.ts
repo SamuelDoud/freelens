@@ -6,7 +6,8 @@
 
 import http2 from "node:http2";
 import net from "node:net";
-import { apiKubePrefix, apiPrefix } from "../../common/vars";
+import { apiKubePrefix, apiPrefix, apiRowsPrefix } from "../../common/vars";
+import { rowsServiceTargetOptions } from "../rows-service/rows-service-target";
 import { respondJson, respondText } from "../utils/http-responses";
 import { getBoolean } from "../utils/parse-query";
 import { abortFetchWhenClientCloses, isClientGone } from "./abort-when-client-closes";
@@ -25,6 +26,7 @@ import type { SelfSignedCert } from "../../common/certificate/certificate";
 import type { Cluster } from "../../common/cluster/cluster";
 import type { FreelensK8sProxyManager } from "../cluster/freelens-k8s-proxy-manager.injectable";
 import type { Router } from "../router/router";
+import type { RowsServiceManager } from "../rows-service/rows-service-manager.injectable";
 import type { ClusterRouteRedirect } from "./cluster-route-redirect";
 import type { FreelensProxyPreferredPort } from "./freelens-proxy-preferred-port.injectable";
 import type { FreelensProxyToken } from "./freelens-proxy-token.injectable";
@@ -47,6 +49,9 @@ interface Dependencies {
   kubeApiUpgradeRequest: FreelensProxyApiRequest;
   emitAppEvent: EmitAppEvent;
   getFreelensK8sProxyManager: (cluster: Cluster) => FreelensK8sProxyManager;
+  /** Prototype: the compact pod rows service of a cluster, when the experimental preference is on. */
+  getRowsService?: (cluster: Cluster) => RowsServiceManager;
+  isRowsServiceEnabled?: () => boolean;
   readonly router: Router;
   readonly proxy: ProxyServer;
   readonly freelensProxyPort: { set: (portNumber: number) => void };
@@ -494,6 +499,15 @@ export class FreelensProxy {
       }
     }
 
+    if (
+      cluster &&
+      req.url.startsWith(`${apiRowsPrefix}/`) &&
+      this.dependencies.getRowsService &&
+      this.dependencies.isRowsServiceEnabled?.()
+    ) {
+      return this.handleRowsRequest(cluster, this.dependencies.getRowsService(cluster), req, res);
+    }
+
     if (cluster && req.url.startsWith(apiKubePrefix)) {
       stripToken(req.headers);
       // The `Origin` a frame's browser adds is checked above and means nothing
@@ -563,6 +577,41 @@ export class FreelensProxy {
       this.dependencies.logger.error("[FREELENS-PROXY]: failed to route request", { url: req.url, error });
       this.respondWithError(res, 500, `Oops, something went wrong.\n${error}`);
     }
+  }
+
+  /**
+   * Prototype: forwards `/api-rows/<path>` to the rows service of the cluster,
+   * which is started on the first request, with the service's own token.
+   */
+  protected async handleRowsRequest(
+    cluster: Cluster,
+    rowsService: RowsServiceManager,
+    req: ServerIncomingMessage,
+    res: ServerResponse,
+  ) {
+    stripToken(req.headers);
+    delete req.headers.origin;
+
+    if (cluster.disconnected.get()) {
+      return this.respondWithError(res, 503, `Cluster ${cluster.id} is not connected`);
+    }
+
+    let endpoint;
+
+    try {
+      endpoint = await rowsService.ensure();
+    } catch (error) {
+      const message = `Failed to start the rows service of cluster ${cluster.id}: ${messageOf(error)}`;
+
+      this.dependencies.logger.error(`[FREELENS-PROXY]: ${message}`, { url: req.url });
+
+      return this.respondWithError(res, 503, message);
+    }
+
+    req.url = req.url.slice(apiRowsPrefix.length);
+    req.headers["x-rows-token"] = endpoint.token;
+
+    return this.proxyWeb(req, res, rowsServiceTargetOptions(endpoint.port, req.url.startsWith("/rows/watch")));
   }
 
   /**
