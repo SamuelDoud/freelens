@@ -7,12 +7,18 @@
  */
 
 import podRowStoreInjectable from "./pod-row-store.injectable";
+import podsFromRowsInjectable from "./pods-from-rows.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
     di.register(podRowStoreInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(podsFromRowsInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

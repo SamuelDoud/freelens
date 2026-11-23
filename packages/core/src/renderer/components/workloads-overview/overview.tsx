@@ -12,6 +12,8 @@ import { withInjectables } from "@ogre-tools/injectable-react";
 import { observable, reaction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
+import podRowStoreInjectable from "../../../features/rows-service/renderer/pods-list/pod-row-store.injectable";
+import podsFromRowsInjectable from "../../../features/rows-service/renderer/pods-list/pods-from-rows.injectable";
 import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-frame-context/for-namespaced-resources.injectable";
 import subscribeStoresInjectable from "../../kube-watch-api/subscribe-stores.injectable";
 import eventStoreInjectable from "../events/store.injectable";
@@ -28,6 +30,7 @@ import workloadOverviewDetailsInjectable from "./workload-overview-details/workl
 
 import type { IComputedValue } from "mobx";
 
+import type { PodRowStore } from "../../../features/rows-service/renderer/pods-list/pod-row-store";
 import type { ClusterContext } from "../../cluster-frame-context/cluster-frame-context";
 import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 import type { EventStore } from "../events/store";
@@ -44,6 +47,8 @@ interface Dependencies {
   clusterFrameContext: ClusterContext;
   subscribeStores: SubscribeStores;
   podStore: PodStore;
+  podRowStore: PodRowStore;
+  podsFromRows: IComputedValue<boolean>;
   daemonSetStore: DaemonSetStore;
   replicaSetStore: ReplicaSetStore;
   deploymentStore: DeploymentStore;
@@ -65,7 +70,9 @@ class NonInjectedWorkloadsOverview extends React.Component<Dependencies> {
   componentDidMount() {
     // Capture props before the reaction: mobx-react 9 forbids reading this.props
     // inside a derivation (the reaction's data function below).
-    const { clusterFrameContext } = this.props;
+    const { clusterFrameContext, podsFromRows, podRowStore, podStore, subscribeStores } = this.props;
+    const onLoadFailure = (error: unknown) => this.loadErrors.push(String(error));
+    let stopPods: (() => void) | undefined;
 
     this.disposers.push(
       this.props.subscribeStores(
@@ -75,14 +82,22 @@ class NonInjectedWorkloadsOverview extends React.Component<Dependencies> {
           this.props.deploymentStore,
           this.props.eventStore,
           this.props.jobStore,
-          this.props.podStore,
           this.props.replicaSetStore,
           this.props.statefulSetStore,
         ],
-        {
-          onLoadFailure: (error) => this.loadErrors.push(String(error)),
-        },
+        { onLoadFailure },
       ),
+      // The pods come from the rows service while it serves this cluster, from full pods otherwise,
+      // and switch over when the option changes.
+      reaction(
+        () => podsFromRows.get(),
+        (fromRows) => {
+          stopPods?.();
+          stopPods = fromRows ? podRowStore.start() : subscribeStores([podStore], { onLoadFailure });
+        },
+        { fireImmediately: true },
+      ),
+      () => stopPods?.(),
       reaction(
         () => clusterFrameContext.contextNamespaces.slice(),
         () => {
@@ -146,6 +161,8 @@ export const WorkloadsOverview = withInjectables<Dependencies>(NonInjectedWorklo
     subscribeStores: di.inject(subscribeStoresInjectable),
     daemonSetStore: di.inject(daemonSetStoreInjectable),
     podStore: di.inject(podStoreInjectable),
+    podRowStore: di.inject(podRowStoreInjectable),
+    podsFromRows: di.inject(podsFromRowsInjectable),
     replicaSetStore: di.inject(replicaSetStoreInjectable),
     cronJobStore: di.inject(cronJobStoreInjectable),
     deploymentStore: di.inject(deploymentStoreInjectable),

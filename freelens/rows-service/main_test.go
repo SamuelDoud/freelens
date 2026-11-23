@@ -99,3 +99,28 @@ func TestRemoveDropsTheRowTheTransformComputed(t *testing.T) {
 		t.Fatalf("the transform's row of a deleted pod stayed: %d left", len(s.stash))
 	}
 }
+
+func TestOverviewStatusFollowsPodGetStatus(t *testing.T) {
+	ready := []corev1.PodCondition{{Type: corev1.PodReady, Status: corev1.ConditionTrue}}
+	notReady := []corev1.PodCondition{{Type: corev1.PodReady, Status: corev1.ConditionFalse}}
+	cases := []struct {
+		name   string
+		status corev1.PodStatus
+		want   string
+	}{
+		{"running and ready", corev1.PodStatus{Phase: corev1.PodRunning, Conditions: ready}, "Running"},
+		{"running, not ready", corev1.PodStatus{Phase: corev1.PodRunning, Conditions: notReady}, "Pending"},
+		{"pending", corev1.PodStatus{Phase: corev1.PodPending}, "Pending"},
+		{"no phase yet", corev1.PodStatus{}, "Pending"},
+		{"succeeded", corev1.PodStatus{Phase: corev1.PodSucceeded}, "Succeeded"},
+		{"failed", corev1.PodStatus{Phase: corev1.PodFailed}, "Failed"},
+		{"evicted", corev1.PodStatus{Phase: corev1.PodFailed, Reason: "Evicted"}, "Evicted"},
+	}
+	for _, c := range cases {
+		p := pod("u", "p")
+		p.Status = c.status
+		if got := computeRow(p).OverviewStatus; got != c.want {
+			t.Errorf("%s: want %s, got %s", c.name, c.want, got)
+		}
+	}
+}

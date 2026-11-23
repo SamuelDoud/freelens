@@ -8,7 +8,7 @@ import type { ItemObject } from "@freelensapp/list-layout";
 /** One container of a row: its name, the class of its status brick and the text of its tooltip. */
 export type PodRowContainer = readonly [name: string, className: string, detail: string];
 
-/** The 14 cells of a row as the rows service sends them, `id` first. */
+/** The 15 cells of a row as the rows service sends them, `id` first. */
 export type PodRowCells = readonly [
   id: number,
   name: string,
@@ -24,6 +24,8 @@ export type PodRowCells = readonly [
   cpuLimit: number | null,
   memoryRequest: number | null,
   memoryLimit: number | null,
+  /** What `Pod.getStatus()` answers, the status the Workloads overview counts. */
+  overviewStatus: string,
 ];
 
 export const podRowCell = {
@@ -41,6 +43,7 @@ export const podRowCell = {
   cpuLimit: 11,
   memoryRequest: 12,
   memoryLimit: 13,
+  overviewStatus: 14,
 } as const;
 
 /**
@@ -91,6 +94,10 @@ export class PodRowItem implements ItemObject {
 
   get status() {
     return this.cells[podRowCell.status];
+  }
+
+  get overviewStatus() {
+    return this.cells[podRowCell.overviewStatus];
   }
 
   /** What the details drawer is asked for: the URL of the pod, which its store loads in full. */

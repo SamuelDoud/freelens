@@ -133,6 +133,27 @@ export class PodRowStore {
 
   readonly getContextItems = () => this.contextItems;
 
+  /**
+   * How many of the items have each status of `Pod.getStatus()`, as
+   * `PodStore.getStatuses` counts them for the Workloads overview: the key order is
+   * the order of the pie chart segments, descending by status name.
+   */
+  getStatuses(items: readonly PodRowItem[]): Record<string, number> {
+    const counts = new Map<string, number>();
+
+    for (const item of items) {
+      counts.set(item.overviewStatus, (counts.get(item.overviewStatus) ?? 0) + 1);
+    }
+
+    const result: Record<string, number> = {};
+
+    for (const status of [...counts.keys()].sort().reverse()) {
+      result[status] = counts.get(status) as number;
+    }
+
+    return result;
+  }
+
   // What the list layout asks of its store
   getTotalCount = () => this.contextItems.length;
   isSelected = () => false;

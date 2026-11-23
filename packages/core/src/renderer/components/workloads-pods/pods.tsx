@@ -13,8 +13,7 @@ import { observer } from "mobx-react";
 import { useEffect } from "react";
 import frameActivityInjectable from "../../../features/frame-activity/renderer/frame-activity.injectable";
 import { pollWhileActive } from "../../../features/frame-activity/renderer/poll-while-active";
-import rowsServiceEnabledInjectable from "../../../features/rows-service/common/rows-service-enabled.injectable";
-import podRowStoreInjectable from "../../../features/rows-service/renderer/pods-list/pod-row-store.injectable";
+import podsFromRowsInjectable from "../../../features/rows-service/renderer/pods-list/pods-from-rows.injectable";
 import { PodsRows } from "../../../features/rows-service/renderer/pods-list/pods-rows";
 import isTableColumnHiddenInjectable from "../../../features/user-preferences/common/is-table-column-hidden.injectable";
 import eventStoreInjectable from "../events/store.injectable";
@@ -32,7 +31,6 @@ import type { SpecificKubeListLayoutColumn } from "@freelensapp/list-layout";
 import type { IComputedValue } from "mobx";
 
 import type { SearchField } from "../../../features/advanced-search/common/conditions";
-import type { PodRowStore } from "../../../features/rows-service/renderer/pods-list/pod-row-store";
 import type { EventStore } from "../events/store";
 import type { ListLayoutSearchFilter } from "../item-object-list/list-layout";
 import type { PodStore } from "./store";
@@ -158,8 +156,7 @@ const DefaultPods = withInjectables<Dependencies>(NonInjectedPods, {
 });
 
 interface SwitchDependencies {
-  rowsServiceEnabled: IComputedValue<boolean>;
-  podRowStore: PodRowStore;
+  podsFromRows: IComputedValue<boolean>;
 }
 
 /**
@@ -168,13 +165,10 @@ interface SwitchDependencies {
  * otherwise.
  */
 export const Pods = withInjectables<SwitchDependencies>(
-  observer(({ rowsServiceEnabled, podRowStore }: SwitchDependencies) =>
-    rowsServiceEnabled.get() && !podRowStore.unavailable ? <PodsRows /> : <DefaultPods />,
-  ),
+  observer(({ podsFromRows }: SwitchDependencies) => (podsFromRows.get() ? <PodsRows /> : <DefaultPods />)),
   {
     getProps: (di) => ({
-      rowsServiceEnabled: di.inject(rowsServiceEnabledInjectable),
-      podRowStore: di.inject(podRowStoreInjectable),
+      podsFromRows: di.inject(podsFromRowsInjectable),
     }),
   },
 );

@@ -30,6 +30,7 @@ const row = (
   null,
   null,
   null,
+  overrides.status === "Succeeded" ? "Succeeded" : "Running",
 ];
 
 const createStore = (namespaces: string[] = ["default", "other"], hideCompleted = false) =>

@@ -27,11 +27,15 @@ type Row struct {
 	CPULim     *float64
 	MemReq     *float64
 	MemLim     *float64
+	// OverviewStatus is what Pod.getStatus() of Freelens answers: the status the Workloads
+	// overview counts, which differs from the Status column (a Running pod that is not Ready
+	// counts as Pending there).
+	OverviewStatus string
 }
 
 type ContainerCell struct{ Name, Class, Detail string }
 
-var columnNames = []string{"id", "name", "namespace", "containers", "restarts", "owners", "node", "qos", "created", "status", "cpuRequest", "cpuLimit", "memoryRequest", "memoryLimit"}
+var columnNames = []string{"id", "name", "namespace", "containers", "restarts", "owners", "node", "qos", "created", "status", "cpuRequest", "cpuLimit", "memoryRequest", "memoryLimit", "overviewStatus"}
 
 // ---- quantity: exact port of parseQuantity in k8s-quantity.ts ----
 var qtyRe = regexp.MustCompile(`^([+-]?(?:\d+\.?\d*|\.\d+))(?:[eE]([+-]?\d+))?(n|u|m|k|M|G|T|P|E|Ki|Mi|Gi|Ti|Pi|Ei)?$`)
@@ -201,6 +205,7 @@ func computeRow(p *corev1.Pod) Row {
 		}
 		r.Status = in(r.Status)
 	}
+	r.OverviewStatus = overviewStatus(p)
 	// containers
 	type typed struct {
 		c    *corev1.Container
@@ -380,8 +385,10 @@ func (r *Row) cell(b []byte, i int) []byte {
 		return appendNum(b, r.CPULim)
 	case 12:
 		return appendNum(b, r.MemReq)
-	default:
+	case 13:
 		return appendNum(b, r.MemLim)
+	default:
+		return appendStr(b, r.OverviewStatus)
 	}
 }
 
@@ -407,4 +414,28 @@ func diffCols(a, b *Row) (idx []int) {
 		}
 	}
 	return
+}
+
+// overviewStatus ports Pod.getStatus() of packages/kube-object/src/specifics/pod.ts.
+func overviewStatus(p *corev1.Pod) string {
+	switch {
+	case p.Status.Reason == "Evicted":
+		return "Evicted"
+	case p.Status.Phase == corev1.PodFailed:
+		return "Failed"
+	case p.Status.Phase == corev1.PodSucceeded:
+		return "Succeeded"
+	case p.Status.Phase == corev1.PodRunning && isReady(p):
+		return "Running"
+	}
+	return "Pending"
+}
+
+func isReady(p *corev1.Pod) bool {
+	for _, c := range p.Status.Conditions {
+		if c.Type == corev1.PodReady && c.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }
