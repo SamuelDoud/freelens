@@ -239,4 +239,72 @@ describe("PodRowStore.start", () => {
 
     stop();
   });
+
+  it("marks the store unavailable on a 501 and stops asking, until it is reset", async () => {
+    const fakeFetch = vi.fn(async () => new Response("Rows service unavailable: the option is off", { status: 501 }));
+    const store = new PodRowStore({
+      fetch: fakeFetch as unknown as typeof fetch,
+      baseUrl: "/api-rows",
+      getContextNamespaces: () => ["default"],
+      hideCompletedPods: () => false,
+    });
+    const stop = store.start();
+
+    await vi.waitFor(() => expect(store.unavailable).toBe(true));
+
+    const calls = fakeFetch.mock.calls.length;
+
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(fakeFetch.mock.calls.length).toBe(calls);
+    expect(store.failedLoading).toBe(false);
+
+    store.resetUnavailable();
+    expect(store.unavailable).toBe(false);
+
+    stop();
+  });
+
+  it("loads the snapshot again when a batch is missing from the stream", async () => {
+    const pushers: ((line: string) => void)[] = [];
+    let snapshots = 0;
+    const fakeFetch = (async (input: string) => {
+      if (input.endsWith("/rows/watch")) {
+        return new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              pushers.push((line) => controller.enqueue(encoder.encode(`${line}\n`)));
+            },
+          }),
+        );
+      }
+
+      snapshots += 1;
+
+      return new Response(
+        JSON.stringify(
+          snapshots === 1
+            ? { seq: 1, cols: [], rows: [row(1, "a")] }
+            : { seq: 9, cols: [], rows: [row(1, "a"), row(2, "b"), row(3, "c")] },
+        ),
+      );
+    }) as unknown as typeof fetch;
+    const store = new PodRowStore({
+      fetch: fakeFetch,
+      baseUrl: "/api-rows",
+      getContextNamespaces: () => ["default"],
+      hideCompletedPods: () => false,
+    });
+    const stop = store.start();
+
+    await vi.waitFor(() => expect(store.seq).toBe(1));
+
+    // Batch 2 never arrives: batch 3 must not be applied over it
+    pushers[0](JSON.stringify({ s: 3, a: [row(3, "c")], c: [], d: [] }));
+
+    await vi.waitFor(() => expect(store.seq).toBe(9), { timeout: 3000 });
+    expect(snapshots).toBe(2);
+    expect(store.items.map((item) => item.getName())).toEqual(["a", "b", "c"]);
+
+    stop();
+  });
 });

@@ -5,19 +5,19 @@
 
 import { getConvertedParts } from "@freelensapp/utilities";
 import { kebabCase } from "es-toolkit";
-import { Badge } from "../../badge";
-import { KubeObjectAge } from "../../kube-object/age";
-import { NamespaceSelectBadge } from "../../namespaces/namespace-select-badge";
-import { StatusBrick } from "../../status-brick";
-import { WithTooltip } from "../../with-tooltip";
-import { COLUMN_PRIORITY } from "../columns/column-priority";
-import { formatPodResource } from "../columns/pods-resource-column";
+import { Badge } from "../../../../renderer/components/badge";
+import { KubeObjectAge } from "../../../../renderer/components/kube-object/age";
+import { NamespaceSelectBadge } from "../../../../renderer/components/namespaces/namespace-select-badge";
+import { StatusBrick } from "../../../../renderer/components/status-brick";
+import { WithTooltip } from "../../../../renderer/components/with-tooltip";
+import { COLUMN_PRIORITY } from "../../../../renderer/components/workloads-pods/columns/column-priority";
+import { formatPodResource } from "../../../../renderer/components/workloads-pods/columns/pods-resource-column";
 import { podRowCell } from "./pod-row-item";
 
 import type { TableCellProps } from "@freelensapp/list-layout";
 import type { StrictReactNode } from "@freelensapp/utilities";
 
-import type { PodResourceColumnId } from "../columns/pods-resource-column";
+import type { PodResourceColumnId } from "../../../../renderer/components/workloads-pods/columns/pods-resource-column";
 import type { PodRowItem } from "./pod-row-item";
 
 export interface PodRowColumn {

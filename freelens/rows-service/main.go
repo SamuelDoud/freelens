@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
@@ -17,6 +18,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	authorizationv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -33,7 +35,7 @@ type server struct {
 	touched  map[types.UID]struct{}
 	nextID   uint32
 	seq      uint64
-	subs     map[chan []byte]struct{}
+	subs     map[*subscriber]struct{}
 	flushLen int // batches
 	// stats
 	events                                     atomic.Int64
@@ -45,7 +47,14 @@ type server struct {
 }
 
 func newServer() *server {
-	return &server{rows: map[types.UID]*Row{}, sent: map[types.UID]*Row{}, touched: map[types.UID]struct{}{}, subs: map[chan []byte]struct{}{}, stash: map[types.UID]*Row{}}
+	return &server{rows: map[types.UID]*Row{}, sent: map[types.UID]*Row{}, touched: map[types.UID]struct{}{}, subs: map[*subscriber]struct{}{}, stash: map[types.UID]*Row{}}
+}
+
+// subscriber is one /rows/watch stream. A reader that falls behind by more than the buffer has
+// its stream ended (overflow closes) rather than losing batches: it then loads the rows again.
+type subscriber struct {
+	ch       chan []byte
+	overflow chan struct{}
 }
 
 func (s *server) upsert(p *corev1.Pod) {
@@ -73,6 +82,8 @@ func (s *server) remove(p *corev1.Pod) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.events.Add(1)
+	// The transform also computed a row for the object of the delete event: drop it.
+	delete(s.stash, p.UID)
 	delete(s.rows, p.UID)
 	s.touched[p.UID] = struct{}{}
 }
@@ -146,10 +157,12 @@ func (s *server) flush() {
 	s.bytesPatch.Add(int64(len(msg)))
 	s.bytesFullRow.Add(int64(len(msg)) - int64(len(chg)) + fullAlt)
 	s.subMu.Lock()
-	for ch := range s.subs {
+	for sub := range s.subs {
 		select {
-		case ch <- msg:
+		case sub.ch <- msg:
 		default:
+			delete(s.subs, sub)
+			close(sub.overflow)
 		}
 	}
 	s.subMu.Unlock()
@@ -205,19 +218,22 @@ func (s *server) serve(ln net.Listener, token string, storeLen func() int) {
 		w.Write(b)
 	})
 	mux.HandleFunc("/rows/watch", func(w http.ResponseWriter, r *http.Request) {
-		ch := make(chan []byte, 256)
+		sub := &subscriber{ch: make(chan []byte, 256), overflow: make(chan struct{})}
 		s.subMu.Lock()
-		s.subs[ch] = struct{}{}
+		s.subs[sub] = struct{}{}
 		s.subMu.Unlock()
-		defer func() { s.subMu.Lock(); delete(s.subs, ch); s.subMu.Unlock() }()
+		defer func() { s.subMu.Lock(); delete(s.subs, sub); s.subMu.Unlock() }()
 		w.Header().Set("Content-Type", "application/x-ndjson")
 		fl := w.(http.Flusher)
 		fl.Flush()
 		for {
 			select {
-			case m := <-ch:
+			case m := <-sub.ch:
 				w.Write(m)
 				fl.Flush()
+			case <-sub.overflow:
+				log.Printf("a /rows/watch reader fell behind; ending its stream so that it loads the rows again")
+				return
 			case <-r.Context().Done():
 				return
 			}
@@ -246,6 +262,34 @@ func (s *server) serve(ln net.Listener, token string, storeLen func() int) {
 		}
 	}()
 	log.Fatal(http.Serve(ln, authorized(token, mux)))
+}
+
+// accessDeniedExitCode tells Freelens that this cluster cannot use the service: its lists then load
+// full objects, which also work with access to some namespaces only.
+const accessDeniedExitCode = 3
+
+// mayListAndWatchAllPods asks the API server whether the user may list and watch pods in every
+// namespace, which the cluster-wide informer needs. When the question itself fails, it answers yes:
+// the informer then reports the real error.
+func mayListAndWatchAllPods(cs kubernetes.Interface) bool {
+	for _, verb := range []string{"list", "watch"} {
+		review := &authorizationv1.SelfSubjectAccessReview{
+			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authorizationv1.ResourceAttributes{Verb: verb, Resource: "pods"},
+			},
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		answer, err := cs.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, review, metav1.CreateOptions{})
+		cancel()
+		if err != nil {
+			log.Printf("access review for %s pods failed: %v", verb, err)
+			return true
+		}
+		if !answer.Status.Allowed {
+			return false
+		}
+	}
+	return true
 }
 
 func main() {
@@ -299,6 +343,10 @@ func main() {
 		},
 	}
 	cs := kubernetes.NewForConfigOrDie(cfg)
+	if !mayListAndWatchAllPods(cs) {
+		log.Printf("the user may not list and watch pods in every namespace")
+		os.Exit(accessDeniedExitCode)
+	}
 	lw := cache.NewListWatchFromClient(cs.CoreV1().RESTClient(), "pods", metav1.NamespaceAll, fields.Everything())
 	inf := cache.NewSharedIndexInformer(lw, &corev1.Pod{}, 0, cache.Indexers{})
 	inf.SetTransform(transform)

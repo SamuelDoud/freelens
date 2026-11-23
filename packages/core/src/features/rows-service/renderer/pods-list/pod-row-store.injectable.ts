@@ -4,8 +4,11 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import clusterFrameContextForNamespacedResourcesInjectable from "../../../cluster-frame-context/for-namespaced-resources.injectable";
-import hostedClusterInjectable from "../../../cluster-frame-context/hosted-cluster.injectable";
+import { reaction } from "mobx";
+import clusterFrameContextForNamespacedResourcesInjectable from "../../../../renderer/cluster-frame-context/for-namespaced-resources.injectable";
+import hostedClusterInjectable from "../../../../renderer/cluster-frame-context/hosted-cluster.injectable";
+import { apiRowsPrefix } from "../../common/api-rows-prefix";
+import rowsServiceEnabledInjectable from "../../common/rows-service-enabled.injectable";
 import { PodRowStore } from "./pod-row-store";
 
 /** The rows of the Pods list, from the rows service of the cluster of this frame. */
@@ -15,12 +18,21 @@ const podRowStoreInjectable = getInjectable({
     const context = di.inject(clusterFrameContextForNamespacedResourcesInjectable);
     const hostedCluster = di.inject(hostedClusterInjectable);
 
-    return new PodRowStore({
+    const enabled = di.inject(rowsServiceEnabledInjectable);
+    const store = new PodRowStore({
       fetch: (input, init) => globalThis.fetch(input, init),
-      baseUrl: "/api-rows",
+      baseUrl: apiRowsPrefix,
       getContextNamespaces: () => context.contextNamespaces,
       hideCompletedPods: () => hostedCluster?.preferences.hideCompletedPods ?? false,
     });
+
+    // Turning the option off and on again tries the rows service again
+    reaction(
+      () => enabled.get(),
+      () => store.resetUnavailable(),
+    );
+
+    return store;
   },
 });
 

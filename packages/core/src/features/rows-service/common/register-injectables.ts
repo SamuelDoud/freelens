@@ -6,13 +6,13 @@
  * This replaces the webpack-based auto-registration system.
  */
 
-import experimentalRowsPodsListPreferenceBlockInjectable from "./experimental-rows-pods-list-preference-block.injectable";
+import rowsServiceEnabledInjectable from "./rows-service-enabled.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
-    di.register(experimentalRowsPodsListPreferenceBlockInjectable);
+    di.register(rowsServiceEnabledInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

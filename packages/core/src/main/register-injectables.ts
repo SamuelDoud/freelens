@@ -37,7 +37,6 @@ import { registerInjectables as registerProtocolHandlerInjectables } from "./pro
 import { registerInjectables as registerResourceApplierInjectables } from "./resource-applier/register-injectables";
 import { registerInjectables as registerRouterInjectables } from "./router/register-injectables";
 import { registerInjectables as registerRoutesInjectables } from "./routes/register-injectables";
-import { registerInjectables as registerRowsServiceInjectables } from "./rows-service/register-injectables";
 import { registerInjectables as registerShellSessionInjectables } from "./shell-session/register-injectables";
 import { registerInjectables as registerStartMainApplicationInjectables } from "./start-main-application/register-injectables";
 import storesAndApisCanBeCreatedInjectable from "./stores-apis-can-be-created.injectable";
@@ -207,11 +206,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerRoutesInjectables(di);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    registerRowsServiceInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

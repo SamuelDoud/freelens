@@ -4,6 +4,7 @@
  */
 
 import { action, computed, observable } from "mobx";
+import { rowsServiceUnavailableStatus } from "../../common/api-rows-prefix";
 import { PodRowItem, podRowCell } from "./pod-row-item";
 
 import type { PodRowCells } from "./pod-row-item";
@@ -39,6 +40,12 @@ export interface PodRowStoreDependencies {
 
 const retryDelaysMs = [500, 1000, 2000, 5000];
 
+/** The rows service cannot serve this cluster: the list uses full pods instead. */
+class RowsServiceUnavailable extends Error {}
+
+/** A batch is missing from the stream, so the rows are no longer known to be right. */
+class RowsStreamGap extends Error {}
+
 const sleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve) => {
     const timer = setTimeout(resolve, ms);
@@ -64,6 +71,12 @@ export class PodRowStore {
   private readonly itemsBox = observable.box<PodRowItem[]>([], { deep: false });
   @observable accessor isLoaded = false;
   @observable accessor failedLoading = false;
+  /**
+   * The rows service answered that it cannot serve this cluster (the option is off,
+   * its binary is missing, or the user may not list pods in every namespace). The
+   * Pods list then shows the list of full pods, until `resetUnavailable`.
+   */
+  @observable accessor unavailable = false;
   /** The sequence number of the last batch applied, `0` before the first. */
   seq = 0;
 
@@ -214,6 +227,12 @@ export class PodRowStore {
           return;
         }
 
+        if (error instanceof RowsServiceUnavailable) {
+          this.markUnavailable();
+
+          return;
+        }
+
         console.warn("[PodRowStore] the rows stream failed", error);
         this.markFailed();
       }
@@ -225,6 +244,28 @@ export class PodRowStore {
       await sleep(retryDelaysMs[Math.min(attempt, retryDelaysMs.length - 1)], signal);
       attempt += 1;
     }
+  }
+
+  private markUnavailable = action(() => {
+    this.unavailable = true;
+  });
+
+  /** Lets the list try the rows service again, after the option was turned off and on. */
+  @action resetUnavailable() {
+    this.unavailable = false;
+  }
+
+  /** Applies the next batch, or fails the stream when one is missing, so that it is loaded again. */
+  private applyNext(delta: PodRowsDelta) {
+    if (delta.s <= this.seq) {
+      return;
+    }
+
+    if (delta.s !== this.seq + 1) {
+      throw new RowsStreamGap(`batch ${delta.s} follows batch ${this.seq}`);
+    }
+
+    this.applyDelta(delta);
   }
 
   private markFailed = action(() => {
@@ -249,6 +290,10 @@ export class PodRowStore {
     try {
       const watch = await fetch(`${baseUrl}/rows/watch`, { signal });
 
+      if (watch.status === rowsServiceUnavailableStatus) {
+        throw new RowsServiceUnavailable(await watch.text());
+      }
+
       if (!watch.ok || !watch.body) {
         throw new Error(`/rows/watch answered ${watch.status}`);
       }
@@ -258,8 +303,8 @@ export class PodRowStore {
       const onDelta = (delta: PodRowsDelta) => {
         if (loadedSeq === undefined) {
           held.push(delta);
-        } else if (delta.s > loadedSeq) {
-          this.applyDelta(delta);
+        } else {
+          this.applyNext(delta);
         }
       };
       const streaming = readNdjson<PodRowsDelta>(watch.body, onDelta);
@@ -268,6 +313,10 @@ export class PodRowStore {
       streaming.catch(() => {});
 
       const snapshotResponse = await fetch(`${baseUrl}/rows`, { signal });
+
+      if (snapshotResponse.status === rowsServiceUnavailableStatus) {
+        throw new RowsServiceUnavailable(await snapshotResponse.text());
+      }
 
       if (!snapshotResponse.ok) {
         throw new Error(`/rows answered ${snapshotResponse.status}`);
@@ -279,9 +328,7 @@ export class PodRowStore {
       loadedSeq = snapshot.seq;
 
       for (const delta of held.splice(0)) {
-        if (delta.s > loadedSeq) {
-          this.applyDelta(delta);
-        }
+        this.applyNext(delta);
       }
 
       onLoaded();

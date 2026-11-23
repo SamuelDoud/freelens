@@ -16,6 +16,9 @@ import directoryForUserDataInjectable from "../../common/app-paths/directory-for
 import freelensProxyCertificateInjectable from "../../common/certificate/freelens-proxy-certificate.injectable";
 import { nodeEnvInjectionToken } from "../../common/vars/node-env-injection-token";
 import getClusterByIdInjectable from "../../features/cluster/storage/common/get-by-id.injectable";
+import rowsServiceManagerInjectable, {
+  RowsServiceUnavailableError,
+} from "../../features/rows-service/main/rows-service-manager.injectable";
 import { testCertificate } from "../../test-utils/test-certificate";
 import freelensK8sProxyManagerInjectable from "../cluster/freelens-k8s-proxy-manager.injectable";
 import { apiTargetOptions, createFreelensK8sProxyAgent, dispatcherFor } from "../cluster/freelens-k8s-proxy-target";
@@ -458,6 +461,7 @@ describe("Freelens proxy kube api requests", () => {
   let agent: Agent;
   let logError: Mock;
   let clusterDisconnected: boolean;
+  let ensureRowsService: () => Promise<{ port: number; token: string }>;
   const sessions: http2.ClientHttp2Session[] = [];
 
   const apiPrefix = "/some-api-prefix";
@@ -562,13 +566,17 @@ describe("Freelens proxy kube api requests", () => {
         req.url = req.url.replace("/some-cluster-id", "/api-kube");
       }
 
-      if (req.url?.startsWith("/api-kube")) {
+      if (req.url?.startsWith("/api-kube") || req.url?.startsWith("/api-rows")) {
         return { id: "some-cluster-id", disconnected: { get: () => clusterDisconnected } } as unknown as Cluster;
       }
 
       return undefined;
     });
     di.override(shellApiRequestInjectable, () => vi.fn());
+    ensureRowsService = async () => {
+      throw new RowsServiceUnavailableError("the rows service option is off");
+    };
+    di.override(rowsServiceManagerInjectable, () => ({ ensure: () => ensureRowsService() }));
     di.override(kubeApiUpgradeRequestInjectable, () => vi.fn());
     di.override(
       freelensK8sProxyManagerInjectable,
@@ -666,6 +674,26 @@ describe("Freelens proxy kube api requests", () => {
     expect(response.statusCode).toBe(503);
     expect(JSON.parse(response.body)).toMatchObject({ kind: "Status", reason: "ServiceUnavailable", code: 503 });
     expect(targetReceived).toEqual([]);
+  });
+
+  it("answers 501 for the rows of a cluster whose rows service is unavailable, so the lists use full objects", async () => {
+    const response = await getHttp1(port, "/api-rows/rows");
+
+    expect(response.statusCode).toBe(501);
+    expect(response.body).toContain("the rows service option is off");
+    expect(targetReceived).toEqual([]);
+  });
+
+  it("answers 503 when the rows service fails to start for another reason", async () => {
+    ensureRowsService = async () => {
+      throw new Error("did not start in time");
+    };
+
+    expect((await getHttp1(port, "/api-rows/rows")).statusCode).toBe(503);
+  });
+
+  it("answers 403 for the rows without a valid token", async () => {
+    expect((await getHttp1(port, "/api-rows/rows", { authorization: "Bearer not-the-token" })).statusCode).toBe(403);
   });
 
   it("answers 403 for a foreign host, even with a valid token", async () => {

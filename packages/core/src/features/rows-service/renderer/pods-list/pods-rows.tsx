@@ -3,26 +3,26 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import "../pods.scss";
-import "../../kube-object-list-layout/kube-object-list-layout.scss";
+import "../../../../renderer/components/workloads-pods/pods.scss";
+import "../../../../renderer/components/kube-object-list-layout/kube-object-list-layout.scss";
 
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { computed } from "mobx";
 import { observer } from "mobx-react";
 import { useEffect, useMemo } from "react";
-import { ItemListLayout } from "../../item-object-list/list-layout";
-import kubeSelectedUrlParamInjectable from "../../kube-detail-params/kube-selected-url.injectable";
-import toggleKubeDetailsPaneInjectable from "../../kube-detail-params/toggle-details.injectable";
-import { SiblingsInTabLayout } from "../../layout/siblings-in-tab-layout";
-import { NamespaceSelectFilter } from "../../namespaces/namespace-select-filter";
-import { podResourceColumnIds } from "../columns/pods-resource-column";
+import { ItemListLayout } from "../../../../renderer/components/item-object-list/list-layout";
+import kubeSelectedUrlParamInjectable from "../../../../renderer/components/kube-detail-params/kube-selected-url.injectable";
+import toggleKubeDetailsPaneInjectable from "../../../../renderer/components/kube-detail-params/toggle-details.injectable";
+import { SiblingsInTabLayout } from "../../../../renderer/components/layout/siblings-in-tab-layout";
+import { NamespaceSelectFilter } from "../../../../renderer/components/namespaces/namespace-select-filter";
+import { podResourceColumnIds } from "../../../../renderer/components/workloads-pods/columns/pods-resource-column";
 import { podRowColumns } from "./pod-row-columns";
 import podRowStoreInjectable from "./pod-row-store.injectable";
 
-import type { PageParam } from "../../../navigation/page-param";
-import type { ListLayoutSearchFilter } from "../../item-object-list/list-layout";
-import type { ToggleKubeDetailsPane } from "../../kube-detail-params/toggle-details.injectable";
-import type { TableSortCallbacks } from "../../table";
+import type { ListLayoutSearchFilter } from "../../../../renderer/components/item-object-list/list-layout";
+import type { ToggleKubeDetailsPane } from "../../../../renderer/components/kube-detail-params/toggle-details.injectable";
+import type { TableSortCallbacks } from "../../../../renderer/components/table";
+import type { PageParam } from "../../../../renderer/navigation/page-param";
 import type { PodRowItem } from "./pod-row-item";
 import type { PodRowStore } from "./pod-row-store";
 

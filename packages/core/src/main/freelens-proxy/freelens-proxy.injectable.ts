@@ -10,10 +10,9 @@ import { createProxyServer } from "http-proxy-3";
 import emitAppEventInjectable from "../../common/app-event-bus/emit-event.injectable";
 import freelensProxyCertificateInjectable from "../../common/certificate/freelens-proxy-certificate.injectable";
 import contentSecurityPolicyInjectable from "../../common/vars/content-security-policy.injectable";
-import userPreferencesStateInjectable from "../../features/user-preferences/common/state.injectable";
+import rowsServiceManagerInjectable from "../../features/rows-service/main/rows-service-manager.injectable";
 import freelensK8sProxyManagerInjectable from "../cluster/freelens-k8s-proxy-manager.injectable";
 import routerInjectable from "../router/router.injectable";
-import rowsServiceManagerInjectable from "../rows-service/rows-service-manager.injectable";
 import { FreelensProxy } from "./freelens-proxy";
 import freelensProxyPortInjectable from "./freelens-proxy-port.injectable";
 import freelensProxyPreferredPortInjectable from "./freelens-proxy-preferred-port.injectable";
@@ -41,7 +40,6 @@ const freelensProxyInjectable = getInjectable({
       token: di.inject(freelensProxyTokenInjectable),
       getFreelensK8sProxyManager: (cluster) => di.inject(freelensK8sProxyManagerInjectable, cluster),
       getRowsService: (cluster) => di.inject(rowsServiceManagerInjectable, cluster),
-      isRowsServiceEnabled: () => di.inject(userPreferencesStateInjectable).experimentalRowsPodsList,
     }),
 });
 

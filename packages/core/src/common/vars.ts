@@ -13,7 +13,6 @@ export const defaultEditorFontFamily = "RobotoMono";
 // Apis
 export const apiPrefix = "/api"; // local router apis
 export const apiKubePrefix = "/api-kube"; // k8s cluster apis
-export const apiRowsPrefix = "/api-rows"; // prototype: compact pod rows of a cluster
 
 // Links
 export const issuesTrackerUrl = "https://github.com/freelensapp/freelens/issues" as string;

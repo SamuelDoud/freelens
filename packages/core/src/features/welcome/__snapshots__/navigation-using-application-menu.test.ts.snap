@@ -1532,6 +1532,38 @@ exports[`welcome - navigation using application menu > when navigated somewhere 
                     </div>
                   </section>
                 </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="rows-service"
+                >
+                  <section
+                    id="rows-service"
+                  >
+                    <div
+                      class="SubTitle"
+                    >
+                      Experimental
+                       
+                    </div>
+                    <label
+                      class="Switch"
+                      data-testid="switch"
+                    >
+                      Rows service for the Pods list
+                      <input
+                        role="switch"
+                        type="checkbox"
+                      />
+                    </label>
+                    <small
+                      class="hint"
+                    >
+                      Runs a helper process per cluster that sends the Pods list as compact rows instead of full pods. Faster and lighter on clusters with thousands of pods. The helper's memory grows with the pod count, about 55 MB at 10,000 pods. Search covers the visible columns only. Takes effect at once; turn it off to go back to the usual list.
+                    </small>
+                  </section>
+                </div>
               </section>
             </div>
             <div

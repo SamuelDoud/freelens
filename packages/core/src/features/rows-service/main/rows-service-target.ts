@@ -4,7 +4,7 @@
  */
 
 import { Agent } from "undici";
-import { apiTargetOptions, dispatcherFor } from "../cluster/freelens-k8s-proxy-target";
+import { apiTargetOptions, dispatcherFor } from "../../../main/cluster/freelens-k8s-proxy-target";
 
 import type { ServerOptions } from "http-proxy-3";
 

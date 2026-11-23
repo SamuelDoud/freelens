@@ -15,6 +15,7 @@ import { registerInjectables as registerLicensesInjectables } from "./licenses/r
 import { registerInjectables as registerMultiviewInjectables } from "./multiview/register-injectables";
 import { registerInjectables as registerPersistentStorageInjectables } from "./persistent-storage/register-injectables";
 import { registerInjectables as registerPreferencesInjectables } from "./preferences/register-injectables";
+import { registerInjectables as registerRowsServiceInjectables } from "./rows-service/register-injectables";
 import { registerInjectables as registerUserPreferencesInjectables } from "./user-preferences/register-injectables";
 import { registerInjectables as registerVarsInjectables } from "./vars/register-injectables";
 import { registerInjectables as registerWeblinksInjectables } from "./weblinks/register-injectables";
@@ -64,6 +65,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerPreferencesInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerRowsServiceInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

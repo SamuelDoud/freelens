@@ -4,10 +4,10 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import bundledBinaryPathInjectable from "../../common/utils/bundled-binary-path.injectable";
+import bundledBinaryPathInjectable from "../../../common/utils/bundled-binary-path.injectable";
 
 /**
- * The prototype rows service, built by `freelens/rows-service/build.sh` into
+ * The rows service binary, built by `freelens/rows-service/build.sh` into
  * the bundled binaries next to the proxy, kubectl and helm.
  */
 const rowsServicePathInjectable = getInjectable({

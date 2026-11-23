@@ -13,8 +13,10 @@ import { observer } from "mobx-react";
 import { useEffect } from "react";
 import frameActivityInjectable from "../../../features/frame-activity/renderer/frame-activity.injectable";
 import { pollWhileActive } from "../../../features/frame-activity/renderer/poll-while-active";
+import rowsServiceEnabledInjectable from "../../../features/rows-service/common/rows-service-enabled.injectable";
+import podRowStoreInjectable from "../../../features/rows-service/renderer/pods-list/pod-row-store.injectable";
+import { PodsRows } from "../../../features/rows-service/renderer/pods-list/pods-rows";
 import isTableColumnHiddenInjectable from "../../../features/user-preferences/common/is-table-column-hidden.injectable";
-import userPreferencesStateInjectable from "../../../features/user-preferences/common/state.injectable";
 import eventStoreInjectable from "../events/store.injectable";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
 import { SiblingsInTabLayout } from "../layout/siblings-in-tab-layout";
@@ -22,7 +24,6 @@ import { podResourceColumnIds } from "./columns/pods-resource-column";
 import { getPodControllerKinds } from "./pod-controller-kinds";
 import { getPodContainerPorts } from "./pod-ports-cell";
 import { getPodResources } from "./pod-resources";
-import { PodsRows } from "./rows/pods-rows";
 import podStoreInjectable from "./store.injectable";
 
 import type { Pod } from "@freelensapp/kube-object";
@@ -31,7 +32,7 @@ import type { SpecificKubeListLayoutColumn } from "@freelensapp/list-layout";
 import type { IComputedValue } from "mobx";
 
 import type { SearchField } from "../../../features/advanced-search/common/conditions";
-import type { UserPreferencesState } from "../../../features/user-preferences/common/state.injectable";
+import type { PodRowStore } from "../../../features/rows-service/renderer/pods-list/pod-row-store";
 import type { EventStore } from "../events/store";
 import type { ListLayoutSearchFilter } from "../item-object-list/list-layout";
 import type { PodStore } from "./store";
@@ -157,18 +158,23 @@ const DefaultPods = withInjectables<Dependencies>(NonInjectedPods, {
 });
 
 interface SwitchDependencies {
-  preferences: UserPreferencesState;
+  rowsServiceEnabled: IComputedValue<boolean>;
+  podRowStore: PodRowStore;
 }
 
 /**
- * The Pods list: the one built from full pods, or, with the experimental
- * rows preference on, the one built from the rows service's compact rows.
+ * The Pods list: the one built from compact rows while the `rowsService` option
+ * is on and the rows service can serve the cluster, the one built from full pods
+ * otherwise.
  */
 export const Pods = withInjectables<SwitchDependencies>(
-  observer(({ preferences }: SwitchDependencies) =>
-    preferences.experimentalRowsPodsList ? <PodsRows /> : <DefaultPods />,
+  observer(({ rowsServiceEnabled, podRowStore }: SwitchDependencies) =>
+    rowsServiceEnabled.get() && !podRowStore.unavailable ? <PodsRows /> : <DefaultPods />,
   ),
   {
-    getProps: (di) => ({ preferences: di.inject(userPreferencesStateInjectable) }),
+    getProps: (di) => ({
+      rowsServiceEnabled: di.inject(rowsServiceEnabledInjectable),
+      podRowStore: di.inject(podRowStoreInjectable),
+    }),
   },
 );

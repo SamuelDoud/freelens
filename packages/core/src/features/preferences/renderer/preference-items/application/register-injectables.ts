@@ -9,7 +9,6 @@
 import { registerInjectables as registerAppearanceInjectables } from "./appearance/register-injectables";
 import applicationPreferencePageInjectable from "./application-preference-page.injectable";
 import applicationPreferenceTabInjectable from "./application-preference-tab.injectable";
-import { registerInjectables as registerExperimentalRowsPodsListInjectables } from "./experimental-rows-pods-list/register-injectables";
 import { registerInjectables as registerExtensionInstallRegistryInjectables } from "./extension-install-registry/register-injectables";
 import { registerInjectables as registerHotbarAutoHideInjectables } from "./hotbar-auto-hide/register-injectables";
 import { registerInjectables as registerMenuBarInjectables } from "./menu-bar/register-injectables";
@@ -35,11 +34,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerAppearanceInjectables(di);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    registerExperimentalRowsPodsListInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

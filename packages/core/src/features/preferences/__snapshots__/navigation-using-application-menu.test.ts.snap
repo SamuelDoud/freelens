@@ -1535,10 +1535,10 @@ exports[`preferences - navigation using application menu > when navigating to pr
                 class="HorizontalLine size-xl"
               />
               <div
-                data-preference-item-test="experimental-rows-pods-list"
+                data-preference-item-test="rows-service"
               >
                 <section
-                  id="experimental-rows-pods-list"
+                  id="rows-service"
                 >
                   <div
                     class="SubTitle"
@@ -1550,7 +1550,7 @@ exports[`preferences - navigation using application menu > when navigating to pr
                     class="Switch"
                     data-testid="switch"
                   >
-                    Load the Pods list as compact rows from a local service
+                    Rows service for the Pods list
                     <input
                       role="switch"
                       type="checkbox"
@@ -1559,7 +1559,7 @@ exports[`preferences - navigation using application menu > when navigating to pr
                   <small
                     class="hint"
                   >
-                    A helper process per cluster keeps the pod rows and streams changes in batches, so the list does not load every full pod. Search covers the visible columns only, and the row menu is missing. Reload the cluster view after changing it.
+                    Runs a helper process per cluster that sends the Pods list as compact rows instead of full pods. Faster and lighter on clusters with thousands of pods. The helper's memory grows with the pod count, about 55 MB at 10,000 pods. Search covers the visible columns only. Takes effect at once; turn it off to go back to the usual list.
                   </small>
                 </section>
               </div>

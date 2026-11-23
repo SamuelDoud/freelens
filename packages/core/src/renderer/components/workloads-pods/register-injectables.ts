@@ -14,7 +14,6 @@ import loadPodsFromAllNamespacesInjectable from "./load-pods-from-all-namespaces
 import podMetricsInjectable from "./metrics.injectable";
 import podsRouteComponentInjectable from "./pods-route-component.injectable";
 import podsSidebarItemInjectable from "./pods-sidebar-items.injectable";
-import { registerInjectables as registerRowsInjectables } from "./rows/register-injectables";
 import podStoreInjectable from "./store.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
@@ -62,11 +61,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerColumnsInjectables(di);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    registerRowsInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

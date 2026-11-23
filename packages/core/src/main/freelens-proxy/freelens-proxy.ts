@@ -6,8 +6,10 @@
 
 import http2 from "node:http2";
 import net from "node:net";
-import { apiKubePrefix, apiPrefix, apiRowsPrefix } from "../../common/vars";
-import { rowsServiceTargetOptions } from "../rows-service/rows-service-target";
+import { apiKubePrefix, apiPrefix } from "../../common/vars";
+import { apiRowsPrefix, rowsServiceUnavailableStatus } from "../../features/rows-service/common/api-rows-prefix";
+import { RowsServiceUnavailableError } from "../../features/rows-service/main/rows-service-manager.injectable";
+import { rowsServiceTargetOptions } from "../../features/rows-service/main/rows-service-target";
 import { respondJson, respondText } from "../utils/http-responses";
 import { getBoolean } from "../utils/parse-query";
 import { abortFetchWhenClientCloses, isClientGone } from "./abort-when-client-closes";
@@ -24,9 +26,9 @@ import type { SetRequired } from "type-fest";
 import type { EmitAppEvent } from "../../common/app-event-bus/emit-event.injectable";
 import type { SelfSignedCert } from "../../common/certificate/certificate";
 import type { Cluster } from "../../common/cluster/cluster";
+import type { RowsServiceManager } from "../../features/rows-service/main/rows-service-manager.injectable";
 import type { FreelensK8sProxyManager } from "../cluster/freelens-k8s-proxy-manager.injectable";
 import type { Router } from "../router/router";
-import type { RowsServiceManager } from "../rows-service/rows-service-manager.injectable";
 import type { ClusterRouteRedirect } from "./cluster-route-redirect";
 import type { FreelensProxyPreferredPort } from "./freelens-proxy-preferred-port.injectable";
 import type { FreelensProxyToken } from "./freelens-proxy-token.injectable";
@@ -49,9 +51,8 @@ interface Dependencies {
   kubeApiUpgradeRequest: FreelensProxyApiRequest;
   emitAppEvent: EmitAppEvent;
   getFreelensK8sProxyManager: (cluster: Cluster) => FreelensK8sProxyManager;
-  /** Prototype: the compact pod rows service of a cluster, when the experimental preference is on. */
+  /** The rows service of a cluster, which decides itself whether it may run (the `rowsService` option). */
   getRowsService?: (cluster: Cluster) => RowsServiceManager;
-  isRowsServiceEnabled?: () => boolean;
   readonly router: Router;
   readonly proxy: ProxyServer;
   readonly freelensProxyPort: { set: (portNumber: number) => void };
@@ -499,12 +500,7 @@ export class FreelensProxy {
       }
     }
 
-    if (
-      cluster &&
-      req.url.startsWith(`${apiRowsPrefix}/`) &&
-      this.dependencies.getRowsService &&
-      this.dependencies.isRowsServiceEnabled?.()
-    ) {
+    if (cluster && req.url.startsWith(`${apiRowsPrefix}/`) && this.dependencies.getRowsService) {
       return this.handleRowsRequest(cluster, this.dependencies.getRowsService(cluster), req, res);
     }
 
@@ -580,8 +576,9 @@ export class FreelensProxy {
   }
 
   /**
-   * Prototype: forwards `/api-rows/<path>` to the rows service of the cluster,
-   * which is started on the first request, with the service's own token.
+   * Forwards `/api-rows/<path>` to the rows service of the cluster, which is started
+   * on the first request, with the service's own token. Answers 501 while the service
+   * may not serve the cluster, so that the renderer uses its usual lists.
    */
   protected async handleRowsRequest(
     cluster: Cluster,
@@ -601,6 +598,10 @@ export class FreelensProxy {
     try {
       endpoint = await rowsService.ensure();
     } catch (error) {
+      if (error instanceof RowsServiceUnavailableError) {
+        return this.respondWithError(res, rowsServiceUnavailableStatus, `Rows service unavailable: ${error.message}`);
+      }
+
       const message = `Failed to start the rows service of cluster ${cluster.id}: ${messageOf(error)}`;
 
       this.dependencies.logger.error(`[FREELENS-PROXY]: ${message}`, { url: req.url });

@@ -48,6 +48,8 @@ import { registerInjectables as registerFeaturesFeaturesPopulationOfLogsToAFileR
 import { registerInjectables as registerFeaturesFeaturesPreferencesInjectables } from "./features/preferences/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPreferencesRendererInjectables } from "./features/preferences/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesResourceDefinitionsRendererInjectables } from "./features/resource-definitions/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesRowsServiceInjectables } from "./features/rows-service/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesRowsServiceRendererInjectables } from "./features/rows-service/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesSecretCertificatesRendererInjectables } from "./features/secret-certificates/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesShellSyncRendererInjectables } from "./features/shell-sync/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesStandaloneTerminalRendererInjectables } from "./features/standalone-terminal/renderer/register-injectables";
@@ -108,6 +110,8 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesPreferencesRendererInjectables(di);
   registerFeaturesFeaturesPreferencesInjectables(di);
   registerFeaturesFeaturesResourceDefinitionsRendererInjectables(di);
+  registerFeaturesFeaturesRowsServiceRendererInjectables(di);
+  registerFeaturesFeaturesRowsServiceInjectables(di);
   registerFeaturesFeaturesSecretCertificatesRendererInjectables(di);
   registerFeaturesFeaturesShellSyncRendererInjectables(di);
   registerFeaturesFeaturesStandaloneTerminalRendererInjectables(di);
