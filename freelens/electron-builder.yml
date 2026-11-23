@@ -262,7 +262,7 @@ linux:
       to: ./${arch}/freelens-k8s-proxy
     - from: binaries/client/linux/${arch}/helm
       to: ./${arch}/helm
-    ## Prototype: built by rows-service/build.sh, not downloaded
+    ## Built from rows-service/ by rows-service/build.cjs, not downloaded
     - from: binaries/client/linux/${arch}/freelens-rows
       to: ./${arch}/freelens-rows
   publish: null
@@ -349,6 +349,9 @@ mac:
       to: ./${arch}/freelens-k8s-proxy
     - from: binaries/client/darwin/${arch}/helm
       to: ./${arch}/helm
+    ## Built from rows-service/ by rows-service/build.cjs, not downloaded
+    - from: binaries/client/darwin/${arch}/freelens-rows
+      to: ./${arch}/freelens-rows
   publish: null
 
 dmg:
@@ -374,6 +377,9 @@ win:
       to: ./${arch}/freelens-k8s-proxy.exe
     - from: binaries/client/windows/${arch}/helm.exe
       to: ./${arch}/helm.exe
+    ## Built from rows-service/ by rows-service/build.cjs, not downloaded
+    - from: binaries/client/windows/${arch}/freelens-rows.exe
+      to: ./${arch}/freelens-rows.exe
   publish: null
 
 msi:

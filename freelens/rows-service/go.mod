@@ -1,4 +1,4 @@
-module rowcache
+module freelens-rows
 
 go 1.27.4
 

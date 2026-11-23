@@ -27,7 +27,7 @@
     "build:app:default": "electron-builder --publish never",
     "build:app:linux": "electron-builder --publish never --linux",
     "build:app:win32": "electron-builder --publish never --win",
-    "build:binaries": "ensure-binaries --package package.json --base-dir binaries/client",
+    "build:binaries": "ensure-binaries --package package.json --base-dir binaries/client && node rows-service/build.cjs",
     "build:dev": "NODE_ENV=development electron-vite build",
     "build:resources": "pnpm \"/^build:resources:/\"",
     "build:resources:license": "generate-license --prod --header license-header.txt --output static/build/license.txt",
