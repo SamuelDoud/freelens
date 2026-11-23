@@ -28,8 +28,9 @@ const NonInjectedRowsServicePreference = observer(({ state }: Dependencies) => (
     </Switch>
     <small className="hint">
       Runs a helper process per cluster that sends the Pods list as compact rows instead of full pods. Faster and
-      lighter on clusters with thousands of pods. The helper's memory grows with the pod count, about 55 MB at 10,000
-      pods. Search covers the visible columns only. Takes effect at once; turn it off to go back to the usual list.
+      lighter on clusters with thousands of pods. The helper's memory grows with the pod count, about 90 MB at 10,000
+      pods. Search covers the visible columns only, and a pod's actions (logs, shell, edit, delete) are in its details
+      panel, not on its row. Takes effect at once; turn it off to go back to the usual list.
     </small>
   </section>
 ));
