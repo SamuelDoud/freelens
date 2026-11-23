@@ -36,7 +36,15 @@ export interface PodRowStoreDependencies {
   getContextNamespaces: () => readonly string[];
   /** Whether pods that ran to completion are left out, as the cluster's preference says. */
   hideCompletedPods: () => boolean;
+  /**
+   * How long batches gather before the table sees them. The default is the delay
+   * with which the kube object stores apply their watch events, so the rows list
+   * sorts and renders as often as the list of full pods, not on every batch.
+   */
+  readonly publishDelayMs?: number;
 }
+
+const defaultPublishDelayMs = 1000;
 
 const retryDelaysMs = [500, 1000, 2000, 5000];
 
@@ -145,6 +153,7 @@ export class PodRowStore {
     this.seq = snapshot.seq;
     this.isLoaded = true;
     this.failedLoading = false;
+    this.cancelPublish();
     this.publish();
   }
 
@@ -184,8 +193,29 @@ export class PodRowStore {
     this.seq = Math.max(this.seq, delta.s);
 
     if (changed) {
-      this.publish();
+      this.schedulePublish();
     }
+  }
+
+  private publishTimer?: ReturnType<typeof setTimeout>;
+
+  /** Publishes once the batches of the publish delay have gathered, or at once without a delay. */
+  private schedulePublish() {
+    const delay = this.dependencies.publishDelayMs ?? defaultPublishDelayMs;
+
+    if (delay <= 0) {
+      this.publish();
+    } else {
+      this.publishTimer ??= setTimeout(() => {
+        this.publishTimer = undefined;
+        this.publish();
+      }, delay);
+    }
+  }
+
+  private cancelPublish() {
+    clearTimeout(this.publishTimer);
+    this.publishTimer = undefined;
   }
 
   @action protected publish() {
@@ -210,6 +240,7 @@ export class PodRowStore {
       if (this.users === 0) {
         this.abort?.abort();
         this.abort = undefined;
+        this.cancelPublish();
       }
     };
   }

@@ -38,6 +38,7 @@ const createStore = (namespaces: string[] = ["default", "other"], hideCompleted 
     baseUrl: "/api-rows",
     getContextNamespaces: () => namespaces,
     hideCompletedPods: () => hideCompleted,
+    publishDelayMs: 0,
   });
 
 describe("PodRowStore", () => {
@@ -106,6 +107,35 @@ describe("PodRowStore", () => {
     expect(store.getById(1)?.restarts).toBe(2);
   });
 
+  it("gathers the batches of a second before the table sees them, as the stores of full objects do", () => {
+    vi.useFakeTimers();
+
+    try {
+      const store = new PodRowStore({
+        fetch: () => Promise.reject(new Error("not used")),
+        baseUrl: "/api-rows",
+        getContextNamespaces: () => ["default"],
+        hideCompletedPods: () => false,
+      });
+
+      store.replaceAll({ seq: 1, cols: [], rows: [row(1, "a")] });
+
+      const loaded = store.items;
+
+      expect(loaded.map((item) => item.getName())).toEqual(["a"]);
+
+      store.applyDelta({ s: 2, a: [row(2, "b")], c: [], d: [] });
+      store.applyDelta({ s: 3, a: [row(3, "c")], c: [], d: [] });
+      vi.advanceTimersByTime(999);
+      expect(store.items).toBe(loaded);
+
+      vi.advanceTimersByTime(1);
+      expect(store.items.map((item) => item.getName())).toEqual(["a", "b", "c"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("lists the items of the selected namespaces, and leaves out completed pods when asked", () => {
     let namespaces = ["default"];
     let hideCompleted = false;
@@ -114,6 +144,7 @@ describe("PodRowStore", () => {
       baseUrl: "/api-rows",
       getContextNamespaces: () => namespaces,
       hideCompletedPods: () => hideCompleted,
+      publishDelayMs: 0,
     });
 
     store.replaceAll({
@@ -227,6 +258,7 @@ describe("PodRowStore.start", () => {
       baseUrl: "/api-rows",
       getContextNamespaces: () => ["default"],
       hideCompletedPods: () => false,
+      publishDelayMs: 0,
     });
     const stop = store.start();
 
@@ -247,6 +279,7 @@ describe("PodRowStore.start", () => {
       baseUrl: "/api-rows",
       getContextNamespaces: () => ["default"],
       hideCompletedPods: () => false,
+      publishDelayMs: 0,
     });
     const stop = store.start();
 
@@ -293,6 +326,7 @@ describe("PodRowStore.start", () => {
       baseUrl: "/api-rows",
       getContextNamespaces: () => ["default"],
       hideCompletedPods: () => false,
+      publishDelayMs: 0,
     });
     const stop = store.start();
 
