@@ -624,7 +624,7 @@ exports[`entity running technical tests > when navigated to catalog > renders 1`
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(32, 110, 28); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(32, 110, 28);"
                               >
                                 ace
                               </div>
@@ -751,7 +751,7 @@ exports[`entity running technical tests > when navigated to catalog > renders 1`
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -776,7 +776,7 @@ exports[`entity running technical tests > when navigated to catalog > renders 1`
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -838,7 +838,7 @@ exports[`entity running technical tests > when navigated to catalog > renders 1`
             aria-live="assertive"
             id="DndLiveRegion-0"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -1521,7 +1521,7 @@ exports[`entity running technical tests > when navigated to catalog > when detai
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(32, 110, 28); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(32, 110, 28);"
                               >
                                 ace
                               </div>
@@ -1648,7 +1648,7 @@ exports[`entity running technical tests > when navigated to catalog > when detai
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -1673,7 +1673,7 @@ exports[`entity running technical tests > when navigated to catalog > when detai
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -1735,7 +1735,7 @@ exports[`entity running technical tests > when navigated to catalog > when detai
             aria-live="assertive"
             id="DndLiveRegion-1"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -1807,7 +1807,8 @@ exports[`entity running technical tests > when navigated to catalog > when detai
         >
           Mock: a catalog entity
           <i
-            class="Icon material interactive focusable"
+            aria-label="Copy"
+            class="Icon CopyToClipboardIcon material interactive focusable"
             tabindex="0"
           >
             <span
@@ -1849,7 +1850,7 @@ exports[`entity running technical tests > when navigated to catalog > when detai
             <div
               class="Avatar rounded avatar"
               data-testid="detail-panel-hot-bar-icon"
-              style="width: 128px; height: 128px; background: rgb(32, 110, 28); color: rgb(255, 255, 255);"
+              style="width: 128px; height: 128px; background: rgb(32, 110, 28);"
             >
               ace
             </div>

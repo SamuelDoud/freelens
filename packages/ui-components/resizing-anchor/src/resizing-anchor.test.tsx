@@ -28,17 +28,25 @@ describe("ResizingAnchor", () => {
     });
 
     // The bar sits left of every move, so no move counts as the bar jumping around.
-    (anchor.ref as React.MutableRefObject<HTMLDivElement | null>).current = {
+    // The drag handlers are the anchor's own: the test drives them as the DOM events would.
+    const internals = anchor as unknown as {
+      ref: React.MutableRefObject<HTMLDivElement | null>;
+      onDragInit: (event: React.MouseEvent) => void;
+      onDrag: (event: MouseEvent) => void;
+      onDragEnd: () => void;
+    };
+
+    internals.ref.current = {
       getBoundingClientRect: () => ({ x: 0, y: 0, width: 4, height: 100 }),
     } as HTMLDivElement;
 
-    anchor.onDragInit({ buttons: 1 } as React.MouseEvent);
+    internals.onDragInit({ buttons: 1 } as React.MouseEvent);
     // Within one throttle window: the first move runs at once and only records the position; the
     // later ones wait in the throttle.
-    anchor.onDrag(mouse(100));
-    anchor.onDrag(mouse(110));
-    anchor.onDrag(mouse(130));
-    anchor.onDragEnd();
+    internals.onDrag(mouse(100));
+    internals.onDrag(mouse(110));
+    internals.onDrag(mouse(130));
+    internals.onDragEnd();
 
     // The movement reaches onDrag before onEnd, and onEnd sees the extent it set.
     expect(extent).not.toBe(400);

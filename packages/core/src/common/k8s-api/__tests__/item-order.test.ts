@@ -3,8 +3,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { orderBy } from "es-toolkit/compat";
+import { rectifyOrdering } from "@freelensapp/utilities";
 import { describe, expect, it } from "vitest";
+import { compareSortValues } from "../../item.store";
 import { ItemOrder } from "../item-order";
 
 interface Row {
@@ -14,10 +15,22 @@ interface Row {
 }
 
 // One type of key at a time, plus the values that sort apart from it: keys of
-// mixed types have no consistent order, in orderBy or here.
-const symbol = Symbol.for("x");
-const strings: unknown[] = ["a", "b", "ab", "B", "", "10", "9", null, undefined, symbol];
-const numbers: unknown[] = [1, 2, 10, 0, -1, 2.5, NaN, null, undefined, symbol];
+// mixed types have no consistent order, in ItemStore.sortItems or here.
+const strings: unknown[] = ["a", "b", "ab", "B", "", "10", "9", null, undefined];
+const numbers: unknown[] = [1, 2, 10, 0, -1, 2.5, NaN, null, undefined];
+
+// The order of ItemStore.sortItems, which a flush must reproduce: a stable sort by every key in turn,
+// each in the given direction.
+const sortItems = (list: Row[], by: ((row: Row) => unknown)[], order: "asc" | "desc" | undefined): Row[] =>
+  [...list].sort((left, right) => {
+    for (const sortBy of by) {
+      const ordering = rectifyOrdering(compareSortValues(sortBy(left), sortBy(right)), order ?? "asc");
+
+      if (ordering) return ordering;
+    }
+
+    return 0;
+  });
 
 // A small deterministic generator, so that a failure can be reproduced.
 const random = (seed: number) => () => {
@@ -42,19 +55,18 @@ describe("ItemOrder", () => {
     ["two keys", [(row) => row.name, (row) => row.rank], undefined],
     ["two keys, descending", [(row) => row.name, (row) => row.rank], "desc"],
     ["two keys, ascending stated", [(row) => row.name, (row) => row.rank], "asc"],
-    ["no key", [], undefined],
   ];
 
   describe.each(variants)("%s", (_, by, order) => {
     const order_ = new ItemOrder<Row>(by, order);
 
-    it("sorts as orderBy does, ties included", () => {
+    it("sorts as ItemStore.sortItems does, ties included", () => {
       for (let seed = 1; seed <= 60; seed++) {
         const next = random(seed);
         const pool = [["a", "b", "c", "d"], strings, numbers][seed % 3];
         const list = rows(1 + Math.floor(next() * 80), next, pool);
 
-        expect(ids(order_.sort(list))).toEqual(ids(orderBy(list, by.length ? by : [(row) => row], order)));
+        expect(ids(order_.sort(list))).toEqual(ids(sortItems(list, by.length ? by : [(row) => row], order)));
       }
     });
 

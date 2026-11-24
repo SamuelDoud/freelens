@@ -7,9 +7,6 @@ import { loggerInjectionToken } from "@freelensapp/logger";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForTempInjectable from "../../common/app-paths/directory-for-temp/directory-for-temp.injectable";
 import directoryForUserDataInjectable from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import createCanIInjectable from "../../common/cluster/create-can-i.injectable";
-import createRequestNamespaceListPermissionsInjectable from "../../common/cluster/create-request-namespace-list-permissions.injectable";
-import createListNamespacesInjectable from "../../common/cluster/list-namespaces.injectable";
 import { ClusterMetadataKey } from "../../common/cluster-types";
 import writeJsonFileInjectable from "../../common/fs/write-json-file.injectable";
 import writeJsonSyncInjectable from "../../common/fs/write-json-sync.injectable";
@@ -24,7 +21,10 @@ import kubectlDownloadingNormalizedArchInjectable from "../kubectl/normalized-ar
 import accessibilityCacheInjectable from "./accessibility-cache.injectable";
 import broadcastConnectionUpdateInjectable from "./broadcast-connection-update.injectable";
 import clusterConnectionInjectable from "./cluster-connection.injectable";
+import createCanIInjectable from "./create-can-i.injectable";
+import createRequestNamespaceListPermissionsInjectable from "./create-request-namespace-list-permissions.injectable";
 import freelensK8sProxyManagerInjectable from "./freelens-k8s-proxy-manager.injectable";
+import createListNamespacesInjectable from "./list-namespaces.injectable";
 import prometheusHandlerInjectable from "./prometheus-handler/prometheus-handler.injectable";
 import requestApiResourcesInjectable from "./request-api-resources.injectable";
 
@@ -53,6 +53,7 @@ describe("ClusterConnection activation", () => {
   let accessibilityResolvers: (() => void)[] | undefined;
   // When set, the version detection waits for the test to release it.
   let detectResolvers: (() => void)[] | undefined;
+  let listNamespaces: () => Promise<string[]>;
 
   const countOf = (event: string) => events.filter((each) => each === event).length;
 
@@ -86,8 +87,10 @@ describe("ClusterConnection activation", () => {
 
     events = [];
     pendingRestarts = [];
+    accessibilityResolvers = undefined;
     detectResolvers = undefined;
     discoveryFails = false;
+    listNamespaces = () => Promise.resolve(["default"]);
 
     di.override(directoryForUserDataInjectable, () => "some-directory-for-user-data");
     di.override(directoryForTempInjectable, () => "some-directory-for-temp");
@@ -121,13 +124,17 @@ describe("ClusterConnection activation", () => {
         ? new Promise<boolean>((resolve) => accessibilityResolvers?.push(() => resolve(true)))
         : Promise.resolve(true);
     });
-    di.override(createRequestNamespaceListPermissionsInjectable, () => () => async () => () => true);
+    di.override(createRequestNamespaceListPermissionsInjectable, () => () => async () => {
+      record("requestNamespaceListPermissions");
+
+      return () => true;
+    });
     di.override(createListNamespacesInjectable, () => () => () => {
       record("listNamespaces");
 
       return accessibilityResolvers
         ? new Promise<string[]>((resolve) => accessibilityResolvers?.push(() => resolve(["default"])))
-        : Promise.resolve(["default"]);
+        : listNamespaces();
     });
     di.override(requestApiResourcesInjectable, () => async () => {
       record("requestApiResources");
@@ -551,6 +558,32 @@ describe("ClusterConnection activation", () => {
       await activation;
 
       expect(cluster.knownResources.length).toBe(2);
+    });
+  });
+
+  describe("a refresh of accessibility and metadata, against a disconnect", () => {
+    it("is skipped for a cluster that is disconnected", async () => {
+      await clusterConnection.refreshAccessibilityAndMetadata();
+
+      expect(countOf("[CLUSTER]: refreshAccessibility")).toBe(0);
+      expect(countOf("[CLUSTER]: refreshMetadata")).toBe(0);
+    });
+
+    it("drops a refresh that the cluster disconnects during, and reviews no more namespaces", async () => {
+      cluster.disconnected.set(false);
+      listNamespaces = async () => {
+        clusterConnection.disconnect();
+
+        return ["default"];
+      };
+
+      await clusterConnection.refreshAccessibilityAndMetadata();
+
+      expect(countOf("[CLUSTER]: refreshAccessibility")).toBe(1);
+      expect(countOf("requestNamespaceListPermissions")).toBe(0);
+      expect(countOf("[CLUSTER]: refreshMetadata")).toBe(0);
+      expect(cluster.allowedNamespaces.length).toBe(0);
+      expect(cluster.ready.get()).toBe(false);
     });
   });
 });

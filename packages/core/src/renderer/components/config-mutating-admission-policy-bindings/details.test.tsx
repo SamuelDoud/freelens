@@ -28,30 +28,26 @@ const mutatingAdmissionPolicyBinding: KubeJsonApiData<
   apiVersion: "admissionregistration.k8s.io/v1",
   kind: "MutatingAdmissionPolicyBinding",
   metadata: {
-    name: "demo-binding.example.com",
+    name: "sidecar-binding.example.com",
     resourceVersion: "1",
-    uid: "demo-binding.example.com",
-    selfLink: "/apis/admissionregistration.k8s.io/v1/mutatingadmissionpolicybindings/demo-binding.example.com",
+    uid: "sidecar-binding.example.com",
+    selfLink: "/apis/admissionregistration.k8s.io/v1/mutatingadmissionpolicybindings/sidecar-binding.example.com",
   },
   spec: {
-    policyName: "demo-mutation.example.com",
+    policyName: "sidecar-policy.example.com",
     paramRef: {
-      name: "sidecar-config",
+      name: "mesh-proxy",
       namespace: "default",
       parameterNotFoundAction: "Deny",
     },
     matchResources: {
       matchPolicy: "Equivalent",
-      namespaceSelector: {
-        matchLabels: { "kubernetes.io/metadata.name": "team-a" },
-        matchExpressions: [{ key: "environment", operator: "In", values: ["dev", "test"] }],
-      },
       resourceRules: [
         {
-          apiGroups: ["apps"],
+          apiGroups: [""],
           apiVersions: ["v1"],
-          operations: ["CREATE", "UPDATE"],
-          resources: ["deployments"],
+          operations: ["CREATE"],
+          resources: ["pods"],
         },
       ],
     },
@@ -76,11 +72,31 @@ describe("MutatingAdmissionPolicyBindingDetails", () => {
     expect(result.baseElement).toMatchSnapshot();
   });
 
+  it("renders match resource selectors", () => {
+    const binding = new MutatingAdmissionPolicyBinding({
+      ...mutatingAdmissionPolicyBinding,
+      spec: {
+        ...mutatingAdmissionPolicyBinding.spec,
+        matchResources: {
+          namespaceSelector: { matchLabels: { environment: "production" } },
+          objectSelector: { matchExpressions: [{ key: "injected", operator: "DoesNotExist" }] },
+        },
+      },
+    });
+
+    result = render(<MutatingAdmissionPolicyBindingDetails object={binding} />);
+
+    expect(result.getByText("Namespace Selector")).toBeInTheDocument();
+    expect(result.getByText("environment=production")).toBeInTheDocument();
+    expect(result.getByText("Object Selector")).toBeInTheDocument();
+    expect(result.getByText("!injected")).toBeInTheDocument();
+  });
+
   it("renders with no param ref", () => {
     const binding = new MutatingAdmissionPolicyBinding({
       ...mutatingAdmissionPolicyBinding,
       spec: {
-        policyName: "demo-mutation.example.com",
+        policyName: "sidecar-policy.example.com",
       },
     });
 

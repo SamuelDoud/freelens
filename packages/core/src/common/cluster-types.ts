@@ -101,24 +101,20 @@ export interface ClusterPreferences extends ClusterPrometheusPreferences {
    * cleared by preferences.
    */
   icon?: string | null;
-  /** The text of the cluster's icon, instead of the initials of its name */
-  iconText?: string;
-  /** The background colour of the cluster's icon, a CSS colour */
-  iconBackground?: string;
-  /** The colour of the text of the cluster's icon; by default it contrasts with the background */
-  iconTextColor?: string;
+  iconShortName?: string | null;
   httpsProxy?: string;
   hiddenMetrics?: string[];
   nodeShellImage?: string;
   nodeShellWindowsImage?: string;
   imagePullSecret?: string;
-  defaultNamespace?: string;
-  skipNamespaceAuthorizationCheck?: boolean;
+  debugContainerImage?: string;
   /**
    * Leave pods that ran to completion (phase Succeeded) out of the pod list
    * and its watch. Failed pods stay.
    */
   hideCompletedPods?: boolean;
+  defaultNamespace?: string;
+  skipNamespaceAuthorizationCheck?: boolean;
 }
 
 /**
@@ -206,6 +202,11 @@ export const initialNodeShellImage = "docker.io/library/alpine";
  * The default node shell image for Windows
  */
 export const initialNodeShellWindowsImage = "mcr.microsoft.com/powershell";
+
+/**
+ * The default image of a debug container
+ */
+export const initialDebugContainerImage = "docker.io/library/alpine";
 
 /**
  * The data representing a cluster's state, for passing between main and renderer

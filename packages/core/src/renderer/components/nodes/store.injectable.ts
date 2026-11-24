@@ -15,6 +15,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { kubeObjectStoreInjectionToken } from "../../../common/k8s-api/api-manager/kube-object-store-token";
 import { shouldShowResourceInjectionToken } from "../../../features/cluster/showing-kube-resources/common/allowed-resources-injection-token";
 import clusterFrameContextForClusterScopedResourcesInjectable from "../../cluster-frame-context/for-cluster-scoped-resources.injectable";
+import watchReconnectInjectable from "../../k8s/watch-reconnect/watch-reconnect.injectable";
 import { NodeStore } from "./store";
 
 const nodeStoreInjectable = getInjectable({
@@ -27,6 +28,7 @@ const nodeStoreInjectable = getInjectable({
     return new NodeStore(
       {
         context: di.inject(clusterFrameContextForClusterScopedResourcesInjectable),
+        watchReconnect: di.inject(watchReconnectInjectable),
         logger: di.inject(loggerInjectionToken),
         nodeMetricsApi: di.inject(nodeMetricsApiInjectable),
         isMetricsApiAvailable: di.inject(shouldShowResourceInjectionToken, {

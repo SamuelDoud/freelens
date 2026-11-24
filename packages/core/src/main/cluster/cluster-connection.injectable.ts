@@ -10,9 +10,6 @@ import { ApiException, type KubeConfig } from "@kubernetes/client-node";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import { isEqual } from "es-toolkit";
 import { compareStructural, reaction, runInAction } from "mobx";
-import createCanIInjectable from "../../common/cluster/create-can-i.injectable";
-import createRequestNamespaceListPermissionsInjectable from "../../common/cluster/create-request-namespace-list-permissions.injectable";
-import createListNamespacesInjectable from "../../common/cluster/list-namespaces.injectable";
 import loadKubeconfigInjectable from "../../common/cluster/load-kubeconfig.injectable";
 import { ClusterMetadataKey, ClusterStatus } from "../../common/cluster-types";
 import broadcastMessageInjectable from "../../common/ipc/broadcast-message.injectable";
@@ -24,9 +21,12 @@ import detectClusterMetadataInjectable from "../cluster-detectors/detect-cluster
 import accessibilityCacheInjectable from "./accessibility-cache.injectable";
 import broadcastConnectionUpdateInjectable from "./broadcast-connection-update.injectable";
 import createAuthorizationApiInjectable from "./create-authorization-api.injectable";
+import createCanIInjectable from "./create-can-i.injectable";
 import createCoreApiInjectable from "./create-core-api.injectable";
+import createRequestNamespaceListPermissionsInjectable from "./create-request-namespace-list-permissions.injectable";
 import freelensK8sProxyManagerInjectable from "./freelens-k8s-proxy-manager.injectable";
 import { getResourcesToShow } from "./get-resources-to-show";
+import createListNamespacesInjectable from "./list-namespaces.injectable";
 import loadProxyKubeconfigInjectable from "./load-proxy-kubeconfig.injectable";
 import prometheusHandlerInjectable from "./prometheus-handler/prometheus-handler.injectable";
 import removeProxyKubeconfigInjectable from "./remove-proxy-kubeconfig.injectable";
@@ -35,12 +35,6 @@ import requestApiResourcesInjectable from "./request-api-resources.injectable";
 import type { Logger } from "@freelensapp/logger";
 
 import type { Cluster } from "../../common/cluster/cluster";
-import type { CreateCanI } from "../../common/cluster/create-can-i.injectable";
-import type {
-  CreateRequestNamespaceListPermissions,
-  RequestNamespaceListPermissions,
-} from "../../common/cluster/create-request-namespace-list-permissions.injectable";
-import type { CreateListNamespaces } from "../../common/cluster/list-namespaces.injectable";
 import type { LoadKubeconfig } from "../../common/cluster/load-kubeconfig.injectable";
 import type { BroadcastMessage } from "../../common/ipc/broadcast-message.injectable";
 import type { KubeApiResource } from "../../common/rbac";
@@ -49,8 +43,14 @@ import type { FallibleOnlyClusterMetadataDetector } from "../cluster-detectors/t
 import type { Accessibility, AccessibilityCache, AccessibilityIdentity } from "./accessibility-cache.injectable";
 import type { BroadcastConnectionUpdate } from "./broadcast-connection-update.injectable";
 import type { CreateAuthorizationApi } from "./create-authorization-api.injectable";
+import type { CreateCanI } from "./create-can-i.injectable";
 import type { CreateCoreApi } from "./create-core-api.injectable";
+import type {
+  CreateRequestNamespaceListPermissions,
+  RequestNamespaceListPermissions,
+} from "./create-request-namespace-list-permissions.injectable";
 import type { FreelensK8sProxyManager } from "./freelens-k8s-proxy-manager.injectable";
+import type { CreateListNamespaces } from "./list-namespaces.injectable";
 import type { LoadProxyKubeconfig } from "./load-proxy-kubeconfig.injectable";
 import type { ClusterPrometheusHandler } from "./prometheus-handler/prometheus-handler";
 import type { RemoveProxyKubeconfig } from "./remove-proxy-kubeconfig.injectable";
@@ -140,6 +140,14 @@ class ClusterConnection {
    * waits for an interactive login, no other caller must start another attempt.
    */
   private refreshInFlight: Promise<void> | undefined;
+
+  /**
+   * Counts the disconnects. A refresh of the accessibility that started before
+   * the latest one belongs to a connection that has ended: its requests fail as
+   * the proxy stops, and its results would refill the state the disconnect
+   * cleared.
+   */
+  private disconnects = 0;
 
   constructor(
     private readonly dependencies: Dependencies,
@@ -408,6 +416,7 @@ class ClusterConnection {
       this.cluster.accessible.set(false);
       this.cluster.ready.set(false);
       this.activated = false;
+      this.disconnects += 1;
       this.cluster.allowedNamespaces.clear();
       this.dependencies.logger.info(`[CLUSTER]: disconnected`, { id: this.cluster.id });
     });
@@ -427,6 +436,11 @@ class ClusterConnection {
     }
 
     await this.refreshAccessibility();
+
+    if (this.cluster.disconnected.get()) {
+      return;
+    }
+
     await this.refreshMetadata();
   }
 
@@ -540,11 +554,20 @@ class ClusterConnection {
   }
 
   private async fetchAndApplyAccessibility(identity: AccessibilityIdentity | undefined, inBackground: boolean) {
+    // A disconnect while the cluster answers ends this refresh: its requests fail as the proxy
+    // stops, and its answers would refill the state the disconnect cleared.
+    const disconnects = this.disconnects;
+    const isCanceled = () => this.disconnects !== disconnects;
     const proxyConfig = await this.dependencies.loadProxyKubeconfig();
-    const fresh = await this.fetchAccessibility(proxyConfig);
+    const fresh = isCanceled() ? undefined : await this.fetchAccessibility(proxyConfig, isCanceled);
 
-    if (inBackground && this.cluster.disconnected.get()) {
+    if (!fresh || isCanceled() || (inBackground && this.cluster.disconnected.get())) {
       // The user disconnected while the cluster answered: nothing is shown any more
+      this.dependencies.logger.debug(
+        `[CLUSTER]: dropped the refresh of a disconnected cluster`,
+        this.cluster.getMeta(),
+      );
+
       return;
     }
 
@@ -563,12 +586,16 @@ class ClusterConnection {
     this.dependencies.logger.debug(`[CLUSTER]: refreshed accessibility data`, this.cluster.getState());
   }
 
-  private async fetchAccessibility(proxyConfig: KubeConfig): Promise<Accessibility> {
+  private async fetchAccessibility(
+    proxyConfig: KubeConfig,
+    isCanceled: () => boolean,
+  ): Promise<Accessibility | undefined> {
     const api = this.dependencies.createAuthorizationApi(proxyConfig);
-    const canI = this.dependencies.createCanI(api);
-    const requestNamespaceListPermissions = this.cluster.preferences.skipNamespaceAuthorizationCheck
+    const canI = this.dependencies.createCanI(api, { isCanceled });
+    const requestNamespaceListPermissions: RequestNamespaceListPermissions = this.cluster.preferences
+      .skipNamespaceAuthorizationCheck
       ? async () => () => true
-      : this.dependencies.createRequestNamespaceListPermissions(api);
+      : this.dependencies.createRequestNamespaceListPermissions(api, { isCanceled });
 
     // The permission checks, namespace listing and API discovery are
     // independent API calls: run them in parallel so that the refresh
@@ -591,7 +618,7 @@ class ClusterConnection {
       }),
       this.requestAllowedNamespaces(proxyConfig),
       (async () => {
-        const result = await this.dependencies.requestApiResources(this.cluster);
+        const result = await this.dependencies.requestApiResources(this.cluster, { isCanceled });
 
         if (result.callWasSuccessful) {
           return result.response;
@@ -614,11 +641,18 @@ class ClusterConnection {
         return [];
       })(),
     ]);
-    const resourcesToShow = await this.getResourcesToShow(
-      allowedNamespaces,
-      knownResources,
-      requestNamespaceListPermissions,
+    if (isCanceled()) {
+      return undefined;
+    }
+
+    // The namespaces not reviewed yet when the cluster disconnects are not reviewed at all.
+    const resourcesToShow = await this.getResourcesToShow(allowedNamespaces, knownResources, async (namespace) =>
+      isCanceled() ? () => false : requestNamespaceListPermissions(namespace),
     );
+
+    if (isCanceled()) {
+      return undefined;
+    }
 
     return { isAdmin, isGlobalWatchEnabled, isGlobalListEnabled, allowedNamespaces, knownResources, resourcesToShow };
   }

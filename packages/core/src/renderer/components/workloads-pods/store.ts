@@ -10,7 +10,13 @@ import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { RetryBackoff } from "../../utils/retry-backoff";
 
 import type { KubeApiQueryParams, PodApi, PodMetricsApi } from "@freelensapp/kube-api";
-import type { KubeObject, NamespaceScopedMetadata, Pod, PodMetrics } from "@freelensapp/kube-object";
+import type {
+  KubeObject,
+  NamespaceScopedMetadata,
+  PersistentVolumeClaim,
+  Pod,
+  PodMetrics,
+} from "@freelensapp/kube-object";
 
 import type { IComputedValue } from "mobx";
 
@@ -92,14 +98,24 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
       if (namespace) {
         this.mergeKubeMetrics([namespace], (await this.dependencies.podMetricsApi.list({ namespace })) ?? []);
       } else {
-        try {
-          this.kubeMetrics.replace((await this.dependencies.podMetricsApi.list({ namespace })) ?? []);
-        } catch (error) {
-          if (!isForbidden(error)) {
-            throw error;
-          }
+        const namespaces = [...this.dependencies.context.contextNamespaces];
+        // With every namespace selected, the selected ones are the whole cluster: one request, refused or not.
+        const allSelected = this.dependencies.context.isLoadingAll(namespaces);
 
-          await this.loadKubeMetricsOfSelectedNamespaces(error);
+        if (this.clusterMetricsForbidden && !allSelected) {
+          await this.loadKubeMetricsOfSelectedNamespaces(this.clusterMetricsForbidden);
+        } else {
+          try {
+            this.kubeMetrics.replace((await this.dependencies.podMetricsApi.list({ namespace })) ?? []);
+          } catch (error) {
+            if (!isForbidden(error) || allSelected) {
+              throw error;
+            }
+
+            // Refused for good: the next polls ask the selected namespaces only.
+            this.clusterMetricsForbidden = error;
+            await this.loadKubeMetricsOfSelectedNamespaces(error);
+          }
         }
       }
 
@@ -109,6 +125,9 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
       console.warn("loadKubeMetrics failed", error);
     }
   }
+
+  /** The refusal of the cluster-wide pod metrics, once the API server gave it. */
+  private clusterMetricsForbidden: unknown = undefined;
 
   private async loadKubeMetricsOfSelectedNamespaces(forbidden: unknown) {
     const namespaces = [...this.dependencies.context.contextNamespaces];
@@ -186,6 +205,23 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
     return map;
   }
 
+  @computed private get podsByNamespace(): Map<string, Pod[]> {
+    const map = new Map<string, Pod[]>();
+
+    for (const pod of this.items.slice()) {
+      const namespace = pod.getNs();
+      const pods = map.get(namespace);
+
+      if (pods) {
+        pods.push(pod);
+      } else {
+        map.set(namespace, [pod]);
+      }
+    }
+
+    return map;
+  }
+
   @computed private get podsByPvc(): Map<string, Pod[]> {
     const map = new Map<string, Pod[]>();
 
@@ -225,7 +261,7 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
     return [...(this.podsByOwnerId.get(workloadId) ?? [])];
   }
 
-  getPodsByNode(node: string) {
+  getPodsByNode(node: string): Pod[] {
     if (!this.isLoaded) return [];
 
     return [...(this.podsByNode.get(node) ?? [])];
@@ -233,6 +269,15 @@ export class PodStore extends KubeObjectStore<Pod, PodApi> {
 
   getPodsByPvc(namespace: string, claimName: string): Pod[] {
     return [...(this.podsByPvc.get(`${namespace}/${claimName}`) ?? [])];
+  }
+
+  getPodsByNamespace(namespace: string): Pod[] {
+    return [...(this.podsByNamespace.get(namespace) ?? [])];
+  }
+
+  // The pods `persistentVolumeClaim.getPods(podStore.items)` returns.
+  getPodsByPersistentVolumeClaim(persistentVolumeClaim: PersistentVolumeClaim): Pod[] {
+    return this.getPodsByPvc(persistentVolumeClaim.getNs(), persistentVolumeClaim.getName());
   }
 
   getStatuses(pods: Pod[]) {

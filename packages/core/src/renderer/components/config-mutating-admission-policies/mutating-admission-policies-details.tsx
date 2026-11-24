@@ -5,9 +5,8 @@
 
 import { observer } from "mobx-react";
 import React from "react";
+import { AdmissionPolicySelectors } from "../admission-policy-selectors/admission-policy-selectors";
 import { DrawerItem, DrawerTitle } from "../drawer";
-import { MatchResourcesDetails } from "./match-resources-details";
-import styles from "./mutating-admission-policies-details.module.scss";
 
 import type { MutatingAdmissionPolicy } from "@freelensapp/kube-object";
 
@@ -30,9 +29,7 @@ export class MutatingAdmissionPolicyDetails extends React.Component<MutatingAdmi
       <div className="MutatingAdmissionPolicyDetails">
         <DrawerItem name="API version">{policy.apiVersion}</DrawerItem>
         <DrawerItem name="Failure Policy">{policy.getFailurePolicy()}</DrawerItem>
-        <DrawerItem name="Reinvocation Policy" hidden={!policy.getReinvocationPolicy()}>
-          {policy.getReinvocationPolicy()}
-        </DrawerItem>
+        <DrawerItem name="Reinvocation Policy">{policy.getReinvocationPolicy()}</DrawerItem>
         {paramKind && (
           <DrawerItem name="Param Kind">{[paramKind.apiVersion, paramKind.kind].filter(Boolean).join("/")}</DrawerItem>
         )}
@@ -65,19 +62,38 @@ export class MutatingAdmissionPolicyDetails extends React.Component<MutatingAdmi
           <div key={index}>
             <DrawerItem name="Patch Type">{mutation.patchType}</DrawerItem>
             {mutation.applyConfiguration?.expression && (
-              <DrawerItem name="Apply Configuration">
-                <pre className={styles.expression}>{mutation.applyConfiguration.expression}</pre>
-              </DrawerItem>
+              <DrawerItem name="Expression">{mutation.applyConfiguration.expression}</DrawerItem>
             )}
             {mutation.jsonPatch?.expression && (
-              <DrawerItem name="JSON Patch">
-                <pre className={styles.expression}>{mutation.jsonPatch.expression}</pre>
-              </DrawerItem>
+              <DrawerItem name="Expression">{mutation.jsonPatch.expression}</DrawerItem>
             )}
           </div>
         ))}
 
-        <MatchResourcesDetails title="Match Constraints" matchResources={matchConstraints} />
+        {matchConstraints && (
+          <>
+            <DrawerTitle>Match Constraints</DrawerTitle>
+            {matchConstraints.matchPolicy && (
+              <DrawerItem name="Match Policy">{matchConstraints.matchPolicy}</DrawerItem>
+            )}
+            <AdmissionPolicySelectors
+              namespaceSelector={matchConstraints.namespaceSelector}
+              objectSelector={matchConstraints.objectSelector}
+            />
+            <DrawerItem name="Resource Rules">
+              {matchConstraints.resourceRules?.map((rule, index) => (
+                <div key={index}>
+                  <div>API Groups: {rule.apiGroups.map((group) => group || "core").join(", ")}</div>
+                  <div>API Versions: {rule.apiVersions?.join(", ")}</div>
+                  <div>Operations: {rule.operations.join(", ")}</div>
+                  {rule.resources && <div>Resources: {rule.resources.join(", ")}</div>}
+                  {rule.resourceNames && <div>Resource Names: {rule.resourceNames.join(", ")}</div>}
+                  {rule.scope && <div>Scope: {rule.scope}</div>}
+                </div>
+              ))}
+            </DrawerItem>
+          </>
+        )}
       </div>
     );
   }

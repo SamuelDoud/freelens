@@ -18,6 +18,30 @@ interface Dependencies extends KubeObjectStoreDependencies {
   getPodsByOwnerId: GetPodsByOwnerId;
 }
 
+const ownerKey = (namespace: string | undefined, kind: string, name: string) => `${namespace}/${kind}/${name}`;
+
+// Jobs by the namespace, kind and name of each owner, in store order, each job
+// once per owner.
+const indexJobsByOwner = (jobs: readonly Job[]): Map<string, Job[]> => {
+  const index = new Map<string, Job[]>();
+
+  for (const job of jobs) {
+    const keys = new Set(job.getOwnerRefs().map((ref) => ownerKey(job.getNs(), ref.kind, ref.name)));
+
+    for (const key of keys) {
+      const owned = index.get(key);
+
+      if (owned) {
+        owned.push(job);
+      } else {
+        index.set(key, [job]);
+      }
+    }
+  }
+
+  return index;
+};
+
 export class JobStore extends KubeObjectStore<Job, JobApi> {
   constructor(
     protected readonly dependencies: Dependencies,
@@ -34,34 +58,14 @@ export class JobStore extends KubeObjectStore<Job, JobApi> {
     return this.dependencies.getPodsByOwnerId(job.getId());
   }
 
-  // Jobs by "namespace/kind/name" of an owner reference, so that
-  // getJobsByOwner stays O(1) instead of scanning every job. Rebuilt by
-  // MobX only when the items change; lookups return copies so that a
-  // caller sorting its result cannot corrupt the cached index.
-  @computed private get jobsByOwner(): Map<string, Job[]> {
-    const map = new Map<string, Job[]>();
+  // The Active column of the CronJobs list asks once per row, and sorting by it
+  // once per CronJob: kept alive, so that the index is built once per change
+  // of the jobs and not once per lookup.
+  private readonly jobsByOwner = computed(() => indexJobsByOwner(this.items), { keepAlive: true });
 
-    for (const job of this.items.slice()) {
-      // The set keeps a job with a repeated owner reference listed once
-      // per owner, as the filter this replaces did.
-      const keys = new Set((job.metadata.ownerReferences ?? []).map((ref) => `${job.getNs()}/${ref.kind}/${ref.name}`));
-
-      for (const key of keys) {
-        const jobs = map.get(key);
-
-        if (jobs) {
-          jobs.push(job);
-        } else {
-          map.set(key, [job]);
-        }
-      }
-    }
-
-    return map;
-  }
-
-  getJobsByOwner(cronJob: CronJob) {
-    return [...(this.jobsByOwner.get(`${cronJob.getNs()}/${cronJob.kind}/${cronJob.getName()}`) ?? [])];
+  // A copy, so that a caller sorting the result does not change the index.
+  getJobsByOwner(cronJob: CronJob): Job[] {
+    return [...(this.jobsByOwner.get().get(ownerKey(cronJob.getNs(), cronJob.kind, cronJob.getName())) ?? [])];
   }
 
   getStatuses(jobs?: Job[]) {

@@ -8,6 +8,7 @@
 
 import addNewMonacoThemeInjectable from "./add-new-theme.injectable";
 import loadMonacoBeforeExtensionEntryPointInjectable from "./load-monaco-before-extension-entry-point.injectable";
+import registerYamlFoldingRangeProviderInjectable from "./register-yaml-folding-range-provider.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
@@ -19,6 +20,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(loadMonacoBeforeExtensionEntryPointInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(registerYamlFoldingRangeProviderInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

@@ -32,7 +32,11 @@ import type {
   ConfirmDialogProps,
 } from "../../renderer/components/confirm-dialog";
 
+// Explicit rather than a star export: the contract is the component and its
+// props, not the injectables that give it its default durations.
+export { Animate, type AnimateName, type AnimateProps } from "@freelensapp/animate";
 export * from "@freelensapp/button";
+export { ErrorBoundary, type ErrorBoundaryProps } from "@freelensapp/error-boundary";
 export * from "@freelensapp/icon";
 export {
   type CreateNotificationOptions,
@@ -47,6 +51,15 @@ export {
 // declare as a value too, although only the instance, `notificationsStore`,
 // exists at runtime.
 export type NotificationsStore = import("@freelensapp/notifications").NotificationsStore;
+// Explicit rather than a star export: the contract is the component, its props
+// and the enums the props take, whatever else the module comes to hold.
+export {
+  ResizeDirection,
+  ResizeGrowthDirection,
+  ResizeSide,
+  ResizingAnchor,
+  type ResizingAnchorProps,
+} from "@freelensapp/resizing-anchor";
 export * from "@freelensapp/spinner";
 export * from "@freelensapp/tooltip";
 // Explicit rather than a star export: the contract is the component and its
@@ -61,6 +74,27 @@ export * from "../../renderer/components/avatar";
 export * from "../../renderer/components/badge";
 export * from "../../renderer/components/chart";
 export * from "../../renderer/components/checkbox";
+// Explicit rather than a star export: the contract is the components and their
+// props. The color picker they are built on stays an implementation detail.
+export {
+  ColorSwatch,
+  ColorSwatchGroup,
+  type ColorSwatchGroupProps,
+  type ColorSwatchProps,
+  CustomColorSwatch,
+  type CustomColorSwatchProps,
+} from "../../renderer/components/color-swatch/color-swatch";
+// Explicit rather than a star export: the contract is the component and its
+// props, not how long it shows that the text was copied.
+export {
+  CopyToClipboardIcon,
+  type CopyToClipboardIconProps,
+} from "../../renderer/components/copy-to-clipboard/copy-to-clipboard-icon";
+export { CopyableInput, type CopyableInputProps } from "../../renderer/components/copyable-input/copyable-input";
+export {
+  CopyableMonacoEditor,
+  type CopyableMonacoEditorProps,
+} from "../../renderer/components/copyable-monaco-editor/copyable-monaco-editor";
 export * from "../../renderer/components/countdown";
 export * from "../../renderer/components/dialog";
 export * from "../../renderer/components/drawer";
@@ -71,6 +105,7 @@ export * from "../../renderer/components/events";
 export * from "../../renderer/components/file-picker";
 export * from "../../renderer/components/gutter";
 export * from "../../renderer/components/horizontal-line";
+export * from "../../renderer/components/image-reference";
 export * from "../../renderer/components/input";
 export * from "../../renderer/components/item-object-list";
 export * from "../../renderer/components/kube-object";
@@ -109,6 +144,21 @@ export {
 } from "../../renderer/components/namespaces/namespace-select-badge";
 export * from "../../renderer/components/namespaces/namespace-select-filter";
 export * from "../../renderer/components/no-items";
+// Explicit rather than a star export: the contract is the components and their
+// props, not the hook that keeps the order or the drag-and-drop library.
+export { OrderableItem, type OrderableItemProps } from "../../renderer/components/orderable-list/orderable-item";
+export { OrderableList, type OrderableListProps } from "../../renderer/components/orderable-list/orderable-list";
+// Explicit rather than a star export: the contract is the two cards and their
+// props, whatever else the module comes to hold.
+export {
+  CapacityCard,
+  type CapacityCardLabels,
+  type CapacityCardProps,
+  StatusCard,
+  type StatusCardProps,
+  type StatusCardStatus,
+  type StatusCardTone,
+} from "../../renderer/components/overview-cards";
 export * from "../../renderer/components/path-picker";
 export * from "../../renderer/components/radio";
 export * from "../../renderer/components/render-delay";
@@ -121,6 +171,14 @@ export * from "../../renderer/components/switch";
 export * from "../../renderer/components/table";
 export * from "../../renderer/components/tabs";
 export * from "../../renderer/components/tree-view";
+// Explicit rather than a star export: the contract is the component, its props
+// and its ref, none of which names a type of the virtualizing library.
+export {
+  VirtualList,
+  type VirtualListAlign,
+  type VirtualListProps,
+  type VirtualListRef,
+} from "../../renderer/components/virtual-list";
 export * from "../../renderer/components/with-tooltip";
 export * from "../../renderer/components/wizard";
 export * from "../../renderer/components/workloads-pods/pod-charts";

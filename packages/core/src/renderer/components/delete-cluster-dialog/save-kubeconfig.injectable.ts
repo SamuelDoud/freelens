@@ -5,13 +5,14 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import * as yaml from "js-yaml";
 import * as lockFile from "proper-lockfile";
 import readFileInjectable from "../../../common/fs/read-file.injectable";
 import writeFileInjectable from "../../../common/fs/write-file.injectable";
 
-import type { KubeConfig } from "@kubernetes/client-node";
+import type { KubeConfigData } from "../../../common/kube-config";
 
-export type SaveKubeconfig = (config: KubeConfig, path: string) => Promise<void>;
+export type SaveKubeconfig = (config: KubeConfigData, path: string) => Promise<void>;
 
 type KubeconfigDocument = Record<string, unknown> & { contexts?: { name?: string }[] };
 
@@ -37,7 +38,7 @@ const readOriginal = async (
  * credential plugin reads. Only the contexts and the current context change
  * when a cluster is deleted, so everything else stays as the file had it.
  */
-const applyContexts = (original: KubeconfigDocument, config: KubeConfig): KubeconfigDocument => {
+const applyContexts = (original: KubeconfigDocument, config: KubeConfigData): KubeconfigDocument => {
   const remaining = new Set(config.contexts.map((context) => context.name));
 
   return {
@@ -57,9 +58,10 @@ const saveKubeconfigInjectable = getInjectable({
       const release = await lockFile.lock(filePath);
 
       try {
-        const { dumpYaml, loadYaml } = await import("@kubernetes/client-node");
-        const original = await readOriginal(readFile, filePath, loadYaml);
-        const contents = dumpYaml(original ? applyContexts(original, config) : JSON.parse(config.exportConfig()));
+        // js-yaml directly: `dumpYaml` and `loadYaml` of @kubernetes/client-node only pass their input on
+        // to it, and importing them would bundle the API models of the client into the renderer.
+        const original = await readOriginal(readFile, filePath, (text) => yaml.load(text));
+        const contents = yaml.dump(original ? applyContexts(original, config) : JSON.parse(config.exportConfig()));
 
         await writeFile(filePath, contents);
       } finally {

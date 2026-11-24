@@ -16,6 +16,7 @@ import { kubeObjectStoreInjectionToken } from "../../../common/k8s-api/api-manag
 import { shouldShowResourceInjectionToken } from "../../../features/cluster/showing-kube-resources/common/allowed-resources-injection-token";
 import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-frame-context/for-namespaced-resources.injectable";
 import hostedClusterInjectable from "../../cluster-frame-context/hosted-cluster.injectable";
+import watchReconnectInjectable from "../../k8s/watch-reconnect/watch-reconnect.injectable";
 import { PodStore } from "./store";
 
 const podStoreInjectable = getInjectable({
@@ -35,6 +36,7 @@ const podStoreInjectable = getInjectable({
         }),
         hideCompletedPods: () => hostedCluster?.preferences.hideCompletedPods ?? false,
         context: di.inject(clusterFrameContextForNamespacedResourcesInjectable),
+        watchReconnect: di.inject(watchReconnectInjectable),
         logger: di.inject(loggerInjectionToken),
       },
       api,

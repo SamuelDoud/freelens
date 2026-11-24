@@ -71,21 +71,20 @@ describe("update-entity-spec", () => {
     expect(entity.spec.icon?.src).toBeUndefined();
   });
 
-  it("given an icon text and colours, puts them on the entity, and takes them off when cleared", () => {
-    cluster.preferences.iconText = " prod-east-1 ";
-    cluster.preferences.iconBackground = "#123456";
-    cluster.preferences.iconTextColor = "#ffcc00";
-    updateEntitySpec(entity, cluster);
-    expect(entity.metadata.shortName).toBe("prod-east-1");
-    expect(entity.spec.icon).toMatchObject({ background: "#123456", textColor: "#ffcc00" });
+  it("moves the icon text and background of the fork's earlier versions to the label and the icon color", () => {
+    const preferences = cluster.preferences as typeof cluster.preferences & Record<string, unknown>;
 
-    cluster.preferences.iconText = undefined;
-    cluster.preferences.iconBackground = undefined;
-    cluster.preferences.iconTextColor = undefined;
+    preferences.iconText = " prod-east-1 ";
+    preferences.iconBackground = "#123456";
+    preferences.iconTextColor = "#ffcc00";
     updateEntitySpec(entity, cluster);
-    expect(entity.metadata.shortName).toBeUndefined();
-    expect(entity.spec.icon?.background).toBeUndefined();
-    expect(entity.spec.icon?.textColor).toBeUndefined();
+
+    expect(cluster.preferences.iconShortName).toBe("pro");
+    expect(cluster.preferences.icon).toBe("#123456");
+    expect(entity.spec.icon?.background).toBe("#123456");
+    expect(preferences).not.toHaveProperty("iconText");
+    expect(preferences).not.toHaveProperty("iconBackground");
+    expect(preferences).not.toHaveProperty("iconTextColor");
   });
 
   it("given cluster icon is null, deletes icon from both", () => {
@@ -178,5 +177,21 @@ describe("update-entity-spec", () => {
     });
 
     expect(entity.spec.metrics?.prometheus?.type).toEqual("some-prometheus-provider-type");
+  });
+
+  it("given cluster icon changes from an image to a color, drops the image", () => {
+    entity.spec.icon = { src: "data:image/png;base64,AAAA" };
+    cluster.preferences.icon = "hsl(215, 60%, 27%)";
+
+    updateEntitySpec(entity, cluster);
+    expect(entity.spec.icon).toEqual({ background: "hsl(215, 60%, 27%)" });
+  });
+
+  it("given cluster icon changes from a color to an image, drops the color", () => {
+    entity.spec.icon = { background: "hsl(215, 60%, 27%)" };
+    cluster.preferences.icon = "data:image/png;base64,AAAA";
+
+    updateEntitySpec(entity, cluster);
+    expect(entity.spec.icon).toEqual({ src: "data:image/png;base64,AAAA" });
   });
 });

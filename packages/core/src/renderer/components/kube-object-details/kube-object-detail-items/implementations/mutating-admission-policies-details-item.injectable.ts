@@ -11,7 +11,7 @@ import { kubeObjectMatchesToKindAndApiVersion } from "../kube-object-matches-to-
 const mutatingAdmissionPolicyDetailItemInjectable = getInjectable({
   id: "mutating-admission-policy-detail-item",
 
-  instantiate(di) {
+  instantiate() {
     return {
       Component: MutatingAdmissionPolicyDetails,
       isFor: isMutatingAdmissionPolicy,
@@ -23,7 +23,6 @@ const mutatingAdmissionPolicyDetailItemInjectable = getInjectable({
 });
 
 export const isMutatingAdmissionPolicy = kubeObjectMatchesToKindAndApiVersion("MutatingAdmissionPolicy", [
-  "v1",
   "admissionregistration.k8s.io/v1alpha1",
   "admissionregistration.k8s.io/v1beta1",
   "admissionregistration.k8s.io/v1",

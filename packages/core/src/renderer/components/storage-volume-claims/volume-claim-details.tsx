@@ -71,7 +71,7 @@ class NonInjectedPersistentVolumeClaimDetails extends React.Component<
     }
 
     const { storageClassName, accessModes } = volumeClaim.spec;
-    const pods = podStore.getPodsByPvc(volumeClaim.getNs(), volumeClaim.getName());
+    const pods = podStore.getPodsByPersistentVolumeClaim(volumeClaim);
 
     const storageClassDetailsUrl = getDetailsUrl(
       storageClassApi.formatUrlForNotListing({

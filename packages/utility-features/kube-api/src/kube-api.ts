@@ -32,10 +32,10 @@ import type {
   ScaleCreateOptions,
 } from "@freelensapp/kube-object";
 import type { LogFunction } from "@freelensapp/logger";
+import type { PartialDeep } from "@freelensapp/type-fest";
 import type { Disposer } from "@freelensapp/utilities";
 
 import type { Patch } from "rfc6902";
-import type { PartialDeep } from "type-fest";
 
 import type { KubeJsonApi } from "./kube-json-api";
 import type { IKubeWatchEvent } from "./kube-watch-event";
@@ -371,6 +371,13 @@ export interface KubeApiWatchOptions<Object extends KubeObject, Data extends Kub
    * between, deletes included.
    */
   getResourceVersion?: () => string | undefined;
+
+  /**
+   * Called each time the watch request is accepted, including the requests
+   * that restart it: the connection works, even before the first event, which
+   * a resource that seldom changes may not send for a long time.
+   */
+  onConnect?: () => void;
 }
 
 export type KubeApiPatchType = "merge" | "json" | "strategic";
@@ -1031,6 +1038,7 @@ export class KubeApi<
       query,
       onBookmark,
       getResourceVersion,
+      onConnect,
     } = opts ?? {};
 
     // Create AbortController for this request
@@ -1062,6 +1070,8 @@ export class KubeApi<
 
           return callback(null, response);
         }
+
+        onConnect?.();
 
         // Add mechanism to retry in case timeoutSeconds is set but the watch wasn't timed out.
         // This can happen if e.g. network is offline and AWS NLB is used.

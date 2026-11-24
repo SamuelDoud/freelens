@@ -16,6 +16,7 @@ import { registerInjectables as registerFeaturesFeaturesClusterExecuteRendererIn
 import { registerInjectables as registerFeaturesFeaturesClusterInjectables } from "./features/cluster/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesClusterStateSyncRendererInjectables } from "./features/cluster/state-sync/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesClusterStorageRendererInjectables } from "./features/cluster/storage/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesDebugContainersRendererInjectables } from "./features/debug-containers/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesExtensionCredentialsInjectables } from "./features/extension-credentials/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesExtensionCredentialsRendererInjectables } from "./features/extension-credentials/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesExtensionsEnabledRendererInjectables } from "./features/extensions/enabled/renderer/register-injectables";
@@ -54,6 +55,8 @@ import { registerInjectables as registerFeaturesFeaturesSecretCertificatesRender
 import { registerInjectables as registerFeaturesFeaturesShellSyncRendererInjectables } from "./features/shell-sync/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesStandaloneTerminalRendererInjectables } from "./features/standalone-terminal/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesTerminalRendererInjectables } from "./features/terminal/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesTerminalShellLookupRendererInjectables } from "./features/terminal-shell-lookup/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesThemeFilesRendererInjectables } from "./features/theme/files/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesThemeSystemTypeRendererInjectables } from "./features/theme/system-type/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesTopBarExtensionApiRendererInjectables } from "./features/top-bar/extension-api/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesUserPreferencesInjectables } from "./features/user-preferences/register-injectables";
@@ -78,6 +81,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesClusterExecuteRendererInjectables(di);
   registerFeaturesFeaturesClusterStateSyncRendererInjectables(di);
   registerFeaturesFeaturesClusterStorageRendererInjectables(di);
+  registerFeaturesFeaturesDebugContainersRendererInjectables(di);
   registerFeaturesFeaturesExtensionCredentialsRendererInjectables(di);
   registerFeaturesFeaturesExtensionCredentialsInjectables(di);
   registerFeaturesFeaturesExtensionsInjectables(di);
@@ -116,6 +120,8 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesShellSyncRendererInjectables(di);
   registerFeaturesFeaturesStandaloneTerminalRendererInjectables(di);
   registerFeaturesFeaturesTerminalRendererInjectables(di);
+  registerFeaturesFeaturesTerminalShellLookupRendererInjectables(di);
+  registerFeaturesFeaturesThemeFilesRendererInjectables(di);
   registerFeaturesFeaturesThemeSystemTypeRendererInjectables(di);
   registerFeaturesFeaturesTopBarExtensionApiRendererInjectables(di);
   registerFeaturesFeaturesUserPreferencesRendererInjectables(di);

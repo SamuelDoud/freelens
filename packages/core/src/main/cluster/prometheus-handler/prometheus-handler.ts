@@ -19,6 +19,10 @@ import type { LoadProxyKubeconfig } from "../load-proxy-kubeconfig.injectable";
 export interface PrometheusDetails {
   prometheusPath: string;
   provider: PrometheusProvider;
+  /**
+   * The options the provider found with the service, to add to the options of every query.
+   */
+  queryOpts?: Record<string, string>;
 }
 
 interface PrometheusServicePreferences {
@@ -48,6 +52,13 @@ export const prometheusFailedDiscoveryTtlMs = 60_000;
 
 const ensurePrometheusPath = (service: PrometheusService, useHttps?: boolean) =>
   `${service.namespace}/services/${useHttps ? "https:" : ""}${service.service}:${service.port}`;
+
+/**
+ * Auto Detect takes the first provider that found a service, so the fallback providers go last. The sort is stable:
+ * the other providers keep the order of their registration.
+ */
+export const sortForAutoDetection = (providers: PrometheusProvider[]): PrometheusProvider[] =>
+  providers.toSorted((left, right) => Number(Boolean(left.isFallback)) - Number(Boolean(right.isFallback)));
 
 export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster]): ClusterPrometheusHandler => {
   const [deps, cluster] = args;
@@ -79,7 +90,7 @@ export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster])
       }
     }
 
-    return prometheusProviders.get();
+    return sortForAutoDetection(prometheusProviders.get());
   };
 
   // Every metrics request needs the Prometheus service, and finding it lists the cluster's services for
@@ -151,7 +162,7 @@ export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster])
     const prometheusPath = ensurePrometheusPath(service, prometheus?.https);
     const provider = ensurePrometheusProvider(service);
 
-    return { prometheusPath, provider };
+    return { prometheusPath, provider, queryOpts: service.queryOpts };
   };
 
   setupPrometheus(cluster.preferences);

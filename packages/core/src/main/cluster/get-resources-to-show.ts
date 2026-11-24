@@ -5,8 +5,8 @@
 
 import { formatKubeApiResource } from "../../common/rbac";
 
-import type { RequestNamespaceListPermissions } from "../../common/cluster/create-request-namespace-list-permissions.injectable";
 import type { KubeApiResource } from "../../common/rbac";
+import type { RequestNamespaceListPermissions } from "./create-request-namespace-list-permissions.injectable";
 
 export const namespaceReviewConcurrency = 16;
 

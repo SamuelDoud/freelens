@@ -8,6 +8,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { toJS } from "mobx";
 import { ClusterMetadataKey } from "../../common/cluster-types";
 import { enumKeys } from "../../common/utils/enum";
+import { migrateForkIconPreferences } from "./migrate-fork-icon-preferences";
 
 import type { KubernetesCluster } from "../../common/catalog-entities";
 import type { Cluster } from "../../common/cluster/cluster";
@@ -35,6 +36,7 @@ const updateEntityMetadataInjectable = getInjectable({
     const appliedLabels = new WeakMap<Cluster, Record<string, string | undefined>>();
 
     return (entity, cluster) => {
+      migrateForkIconPreferences(cluster.preferences);
       const clusterLabels = toJS(cluster.labels);
       const labels = { ...entity.metadata.labels };
 
@@ -66,6 +68,13 @@ const updateEntityMetadataInjectable = getInjectable({
          * set then the name of the entity has been explicitly set by its source
          */
         entity.metadata.name = cluster.preferences.clusterName;
+      }
+
+      if (cluster.preferences?.iconShortName) {
+        entity.metadata.shortName = cluster.preferences.iconShortName;
+      } else if (cluster.preferences?.iconShortName === null) {
+        entity.metadata.shortName = undefined;
+        cluster.preferences.iconShortName = undefined;
       }
     };
   },

@@ -101,12 +101,11 @@ const NonInjectedSidebarCluster = observer(
       >
         <Avatar
           title={clusterEntity.getName()}
+          shortName={clusterEntity.metadata.shortName}
           colorHash={`${clusterEntity.getName()}-${clusterEntity.metadata.source}`}
           size={40}
           src={clusterEntity.spec.icon?.src}
           background={clusterEntity.spec.icon?.background}
-          text={clusterEntity.metadata.shortName}
-          color={(clusterEntity.spec.icon as { textColor?: string } | undefined)?.textColor}
           className={styles.avatar}
         />
         <div className={styles.clusterName} id={tooltipId}>

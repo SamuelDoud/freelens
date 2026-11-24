@@ -3,14 +3,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeConfig } from "@kubernetes/client-node";
 import { describe, expect, it } from "vitest";
+import { KubeConfigData } from "../kube-config";
 import { splitConfig, validateKubeConfig } from "../kube-helpers";
 
 // The implementation from before the lookups were indexed.
-function splitConfigOld(kubeConfig: KubeConfig) {
+function splitConfigOld(kubeConfig: KubeConfigData) {
   return kubeConfig.getContexts().map((ctx) => {
-    const config = new KubeConfig();
+    const config = new KubeConfigData();
     const cluster = kubeConfig.getCluster(ctx.cluster);
     const user = kubeConfig.getUser(ctx.user);
     const context = kubeConfig.getContextObject(ctx.name);
@@ -40,16 +40,12 @@ const build = (spec: {
   users: [string, string][];
   contexts: [string, string, string][];
 }) => {
-  const kc = new KubeConfig();
-
-  kc.loadFromOptions({
+  return new KubeConfigData({
     clusters: spec.clusters.map(([name, server]) => ({ name, server, skipTLSVerify: false })),
     users: spec.users.map(([name, token]) => ({ name, token })),
     contexts: spec.contexts.map(([name, cluster, user]) => ({ name, cluster, user })),
     currentContext: spec.contexts[0]?.[0],
   });
-
-  return kc;
 };
 
 describe("splitConfig", () => {
@@ -100,6 +96,6 @@ describe("splitConfig", () => {
   });
 
   it("returns nothing for an empty config", () => {
-    expect(splitConfig(new KubeConfig())).toEqual([]);
+    expect(splitConfig(new KubeConfigData())).toEqual([]);
   });
 });

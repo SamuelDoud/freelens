@@ -72,12 +72,13 @@ const toHierarchicalElectronMenuItem = (composite: Composite<ApplicationMenuItem
 
     case "clickable-menu-item": {
       const { id } = composite;
-      const { label, onClick, keyboardShortcut } = value;
+      const { label, onClick, keyboardShortcut, visible } = value;
 
       return {
         ...(id ? { id } : {}),
         ...(label ? { label } : {}),
         ...(keyboardShortcut ? { accelerator: keyboardShortcut } : {}),
+        ...(visible === false ? { visible } : {}),
         click: onClick,
       };
     }
@@ -99,11 +100,12 @@ const toHierarchicalElectronMenuItem = (composite: Composite<ApplicationMenuItem
     }
 
     case "os-action-menu-item": {
-      const { label, keyboardShortcut, actionName } = value;
+      const { label, keyboardShortcut, actionName, visible } = value;
 
       return {
         ...(label ? { label } : {}),
         ...(keyboardShortcut ? { accelerator: keyboardShortcut } : {}),
+        ...(visible === false ? { visible } : {}),
         role: actionName,
       };
     }

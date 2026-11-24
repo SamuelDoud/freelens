@@ -19,7 +19,8 @@ import type { CSSProperties } from "react";
 // The wrapper accepts loosely typed data and casts it to the strict v4
 // ChartData at the ChartJS boundary (see renderChart). Chart.js v4 parses data
 // internally, so string/number-y point values are tolerated at runtime.
-export type ChartDataPoint = number | { x: number | string; y: number | string } | null | undefined;
+// A `null` y marks a gap: the line (and its fill) is broken at that point.
+export type ChartDataPoint = number | { x: number | string; y: number | string | null } | null | undefined;
 
 export interface ChartDataSets {
   id?: string;
@@ -78,8 +79,8 @@ export class Chart extends React.Component<ChartProps> {
   private chart: ChartJS | null = null;
   private unmounted = false;
   private loading = false;
-  // ChartJS adds _meta field to any data object passed to it.
-  // We clone new data prop into currentChartData to compare props and prevProps
+  // Chart.js gets copies of the datasets of the data prop, never the objects
+  // of the caller. An update changes the copy the chart already has in place.
   private currentChartData?: ChartData;
 
   componentDidMount() {
@@ -174,11 +175,19 @@ export class Chart extends React.Component<ChartProps> {
           data[dataIndex] = nextData[dataIndex];
         }
 
-        // Merge the other fields into the same object. Chart.js keeps a
-        // dataset's controller and elements keyed by the dataset object, so a
-        // replaced object counts as a new dataset and animates from zero
-        // instead of from its previous values.
+        // Give the dataset Chart.js already has the other fields of the new
+        // one, and only those: a field the new one lacks, such as the tooltip
+        // labels of a ring that has no status left, must not stay. Chart.js
+        // finds the controller and the elements of a dataset by the identity of
+        // the dataset object: another object is a new dataset to it, and a new
+        // dataset is drawn from its start, with the opening animation.
         const { data: _data, ...props } = next;
+
+        for (const key of Object.keys(dataset)) {
+          if (key !== "data" && !(key in props)) {
+            delete dataset[key];
+          }
+        }
 
         Object.assign(dataset, props);
       } else {

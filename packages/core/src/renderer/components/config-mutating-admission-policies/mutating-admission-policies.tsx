@@ -18,7 +18,6 @@ import type { MutatingAdmissionPolicyStore } from "./mutating-admission-policy-s
 enum columnId {
   name = "name",
   mutations = "mutations",
-  reinvocation = "reinvocation",
   age = "age",
 }
 
@@ -44,21 +43,22 @@ const NonInjectedMutatingAdmissionPolicies = observer((props: Dependencies) => {
         sortingCallbacks={{
           [columnId.name]: (item) => item.getName(),
           [columnId.mutations]: (item) => item.getMutations().length,
-          [columnId.reinvocation]: (item) => item.getReinvocationPolicy(),
           [columnId.age]: (item) => -item.getCreationTimestamp(),
         }}
         searchFilters={[(item) => item.getSearchFields(), (item) => item.getLabels()]}
         renderHeaderTitle="Mutating Admission Policies"
         renderTableHeader={[
           { title: "Name", className: "name", sortBy: columnId.name, id: columnId.name },
-          { title: "Mutations", sortBy: columnId.mutations, id: columnId.mutations },
-          { title: "Reinvocation", sortBy: columnId.reinvocation, id: columnId.reinvocation },
+          {
+            title: "Mutations",
+            sortBy: columnId.mutations,
+            id: columnId.mutations,
+          },
           { title: "Age", className: "age", sortBy: columnId.age, id: columnId.age },
         ]}
         renderTableContents={(item) => [
           <WithTooltip>{item.getName()}</WithTooltip>,
           item.getMutations().length,
-          item.getReinvocationPolicy(),
           <KubeObjectAge key="age" object={item} />,
         ]}
       />

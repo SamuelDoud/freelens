@@ -3,64 +3,61 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import "@testing-library/jest-dom/vitest";
-
-import { serviceAccountApiInjectable } from "@freelensapp/kube-api-specifics";
 import { Pod } from "@freelensapp/kube-object";
-import { beforeEach, describe, expect, it } from "vitest";
-import directoryForLensLocalStorageInjectable from "../../../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
+import { screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { getDiForUnitTesting } from "../../../getDiForUnitTesting";
-import currentlyInClusterFrameInjectable from "../../../routes/currently-in-cluster-frame.injectable";
-import getMaybeDetailsUrlInjectable from "../../kube-detail-params/get-maybe-details-url.injectable";
 import { renderFor } from "../../test-utils/renderFor";
 import { PodDetails } from "../pod-details";
 
-import type { DiRender } from "../../test-utils/renderFor";
+import type { PodStatus } from "@freelensapp/kube-object";
 
-const makePod = (serviceAccountName?: string) =>
-  new Pod({
-    apiVersion: "v1",
-    kind: "Pod",
-    metadata: {
-      name: "some-pod",
-      namespace: "default",
-      resourceVersion: "1",
-      selfLink: "/api/v1/namespaces/default/pods/some-pod",
-      uid: "some-uid",
-    },
-    spec: {
-      containers: [],
-      ...(serviceAccountName ? { serviceAccountName } : {}),
-    },
+vi.mock("../details/containers/pod-details-containers", () => ({ PodDetailsContainers: () => null }));
+vi.mock("../details/containers/pod-details-init-containers", () => ({ PodDetailsInitContainers: () => null }));
+vi.mock("../details/containers/pod-details-ephemeral-containers", () => ({
+  PodDetailsEphemeralContainers: () => null,
+}));
+vi.mock("../details/volumes/view", () => ({ PodVolumes: () => null }));
+vi.mock("../../kube-object-link", () => ({
+  LinkToNode: () => null,
+  LinkToPriorityClass: () => null,
+  LinkToRuntimeClass: () => null,
+  LinkToServiceAccount: ({ name }: { name: string }) => <span>{name}</span>,
+}));
+
+describe("pod-details service account", () => {
+  const renderPod = (serviceAccountName?: string) => {
+    const render = renderFor(getDiForUnitTesting());
+    const pod = new Pod({
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name: "test-pod",
+        namespace: "default",
+        resourceVersion: "1",
+        selfLink: "/api/v1/namespaces/default/pods/test-pod",
+        uid: "pod-uid",
+      },
+      spec: {
+        containers: [{ name: "main" }],
+        ...(serviceAccountName ? { serviceAccountName } : {}),
+      },
+      status: {} as PodStatus,
+    });
+
+    render(<PodDetails object={pod} />);
+  };
+
+  it("shows the Service Account when the pod has one", () => {
+    renderPod("my-account");
+
+    expect(screen.getByText("Service Account")).toBeInTheDocument();
+    expect(screen.getByText("my-account")).toBeInTheDocument();
   });
 
-describe("<PodDetails /> service account", () => {
-  let render: DiRender;
+  it("hides the Service Account when the pod has none", () => {
+    renderPod();
 
-  beforeEach(() => {
-    const di = getDiForUnitTesting();
-
-    di.override(directoryForLensLocalStorageInjectable, () => "some-directory-for-lens-local-storage");
-
-    di.override(serviceAccountApiInjectable, () => ({ formatUrlForNotListing: () => "/some-url" }) as any);
-
-    di.override(currentlyInClusterFrameInjectable, () => true);
-    di.override(getMaybeDetailsUrlInjectable, () => (url: string) => url);
-
-    render = renderFor(di);
-  });
-
-  it("shows the service account of the pod", () => {
-    const result = render(<PodDetails object={makePod("some-account")} />);
-
-    expect(result.getByText("Service Account")).toBeInTheDocument();
-    expect(result.getAllByText("some-account").length).toBeGreaterThan(0);
-  });
-
-  it("hides the service account when the pod has none", () => {
-    const result = render(<PodDetails object={makePod()} />);
-
-    expect(result.getByText("QoS Class")).toBeInTheDocument();
-    expect(result.queryByText("Service Account")).not.toBeInTheDocument();
+    expect(screen.queryByText("Service Account")).not.toBeInTheDocument();
   });
 });

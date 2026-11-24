@@ -330,7 +330,7 @@ exports[`add-cluster - navigation using application menu > renders 1`] = `
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
               >
                 WP
               </div>
@@ -355,7 +355,7 @@ exports[`add-cluster - navigation using application menu > renders 1`] = `
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-catalog-entity"
-                style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
               >
                 Ca
               </div>
@@ -417,7 +417,7 @@ exports[`add-cluster - navigation using application menu > renders 1`] = `
           aria-live="assertive"
           id="DndLiveRegion-0"
           role="status"
-          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div
@@ -705,7 +705,7 @@ exports[`add-cluster - navigation using application menu > when navigating to ad
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
               >
                 WP
               </div>
@@ -730,7 +730,7 @@ exports[`add-cluster - navigation using application menu > when navigating to ad
               <div
                 class="Avatar rounded disabled avatar"
                 id="hotbarIcon-hotbar-icon-catalog-entity"
-                style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
               >
                 Ca
               </div>
@@ -792,7 +792,7 @@ exports[`add-cluster - navigation using application menu > when navigating to ad
           aria-live="assertive"
           id="DndLiveRegion-2"
           role="status"
-          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div

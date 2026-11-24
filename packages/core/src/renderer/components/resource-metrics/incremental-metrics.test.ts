@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { calculateAdaptiveStep } from "../../../common/k8s-api/endpoints/metrics.api/request-metrics.injectable";
+import { calculateAdaptiveStep } from "../../../common/k8s-api/endpoints/metrics.api/adaptive-step";
 import { createIncrementalMetrics } from "./incremental-metrics";
 
 import type { MetricData } from "../../../common/k8s-api/endpoints/metrics.api";

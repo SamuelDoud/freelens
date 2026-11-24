@@ -31,7 +31,7 @@ exports[`MutatingAdmissionPolicyBindingDetails > renders 1`] = `
         <span
           class="value"
         >
-          demo-mutation.example.com
+          sidecar-policy.example.com
         </span>
       </div>
       <div
@@ -50,7 +50,7 @@ exports[`MutatingAdmissionPolicyBindingDetails > renders 1`] = `
         <span
           class="value"
         >
-          sidecar-config
+          mesh-proxy
         </span>
       </div>
       <div
@@ -106,25 +106,6 @@ exports[`MutatingAdmissionPolicyBindingDetails > renders 1`] = `
         <span
           class="name"
         >
-          Namespace Selector
-        </span>
-        <span
-          class="value"
-        >
-          <div>
-            kubernetes.io/metadata.name=team-a
-          </div>
-          <div>
-            environment In (dev, test)
-          </div>
-        </span>
-      </div>
-      <div
-        class="DrawerItem"
-      >
-        <span
-          class="name"
-        >
           Resource Rules
         </span>
         <span
@@ -133,7 +114,7 @@ exports[`MutatingAdmissionPolicyBindingDetails > renders 1`] = `
           <div>
             <div>
               API Groups: 
-              apps
+              core
             </div>
             <div>
               API Versions: 
@@ -141,11 +122,11 @@ exports[`MutatingAdmissionPolicyBindingDetails > renders 1`] = `
             </div>
             <div>
               Operations: 
-              CREATE, UPDATE
+              CREATE
             </div>
             <div>
               Resources: 
-              deployments
+              pods
             </div>
           </div>
         </span>
@@ -186,7 +167,7 @@ exports[`MutatingAdmissionPolicyBindingDetails > renders with no param ref 1`] =
         <span
           class="value"
         >
-          demo-mutation.example.com
+          sidecar-policy.example.com
         </span>
       </div>
     </div>

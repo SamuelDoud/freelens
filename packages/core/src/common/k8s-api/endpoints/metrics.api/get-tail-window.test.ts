@@ -4,8 +4,8 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { calculateAdaptiveStep } from "./adaptive-step";
 import { getTailWindow } from "./get-tail-window";
-import { calculateAdaptiveStep } from "./request-metrics.injectable";
 
 // The points a range query returns: the start and every step after it, up to the end.
 function lastPointOf(start: number, end: number, step: number): number {

@@ -59,7 +59,7 @@ exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
         <span
           class="value"
         >
-          rules.example.com/v1/SidecarConfig
+          mutations.example.com/v1/Sidecar
         </span>
       </div>
       <div
@@ -73,12 +73,12 @@ exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
         <span
           class="name"
         >
-          exclude-leases
+          does-not-already-have-sidecar
         </span>
         <span
           class="value"
         >
-          !(request.resource.group == 'coordination.k8s.io' && request.resource.resource == 'leases')
+          !object.spec.initContainers.exists(ic, ic.name == "mesh-proxy")
         </span>
       </div>
       <div
@@ -92,12 +92,12 @@ exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
         <span
           class="name"
         >
-          hasSidecar
+          containerName
         </span>
         <span
           class="value"
         >
-          object.spec.initContainers.exists(c, c.name == 'mesh-proxy')
+          params.name
         </span>
       </div>
       <div
@@ -126,16 +126,12 @@ exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
           <span
             class="name"
           >
-            Apply Configuration
+            Expression
           </span>
           <span
             class="value"
           >
-            <pre
-              class="expression"
-            >
-              Object{ spec: Object.spec{ replicas: 1 } }
-            </pre>
+            Object{spec: Object.spec{initContainers: [Object.spec.initContainers{name: "mesh-proxy", image: "mesh/proxy:v1.0.0"}]}}
           </span>
         </div>
       </div>
@@ -160,16 +156,12 @@ exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
           <span
             class="name"
           >
-            JSON Patch
+            Expression
           </span>
           <span
             class="value"
           >
-            <pre
-              class="expression"
-            >
-              [JSONPatch{ op: 'add', path: '/metadata/labels/mutated', value: 'true' }]
-            </pre>
+            [JSONPatch{op: "add", path: "/metadata/labels/injected", value: "true"}]
           </span>
         </div>
       </div>
@@ -206,7 +198,7 @@ exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
           <div>
             <div>
               API Groups: 
-              apps
+              core
             </div>
             <div>
               API Versions: 
@@ -214,11 +206,11 @@ exports[`MutatingAdmissionPolicyDetails > renders 1`] = `
             </div>
             <div>
               Operations: 
-              CREATE, UPDATE
+              CREATE
             </div>
             <div>
               Resources: 
-              deployments
+              pods
             </div>
           </div>
         </span>
@@ -287,7 +279,7 @@ exports[`MutatingAdmissionPolicyDetails > renders with no mutations 1`] = `
         <span
           class="value"
         >
-          rules.example.com/v1/SidecarConfig
+          mutations.example.com/v1/Sidecar
         </span>
       </div>
       <div
@@ -301,12 +293,12 @@ exports[`MutatingAdmissionPolicyDetails > renders with no mutations 1`] = `
         <span
           class="name"
         >
-          exclude-leases
+          does-not-already-have-sidecar
         </span>
         <span
           class="value"
         >
-          !(request.resource.group == 'coordination.k8s.io' && request.resource.resource == 'leases')
+          !object.spec.initContainers.exists(ic, ic.name == "mesh-proxy")
         </span>
       </div>
       <div
@@ -320,12 +312,12 @@ exports[`MutatingAdmissionPolicyDetails > renders with no mutations 1`] = `
         <span
           class="name"
         >
-          hasSidecar
+          containerName
         </span>
         <span
           class="value"
         >
-          object.spec.initContainers.exists(c, c.name == 'mesh-proxy')
+          params.name
         </span>
       </div>
       <div
@@ -371,7 +363,7 @@ exports[`MutatingAdmissionPolicyDetails > renders with no mutations 1`] = `
           <div>
             <div>
               API Groups: 
-              apps
+              core
             </div>
             <div>
               API Versions: 
@@ -379,11 +371,11 @@ exports[`MutatingAdmissionPolicyDetails > renders with no mutations 1`] = `
             </div>
             <div>
               Operations: 
-              CREATE, UPDATE
+              CREATE
             </div>
             <div>
               Resources: 
-              deployments
+              pods
             </div>
           </div>
         </span>

@@ -259,52 +259,67 @@ describe("Job Store tests", () => {
     ]);
   });
 
-  it("gets jobs by their CronJob owner", () => {
-    const cronJob = new CronJob({
-      apiVersion: "foo",
-      kind: "CronJob",
-      metadata: {
-        name: "some-cronjob",
-        resourceVersion: "1",
-        uid: "some-cronjob",
-        namespace: "default",
-        selfLink: "/apis/batch/v1/cronjobs/default/some-cronjob",
-      },
-    } as ConstructorParameters<typeof CronJob>[0]);
-
-    const jobOfCronJob = (name: string, namespace: string, ownerName: string) =>
+  describe("getJobsByOwner", () => {
+    const createCronJob = (name: string, namespace = "default") =>
+      new CronJob({
+        apiVersion: "batch/v1",
+        kind: "CronJob",
+        metadata: {
+          name,
+          resourceVersion: "1",
+          uid: `${namespace}-cronjob-${name}`,
+          namespace,
+          selfLink: `/apis/batch/v1/namespaces/${namespace}/cronjobs/${name}`,
+        },
+        spec: {} as CronJob["spec"],
+      });
+    const createOwnedJob = (name: string, owners: { kind: string; name: string }[], namespace = "default") =>
       new Job({
-        apiVersion: "foo",
+        apiVersion: "batch/v1",
         kind: "Job",
         metadata: {
           name,
           resourceVersion: "1",
-          uid: name,
+          uid: `${namespace}-job-${name}`,
           namespace,
-          selfLink: `/apis/batch/v1/jobs/${namespace}/${name}`,
-          ownerReferences: [
-            {
-              apiVersion: "batch/v1",
-              kind: "CronJob",
-              name: ownerName,
-              uid: ownerName,
-            },
-          ],
+          selfLink: `/apis/batch/v1/namespaces/${namespace}/jobs/${name}`,
+          ownerReferences: owners.map((owner) => ({ apiVersion: "batch/v1", uid: owner.name, ...owner })),
         },
-      } as ConstructorParameters<typeof Job>[0]);
+      });
 
-    const ownedJob = jobOfCronJob("owned-job", "default", "some-cronjob");
-    const otherNamespaceJob = jobOfCronJob("other-namespace-job", "kube-system", "some-cronjob");
-    const otherCronJobJob = jobOfCronJob("other-cronjob-job", "default", "other-cronjob");
+    const backup = createCronJob("backup");
+    const first = createOwnedJob("backup-1", [{ kind: "CronJob", name: "backup" }]);
+    const otherNamespace = createOwnedJob("backup-1", [{ kind: "CronJob", name: "backup" }], "other");
+    const otherKind = createOwnedJob("backup-x", [{ kind: "Workflow", name: "backup" }]);
+    const twice = createOwnedJob("backup-2", [
+      { kind: "CronJob", name: "backup" },
+      { kind: "CronJob", name: "backup" },
+    ]);
+    const unowned = createOwnedJob("manual", []);
 
-    jobStore.items.replace([ownedJob, otherNamespaceJob, otherCronJobJob, runningJob]);
+    beforeEach(() => {
+      jobStore.items = observable.array([first, otherNamespace, otherKind, twice, unowned]);
+    });
 
-    expect(jobStore.getJobsByOwner(cronJob)).toEqual([ownedJob]);
+    it("returns the jobs of a CronJob of its namespace and kind in store order, each once", () => {
+      expect(jobStore.getJobsByOwner(backup)).toEqual([first, twice]);
+      expect(jobStore.getJobsByOwner(createCronJob("backup", "other"))).toEqual([otherNamespace]);
+      expect(jobStore.getJobsByOwner(createCronJob("missing"))).toEqual([]);
+    });
 
-    // Callers may sort the result (the CronJob details do); that must not
-    // leak into later lookups.
-    jobStore.getJobsByOwner(cronJob).length = 0;
+    it("returns a copy that a caller may sort without changing the store", () => {
+      jobStore.getJobsByOwner(backup).reverse();
 
-    expect(jobStore.getJobsByOwner(cronJob)).toEqual([ownedJob]);
+      expect(jobStore.getJobsByOwner(backup)).toEqual([first, twice]);
+    });
+
+    it("follows added and removed jobs", () => {
+      const third = createOwnedJob("backup-3", [{ kind: "CronJob", name: "backup" }]);
+
+      jobStore.items.push(third);
+      jobStore.items.remove(first);
+
+      expect(jobStore.getJobsByOwner(backup)).toEqual([twice, third]);
+    });
   });
 });

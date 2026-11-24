@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { calculateAdaptiveStep } from "../../../common/k8s-api/endpoints/metrics.api/request-metrics.injectable";
+import { calculateAdaptiveStep } from "../../../common/k8s-api/endpoints/metrics.api/adaptive-step";
 
 import type { MetricData, MetricResult } from "../../../common/k8s-api/endpoints/metrics.api";
 

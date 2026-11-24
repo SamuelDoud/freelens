@@ -28,52 +28,53 @@ const mutatingAdmissionPolicy: KubeJsonApiData<
   apiVersion: "admissionregistration.k8s.io/v1",
   kind: "MutatingAdmissionPolicy",
   metadata: {
-    name: "demo-mutation.example.com",
+    name: "sidecar-policy.example.com",
     resourceVersion: "1",
-    uid: "demo-mutation.example.com",
-    selfLink: "/apis/admissionregistration.k8s.io/v1/mutatingadmissionpolicies/demo-mutation.example.com",
+    uid: "sidecar-policy.example.com",
+    selfLink: "/apis/admissionregistration.k8s.io/v1/mutatingadmissionpolicies/sidecar-policy.example.com",
   },
   spec: {
     failurePolicy: "Fail",
+    reinvocationPolicy: "IfNeeded",
     paramKind: {
-      apiVersion: "rules.example.com/v1",
-      kind: "SidecarConfig",
+      apiVersion: "mutations.example.com/v1",
+      kind: "Sidecar",
     },
     matchConstraints: {
       matchPolicy: "Equivalent",
       resourceRules: [
         {
-          apiGroups: ["apps"],
+          apiGroups: [""],
           apiVersions: ["v1"],
-          operations: ["CREATE", "UPDATE"],
-          resources: ["deployments"],
+          operations: ["CREATE"],
+          resources: ["pods"],
         },
       ],
     },
     matchConditions: [
       {
-        name: "exclude-leases",
-        expression: "!(request.resource.group == 'coordination.k8s.io' && request.resource.resource == 'leases')",
+        name: "does-not-already-have-sidecar",
+        expression: '!object.spec.initContainers.exists(ic, ic.name == "mesh-proxy")',
       },
     ],
     variables: [
       {
-        name: "hasSidecar",
-        expression: "object.spec.initContainers.exists(c, c.name == 'mesh-proxy')",
+        name: "containerName",
+        expression: "params.name",
       },
     ],
-    reinvocationPolicy: "IfNeeded",
     mutations: [
       {
         patchType: "ApplyConfiguration",
         applyConfiguration: {
-          expression: "Object{ spec: Object.spec{ replicas: 1 } }",
+          expression:
+            'Object{spec: Object.spec{initContainers: [Object.spec.initContainers{name: "mesh-proxy", image: "mesh/proxy:v1.0.0"}]}}',
         },
       },
       {
         patchType: "JSONPatch",
         jsonPatch: {
-          expression: "[JSONPatch{ op: 'add', path: '/metadata/labels/mutated', value: 'true' }]",
+          expression: '[JSONPatch{op: "add", path: "/metadata/labels/injected", value: "true"}]',
         },
       },
     ],
@@ -96,6 +97,26 @@ describe("MutatingAdmissionPolicyDetails", () => {
     result = render(<MutatingAdmissionPolicyDetails object={policy} />);
 
     expect(result.baseElement).toMatchSnapshot();
+  });
+
+  it("renders match constraint selectors", () => {
+    const policy = new MutatingAdmissionPolicy({
+      ...mutatingAdmissionPolicy,
+      spec: {
+        ...mutatingAdmissionPolicy.spec,
+        matchConstraints: {
+          namespaceSelector: { matchLabels: { environment: "production" } },
+          objectSelector: { matchExpressions: [{ key: "injected", operator: "DoesNotExist" }] },
+        },
+      },
+    });
+
+    result = render(<MutatingAdmissionPolicyDetails object={policy} />);
+
+    expect(result.getByText("Namespace Selector")).toBeInTheDocument();
+    expect(result.getByText("environment=production")).toBeInTheDocument();
+    expect(result.getByText("Object Selector")).toBeInTheDocument();
+    expect(result.getByText("!injected")).toBeInTheDocument();
   });
 
   it("renders with no mutations", () => {

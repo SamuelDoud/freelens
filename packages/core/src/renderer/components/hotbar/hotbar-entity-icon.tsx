@@ -108,12 +108,11 @@ class NonInjectedHotbarEntityIcon extends React.Component<HotbarEntityIconProps 
       <HotbarIcon
         uid={entity.getId()}
         title={entity.getName()}
+        shortName={entity.metadata.shortName}
         source={entity.metadata.source}
         src={entity.spec.icon?.src}
         material={entity.spec.icon?.material}
         background={entity.spec.icon?.background}
-        text={entity.metadata.shortName}
-        color={entity.spec.icon?.textColor}
         className={className}
         active={this.isActive(entity)}
         onMenuOpen={() => this.onMenuOpen()}

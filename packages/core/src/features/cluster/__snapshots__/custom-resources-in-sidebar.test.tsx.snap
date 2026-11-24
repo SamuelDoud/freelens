@@ -21,7 +21,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -30,12 +30,13 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
           />
         </div>
         <div
-          class="container sidebarNav sidebar-active-status"
+          class="OrderableList sidebarNav sidebar-active-status"
         >
           <div
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -81,6 +82,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -89,6 +91,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -97,6 +100,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -197,6 +201,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -205,6 +210,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -250,6 +256,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -258,6 +265,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -266,6 +274,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -274,6 +283,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -282,6 +292,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -387,6 +398,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -395,6 +407,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -414,7 +427,7 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             aria-live="assertive"
             id="DndLiveRegion-0"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -734,7 +747,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -743,12 +756,13 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
           />
         </div>
         <div
-          class="container sidebarNav sidebar-active-status"
+          class="OrderableList sidebarNav sidebar-active-status"
         >
           <div
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -794,6 +808,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -802,6 +817,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -810,6 +826,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -910,6 +927,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -918,6 +936,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -963,6 +982,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -971,6 +991,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -979,6 +1000,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -987,6 +1009,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -995,6 +1018,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -1100,6 +1124,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -1108,6 +1133,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1;"
             tabindex="0"
@@ -1164,7 +1190,7 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             aria-live="assertive"
             id="DndLiveRegion-30"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -1484,7 +1510,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -1493,12 +1519,13 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
           />
         </div>
         <div
-          class="container sidebarNav sidebar-active-status"
+          class="OrderableList sidebarNav sidebar-active-status"
         >
           <div
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1544,6 +1571,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1552,6 +1580,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1560,6 +1589,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1660,6 +1690,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1668,6 +1699,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1713,6 +1745,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1721,6 +1754,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1729,6 +1763,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1737,6 +1772,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1745,6 +1781,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1850,6 +1887,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1858,6 +1896,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -1877,7 +1916,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             aria-live="assertive"
             id="DndLiveRegion-3"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -2197,7 +2236,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -2206,12 +2245,13 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
           />
         </div>
         <div
-          class="container sidebarNav sidebar-active-status"
+          class="OrderableList sidebarNav sidebar-active-status"
         >
           <div
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2257,6 +2297,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2265,6 +2306,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2273,6 +2315,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2373,6 +2416,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2381,6 +2425,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2426,6 +2471,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2434,6 +2480,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2442,6 +2489,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2450,6 +2498,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2458,6 +2507,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2563,6 +2613,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2571,6 +2622,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -2627,7 +2679,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-live="assertive"
             id="DndLiveRegion-20"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -2947,7 +2999,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -2956,12 +3008,13 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
           />
         </div>
         <div
-          class="container sidebarNav sidebar-active-status"
+          class="OrderableList sidebarNav sidebar-active-status"
         >
           <div
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3007,6 +3060,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3015,6 +3069,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3023,6 +3078,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3123,6 +3179,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3131,6 +3188,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3176,6 +3234,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3184,6 +3243,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3192,6 +3252,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3200,6 +3261,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3208,6 +3270,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3313,6 +3376,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3321,6 +3385,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3423,7 +3488,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-live="assertive"
             id="DndLiveRegion-25"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -3743,7 +3808,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -3752,12 +3817,13 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
           />
         </div>
         <div
-          class="container sidebarNav sidebar-active-status"
+          class="OrderableList sidebarNav sidebar-active-status"
         >
           <div
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3803,6 +3869,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3811,6 +3878,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3819,6 +3887,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3919,6 +3988,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3927,6 +3997,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3972,6 +4043,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3980,6 +4052,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3988,6 +4061,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -3996,6 +4070,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4004,6 +4079,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4109,6 +4185,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4117,6 +4194,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4173,7 +4251,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-live="assertive"
             id="DndLiveRegion-5"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -4493,7 +4571,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -4502,12 +4580,13 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
           />
         </div>
         <div
-          class="container sidebarNav sidebar-active-status"
+          class="OrderableList sidebarNav sidebar-active-status"
         >
           <div
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4553,6 +4632,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4561,6 +4641,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4569,6 +4650,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4669,6 +4751,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4677,6 +4760,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4722,6 +4806,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4730,6 +4815,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4738,6 +4824,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4746,6 +4833,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4754,6 +4842,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4859,6 +4948,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4867,6 +4957,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -4954,7 +5045,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-live="assertive"
             id="DndLiveRegion-10"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -5274,7 +5365,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -5283,12 +5374,13 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
           />
         </div>
         <div
-          class="container sidebarNav sidebar-active-status"
+          class="OrderableList sidebarNav sidebar-active-status"
         >
           <div
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5334,6 +5426,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5342,6 +5435,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5350,6 +5444,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5450,6 +5545,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5458,6 +5554,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5503,6 +5600,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5511,6 +5609,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5519,6 +5618,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5527,6 +5627,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5535,6 +5636,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5640,6 +5742,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5648,6 +5751,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
             aria-roledescription="sortable"
+            class="OrderableItem"
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
@@ -5781,7 +5885,7 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             aria-live="assertive"
             id="DndLiveRegion-15"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>

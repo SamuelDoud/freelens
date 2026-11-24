@@ -6,29 +6,11 @@
  * This replaces the webpack-based auto-registration system.
  */
 
-import createCanIInjectable from "./create-can-i.injectable";
-import createRequestNamespaceListPermissionsInjectable from "./create-request-namespace-list-permissions.injectable";
-import createListNamespacesInjectable from "./list-namespaces.injectable";
 import loadKubeconfigInjectable from "./load-kubeconfig.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
-  try {
-    di.register(createCanIInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(createListNamespacesInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(createRequestNamespaceListPermissionsInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
   try {
     di.register(loadKubeconfigInjectable);
   } catch (e) {

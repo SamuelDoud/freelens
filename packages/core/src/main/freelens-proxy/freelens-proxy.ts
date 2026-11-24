@@ -16,12 +16,13 @@ import { abortFetchWhenClientCloses, isClientGone } from "./abort-when-client-cl
 import { hasAllowedHost, hasAllowedOrigin } from "./allowed-request";
 import { toClusterRoute } from "./cluster-route-redirect";
 import { stripToken, tokenFromHeaders } from "./freelens-proxy-token";
+import { userAgentForCluster } from "./user-agent";
 import type http from "node:http";
 
 import type { Logger } from "@freelensapp/logger";
+import type { SetRequired } from "@freelensapp/type-fest";
 
 import type { ProxyServer, ServerOptions } from "http-proxy-3";
-import type { SetRequired } from "type-fest";
 
 import type { EmitAppEvent } from "../../common/app-event-bus/emit-event.injectable";
 import type { SelfSignedCert } from "../../common/certificate/certificate";
@@ -84,18 +85,6 @@ export function isLongRunningRequest(reqUrl: string) {
   const url = new URL(reqUrl, "http://localhost");
 
   return getBoolean(url.searchParams, watchParam) || getBoolean(url.searchParams, followParam);
-}
-
-/**
- * Whether a request reaches a cluster or the main process's own API and so has
- * to carry the token: the kube api (`/api-kube`), the local router api
- * (`/api`, which serves helm, the service-account kubeconfig, port-forward,
- * metrics and the resource applier), and the internal upgrade (`/api?…`).
- * `apiKubePrefix` begins with `apiPrefix`, so the one test covers both. Serving
- * the renderer and `/version` need no token, so the window loads without one.
- */
-export function requiresToken(reqUrl: string) {
-  return reqUrl.startsWith(apiPrefix);
 }
 
 /**
@@ -168,6 +157,12 @@ export class FreelensProxy {
    * cluster, for every kube api request on its way to the cluster.
    */
   protected readonly clusterRoutes = new WeakMap<object, Omit<ClusterRouteRedirect, "location">>();
+
+  /**
+   * The cluster of every kube api request on its way to the cluster, which a
+   * failure of the request is reported for.
+   */
+  protected readonly requestClusters = new WeakMap<object, Cluster>();
 
   constructor(private readonly dependencies: Dependencies) {
     this.configureProxy(dependencies.proxy);
@@ -428,9 +423,18 @@ export class FreelensProxy {
         return;
       }
 
-      this.dependencies.logger.error(`[FREELENS-PROXY]: http proxy errored for cluster: ${describeError(error)}`, {
-        url: req.url,
-      });
+      // A disconnect stops the proxy of the cluster, which fails the requests
+      // still on their way, such as those of a refresh of its accessibility.
+      if (this.requestClusters.get(req)?.disconnected.get()) {
+        this.dependencies.logger.debug(
+          `[FREELENS-PROXY]: request of a disconnected cluster failed: ${describeError(error)}`,
+          { url: req.url },
+        );
+      } else {
+        this.dependencies.logger.error(`[FREELENS-PROXY]: http proxy errored for cluster: ${describeError(error)}`, {
+          url: req.url,
+        });
+      }
 
       if (target) {
         this.dependencies.logger.debug(`Failed proxy to target: ${JSON.stringify(target, null, 2)}`);
@@ -476,11 +480,19 @@ export class FreelensProxy {
     const requestedUrl = req.url;
     const cluster = this.dependencies.getClusterForRequest(req);
 
-    // Requires the token on the kube api and the local router api, on the URL
-    // as the lookup has rewritten it, so the `/<clusterId>/…` path of kubectl
-    // and helm is covered. The renderer and `/version` are served without a
-    // token. The host and origin are checked first, behind the token.
-    if (requiresToken(req.url)) {
+    // Every request needs the token, except one for a route the router serves
+    // without it: the renderer's files and `/version`, which the window loads
+    // before it has the token. The router decides on the path it routes by.
+    // The kube api goes to the cluster rather than the router, and is judged on
+    // the URL as the lookup has rewritten it, so the `/<clusterId>/…` path of
+    // kubectl and helm is covered. The rows service of a cluster is not routed
+    // by the router either, and needs the token as the kube api does. The host
+    // and origin are checked first, behind the token.
+    if (
+      req.url.startsWith(apiKubePrefix) ||
+      req.url.startsWith(`${apiRowsPrefix}/`) ||
+      !this.dependencies.router.isServedWithoutToken(req.method, req.url)
+    ) {
       // An API response, whatever answers it. The renderer's own files may
       // still be cached.
       res.setHeader("Cache-Control", noStore);
@@ -511,6 +523,15 @@ export class FreelensProxy {
       // gateway such as the GitLab agent server refuses an origin it does not
       // know, so it is not forwarded.
       delete req.headers.origin;
+
+      // The renderer cannot set its `User-Agent`, and the cluster would name
+      // the field manager of its writes after the browser's
+      const userAgent = req.headers["user-agent"];
+
+      if (userAgent !== undefined) {
+        req.headers["user-agent"] = userAgentForCluster(userAgent);
+      }
+
       req.url = req.url.replace(apiKubePrefix, "");
 
       // A cluster the user has not connected gets no proxy process started for
@@ -553,6 +574,8 @@ export class FreelensProxy {
       if (proxyTarget) {
         const { apiUrl } = freelensK8sProxyManager;
 
+        this.requestClusters.set(req, cluster);
+
         if (apiUrl) {
           this.clusterRoutes.set(req, {
             requestPath: req.url,
@@ -568,7 +591,9 @@ export class FreelensProxy {
     res.setHeader("Content-Security-Policy", this.dependencies.contentSecurityPolicy);
 
     try {
-      await this.dependencies.router.route(cluster, req, res);
+      if (!(await this.dependencies.router.route(cluster, req, res))) {
+        this.respondWithError(res, 404, "Not Found");
+      }
     } catch (error) {
       this.dependencies.logger.error("[FREELENS-PROXY]: failed to route request", { url: req.url, error });
       this.respondWithError(res, 500, `Oops, something went wrong.\n${error}`);

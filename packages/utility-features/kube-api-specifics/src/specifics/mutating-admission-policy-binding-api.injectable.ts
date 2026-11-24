@@ -21,7 +21,7 @@ export const mutatingAdmissionPolicyBindingApiInjectable = getInjectable({
   instantiate: (di) => {
     assert(
       di.inject(storesAndApisCanBeCreatedInjectionToken),
-      "const mutatingAdmissionPolicyBindingApi is only available in certain environments",
+      "mutatingAdmissionPolicyBindingApi is only available in certain environments",
     );
 
     return new MutatingAdmissionPolicyBindingApi({

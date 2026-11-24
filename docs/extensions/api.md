@@ -118,6 +118,14 @@ uses a host API whose types name it: `Renderer.Component.MonacoEditor` takes its
 extension that renders it declares `monaco-editor`, at the host's version
 ([C11](#c11-third-party-bundled-libraries)).
 
+**The host's Monaco leaves out what Freelens does not use:** the language
+services of TypeScript and JavaScript, CSS and HTML, and the LSP client.
+`MonacoEditor.typescript`, `MonacoEditor.css`, `MonacoEditor.html` and
+`MonacoEditor.lsp` are empty, although the types of `monaco-editor` declare
+them, so an extension that uses them fails at runtime, not when it compiles.
+Those languages keep their syntax highlighting, and JSON keeps its language
+service.
+
 **Each process publishes the set it has**, which is why the third column exists.
 Main has no window, so it publishes no DOM renderer and no code editor. What it
 has is what an extension's main entry point can really share: `mobx`, where an
@@ -352,6 +360,46 @@ add the member to the omit list and a line to the migration guide.
 at runtime in a renderer without Node — a `ReferenceError` for a global such as
 `Buffer` — and not at compile time.
 
+### `Common.Types` names the helper types of the signatures
+
+Besides the registration shapes, `Common.Types` exports the helper types the
+signatures of the API are written in, so that an extension can type what it
+passes to them:
+
+| Type                | Where the API uses it                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------- |
+| `PartialDeep`       | the data of `KubeApi.create`, `update` and `patch`, of `KubeObjectStore` and `JsonApi` |
+| `ReadonlyDeep`      | `Renderer.Theme.activeTheme`, `Common.Util.readonly`                                   |
+| `RequireAtLeastOne` | `KubeObjectHandlerRegistration`                                                        |
+| `RequireExactlyOne` | the pod volumes and the ingress backends of `K8sApi`                                   |
+| `SetRequired`       | the input validators of `Renderer.Component`                                           |
+| `JsonValue`         | `JSONSchemaProps.example`                                                              |
+| `ValueOf`           | the query parameters of `JsonApi`                                                      |
+
+```ts
+import type { Common, Renderer } from "@freelensapp/extensions";
+
+const patch: Common.Types.PartialDeep<Renderer.K8sApi.Pod> = {
+  metadata: { labels: { team: "storage" } },
+};
+```
+
+**Guarantee.** Each is the type of the same name of type-fest 5.10.0, from a
+copy of its sources that the host carries in a private package, so it
+accepts and rejects the same values, with `exactOptionalPropertyTypes` on or
+off. The declaration imports nothing from `type-fest`
+([C11](#c11-third-party-bundled-libraries)), and an extension needs no
+type-fest to compile against it. Moving the copy to a type-fest that requires
+more of an extension's compiler options waits for a major
+([C14](#c14-versioning-and-compatibility)). `Common.PackageJson` is the
+`PackageJson` of the same copy, as a type alias.
+
+**Failure mode.** A type-fest type that `Common.Types` does not export is not
+reachable through the API. An extension that needs one declares `type-fest` in
+its own `devDependencies`, at any version; the types of that copy are separate
+declarations, which match the ones of the API only as far as the two versions
+agree.
+
 ### `Catalog.getAllClusters()` and `getClusterById()` are observable
 
 `Main.Catalog` and `Renderer.Catalog` both have `getAllClusters()` and
@@ -491,6 +539,217 @@ intent.
 covers the store, and
 `packages/core/src/extensions/__tests__/extension-api-credentials.test.ts` the
 binding to the instance through the API.
+
+### The overview cards follow the user's choice of Cards or Charts
+
+The cluster overview and the workloads overview show their numbers either as
+the ring and pie charts or as cards, by the user's choice in Preferences →
+Personalization → Overview style. An extension shows its own numbers the same
+way with the components the overviews render:
+
+- **`Renderer.Component.CapacityCard`** shows the usage of one resource on the
+  scale of what is allocatable. Its props, `CapacityCardProps`, are a
+  `title`, the `usage` and `allocatable` values, the optional `requests`,
+  `limits` and `capacity`, a `unit` or a `format` for the values and a
+  `formatHeadline` for the headline number, and `labels`
+  (`CapacityCardLabels`) for the names of the values, each of which keeps its
+  English default when it is not given. The card warns when the limits are
+  more than what is allocatable, and lists the capacity only when it differs
+  from it.
+- **`Renderer.Component.StatusCard`** shows the number of items of one kind and
+  their statuses. Its props, `StatusCardProps`, are a `title`, the `statuses`
+  in the order of the bar, an optional `total` that defaults to the sum of
+  their counts, an `emptyText` for no items and a `noStatusText` for items
+  without a status, and an `onClick` that makes the whole card a button. Each
+  `StatusCardStatus` has a `label`, a `count`, a CSS `color` and a `tone`
+  (`StatusCardTone`): `healthy` statuses make the healthy share, `failing` ones
+  the number that fail.
+- **`Common.App.Preferences.getOverviewStyle()`** returns `"charts"`, the
+  default, or `"cards"`. It is observable: an `observer` component that calls
+  it renders again when the user switches.
+
+The props are the contract, not the shape of the host's metrics or stores, and
+both are plain data with no host type in them. The cards take every color from
+the theme ([C10](#c10-styling-and-css)) apart from the `color` of a status,
+which is what the extension gives: a theme variable such as `var(--colorOk)`
+keeps the card in step with the theme. Each card is a `<section>` named by its
+title, or a `<button>` when it has an `onClick`. A `data-testid` given to a
+card is the prefix of the test ids of its parts. The cards set no width:
+the host lays them out in a grid of columns at least 200px wide, 16px apart.
+They are square panels without a border, drawn in `--contentColor` like the
+other panels of the overviews, so an extension that shows them among panels of
+its own spaces them the same way. A status card that is a button shows the
+hover with its background, tinted with `--primary`, and the focus with an
+outline.
+
+Every part of a card has a class that starts with the name of the card, such
+as `.CapacityCard-title`, `.CapacityCard-legendRow` or `.StatusCard-header`,
+and none has a generic class such as `.header` or `.title`. The styles of the
+page a card is on therefore do not reach into it, and an extension may restyle
+a part by its class ([C10](#c10-styling-and-css)). The state of a part is a
+data attribute rather than a class: `data-warning` on a legend row of a
+capacity card whose limits are more than what is allocatable, `data-swatch`
+on its legend swatches, `data-healthy` on the bar segments of a healthy
+status of a status card, and `data-failing` on its legend rows of a failing
+one.
+
+`packages/core/src/extensions/__tests__/extension-api-overview-cards.test.tsx`
+covers the components and the preference as an extension reaches them.
+
+### The copy controls copy what a view shows
+
+The details views of the host copy a value to the clipboard in one click. An
+extension does the same with the components they render:
+
+- **`Renderer.Component.CopyToClipboardIcon`** copies the text its `getText`
+  returns, and calls it on each click, so the text is the one of that moment.
+  It shows the `content_copy` icon with the tooltip and the `aria-label`
+  "Copy", and `done` with "Copied!" for a few seconds after the write
+  succeeds. A write the clipboard refuses leaves "Copy" in place and shows no
+  notification. Its props, `CopyToClipboardIconProps`, are `getText`, a
+  `className` and a `data-testid`.
+- **`Renderer.Component.CopyableMonacoEditor`** is a `MonacoEditor` with the
+  icon next to its top-right corner, outside the editor, so that it covers
+  neither the text, the minimap nor the scrollbar. Its props,
+  `CopyableMonacoEditorProps`, are those of `MonacoEditor` and a
+  `data-testid`.
+- **`Renderer.Component.CopyableInput`** is an `Input` with the icon after
+  it. Its props, `CopyableInputProps`, are those of `Input`, a
+  `getTextToCopy` that turns what the input shows into the text to copy, as
+  the details of a secret decode its value, `children` that are shown between
+  the input and the icon, such as more icons of the input, and a
+  `data-testid`.
+
+The editor and the input copy what they show: the last value they were given,
+or the last edit made in them, whichever came later. An unsaved edit is
+therefore copied, and `onChange` still gets every edit. A `data-testid` given
+to either is the test id of the whole, and the same with `-copy` the one of
+its icon.
+
+The parts have global classes an extension may restyle
+([C10](#c10-styling-and-css)): `.CopyToClipboardIcon` next to `.Icon` on the
+icon, `.CopyableMonacoEditor` on the wrapper of the editor and
+`.CopyableMonacoEditor-editor` on the editor, `.CopyableInput` on the wrapper
+of the input and `.CopyableInput-input` on the input. They take no color of
+their own.
+
+`packages/core/src/extensions/__tests__/extension-api-copy-to-clipboard.test.tsx`
+covers the components as an extension reaches them.
+
+### An image shows the image the node pulled for it
+
+The details of a pod show the image of a container, and the reference of an
+image volume, as a badge whose tooltip is the image the node pulled for it. An
+extension shows an image the same way with
+**`Renderer.Component.ImageReference`**. Its props, `ImageReferenceProps`, are
+the `reference`, the image as the object names it, which is the label of the
+badge, the `digest`, the image the node pulled, which is its tooltip, a
+`className` and a `data-testid`. Without a `digest`, or with an empty one, the badge has no
+tooltip. The host takes the `digest` of a container from the `imageID` of its
+status, and the one of an image volume from the `volumeStatus.image.imageRef`
+of the mount of the volume in the status of a container, which `K8sApi` types
+as `PodContainerStatus.volumeMounts`. A cluster that does not report the
+digest of an image volume leaves its badge without a tooltip.
+
+The badge has the global class `.ImageReference`, which an extension may
+restyle ([C10](#c10-styling-and-css)). It takes no color of its own.
+
+`packages/core/src/extensions/__tests__/extension-api-image-reference.test.tsx`
+covers the component as an extension reaches it.
+
+### The generic components are the ones the host's views are built from
+
+The host builds its views from a set of generic components. An extension
+renders the same ones, rather than its own copies with their own look and
+their own bugs. Each is a component of `Renderer.Component` and its props
+type, and no type of a library it is built on is part of either: the
+libraries stay an implementation detail that the host may replace.
+
+An extension renders them inside the host's React tree, as it renders any
+component of `Renderer.Component`. `ErrorBoundary` and `Animate` read the
+host's values from there, the history and the default durations, which an
+extension reaches in no other way
+([C7](#c7-the-dependency-injection-surface)). Rendered into a React root of
+the extension's own, they throw.
+
+- **`Renderer.Component.ErrorBoundary`** renders its `children` until one of
+  them throws while it renders. It then shows the error and the component
+  stack in place of the children, with a link to the issue tracker of
+  Freelens and a "Back" button that goes back in the history of the window.
+  Its props, `ErrorBoundaryProps`, are the `children` and a `resetKey`: when
+  it changes, the boundary renders the children again. Give it with the
+  children, from the same render, such as the path of the page they show.
+- **`Renderer.Component.Animate`** renders its only child with the classes of
+  an animation: `.Animate` and the `name`, and `.enter` from the frame after
+  it is shown, or `.leave` from when `enter` turns false, for the
+  `leaveDuration`, after which it renders nothing. It sets the durations as
+  the custom properties `--enter-duration` and `--leave-duration` on the
+  child. Its props, `AnimateProps`, are the `children`, the `name`
+  (`AnimateName`): `opacity`, the default, `slide-right`, `opacity-scale`, or
+  the name of an animation of the extension's own stylesheet, `enter`, which
+  is `true` by default, `enterDuration` and `leaveDuration` in milliseconds,
+  which are the host's defaults when they are not given, and `onEnter` and
+  `onLeave`.
+- **`Renderer.Component.ResizingAnchor`** is the edge the user drags to
+  resize a panel. It is positioned absolutely on the side of its parent that
+  `placement` (`ResizeSide`) and `direction` (`ResizeDirection`) say:
+  `leading` is the left or the top, `trailing` the right or the bottom. Its
+  props, `ResizingAnchorProps`, are those two, `getCurrentExtent` that returns
+  the width or the height of the panel, `onDrag` that gets the new one,
+  between `minExtent` and `maxExtent`, `growthDirection`
+  (`ResizeGrowthDirection`) for a panel that grows towards the top or the
+  left, `onStart`, `onEnd`, `onDoubleClick`, `onlyButtons` to resize with
+  some mouse buttons only, `disabled`, and the callbacks for the extent
+  crossing its limits. A `maxExtent` below the `minExtent` throws.
+- **`Renderer.Component.ColorSwatch`** is a button that shows a `color`, or
+  its `children` as text when it has no color, for a choice that is not one.
+  Its props, `ColorSwatchProps`, are those of a `<button>` but its `color`
+  and `children`, `selected`, and a `tooltip` shown above or below it.
+  **`Renderer.Component.ColorSwatchGroup`** lays out swatches in a row that
+  wraps, as a group named by its `label` (`ColorSwatchGroupProps`).
+  **`Renderer.Component.CustomColorSwatch`** is a swatch that opens a panel
+  with a picker for any color and a field for its hex code. Its props,
+  `CustomColorSwatchProps`, are the custom `value` in use, or `undefined`,
+  an `initialColor` the picker starts from, `onChange`, which gets the color
+  as `#rrggbb` when the picker is released, when the field is left or
+  confirmed, and when the panel closes, and a `data-testid` that is the
+  prefix of the test ids of the panel (`-panel`) and the field (`-hex`).
+- **`Renderer.Component.OrderableList`** is a vertical list whose items the
+  user reorders by dragging them. Its props, `OrderableListProps`, are the
+  `children`, each with a key unique in the list, a `className`, and
+  `onReorder`, which gets the index of the dragged item and the index it was
+  dropped at. The list shows the new order at once, and the order of its
+  children again when they change, so the extension keeps the order it is
+  told. It wraps each child in a **`Renderer.Component.OrderableItem`**,
+  whose props, `OrderableItemProps`, are the `item` and its `id`. Outside a
+  list an item shows its element and cannot be dragged.
+- **`Renderer.Component.VirtualList`** renders only the rows of a long list
+  that are shown. Its props, `VirtualListProps`, are the `items`, either
+  strings or objects with a `getId()`, their `rowHeights` in pixels, `getRow`,
+  which gets the index of a string item or the id of an object and returns
+  the element of its row, the `selectedItemId` it scrolls to, a `width`, a
+  `fixedHeight` instead of the height of its parent, `onScroll` with the
+  scroll event of the list, an `outerRef` to the element that scrolls, and
+  `initialOffset` and `readyOffset`, the number of rows it renders beyond
+  those shown, first and once it has rendered. The style of a row element
+  gets the position of the row. Its ref, `VirtualListRef`, has
+  `scrollToItem`, which takes the index and a `VirtualListAlign`: `start`,
+  `center`, `end`, `auto` or `smart`, and `resetAfterIndex`, which measures
+  the rows again.
+
+They have global classes an extension may restyle
+([C10](#c10-styling-and-css)): `.ErrorBoundary`; `.Animate` with the name of
+the animation, `.enter` and `.leave`; `.ResizingAnchor` with the direction,
+the placement, `.disabled` and `.resizing`, and `.resizing` on the `<body>`
+while it is dragged; `.ColorSwatch`, whose state is `aria-pressed` for the
+selected swatch and `data-text` for one without a color,
+`.ColorSwatchGroup`, `.CustomColorSwatch`, `.CustomColorSwatch-panel` and
+`.CustomColorSwatch-hex`; `.OrderableList` and `.OrderableItem`; and
+`.VirtualList`. They take every color from the theme, but the color a
+swatch shows.
+
+`packages/core/src/extensions/__tests__/extension-api-generic-components.test.tsx`
+covers the components as an extension reaches them.
 
 ---
 
@@ -808,8 +1067,10 @@ when it exists, `style.css` otherwise. Looking for a stylesheet the extension
 does not ship leaves no error in the renderer console.
 
 **Surface.** One CSS asset next to the renderer entry. The host's shared
-component classes (`.Tooltip`, `.Button`, …) are global and part of the public
-API and may be targeted; they must not be redefined. An extension's own styles
+component classes (`.Tooltip`, `.Button`, `.CapacityCard`, `.StatusCard`,
+`.ColorSwatch`, `.OrderableList`, `.VirtualList`, …) are global and part of
+the public API and may be targeted; they must not be redefined. So are the classes of the parts of the overview cards, which start
+with the name of the card (`.CapacityCard-title`, `.StatusCard-legendRow`, …). An extension's own styles
 belong in CSS Modules.
 
 **Failure mode.** A build that splits CSS per module emits assets the host does
@@ -832,14 +1093,14 @@ It splits in two:
   `mobx`, `mobx-react`, `monaco-editor`, and the `@types/react` and
   `@types/react-dom` that type the first two.
 - **Free to bundle**: `chart.js`, `react-select`, `conf`, `es-toolkit`, `immer`,
-  `rfc6902`, `type-fest`. A bundled `react-select` still gets the host's React,
+  `rfc6902`. A bundled `react-select` still gets the host's React,
   because that copy's own `import "react"` is rewritten too. `es-toolkit` is
   there only for the `DebouncedFunc` type the declaration imports from
   `es-toolkit/compat`.
 
 **Surface.** The built declaration imports these external specifiers:
-`type-fest`, `mobx`, `mobx-react`, `react`, `react/jsx-runtime`, `react-dom`,
-`conf`, `rfc6902`, `immer`, `es-toolkit/compat`, `monaco-editor`, `chart.js`,
+`mobx`, `mobx-react`, `react`, `react/jsx-runtime`, `react-dom`, `conf`,
+`rfc6902`, `immer`, `es-toolkit/compat`, `monaco-editor`, `chart.js`,
 `react-select`.
 
 This is the complement of the namespace enumeration in
@@ -887,6 +1148,16 @@ members `Common.Util` leaves out
 ([C5](#util-is-freelensapputilities-minus-the-node-bound-members)) with their
 `node:` imports. `@types/node` is therefore not a dependency of the package: an
 extension whose main code needs it declares it itself.
+
+**Nothing of `type-fest` is imported.** The helper types the declaration names
+come from a copy in a private package of the host, inlined like the other
+private packages ([C5](#commontypes-names-the-helper-types-of-the-signatures)), because a
+dependency would impose the floors of each type-fest major, such as the
+TypeScript version and `exactOptionalPropertyTypes`, on every extension. The
+same config enforces it: `build:dist` fails on an import of `type-fest`, which
+a workspace source importing the package would bring back. The doc comments of
+the inlined types still name `type-fest` in their examples; they are not
+imports.
 
 **How the package declares them.** The host-provided entries are in
 `peerDependencies`, each **optional** in `peerDependenciesMeta` alongside
@@ -1199,6 +1470,19 @@ why there is no packing step and no symlink. The renderer loads from
 `freelens-extension://extensions/<sanitized-name>/<version>-<digest8>/<file>`
 — one origin for all extensions, because an origin per extension would advertise
 an isolation the host cannot guarantee under `contextIsolation: false`.
+
+**Verified and unverified installs.** A tarball is installed **verified** when
+its source vouches for its bytes: the `dist.integrity` of the registry's
+package metadata, or a `.tgz.sha256` sidecar beside a tarball installed from a
+URL or from a file. A download which does not match its checksum is refused. A
+tarball with no checksum is installed **unverified**, and an unverified install
+stays **disabled** until the user enables it on the Extensions page; a verified
+install is enabled at once. Installing over an enabled extension disables it
+first, so an unverified build installed over it leaves it disabled too. A
+directory install is unverified by construction, is shown as development rather
+than unverified, and is enabled at once, because it is the development loop. A
+checksum proves transfer integrity, not authenticity: a host which can rewrite
+the tarball can rewrite its sidecar.
 
 ## The three dependency categories
 

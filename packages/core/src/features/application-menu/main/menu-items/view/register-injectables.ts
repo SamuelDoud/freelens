@@ -15,6 +15,7 @@ import { registerInjectables as registerReloadInjectables } from "./reload/regis
 import { registerInjectables as registerSeparatorsInjectables } from "./separators/register-injectables";
 import { registerInjectables as registerThemeInjectables } from "./theme/register-injectables";
 import viewMenuItemInjectable from "./view-menu-item.injectable";
+import { registerInjectables as registerZoomInjectables } from "./zoom/register-injectables";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
@@ -61,6 +62,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerThemeInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerZoomInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

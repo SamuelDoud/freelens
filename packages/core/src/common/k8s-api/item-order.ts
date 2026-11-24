@@ -14,49 +14,27 @@
 
 type Criterion = unknown;
 
-const priority = (value: unknown): number => {
-  if (typeof value === "symbol") return 1;
-  if (value === null) return 2;
-  if (value === undefined) return 3;
-  if (value !== value) return 4;
+/**
+ * The comparison of `ItemStore.sortItems`, so that a flush that merges moved items into the
+ * sorted list puts them where a full sort would: `compareSortValues`, with the direction applied
+ * to every key.
+ */
+import { rectifyOrdering } from "@freelensapp/utilities";
+import { compareSortValues } from "../item.store";
 
-  return 0;
-};
-
-/** `compareValues` of es-toolkit's compat `orderBy`, which `ItemStore.sortItems` uses. */
-function compareValues(a: any, b: any, order: string | undefined): number {
-  if (a !== b) {
-    // The common keys: two strings, or two numbers that are not NaN.
-    if (
-      (typeof a === "string" && typeof b === "string") ||
-      (typeof a === "number" && typeof b === "number" && a === a && b === b)
-    ) {
-      return a < b === (order !== "desc") ? -1 : 1;
-    }
-
-    const aPriority = priority(a);
-    const bPriority = priority(b);
-
-    if (aPriority === bPriority && aPriority === 0) {
-      if (a < b) return order === "desc" ? 1 : -1;
-      if (a > b) return order === "desc" ? -1 : 1;
-    }
-
-    return order === "desc" ? bPriority - aPriority : aPriority - bPriority;
-  }
-
-  return 0;
+function compareValues(a: unknown, b: unknown, order: "asc" | "desc"): number {
+  return rectifyOrdering(compareSortValues(a, b), order);
 }
 
 export class ItemOrder<Item> {
   private readonly by: readonly ((item: Item) => unknown)[];
-  // Only the first key takes the order, as in orderBy.
-  private readonly order: string | undefined;
+  // The order of every key, as in `ItemStore.sortItems`.
+  private readonly order: "asc" | "desc";
 
   constructor(by: readonly ((item: Item) => unknown)[], order?: "asc" | "desc") {
     // orderBy sorts by the value itself when there is no function to sort by.
     this.by = by.length > 0 ? by : [(item) => item];
-    this.order = order == null ? undefined : String(order);
+    this.order = order ?? "asc";
   }
 
   criteria(item: Item): Criterion[] {
@@ -66,7 +44,7 @@ export class ItemOrder<Item> {
   /** Negative when `a` sorts before `b`, positive after, zero when the order does not tell them apart. */
   compareCriteria(a: readonly Criterion[], b: readonly Criterion[]): number {
     for (let index = 0; index < a.length; index += 1) {
-      const result = compareValues(a[index], b[index], index === 0 ? this.order : undefined);
+      const result = compareValues(a[index], b[index], this.order);
 
       if (result !== 0) {
         return result;
@@ -78,7 +56,7 @@ export class ItemOrder<Item> {
 
   compare(a: Item, b: Item): number {
     for (let index = 0; index < this.by.length; index += 1) {
-      const result = compareValues(this.by[index](a), this.by[index](b), index === 0 ? this.order : undefined);
+      const result = compareValues(this.by[index](a), this.by[index](b), this.order);
 
       if (result !== 0) {
         return result;
@@ -91,7 +69,7 @@ export class ItemOrder<Item> {
   /** `compareCriteria` of the criteria of an item and the item, without making the criteria of the item. */
   private compareCriteriaTo(criteria: readonly Criterion[], item: Item): number {
     for (let index = 0; index < this.by.length; index += 1) {
-      const result = compareValues(criteria[index], this.by[index](item), index === 0 ? this.order : undefined);
+      const result = compareValues(criteria[index], this.by[index](item), this.order);
 
       if (result !== 0) {
         return result;

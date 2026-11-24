@@ -1,7 +1,7 @@
 {
   // Ignore mismatch for Biome version to make Renovate updates without error
   // trunk-ignore(biome/deserialize)
-  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
   "assist": {
     "actions": {
       "source": {
@@ -333,8 +333,6 @@
         "**/packages/core/src/renderer/components/network-ingresses/ingress-store.injectable.ts",
         "**/packages/core/src/renderer/components/network-policies/store.injectable.ts",
         "**/packages/core/src/renderer/components/network-services/store.injectable.ts",
-        "**/packages/core/src/renderer/components/node-pod-menu/pod-attach-menu.tsx",
-        "**/packages/core/src/renderer/components/node-pod-menu/pod-shell-menu.tsx",
         "**/packages/core/src/renderer/components/nodes/store.injectable.ts",
         "**/packages/core/src/renderer/components/pod-security-policies/store.injectable.ts",
         "**/packages/core/src/renderer/components/slider/slider.tsx",
@@ -358,7 +356,6 @@
         "**/packages/core/src/renderer/k8s/api-kube.injectable.ts",
         "**/packages/core/src/renderer/logger/browser-console-transport.ts",
         "**/packages/core/src/renderer/protocol-handler/bind-protocol-add-route-handlers/bind-protocol-add-route-handlers.tsx",
-        "**/packages/core/src/renderer/themes/active.injectable.ts",
         "**/packages/core/src/renderer/utils/storage-helper.ts",
         "**/packages/core/src/renderer/utils/sync-box/provide-initial-values-for-sync-boxes.injectable.ts"
       ],
@@ -366,6 +363,18 @@
         "rules": {
           "correctness": {
             "noNodejsModules": "off"
+          }
+        }
+      }
+    },
+    {
+      // The copy of type-fest keeps the namespace of `PackageJson`, which is
+      // part of the shape of `Common.PackageJson` in the extension API.
+      "includes": ["**/packages/utility-features/type-fest/source/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNamespace": "off"
           }
         }
       }

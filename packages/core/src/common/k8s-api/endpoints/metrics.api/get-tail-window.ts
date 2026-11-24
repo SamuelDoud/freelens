@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { calculateAdaptiveStep } from "./request-metrics.injectable";
+import { calculateAdaptiveStep } from "./adaptive-step";
 
 /**
  * How far before a point an instant query looks for a sample, in seconds.

@@ -60,6 +60,14 @@ export type CommonStatusBarRegistration = Common.Types.StatusBarRegistration;
 export type CommonPageRegistration = Common.Types.PageRegistration;
 export type CommonAppPreferenceRegistration = Common.Types.AppPreferenceRegistration;
 export type CommonCustomResourceRegistration = Common.Types.CustomResourceRegistration;
+// The helper types the signatures of the API are written in.
+export type CommonJsonValue = Common.Types.JsonValue;
+export type CommonPartialDeep = Common.Types.PartialDeep<Renderer.K8sApi.Pod, { recurseIntoArrays: true }>;
+export type CommonReadonlyDeep = Common.Types.ReadonlyDeep<Renderer.K8sApi.Pod>;
+export type CommonRequireAtLeastOne = Common.Types.RequireAtLeastOne<{ first?: string; second?: number }>;
+export type CommonRequireExactlyOne = Common.Types.RequireExactlyOne<{ first: string; second: number }>;
+export type CommonSetRequired = Common.Types.SetRequired<{ optional?: string }, "optional">;
+export type CommonValueOf = Common.Types.ValueOf<{ first: string; second: number }>;
 
 // --- Main --------------------------------------------------------------------
 
@@ -105,6 +113,109 @@ export type RendererIconProps = Renderer.Component.IconProps;
 export type RendererTableOrderBy = Renderer.Component.TableOrderBy;
 export type RendererPieChartData = Renderer.Component.PieChartData;
 export type RendererSecretCertificatesProps = Renderer.Component.SecretCertificatesProps;
+
+// The copy controls of the details views, whose props name what they copy.
+export type RendererCopyToClipboardIconProps = Renderer.Component.CopyToClipboardIconProps;
+export type RendererCopyableMonacoEditorProps = Renderer.Component.CopyableMonacoEditorProps;
+export type RendererCopyableInputProps = Renderer.Component.CopyableInputProps;
+export type RendererCopyToClipboardIconTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CopyToClipboardIcon>[0] extends RendererCopyToClipboardIconProps ? true : false
+>;
+export type RendererCopyableMonacoEditorTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CopyableMonacoEditor>[0] extends RendererCopyableMonacoEditorProps ? true : false
+>;
+export type RendererCopyableInputTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CopyableInput>[0] extends RendererCopyableInputProps ? true : false
+>;
+
+// The badge of an image, and the status of a container that gives the digest
+// of an image volume.
+export type RendererImageReferenceProps = Renderer.Component.ImageReferenceProps;
+export type RendererImageReferenceTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.ImageReference>[0] extends RendererImageReferenceProps ? true : false
+>;
+export type K8sApiImageVolumeDigest = Holds<
+  NonNullable<
+    NonNullable<NonNullable<Renderer.K8sApi.PodContainerStatus["volumeMounts"]>[number]["volumeStatus"]>["image"]
+  >["imageRef"] extends string
+    ? true
+    : false
+>;
+
+// The generic components the host's views are built from. The enums of the
+// resizing anchor and its class are values and types alike, so they are named
+// as types here; the function components are values only, and their props
+// types only.
+export type RendererErrorBoundaryProps = Renderer.Component.ErrorBoundaryProps;
+export type RendererAnimateProps = Renderer.Component.AnimateProps;
+export type RendererAnimateName = Renderer.Component.AnimateName;
+export type RendererResizingAnchorProps = Renderer.Component.ResizingAnchorProps;
+export type RendererResizingAnchor = Renderer.Component.ResizingAnchor;
+export type RendererResizeDirection = Renderer.Component.ResizeDirection;
+export type RendererResizeSide = Renderer.Component.ResizeSide;
+export type RendererResizeGrowthDirection = Renderer.Component.ResizeGrowthDirection;
+export type RendererColorSwatchProps = Renderer.Component.ColorSwatchProps;
+export type RendererColorSwatchGroupProps = Renderer.Component.ColorSwatchGroupProps;
+export type RendererCustomColorSwatchProps = Renderer.Component.CustomColorSwatchProps;
+export type RendererOrderableListProps = Renderer.Component.OrderableListProps;
+export type RendererOrderableItemProps = Renderer.Component.OrderableItemProps;
+export type RendererVirtualListProps = Renderer.Component.VirtualListProps<string>;
+export type RendererVirtualListRef = Renderer.Component.VirtualListRef;
+export type RendererVirtualListAlign = Renderer.Component.VirtualListAlign;
+export type RendererErrorBoundaryTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.ErrorBoundary>[0] extends RendererErrorBoundaryProps ? true : false
+>;
+export type RendererAnimateTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.Animate>[0] extends RendererAnimateProps ? true : false
+>;
+export type RendererResizingAnchorTakesItsProps = Holds<
+  ConstructorParameters<typeof Renderer.Component.ResizingAnchor>[0] extends RendererResizingAnchorProps ? true : false
+>;
+export type RendererColorSwatchTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.ColorSwatch>[0] extends RendererColorSwatchProps ? true : false
+>;
+export type RendererColorSwatchGroupTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.ColorSwatchGroup>[0] extends RendererColorSwatchGroupProps ? true : false
+>;
+export type RendererCustomColorSwatchTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CustomColorSwatch>[0] extends RendererCustomColorSwatchProps ? true : false
+>;
+export type RendererOrderableListTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.OrderableList>[0] extends RendererOrderableListProps ? true : false
+>;
+export type RendererOrderableItemTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.OrderableItem>[0] extends RendererOrderableItemProps ? true : false
+>;
+export type RendererVirtualListTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.VirtualList<string>>[0] extends RendererVirtualListProps ? true : false
+>;
+// What the ref scrolls with is the API's own type, not one of the library
+// that virtualizes the list.
+export type RendererVirtualListRefTakesItsAlign = Holds<
+  Parameters<RendererVirtualListRef["scrollToItem"]>[1] extends RendererVirtualListAlign ? true : false
+>;
+
+// The overview cards and their props, the contract of their own that both
+// overviews of the host render with, and the preference that chooses between
+// them and the charts.
+export type RendererCapacityCardProps = Renderer.Component.CapacityCardProps;
+export type RendererCapacityCardLabels = Renderer.Component.CapacityCardLabels;
+export type RendererStatusCardProps = Renderer.Component.StatusCardProps;
+export type RendererStatusCardStatus = Renderer.Component.StatusCardStatus;
+export type RendererStatusCardTone = Renderer.Component.StatusCardTone;
+export type RendererCapacityCardTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CapacityCard>[0] extends RendererCapacityCardProps ? true : false
+>;
+export type RendererStatusCardTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.StatusCard>[0] extends RendererStatusCardProps ? true : false
+>;
+export type CommonOverviewStyleIsCardsOrCharts = Holds<
+  ReturnType<typeof Common.App.Preferences.getOverviewStyle> extends "cards" | "charts"
+    ? "cards" | "charts" extends ReturnType<typeof Common.App.Preferences.getOverviewStyle>
+      ? true
+      : false
+    : false
+>;
 
 // The custom-resource vocabulary: both published extensions declare their CRDs
 // with these four and register the result with `apiManager`.

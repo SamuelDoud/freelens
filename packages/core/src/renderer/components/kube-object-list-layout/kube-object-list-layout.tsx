@@ -19,6 +19,7 @@ import { getKubeObjectSearchFields } from "../../../features/advanced-search/ren
 import { InlineDetailsPanel } from "../../../features/inline-details/renderer/inline-details-panel";
 import userPreferencesStateInjectable from "../../../features/user-preferences/common/state.injectable";
 import clusterFrameContextForNamespacedResourcesInjectable from "../../cluster-frame-context/for-namespaced-resources.injectable";
+import watchReconnectInjectable from "../../k8s/watch-reconnect/watch-reconnect.injectable";
 import subscribeStoresInjectable from "../../kube-watch-api/subscribe-stores.injectable";
 import { ResourceKindMap, ResourceNames } from "../../utils/rbac";
 import { ItemListLayout } from "../item-object-list/list-layout";
@@ -38,6 +39,7 @@ import type { Disposer } from "@freelensapp/utilities";
 
 import type { IComputedValue } from "mobx";
 
+import type { WatchReconnect } from "../../../common/k8s-api/watch-reconnect";
 import type { SearchField } from "../../../features/advanced-search/common/conditions";
 import type { AdvancedSearchView } from "../../../features/advanced-search/renderer/advanced-search-panel";
 import type { UserPreferencesState } from "../../../features/user-preferences/common/state.injectable";
@@ -85,11 +87,27 @@ interface Dependencies {
   toggleKubeDetailsPane: ToggleKubeDetailsPane;
   generalColumns: GeneralKubeObjectListLayoutColumn[];
   preferences: UserPreferencesState;
+  watchReconnect: WatchReconnect;
 }
 
 const matchesApiFor = (api: SubscribableStore["api"]) => (column: GeneralKubeObjectListLayoutColumn) =>
   column.kind === api.kind &&
   (isString(api.apiVersionWithGroup) ? [column.apiVersion].flat().includes(api.apiVersionWithGroup) : true);
+
+// Takes the state as an argument: it is rendered from within the derivation of
+// ItemListLayout, where mobx-react forbids reading this.props.
+const renderClusterUnreachable = (unreachable: boolean) =>
+  unreachable ? (
+    <Icon
+      material="sync_problem"
+      className="cluster-unreachable"
+      data-testid="kube-object-list-layout-cluster-unreachable"
+      tooltip={{
+        children: "Freelens cannot reach the cluster. The list may be out of date until it reconnects.",
+        preferredPositions: TooltipPosition.BOTTOM,
+      }}
+    />
+  ) : null;
 
 const getLoadErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -278,6 +296,7 @@ class NonInjectedKubeObjectListLayout<
       customizeTableRowProps,
       searchFields = [],
       advancedSearch,
+      watchReconnect,
       ...layoutProps
     } = this.props;
     const resourceName = this.props.resourceName || ResourceNames[ResourceKindMap[store.api.kind]] || store.api.kind;
@@ -379,6 +398,7 @@ class NonInjectedKubeObjectListLayout<
               <>
                 {info}
                 {this.renderLoadErrors()}
+                {renderClusterUnreachable(watchReconnect.isClusterUnreachable)}
               </>
             ),
             ...headerPlaceHolders,
@@ -429,6 +449,7 @@ export const KubeObjectListLayout = withInjectables<
     toggleKubeDetailsPane: di.inject(toggleKubeDetailsPaneInjectable),
     generalColumns: di.injectMany(kubeObjectListLayoutColumnInjectionToken),
     preferences: di.inject(userPreferencesStateInjectable),
+    watchReconnect: di.inject(watchReconnectInjectable),
   }),
 }) as <K extends KubeObject, A extends KubeApi<K, D>, D extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>>(
   props: KubeObjectListLayoutProps<K, A, D>,

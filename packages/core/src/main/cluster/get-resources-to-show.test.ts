@@ -4,14 +4,14 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { createCanListResource } from "../../common/cluster/create-request-namespace-list-permissions.injectable";
 import { formatKubeApiResource } from "../../common/rbac";
+import { createCanListResource } from "./create-request-namespace-list-permissions.injectable";
 import { getResourcesToShow } from "./get-resources-to-show";
 
 import type { V1ResourceRule } from "@kubernetes/client-node";
 
-import type { RequestNamespaceListPermissions } from "../../common/cluster/create-request-namespace-list-permissions.injectable";
 import type { KubeApiResource } from "../../common/rbac";
+import type { RequestNamespaceListPermissions } from "./create-request-namespace-list-permissions.injectable";
 
 // The implementation this replaced: every namespace reviewed, 5 at a time.
 const referenceGetResourcesToShow = async (

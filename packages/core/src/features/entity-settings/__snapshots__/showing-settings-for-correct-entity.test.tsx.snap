@@ -331,7 +331,7 @@ exports[`Showing correct entity settings > renders 1`] = `
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -356,7 +356,7 @@ exports[`Showing correct entity settings > renders 1`] = `
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -418,7 +418,7 @@ exports[`Showing correct entity settings > renders 1`] = `
             aria-live="assertive"
             id="DndLiveRegion-0"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -611,7 +611,7 @@ exports[`Showing correct entity settings > when navigating to local cluster enti
               >
                 <div
                   class="Avatar rounded settingsAvatar"
-                  style="width: 40px; height: 40px; background: rgb(28, 110, 70); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(28, 110, 70);"
                 >
                   slk
                 </div>
@@ -699,7 +699,7 @@ exports[`Showing correct entity settings > when navigating to local cluster enti
                   <div
                     class="label"
                   >
-                    Node Shell
+                    Node Shell and Debug
                   </div>
                 </div>
                 <div
@@ -792,7 +792,7 @@ exports[`Showing correct entity settings > when navigating to local cluster enti
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -817,7 +817,7 @@ exports[`Showing correct entity settings > when navigating to local cluster enti
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -879,7 +879,7 @@ exports[`Showing correct entity settings > when navigating to local cluster enti
             aria-live="assertive"
             id="DndLiveRegion-11"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -1072,7 +1072,7 @@ exports[`Showing correct entity settings > when navigating to non-local cluster 
               >
                 <div
                   class="Avatar rounded settingsAvatar"
-                  style="width: 40px; height: 40px; background: rgb(110, 28, 69); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 28, 69);"
                 >
                   skc
                 </div>
@@ -1148,7 +1148,7 @@ exports[`Showing correct entity settings > when navigating to non-local cluster 
                   <div
                     class="label"
                   >
-                    Node Shell
+                    Node Shell and Debug
                   </div>
                 </div>
                 <div
@@ -1274,7 +1274,7 @@ exports[`Showing correct entity settings > when navigating to non-local cluster 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -1299,7 +1299,7 @@ exports[`Showing correct entity settings > when navigating to non-local cluster 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -1361,7 +1361,7 @@ exports[`Showing correct entity settings > when navigating to non-local cluster 
             aria-live="assertive"
             id="DndLiveRegion-2"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -1554,7 +1554,7 @@ exports[`Showing correct entity settings > when navigating to weblink entity set
               >
                 <div
                   class="Avatar rounded settingsAvatar"
-                  style="width: 40px; height: 40px; background: rgb(67, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(67, 110, 28);"
                 >
                   sw
                 </div>
@@ -1645,7 +1645,7 @@ exports[`Showing correct entity settings > when navigating to weblink entity set
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -1670,7 +1670,7 @@ exports[`Showing correct entity settings > when navigating to weblink entity set
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -1732,7 +1732,7 @@ exports[`Showing correct entity settings > when navigating to weblink entity set
             aria-live="assertive"
             id="DndLiveRegion-20"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div

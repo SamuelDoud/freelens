@@ -5,7 +5,7 @@
  */
 
 import { loggerInjectionToken } from "@freelensapp/logger";
-import { isRequestError, object } from "@freelensapp/utilities";
+import { isDefined, isRequestError, object } from "@freelensapp/utilities";
 import { isObject } from "es-toolkit/compat";
 import { runInAction } from "mobx";
 import { ClusterMetadataKey, initialFilesystemMountpoints } from "../../../common/cluster-types";
@@ -18,6 +18,19 @@ import { getRouteInjectable } from "../../router/router.injectable";
 import type { Cluster } from "../../../common/cluster/cluster";
 import type { ClusterPrometheusMetadata } from "../../../common/cluster-types";
 import type { GetMetrics } from "../../get-metrics.injectable";
+
+/**
+ * The answer for a query the provider has no metric for: what Prometheus returns for a query without series, so
+ * the views show it the same way.
+ */
+const emptyMetricResult = () => ({ status: "success", data: { resultType: "matrix", result: [] } });
+
+/**
+ * The parameters of a range query that the route passes on to Prometheus. A client can send others, as the renderer
+ * sends `kubernetes_namespace`, which nothing reads: Prometheus ignores an unknown parameter, but the API of Google
+ * Cloud Managed Service for Prometheus rejects the whole query with 400 INVALID_ARGUMENT.
+ */
+const rangeQueryParams = ["start", "end", "step"] as const;
 
 // This is used for backoff retry tracking.
 const ATTEMPTS = [false, false, false, false, true];
@@ -75,8 +88,7 @@ const loadMetricsFor =
     cluster: Cluster,
     prometheusPath: string,
     queryParams: Partial<Record<string, string>>,
-    onError: (error: unknown) => void,
-  ): Promise<any[]> => {
+  ): Promise<PromiseSettledResult<any>[]> => {
     const queries = promQueries.map((p) => p.trim());
     const loaders = new Map<string, Promise<any>>();
 
@@ -107,20 +119,20 @@ const loadMetricsFor =
       return loaders.get(query) ?? loaders.set(query, loadMetricHelper()).get(query);
     }
 
-    // One failing query (Prometheus rejects some of them, e.g. "found duplicate series for the match group") must cost
-    // only its own metric: it answers like a missing one, and the rest of the batch keeps its data.
-    return Promise.all(
-      queries.map(async (query) => {
-        try {
-          return await loadMetric(query);
-        } catch (error) {
-          onError(error);
-
-          return {};
-        }
-      }),
-    );
+    return Promise.allSettled(queries.map(loadMetric));
   };
+
+/**
+ * The results of queries whose answers are given by position, all or none: the first failure fails them all.
+ */
+const allOrNone = (results: PromiseSettledResult<any>[]): any[] =>
+  results.map((result) => {
+    if (result.status === "rejected") {
+      throw result.reason;
+    }
+
+    return result.value;
+  });
 
 const addMetricsRouteInjectable = getRouteInjectable({
   id: "add-metrics-route",
@@ -130,35 +142,42 @@ const addMetricsRouteInjectable = getRouteInjectable({
     const loadMetrics = loadMetricsFor(getMetrics);
     const logger = di.inject(loggerInjectionToken);
 
+    const logFailure = (cluster: Cluster, error: unknown) => {
+      const description = error instanceof Error && isMetricsErrorDescription(error.cause) ? error.cause : undefined;
+      const message = `[METRICS-ROUTE]: failed to get metrics for clusterId=${cluster.id}: ${error}`;
+
+      if (description?.status === 422) {
+        logger.warn(`[METRICS-ROUTE]: query failed for clusterId=${cluster.id}`, description);
+      } else if (description) {
+        logger.warn(message, description);
+      } else {
+        // The route is polled, and a cluster without Prometheus is common: the errors of the providers would flood
+        // the log on every request.
+        logger.warn(message);
+      }
+    };
+
     return clusterRoute({
       method: "post",
       path: `${apiPrefix}/metrics`,
     })(async ({ cluster, payload, query }) => {
-      const queryParams: Partial<Record<string, string>> = Object.fromEntries(query.entries());
+      const queryParams: Partial<Record<string, string>> = Object.fromEntries(
+        rangeQueryParams.flatMap((name) => {
+          const value = query.get(name);
+
+          return value === null ? [] : [[name, value]];
+        }),
+      );
       const prometheusMetadata: ClusterPrometheusMetadata = {};
       const prometheusHandler = di.inject(prometheusHandlerInjectable, cluster);
       const mountpoints = cluster.preferences.filesystemMountpoints || initialFilesystemMountpoints;
 
-      let failures = 0;
-      const logFailure = (error: unknown) => {
-        failures += 1;
-
-        const description = error instanceof Error && isMetricsErrorDescription(error.cause) ? error.cause : undefined;
-        const message = `[METRICS-ROUTE]: failed to get metrics for clusterId=${cluster.id}: ${error}`;
-
-        if (description?.status === 422) {
-          logger.warn(`[METRICS-ROUTE]: query failed for clusterId=${cluster.id}`, description);
-        } else if (description) {
-          logger.warn(message, description);
-        } else {
-          // The route is polled, and a cluster without Prometheus is common: the errors of the providers would flood
-          // the log on every request.
-          logger.warn(message);
-        }
-      };
-
       try {
-        const { prometheusPath, provider } = await prometheusHandler.getPrometheusDetails();
+        const {
+          prometheusPath,
+          provider,
+          queryOpts: serviceQueryOpts,
+        } = await prometheusHandler.getPrometheusDetails();
 
         prometheusMetadata.provider = provider?.kind;
         prometheusMetadata.autoDetected = !cluster.preferences.prometheusProvider?.type;
@@ -171,41 +190,56 @@ const addMetricsRouteInjectable = getRouteInjectable({
 
         // return data in same structure as query
         if (typeof payload === "string") {
-          const [data] = await loadMetrics([payload], cluster, prometheusPath, queryParams, logFailure);
+          const [data] = allOrNone(await loadMetrics([payload], cluster, prometheusPath, queryParams));
 
           return { response: data };
         }
 
         if (Array.isArray(payload)) {
-          const data = await loadMetrics(payload, cluster, prometheusPath, queryParams, logFailure);
+          const data = allOrNone(await loadMetrics(payload, cluster, prometheusPath, queryParams));
 
           return { response: data };
         }
 
         if (isObject(payload)) {
           const data = payload as Record<string, Record<string, string>>;
-          // A name the provider has no query for costs only its own metric as well.
-          const queries = object.entries(data).map(([queryName, queryOpts]) => {
-            try {
-              return provider.getQuery({ ...queryOpts, mountpoints }, queryName);
-            } catch (error) {
-              logFailure(error);
+          const queries = object
+            .entries(data)
+            .map(([queryName, queryOpts]) =>
+              provider.getQuery({ ...queryOpts, mountpoints, ...serviceQueryOpts }, queryName),
+            );
+          const supportedQueries = queries.filter(isDefined);
 
-              return undefined;
-            }
-          });
-          const loaded = await loadMetrics(
-            queries.filter((query): query is string => query !== undefined),
-            cluster,
-            prometheusPath,
-            queryParams,
-            logFailure,
+          const settled = await loadMetrics(supportedQueries, cluster, prometheusPath, queryParams);
+          const failures = settled.flatMap((result) => (result.status === "rejected" ? [result.reason] : []));
+
+          // A view asks for its metrics together, so one query that Prometheus rejects would leave the view without
+          // any of them. Only when every query fails is Prometheus itself taken to be unavailable.
+          if (failures.length > 0 && failures.length === settled.length) {
+            throw failures[0];
+          }
+
+          for (const failure of failures) {
+            logFailure(cluster, failure);
+          }
+
+          const results = new Map(
+            supportedQueries.map((query, i) => {
+              const result = settled[i];
+
+              return [query, result.status === "fulfilled" ? result.value : emptyMetricResult()];
+            }),
           );
-          let next = 0;
-          const result = queries.map((query) => (query === undefined ? {} : loaded[next++]));
-          const response = object.fromEntries(object.keys(data).map((metricName, i) => [metricName, result[i]]));
+          const response = object.fromEntries(
+            object
+              .keys(data)
+              .map((metricName, i) => [
+                metricName,
+                queries[i] === undefined ? emptyMetricResult() : results.get(queries[i]),
+              ]),
+          );
 
-          prometheusMetadata.success = failures < queries.length;
+          prometheusMetadata.success = true;
 
           return { response };
         }
@@ -213,7 +247,7 @@ const addMetricsRouteInjectable = getRouteInjectable({
         return { response: {} };
       } catch (error) {
         prometheusMetadata.success = false;
-        logFailure(error);
+        logFailure(cluster, error);
 
         return { response: {} };
       } finally {

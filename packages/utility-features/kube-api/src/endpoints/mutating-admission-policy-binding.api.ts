@@ -11,11 +11,10 @@ import type { DerivedKubeApiOptions, KubeApiDependencies } from "../kube-api";
 export class MutatingAdmissionPolicyBindingApi extends KubeApi<MutatingAdmissionPolicyBinding> {
   constructor(deps: KubeApiDependencies, opts?: DerivedKubeApiOptions) {
     super(deps, {
-      // 1.34 and 1.35 serve these kinds as v1beta1 when their feature gate is on.
-      checkPreferredVersion: true,
-      fallbackApiBases: ["/apis/admissionregistration.k8s.io/v1beta1/mutatingadmissionpolicybindings"],
       ...(opts ?? {}),
       objectConstructor: MutatingAdmissionPolicyBinding,
+      // Served as v1alpha1 or v1beta1 behind a feature gate before Kubernetes 1.36
+      checkPreferredVersion: true,
     });
   }
 }

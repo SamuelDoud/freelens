@@ -82,7 +82,10 @@ describe("PodStore kube metrics", () => {
   });
 
   it("falls back to the selected namespaces when the cluster-wide list is forbidden", async () => {
-    (podStore["dependencies"] as { context: unknown }).context = { contextNamespaces: ["a", "b"] };
+    (podStore["dependencies"] as { context: unknown }).context = {
+      contextNamespaces: ["a", "b"],
+      isLoadingAll: () => false,
+    };
     listMetrics.mockImplementation(async ({ namespace } = {}) => {
       if (!namespace) {
         throw { code: 403, message: "forbidden" };

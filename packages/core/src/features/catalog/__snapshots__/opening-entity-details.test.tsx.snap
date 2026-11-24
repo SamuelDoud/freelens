@@ -331,7 +331,7 @@ exports[`opening catalog entity details panel > renders 1`] = `
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -356,7 +356,7 @@ exports[`opening catalog entity details panel > renders 1`] = `
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -418,7 +418,7 @@ exports[`opening catalog entity details panel > renders 1`] = `
             aria-live="assertive"
             id="DndLiveRegion-0"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -1070,7 +1070,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(88, 28, 110); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(88, 28, 110);"
                               >
                                 skc
                               </div>
@@ -1160,7 +1160,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(110, 62, 28);"
                               >
                                 sw
                               </div>
@@ -1250,7 +1250,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(28, 110, 70); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(28, 110, 70);"
                               >
                                 slk
                               </div>
@@ -1372,7 +1372,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -1397,7 +1397,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -1459,7 +1459,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             aria-live="assertive"
             id="DndLiveRegion-2"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -2111,7 +2111,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(88, 28, 110); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(88, 28, 110);"
                               >
                                 skc
                               </div>
@@ -2201,7 +2201,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(110, 62, 28);"
                               >
                                 sw
                               </div>
@@ -2291,7 +2291,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(28, 110, 70); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(28, 110, 70);"
                               >
                                 slk
                               </div>
@@ -2413,7 +2413,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -2438,7 +2438,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -2500,7 +2500,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             aria-live="assertive"
             id="DndLiveRegion-5"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -3184,7 +3184,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(88, 28, 110); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(88, 28, 110);"
                               >
                                 skc
                               </div>
@@ -3274,7 +3274,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(110, 62, 28);"
                               >
                                 sw
                               </div>
@@ -3364,7 +3364,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(28, 110, 70); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(28, 110, 70);"
                               >
                                 slk
                               </div>
@@ -3486,7 +3486,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -3511,7 +3511,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -3573,7 +3573,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             aria-live="assertive"
             id="DndLiveRegion-8"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -3678,7 +3678,8 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
         >
           KubernetesCluster: some-kubernetes-cluster
           <i
-            class="Icon material interactive focusable"
+            aria-label="Copy"
+            class="Icon CopyToClipboardIcon material interactive focusable"
             tabindex="0"
           >
             <span
@@ -3782,7 +3783,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             <div
               class="Avatar rounded avatar"
               data-testid="detail-panel-hot-bar-icon"
-              style="width: 128px; height: 128px; background: rgb(88, 28, 110); color: rgb(255, 255, 255);"
+              style="width: 128px; height: 128px; background: rgb(88, 28, 110);"
             >
               skc
             </div>
@@ -4509,7 +4510,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(88, 28, 110); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(88, 28, 110);"
                               >
                                 skc
                               </div>
@@ -4599,7 +4600,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(110, 62, 28);"
                               >
                                 sw
                               </div>
@@ -4689,7 +4690,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(28, 110, 70); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(28, 110, 70);"
                               >
                                 slk
                               </div>
@@ -4811,7 +4812,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -4836,7 +4837,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -4898,7 +4899,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             aria-live="assertive"
             id="DndLiveRegion-9"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -4971,7 +4972,8 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
         >
           KubernetesCluster: some-kubernetes-cluster
           <i
-            class="Icon material interactive focusable"
+            aria-label="Copy"
+            class="Icon CopyToClipboardIcon material interactive focusable"
             tabindex="0"
           >
             <span
@@ -5075,7 +5077,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             <div
               class="Avatar rounded avatar"
               data-testid="detail-panel-hot-bar-icon"
-              style="width: 128px; height: 128px; background: rgb(88, 28, 110); color: rgb(255, 255, 255);"
+              style="width: 128px; height: 128px; background: rgb(88, 28, 110);"
             >
               skc
             </div>
@@ -5802,7 +5804,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(88, 28, 110); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(88, 28, 110);"
                               >
                                 skc
                               </div>
@@ -5892,7 +5894,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(110, 62, 28);"
                               >
                                 sw
                               </div>
@@ -5982,7 +5984,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(28, 110, 70); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(28, 110, 70);"
                               >
                                 slk
                               </div>
@@ -6104,7 +6106,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -6129,7 +6131,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -6191,7 +6193,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             aria-live="assertive"
             id="DndLiveRegion-12"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -6863,7 +6865,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(88, 28, 110); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(88, 28, 110);"
                               >
                                 skc
                               </div>
@@ -6953,7 +6955,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(110, 62, 28);"
                               >
                                 sw
                               </div>
@@ -7043,7 +7045,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(28, 110, 70); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(28, 110, 70);"
                               >
                                 slk
                               </div>
@@ -7165,7 +7167,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -7190,7 +7192,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -7252,7 +7254,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             aria-live="assertive"
             id="DndLiveRegion-15"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -7344,7 +7346,8 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
         >
           WebLink: some-weblink
           <i
-            class="Icon material interactive focusable"
+            aria-label="Copy"
+            class="Icon CopyToClipboardIcon material interactive focusable"
             tabindex="0"
           >
             <span
@@ -7386,7 +7389,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             <div
               class="Avatar rounded avatar"
               data-testid="detail-panel-hot-bar-icon"
-              style="width: 128px; height: 128px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+              style="width: 128px; height: 128px; background: rgb(110, 62, 28);"
             >
               sw
             </div>
@@ -8095,7 +8098,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(88, 28, 110); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(88, 28, 110);"
                               >
                                 skc
                               </div>
@@ -8185,7 +8188,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(110, 62, 28);"
                               >
                                 sw
                               </div>
@@ -8275,7 +8278,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                             >
                               <div
                                 class="Avatar rounded catalogAvatar"
-                                style="width: 24px; height: 24px; background: rgb(28, 110, 70); color: rgb(255, 255, 255);"
+                                style="width: 24px; height: 24px; background: rgb(28, 110, 70);"
                               >
                                 slk
                               </div>
@@ -8397,7 +8400,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -8422,7 +8425,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -8484,7 +8487,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             aria-live="assertive"
             id="DndLiveRegion-16"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -8576,7 +8579,8 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
         >
           WebLink: some-weblink
           <i
-            class="Icon material interactive focusable"
+            aria-label="Copy"
+            class="Icon CopyToClipboardIcon material interactive focusable"
             tabindex="0"
           >
             <span
@@ -8618,7 +8622,7 @@ exports[`opening catalog entity details panel > when navigated to the catalog > 
             <div
               class="Avatar rounded avatar"
               data-testid="detail-panel-hot-bar-icon"
-              style="width: 128px; height: 128px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+              style="width: 128px; height: 128px; background: rgb(110, 62, 28);"
             >
               sw
             </div>
@@ -9065,7 +9069,7 @@ exports[`opening catalog entity details panel > when not navigated to the catalo
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-welcome-page-entity"
-                  style="width: 40px; height: 40px; background: rgb(110, 77, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(110, 77, 28);"
                 >
                   WP
                 </div>
@@ -9090,7 +9094,7 @@ exports[`opening catalog entity details panel > when not navigated to the catalo
                 <div
                   class="Avatar rounded disabled avatar"
                   id="hotbarIcon-hotbar-icon-catalog-entity"
-                  style="width: 40px; height: 40px; background: rgb(36, 110, 28); color: rgb(255, 255, 255);"
+                  style="width: 40px; height: 40px; background: rgb(36, 110, 28);"
                 >
                   Ca
                 </div>
@@ -9152,7 +9156,7 @@ exports[`opening catalog entity details panel > when not navigated to the catalo
             aria-live="assertive"
             id="DndLiveRegion-20"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -9224,7 +9228,8 @@ exports[`opening catalog entity details panel > when not navigated to the catalo
         >
           WebLink: some-weblink
           <i
-            class="Icon material interactive focusable"
+            aria-label="Copy"
+            class="Icon CopyToClipboardIcon material interactive focusable"
             tabindex="0"
           >
             <span
@@ -9266,7 +9271,7 @@ exports[`opening catalog entity details panel > when not navigated to the catalo
             <div
               class="Avatar rounded avatar"
               data-testid="detail-panel-hot-bar-icon"
-              style="width: 128px; height: 128px; background: rgb(110, 62, 28); color: rgb(255, 255, 255);"
+              style="width: 128px; height: 128px; background: rgb(110, 62, 28);"
             >
               sw
             </div>

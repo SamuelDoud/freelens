@@ -7,16 +7,21 @@
  */
 
 import {
-  autoThemeMenuItemInjectable,
-  darkThemeMenuItemInjectable,
-  forestPaletteMenuItemInjectable,
-  freelensPaletteMenuItemInjectable,
-  graphitePaletteMenuItemInjectable,
-  highContrastPaletteMenuItemInjectable,
-  lightThemeMenuItemInjectable,
-  oceanPaletteMenuItemInjectable,
-  sunsetPaletteMenuItemInjectable,
-  themePaletteSeparatorInjectable,
+  ayuMirageThemeMenuItemInjectable,
+  ayuThemeMenuItemInjectable,
+  catppuccinThemeMenuItemInjectable,
+  darkThemeVariantMenuItemInjectable,
+  draculaThemeMenuItemInjectable,
+  forestThemeMenuItemInjectable,
+  freelensThemeMenuItemInjectable,
+  graphiteThemeMenuItemInjectable,
+  highContrastThemeMenuItemInjectable,
+  lightThemeVariantMenuItemInjectable,
+  oceanThemeMenuItemInjectable,
+  solarizedThemeMenuItemInjectable,
+  sunsetThemeMenuItemInjectable,
+  systemThemeVariantMenuItemInjectable,
+  themeNamesSeparatorInjectable,
   themeSeparatorForViewInjectable,
   themeSubMenuInjectable,
 } from "./theme-menu-items.injectable";
@@ -25,52 +30,77 @@ import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
-    di.register(autoThemeMenuItemInjectable);
+    di.register(ayuMirageThemeMenuItemInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(darkThemeMenuItemInjectable);
+    di.register(ayuThemeMenuItemInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(forestPaletteMenuItemInjectable);
+    di.register(catppuccinThemeMenuItemInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(freelensPaletteMenuItemInjectable);
+    di.register(darkThemeVariantMenuItemInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(graphitePaletteMenuItemInjectable);
+    di.register(draculaThemeMenuItemInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(highContrastPaletteMenuItemInjectable);
+    di.register(forestThemeMenuItemInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(lightThemeMenuItemInjectable);
+    di.register(freelensThemeMenuItemInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(oceanPaletteMenuItemInjectable);
+    di.register(graphiteThemeMenuItemInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(sunsetPaletteMenuItemInjectable);
+    di.register(highContrastThemeMenuItemInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(themePaletteSeparatorInjectable);
+    di.register(lightThemeVariantMenuItemInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(oceanThemeMenuItemInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(solarizedThemeMenuItemInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(sunsetThemeMenuItemInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(systemThemeVariantMenuItemInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(themeNamesSeparatorInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

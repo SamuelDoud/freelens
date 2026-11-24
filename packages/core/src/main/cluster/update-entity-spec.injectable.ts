@@ -5,6 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import { migrateForkIconPreferences } from "./migrate-fork-icon-preferences";
 
 import type { KubernetesCluster, KubernetesClusterPrometheusMetrics } from "../../common/catalog-entities";
 import type { Cluster } from "../../common/cluster/cluster";
@@ -16,6 +17,7 @@ const updateEntitySpecInjectable = getInjectable({
 
   instantiate: (): UpdateEntitySpec => {
     return (entity, cluster) => {
+      migrateForkIconPreferences(cluster.preferences);
       entity.spec.metrics ||= { source: "local" };
 
       if (entity.spec.metrics.source === "local") {
@@ -31,6 +33,7 @@ const updateEntitySpecInjectable = getInjectable({
 
         entity.spec.icon ??= {};
         entity.spec.icon[source] = cluster.preferences.icon;
+        delete entity.spec.icon[source === "src" ? "background" : "src"];
       } else if (cluster.preferences.icon === null) {
         /**
          * NOTE: only clear the icon if set to `null` by ClusterIconSettings.
@@ -39,18 +42,6 @@ const updateEntitySpecInjectable = getInjectable({
         entity.spec.icon = undefined;
         cluster.preferences.icon = undefined;
       }
-
-      const { iconText, iconBackground, iconTextColor, icon } = cluster.preferences;
-      // A colour stored in `icon` by older versions is the background too.
-      const background = iconBackground || (icon && !icon.startsWith("data:") ? icon : undefined);
-
-      if (background || iconTextColor || entity.spec.icon) {
-        entity.spec.icon ??= {};
-        entity.spec.icon.background = background;
-        entity.spec.icon.textColor = iconTextColor || undefined;
-      }
-
-      entity.metadata.shortName = iconText?.trim() || undefined;
     };
   },
 });

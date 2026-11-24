@@ -7,7 +7,7 @@
 import { Secret, SecretType } from "@freelensapp/kube-object";
 import { base64 } from "@freelensapp/utilities";
 import { act, fireEvent } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForKubeConfigsInjectable from "../../../../common/app-paths/directory-for-kube-configs/directory-for-kube-configs.injectable";
 import directoryForUserDataInjectable from "../../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import { Cluster } from "../../../../common/cluster/cluster";
@@ -39,16 +39,22 @@ const privateKey = `-----BEGIN PRIVATE KEY-----
 not a real key
 -----END PRIVATE KEY-----`;
 
-function getSecret(type: SecretType, data: Partial<Record<string, string>>) {
+function getSecret(
+  type: SecretType,
+  data: Partial<Record<string, string>>,
+  resourceVersion = "1",
+  annotations?: Partial<Record<string, string>>,
+) {
   return new Secret({
     apiVersion: "v1",
     kind: "secret",
     metadata: {
       name: "test",
-      resourceVersion: "1",
+      resourceVersion,
       uid: "uid",
       namespace: "default",
       selfLink: "/api/v1/secrets/default/test",
+      annotations,
     },
     data,
     type,
@@ -88,6 +94,118 @@ describe("SecretDetails tests", () => {
     const result = render(<SecretDetails object={getSecret(SecretType.Opaque, { foobar: "" })} />);
 
     expect(result.getByTestId("foobar-secret-entry").querySelector(".Icon")).toBeDefined();
+  });
+
+  it("shows the data of the newest object when the secret changes in the cluster", () => {
+    const result = render(
+      <SecretDetails object={getSecret(SecretType.Opaque, { password: base64.encode("hunter2") })} />,
+    );
+
+    // The store builds a new object for every change that comes from the watch.
+    result.rerender(
+      <SecretDetails
+        object={getSecret(SecretType.Opaque, { password: base64.encode("hunter3"), user: base64.encode("admin") }, "2")}
+      />,
+    );
+
+    expect(result.getByTestId("password-secret-entry").querySelector("textarea")).toHaveValue(base64.encode("hunter3"));
+    expect(result.getByTestId("user-secret-entry").querySelector("textarea")).toHaveValue(base64.encode("admin"));
+  });
+
+  it("keeps an unsaved edit and the shown values when only the metadata of the secret changes in the cluster", () => {
+    const data = { password: base64.encode("hunter2"), user: base64.encode("admin") };
+    const result = render(<SecretDetails object={getSecret(SecretType.Opaque, data)} />);
+
+    fireEvent.click(result.getByTestId("user-secret-entry").querySelector(".Icon") as HTMLElement);
+    fireEvent.change(result.getByTestId("password-secret-entry").querySelector("textarea") as HTMLTextAreaElement, {
+      target: { value: base64.encode("edited") },
+    });
+    result.rerender(
+      <SecretDetails object={getSecret(SecretType.Opaque, { ...data }, "2", { "example.com/touched": "yes" })} />,
+    );
+
+    expect(result.getByTestId("password-secret-entry").querySelector("textarea")).toHaveValue(base64.encode("edited"));
+    expect(result.getByTestId("user-secret-entry").querySelector("textarea")).toHaveValue("admin");
+  });
+
+  it("replaces an unsaved edit and hides the shown values when the data of the secret changes in the cluster", () => {
+    const data = { password: base64.encode("hunter2"), user: base64.encode("admin") };
+    const result = render(<SecretDetails object={getSecret(SecretType.Opaque, data)} />);
+
+    fireEvent.click(result.getByTestId("user-secret-entry").querySelector(".Icon") as HTMLElement);
+    fireEvent.change(result.getByTestId("password-secret-entry").querySelector("textarea") as HTMLTextAreaElement, {
+      target: { value: base64.encode("edited") },
+    });
+    result.rerender(
+      <SecretDetails object={getSecret(SecretType.Opaque, { ...data, password: base64.encode("hunter3") }, "2")} />,
+    );
+
+    expect(result.getByTestId("password-secret-entry").querySelector("textarea")).toHaveValue(base64.encode("hunter3"));
+    expect(result.getByTestId("user-secret-entry").querySelector("textarea")).toHaveValue(base64.encode("admin"));
+  });
+
+  describe("copying a value", () => {
+    let writeTextMock: Mock<(text: string) => Promise<void>>;
+
+    beforeEach(() => {
+      writeTextMock = vi.fn(async () => {});
+
+      // jsdom has no Clipboard API.
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: writeTextMock },
+      });
+    });
+
+    afterEach(() => {
+      Reflect.deleteProperty(navigator, "clipboard");
+    });
+
+    it("copies the decoded value while it is hidden", async () => {
+      const result = render(
+        <SecretDetails object={getSecret(SecretType.Opaque, { password: base64.encode("hunter2") })} />,
+      );
+
+      await act(async () => result.getByTestId("password-secret-copy").click());
+
+      expect(writeTextMock).toHaveBeenCalledWith("hunter2");
+      expect(result.getByTestId("password-secret-copy")).toHaveAttribute("aria-label", "Copied!");
+    });
+
+    it("copies the decoded value while it is shown", async () => {
+      const result = render(
+        <SecretDetails object={getSecret(SecretType.Opaque, { password: base64.encode("hunter2") })} />,
+      );
+
+      fireEvent.click(result.getByTestId("password-secret-entry").querySelector(".Icon") as HTMLElement);
+      expect(result.getByTestId("password-secret-entry").querySelector("textarea")).toHaveValue("hunter2");
+
+      await act(async () => result.getByTestId("password-secret-copy").click());
+
+      expect(writeTextMock).toHaveBeenCalledWith("hunter2");
+    });
+
+    it("copies an unsaved edit", async () => {
+      const result = render(
+        <SecretDetails object={getSecret(SecretType.Opaque, { password: base64.encode("hunter2") })} />,
+      );
+
+      fireEvent.change(result.getByTestId("password-secret-entry").querySelector("textarea") as HTMLTextAreaElement, {
+        target: { value: base64.encode("edited") },
+      });
+
+      await act(async () => result.getByTestId("password-secret-copy").click());
+
+      expect(writeTextMock).toHaveBeenCalledWith("edited");
+    });
+
+    it("copies a value that cannot be decoded as it is stored", async () => {
+      const result = render(<SecretDetails object={getSecret(SecretType.Opaque, { password: "not base64!" })} />);
+
+      await act(async () => result.getByTestId("password-secret-copy").click());
+
+      expect(writeTextMock).toHaveBeenCalledWith("not base64!");
+    });
   });
 
   it("shows what is in a certificate stored in the secret", async () => {

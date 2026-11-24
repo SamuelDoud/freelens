@@ -35,7 +35,7 @@ interface Dependencies {
 const NonInjectedContainerCharts = observer(
   ({ selectedMetricsTimeRange, containerName }: Dependencies & ContainerChartsProps) => {
     const { metrics, tab, object } = useContext(ResourceMetricsContext) ?? {};
-    const { start: minTime, end: maxTime } = selectedMetricsTimeRange.timestamps.get();
+    const { start: minTime, end: maxTime, step } = selectedMetricsTimeRange.timestamps.get();
 
     if (!metrics || !object || !tab) return null;
     const selectedContainerMetrics = getItemMetrics(toJS(metrics), containerName);
@@ -118,6 +118,7 @@ const NonInjectedContainerCharts = observer(
             data={{ datasets: datasets[tab] }}
             minTime={minTime}
             maxTime={maxTime}
+            step={step}
           />
         </div>
         <MetricStatsTable tab={tab} datasets={datasets[tab]} />

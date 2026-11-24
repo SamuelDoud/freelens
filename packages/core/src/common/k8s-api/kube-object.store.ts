@@ -27,12 +27,13 @@ import type {
 } from "@freelensapp/kube-api";
 import type { KubeJsonApiDataFor, KubeObject } from "@freelensapp/kube-object";
 import type { Logger } from "@freelensapp/logger";
+import type { PartialDeep } from "@freelensapp/type-fest";
 import type { Disposer } from "@freelensapp/utilities";
 
 import type { Patch } from "rfc6902";
-import type { PartialDeep } from "type-fest";
 
 import type { ClusterContext } from "../../renderer/cluster-frame-context/cluster-frame-context";
+import type { WatchReconnect } from "./watch-reconnect";
 
 /**
  * The maps behind `getById` and `getByPath`, which outlive the snapshots they
@@ -270,6 +271,12 @@ export type JsonPatch = Patch;
 export interface KubeObjectStoreDependencies {
   readonly context: ClusterContext;
   readonly logger: Logger;
+
+  /**
+   * Decides when a failed watch starts again. Without it a failed watch
+   * starts again after 5 seconds.
+   */
+  readonly watchReconnect?: WatchReconnect;
 }
 
 /**
@@ -361,6 +368,12 @@ export class KubeObjectStore<
         everyItemHasNamespace: boolean;
       }
     | undefined;
+
+  // Lookups by id and self link run once per row of a list (its menu), once
+  // per warning of the cluster overview, and from details and logs. Kept
+  // alive, so that the index is built once per change of the items, and only
+  // for a store that is looked up in at all: a computed nobody reads is never
+  // evaluated.
 
   constructor(
     protected readonly dependencies: KubeObjectStoreDependencies,
@@ -1508,7 +1521,28 @@ export class KubeObjectStore<
     }
 
     let timedRetry: NodeJS.Timeout;
+    let cancelReconnect: Disposer | undefined;
+    // Failures in a row since the watch last connected.
+    let failures = 0;
     const signal = abortController.signal;
+    const { watchReconnect } = this.dependencies;
+
+    const retryLater = () => {
+      clearTimeout(timedRetry);
+      cancelReconnect?.();
+      failures += 1;
+
+      if (watchReconnect) {
+        cancelReconnect = watchReconnect.schedule(startNewWatch, failures);
+      } else {
+        timedRetry = setTimeout(startNewWatch, 5000);
+      }
+    };
+
+    const onConnect = () => {
+      failures = 0;
+      watchReconnect?.connected();
+    };
 
     const startNewWatch = () => {
       // A retry or a reload scheduled before the abort must not start a
@@ -1527,6 +1561,7 @@ export class KubeObjectStore<
             this.advanceHeldVersion(namespace, version);
           }
         },
+        onConnect,
       });
     };
 
@@ -1543,8 +1578,7 @@ export class KubeObjectStore<
         }
 
         // not sure what to do, best to retry
-        clearTimeout(timedRetry);
-        timedRetry = setTimeout(startNewWatch, 5000);
+        retryLater();
       } else if (
         (error instanceof KubeStatus && error.code === 410) ||
         (error instanceof Response && error.status === 410)
@@ -1560,11 +1594,12 @@ export class KubeObjectStore<
         }, 1000);
       } else if (error) {
         // not sure what to do, best to retry
-        clearTimeout(timedRetry);
-        timedRetry = setTimeout(startNewWatch, 5000);
+        retryLater();
       }
 
       if (data) {
+        // Also for an API whose `watch` does not call `onConnect`.
+        failures = 0;
         this.eventsBuffer.push(data);
 
         if (data.type !== "ERROR") {
@@ -1573,7 +1608,10 @@ export class KubeObjectStore<
       }
     };
 
-    signal.addEventListener("abort", () => clearTimeout(timedRetry));
+    signal.addEventListener("abort", () => {
+      clearTimeout(timedRetry);
+      cancelReconnect?.();
+    });
     startNewWatch();
   }
 

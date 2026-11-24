@@ -15,7 +15,6 @@ import { registerInjectables as registerMenuBarInjectables } from "./menu-bar/re
 import { registerInjectables as registerRowClickInjectables } from "./row-click/register-injectables";
 import { registerInjectables as registerSidebarMenuInjectables } from "./sidebar-menu/register-injectables";
 import { registerInjectables as registerStartUpInjectables } from "./start-up/register-injectables";
-import { registerInjectables as registerThemeInjectables } from "./theme/register-injectables";
 import { registerInjectables as registerTimezoneInjectables } from "./timezone/register-injectables";
 import { registerInjectables as registerUnloadHiddenClustersInjectables } from "./unload-hidden-clusters/register-injectables";
 
@@ -64,11 +63,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerStartUpInjectables(di);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    registerThemeInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

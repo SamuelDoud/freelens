@@ -30,6 +30,7 @@ import freelensProxyTokenInjectable from "./freelens-proxy-token.injectable";
 import getClusterForRequestInjectable from "./get-cluster-for-request.injectable";
 import kubeApiUpgradeRequestInjectable from "./proxy-functions/kube-api-upgrade-request.injectable";
 import shellApiRequestInjectable from "./proxy-functions/shell-api-request.injectable";
+import { freelensUserAgent } from "./user-agent";
 import type net from "node:net";
 
 import type { DiContainer } from "@ogre-tools/injectable";
@@ -88,11 +89,11 @@ const withAuth = (headers: http.OutgoingHttpHeaders): http.OutgoingHttpHeaders =
   ...headers,
 });
 
-const getHttp1 = (port: number, path: string, headers: http.OutgoingHttpHeaders = {}) =>
+const getHttp1 = (port: number, path: string, headers: http.OutgoingHttpHeaders = {}, method = "GET") =>
   new Promise<{ statusCode?: number; body: string }>((resolve, reject) => {
     https
-      .get(
-        { host: "127.0.0.1", port, path, agent: false, rejectUnauthorized: false, headers: withAuth(headers) },
+      .request(
+        { host: "127.0.0.1", port, path, method, agent: false, rejectUnauthorized: false, headers: withAuth(headers) },
         (res) => {
           let body = "";
 
@@ -101,7 +102,8 @@ const getHttp1 = (port: number, path: string, headers: http.OutgoingHttpHeaders 
           res.on("end", () => resolve({ statusCode: res.statusCode, body }));
         },
       )
-      .on("error", reject);
+      .on("error", reject)
+      .end();
   });
 
 const getHttp2 = (session: http2.ClientHttp2Session, path: string, headers: http2.OutgoingHttpHeaders = {}) =>
@@ -214,16 +216,18 @@ describe("closing the Freelens proxy", () => {
       routerInjectable,
       () =>
         ({
+          // As the real router does for the paths of these tests
+          isServedWithoutToken: (_method: string, url: string) => !url.startsWith("/api"),
           route: (_cluster: Cluster | undefined, req: ServerIncomingMessage, res: ServerResponse) => {
             if (req.url === answeredPath) {
               res.end();
 
-              return Promise.resolve();
+              return Promise.resolve(true);
             }
 
             requestReceived();
 
-            return new Promise<void>(() => {});
+            return new Promise<boolean>(() => {});
           },
         }) as unknown as Router,
     );
@@ -357,16 +361,20 @@ describe("Freelens proxy protocols", () => {
       routerInjectable,
       () =>
         ({
+          // As the real router does for the paths of these tests
+          isServedWithoutToken: (_method: string, url: string) => !url.startsWith("/api"),
           route: async (_cluster: Cluster | undefined, req: ServerIncomingMessage, res: ServerResponse) => {
             // A response whose headers have gone out and whose body has not
             // ended yet, which is what the client then cancels
             if (req.url === "/some-open-response" && res instanceof http2.Http2ServerResponse) {
               res.writeHead(200).write("some-start");
 
-              return;
+              return true;
             }
 
             res.end(`some-response-over-${req.httpVersion}`);
+
+            return true;
           },
         }) as unknown as Router,
     );
@@ -455,6 +463,7 @@ describe("Freelens proxy kube api requests", () => {
   let target: http2.Http2SecureServer;
   let targetSessions: http2.ServerHttp2Session[];
   let targetReceived: { url?: string; host?: string; authorization?: string; origin?: string; httpVersion: string }[];
+  let userAgentsReceived: (string | undefined)[];
   let watchReceived: Promise<http2.Http2ServerRequest>;
   let pendingReceived: Promise<http2.Http2ServerRequest>;
   let timeout: number | undefined;
@@ -481,6 +490,7 @@ describe("Freelens proxy kube api requests", () => {
     let receivePending: (req: http2.Http2ServerRequest) => void;
 
     targetReceived = [];
+    userAgentsReceived = [];
     targetSessions = [];
     watchReceived = new Promise((resolve) => {
       receiveWatch = resolve;
@@ -499,6 +509,7 @@ describe("Freelens proxy kube api requests", () => {
           origin: req.headers.origin,
           httpVersion: req.httpVersion,
         });
+        userAgentsReceived.push(req.headers["user-agent"]);
 
         // A request the target has not answered yet, not even with its headers.
         if (req.url.endsWith("/pending")) {
@@ -628,15 +639,47 @@ describe("Freelens proxy kube api requests", () => {
   const afterTheAbort = () => new Promise((resolve) => setTimeout(resolve, 50));
 
   it.each([
-    ["a kube api request", "/api-kube/api/v1/pods"],
-    ["a request to the local router api", "/api/v2/releases"],
-    ["the /<clusterId>/ path of kubectl and helm", "/some-cluster-id/api/v1/pods"],
-  ])("answers 403 without a valid token, for %s", async (_name, path) => {
-    expect(await getHttp1(port, path, { authorization: "Bearer not-the-token" })).toEqual({
+    ["a kube api request", "GET", "/api-kube/api/v1/pods"],
+    ["a request to the local router api", "GET", "/api/v2/charts"],
+    ["the /<clusterId>/ path of kubectl and helm", "GET", "/some-cluster-id/api/v1/pods"],
+    ["a dot segment before the local router api", "POST", "/./api/stack"],
+    ["a parent segment before the local router api", "POST", "/some-segment/../api/stack"],
+    ["an encoded dot segment before the local router api", "POST", "/%2e/api/stack"],
+    ["an empty first segment before the local router api", "GET", "//some-host/api/v2/charts"],
+    ["an absolute-form target of the local router api", "GET", "http://some-host/api/v2/charts"],
+    ["a request that no route answers", "PUT", "/some-path"],
+  ])("answers 403 without a valid token, for %s", async (_name, method, path) => {
+    expect(await getHttp1(port, path, { authorization: "Bearer not-the-token" }, method)).toEqual({
       statusCode: 403,
       body: "Forbidden",
     });
     expect(targetReceived).toEqual([]);
+  });
+
+  it.each(["/./api/v2/charts", "/%2e/api/v2/charts"])(
+    "answers 403 without a valid token over HTTP/2, for %s",
+    async (path) => {
+      const session = await connectSession();
+
+      expect(await getHttp2(session, path, { authorization: "Bearer not-the-token" })).toEqual({
+        statusCode: 403,
+        body: "Forbidden",
+      });
+    },
+  );
+
+  // What answers them is beside the point here: the build version is not
+  // initialized in this container, and there are no renderer files.
+  it.each(["/version", "/some-page.js"])("lets %s through to the router without a token", async (path) => {
+    expect((await getHttp1(port, path, { authorization: "Bearer not-the-token" })).statusCode).not.toBe(403);
+  });
+
+  it.each([
+    ["a GET below the local router api that no route answers", "GET", "/api/some-unknown-route"],
+    ["a GET of a local router api route that takes another method", "GET", "/api/stack"],
+    ["a method that no route answers", "PUT", "/some-path"],
+  ])("answers 404 with a valid token, for %s", async (_name, method, path) => {
+    expect((await getHttp1(port, path, {}, method)).statusCode).toBe(404);
   });
 
   it("tells the client not to store a kube api response over HTTP/1.1, whatever the cluster says", async () => {
@@ -717,6 +760,31 @@ describe("Freelens proxy kube api requests", () => {
     expect(targetReceived).toHaveLength(1);
     expect(targetReceived[0].origin).toBeUndefined();
   });
+
+  it("forwards the User-Agent of the browser as Freelens', for the field manager of a write", async () => {
+    const response = await getHttp1(
+      port,
+      "/api-kube/api/v1/namespaces/default/pods",
+      {
+        "user-agent":
+          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Freelens/2.1.0 Chrome/142.0.0.0 Electron/39.0.0 Safari/537.36",
+      },
+      "POST",
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(userAgentsReceived).toEqual([freelensUserAgent]);
+  });
+
+  it.each(["kubectl/v1.34.0 (linux/amd64) kubernetes/abcdef0", "Helm/3.19.0", freelensUserAgent])(
+    "keeps a User-Agent that is not a browser's, %s",
+    async (userAgent) => {
+      const response = await getHttp1(port, "/api-kube/api/v1/pods", { "user-agent": userAgent });
+
+      expect(response.statusCode).toBe(200);
+      expect(userAgentsReceived).toEqual([userAgent]);
+    },
+  );
 
   it("forwards the request below the path of the target over HTTP/2, as a request for the target", async () => {
     const response = await getHttp1(port, "/api-kube/api/v1/pods");
@@ -954,6 +1022,24 @@ describe("Freelens proxy kube api requests", () => {
     expect(logError).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["logs at error level the failure of a request of a connected cluster", false, 1],
+    ["logs at debug level the failure of a request of a cluster disconnected meanwhile", true, 0],
+  ])("%s", async (_name, disconnect, errors) => {
+    const response = getHttp1(port, "/api-kube/api/v1/pods/pending");
+
+    await pendingReceived;
+    // A disconnect stops the proxy of the cluster, as the target going away does here.
+    clusterDisconnected = disconnect;
+
+    for (const session of targetSessions) {
+      session.destroy();
+    }
+
+    expect((await response).statusCode).toBe(500);
+    expect(logError).toHaveBeenCalledTimes(errors);
+  });
+
   it("ends an HTTP/2 request once it has been idle for the timeout of its target, and not the session", async () => {
     timeout = 100;
 
@@ -1155,7 +1241,7 @@ describe("Freelens proxy kube api requests to a refused target", () => {
     di.override(shellApiRequestInjectable, () => vi.fn());
     di.override(kubeApiUpgradeRequestInjectable, () => vi.fn());
     di.override(freelensK8sProxyManagerInjectable, () => ({ getApiTarget }) as unknown as FreelensK8sProxyManager);
-    di.override(routerInjectable, () => ({ route }) as unknown as Router);
+    di.override(routerInjectable, () => ({ isServedWithoutToken: () => false, route }) as unknown as Router);
 
     proxy = di.inject(freelensProxyInjectable);
     proxyToken = di.inject(freelensProxyTokenInjectable).value;
@@ -1236,7 +1322,7 @@ describe("Freelens proxy kube api requests whose cluster proxy cannot start", ()
           },
         }) as unknown as FreelensK8sProxyManager,
     );
-    di.override(routerInjectable, () => ({ route }) as unknown as Router);
+    di.override(routerInjectable, () => ({ isServedWithoutToken: () => false, route }) as unknown as Router);
     di.override(loggerInjectionToken, () => ({
       warn: vi.fn(),
       debug: vi.fn(),

@@ -18,6 +18,7 @@ import { registerInjectables as registerFeaturesFeaturesClusterExecuteMainInject
 import { registerInjectables as registerFeaturesFeaturesClusterInjectables } from "./features/cluster/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesClusterStateSyncMainInjectables } from "./features/cluster/state-sync/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesClusterStorageMainInjectables } from "./features/cluster/storage/main/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesDebugContainersMainInjectables } from "./features/debug-containers/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesExtensionCredentialsMainInjectables } from "./features/extension-credentials/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesExtensionCredentialsInjectables } from "./features/extension-credentials/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesExtensionsEnabledMainInjectables } from "./features/extensions/enabled/main/register-injectables";
@@ -42,6 +43,7 @@ import { registerInjectables as registerFeaturesFeaturesMultiviewInjectables } f
 import { registerInjectables as registerFeaturesFeaturesPathPickingDialogMainInjectables } from "./features/path-picking-dialog/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPersistentStorageMainInjectables } from "./features/persistent-storage/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPersistentStorageInjectables } from "./features/persistent-storage/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesPodTerminalMainInjectables } from "./features/pod-terminal/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPopulationOfLogsToAFileMainInjectables } from "./features/population-of-logs-to-a-file/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPreferencesChildFeaturesApplicationMenuMainInjectables } from "./features/preferences/child-features/application-menu/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPreferencesChildFeaturesTrayMainInjectables } from "./features/preferences/child-features/tray/main/register-injectables";
@@ -50,6 +52,8 @@ import { registerInjectables as registerFeaturesFeaturesRowsServiceMainInjectabl
 import { registerInjectables as registerFeaturesFeaturesRowsServiceInjectables } from "./features/rows-service/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesSecretCertificatesMainInjectables } from "./features/secret-certificates/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesShellSyncMainInjectables } from "./features/shell-sync/main/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesTerminalShellLookupMainInjectables } from "./features/terminal-shell-lookup/main/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesThemeFilesMainInjectables } from "./features/theme/files/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesThemeSystemTypeMainInjectables } from "./features/theme/system-type/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesUserPreferencesMainInjectables } from "./features/user-preferences/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesUserPreferencesInjectables } from "./features/user-preferences/register-injectables";
@@ -57,6 +61,7 @@ import { registerInjectables as registerFeaturesFeaturesVarsBuildVersionMainInje
 import { registerInjectables as registerFeaturesFeaturesVarsInjectables } from "./features/vars/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesWeblinksMainInjectables } from "./features/weblinks/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesWeblinksInjectables } from "./features/weblinks/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesZoomMainInjectables } from "./features/zoom/main/register-injectables";
 import { registerInjectables as registerMainInjectables } from "./main/register-injectables";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
@@ -75,6 +80,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesClusterExecuteMainInjectables(di);
   registerFeaturesFeaturesClusterStateSyncMainInjectables(di);
   registerFeaturesFeaturesClusterStorageMainInjectables(di);
+  registerFeaturesFeaturesDebugContainersMainInjectables(di);
   registerFeaturesFeaturesExtensionCredentialsMainInjectables(di);
   registerFeaturesFeaturesExtensionCredentialsInjectables(di);
   registerFeaturesFeaturesExtensionsInjectables(di);
@@ -99,6 +105,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesPathPickingDialogMainInjectables(di);
   registerFeaturesFeaturesPersistentStorageMainInjectables(di);
   registerFeaturesFeaturesPersistentStorageInjectables(di);
+  registerFeaturesFeaturesPodTerminalMainInjectables(di);
   registerFeaturesFeaturesPopulationOfLogsToAFileMainInjectables(di);
   registerFeaturesFeaturesPreferencesChildFeaturesApplicationMenuMainInjectables(di);
   registerFeaturesFeaturesPreferencesChildFeaturesTrayMainInjectables(di);
@@ -107,6 +114,8 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesRowsServiceInjectables(di);
   registerFeaturesFeaturesSecretCertificatesMainInjectables(di);
   registerFeaturesFeaturesShellSyncMainInjectables(di);
+  registerFeaturesFeaturesTerminalShellLookupMainInjectables(di);
+  registerFeaturesFeaturesThemeFilesMainInjectables(di);
   registerFeaturesFeaturesThemeSystemTypeMainInjectables(di);
   registerFeaturesFeaturesUserPreferencesMainInjectables(di);
   registerFeaturesFeaturesUserPreferencesInjectables(di);
@@ -114,5 +123,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesVarsBuildVersionMainInjectables(di);
   registerFeaturesFeaturesWeblinksMainInjectables(di);
   registerFeaturesFeaturesWeblinksInjectables(di);
+  registerFeaturesFeaturesZoomMainInjectables(di);
   registerMainInjectables(di);
 }

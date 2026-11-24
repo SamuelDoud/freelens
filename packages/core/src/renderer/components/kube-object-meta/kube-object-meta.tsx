@@ -14,6 +14,7 @@ import { observer } from "mobx-react";
 import { useEffect, useRef, useState } from "react";
 import apiManagerInjectable from "../../../common/k8s-api/api-manager/manager.injectable";
 import { defaultYamlDumpOptions } from "../../../common/kube-helpers/yaml-dump-options";
+import { CopyableMonacoEditor } from "../copyable-monaco-editor/copyable-monaco-editor";
 import requestKubeResourceInjectable from "../dock/edit-resource/edit-resource-model/request-kube-resource.injectable";
 import { DrawerItem, DrawerItemLabels, DrawerParamToggler } from "../drawer";
 import { DurationAbsoluteTimestamp } from "../events";
@@ -21,7 +22,6 @@ import getDetailsUrlInjectable from "../kube-detail-params/get-details-url.injec
 import { KubeObjectAge } from "../kube-object/age";
 import { LinkToNamespace } from "../kube-object-link";
 import { LocaleDate } from "../locale-date";
-import { MonacoEditor } from "../monaco-editor";
 import { WithTooltip } from "../with-tooltip";
 import { PodSpecView } from "../workloads-pods/pod-spec-view/pod-spec-view";
 
@@ -160,7 +160,9 @@ function ManagedFieldSet({ entry, selfLink, requestKubeResource }: ManagedFieldS
 
   const fieldsV1 = hasFieldSet ? entry.fieldsV1 : loaded?.fieldsV1;
 
-  return <MonacoEditor readOnly style={{ height: 200 }} value={yaml.dump(fieldsV1 ?? {}, defaultYamlDumpOptions)} />;
+  return (
+    <CopyableMonacoEditor readOnly style={{ height: 200 }} value={yaml.dump(fieldsV1 ?? {}, defaultYamlDumpOptions)} />
+  );
 }
 
 const NonInjectedKubeObjectMeta = observer((props: Dependencies & KubeObjectMetaProps) => {
@@ -250,7 +252,7 @@ const NonInjectedKubeObjectMeta = observer((props: Dependencies & KubeObjectMeta
       {lastAppliedConfiguration !== undefined && (
         <DrawerItem name="Last Applied Configuration" hidden={isHidden("annotations")}>
           <DrawerParamToggler label={lastAppliedConfigurationAnnotation}>
-            <MonacoEditor
+            <CopyableMonacoEditor
               readOnly
               style={{ height: 200 }}
               value={formatLastAppliedConfiguration(lastAppliedConfiguration)}

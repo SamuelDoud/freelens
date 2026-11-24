@@ -267,3 +267,13 @@ export function keepNewestLogLines(logs: string[], maxLines: number): string[] {
 
   return logs.slice(start);
 }
+
+/**
+ * Splits the logs the API returned into lines. Only the line break that ends
+ * the logs is removed, so the last line keeps the spaces it ends with. "\r\n"
+ * is one line break, as the logs of Windows containers end their lines; a "\r"
+ * alone, as a progress bar writes it, starts a line of its own.
+ */
+export function splitLogLines(logs: string): string[] {
+  return logs.replace(/\r?\n$/, "").split(/\r?\n|\r/);
+}

@@ -45,6 +45,29 @@ export type FixtureAppPreferenceRegistration = Common.Types.AppPreferenceRegistr
 export type FixtureProtocolHandlerRegistration = Common.Types.ProtocolHandlerRegistration;
 export type FixtureCustomResourceRegistration = Common.Types.CustomResourceRegistration;
 
+// The helper types the signatures of the API are written in, so that an
+// extension can type what it passes to them, and the declaration names them
+// without importing a package of its own.
+export type FixtureJsonValue = Common.Types.JsonValue;
+export type FixturePodPatch = Common.Types.PartialDeep<Renderer.K8sApi.Pod>;
+export type FixturePodPatchIntoArrays = Common.Types.PartialDeep<Renderer.K8sApi.Pod, { recurseIntoArrays: true }>;
+export type FixtureReadonlyPod = Common.Types.ReadonlyDeep<Renderer.K8sApi.Pod>;
+export type FixtureRequireAtLeastOne = Common.Types.RequireAtLeastOne<{ first?: string; second?: number }>;
+export type FixtureRequireExactlyOne = Common.Types.RequireExactlyOne<{ first: string; second: number }>;
+export type FixtureSetRequired = Common.Types.SetRequired<{ optional?: string }, "optional">;
+export type FixtureValueOf = Common.Types.ValueOf<{ first: string; second: number }>;
+// The patch `KubeApi.update` takes is the one an extension names.
+type FixturePodUpdatePatch = Parameters<Renderer.K8sApi.PodApi["update"]>[1];
+export type PodUpdateTakesThePartialDeepOfCommonTypes = Holds<
+  FixturePodPatch extends FixturePodUpdatePatch ? (FixturePodUpdatePatch extends FixturePodPatch ? true : false) : false
+>;
+// The active theme is the `ReadonlyDeep` of the theme type an extension names.
+export type ActiveThemeIsTheReadonlyDeepOfLensTheme = Holds<
+  ReturnType<typeof Renderer.Theme.activeTheme.get> extends Common.Types.ReadonlyDeep<Renderer.Theme.LensTheme>
+    ? true
+    : false
+>;
+
 // The `fetch` option of a bundled library, typed with the environment's own
 // standard `fetch` types, the way the MCP SDK types its transports'.
 // `Main.Util.fetch` has to fit it without an assertion, in all three programs:
@@ -102,6 +125,97 @@ export type FixtureRendererFetch = typeof Renderer.Util.fetch;
 export type FixtureRendererNavigate = typeof Renderer.Navigation.navigate;
 export type FixtureIconProps = Renderer.Component.IconProps;
 export type FixtureSecretCertificatesProps = Renderer.Component.SecretCertificatesProps;
+
+// The copy controls are function components and their props types only, as
+// the overview cards below.
+export type FixtureCopyToClipboardIconProps = Renderer.Component.CopyToClipboardIconProps;
+export type FixtureCopyableMonacoEditorProps = Renderer.Component.CopyableMonacoEditorProps;
+export type FixtureCopyableInputProps = Renderer.Component.CopyableInputProps;
+export type CopyToClipboardIconTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CopyToClipboardIcon>[0] extends FixtureCopyToClipboardIconProps ? true : false
+>;
+export type CopyableMonacoEditorTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CopyableMonacoEditor>[0] extends FixtureCopyableMonacoEditorProps ? true : false
+>;
+export type CopyableInputTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CopyableInput>[0] extends FixtureCopyableInputProps ? true : false
+>;
+
+// The generic components the host's views are built from. The enums of the
+// resizing anchor and its class are values and types alike, so they are named
+// as types here; the function components are values only, and their props
+// types only.
+export type FixtureErrorBoundaryProps = Renderer.Component.ErrorBoundaryProps;
+export type FixtureAnimateProps = Renderer.Component.AnimateProps;
+export type FixtureAnimateName = Renderer.Component.AnimateName;
+export type FixtureResizingAnchorProps = Renderer.Component.ResizingAnchorProps;
+export type FixtureResizingAnchor = Renderer.Component.ResizingAnchor;
+export type FixtureResizeDirection = Renderer.Component.ResizeDirection;
+export type FixtureResizeSide = Renderer.Component.ResizeSide;
+export type FixtureResizeGrowthDirection = Renderer.Component.ResizeGrowthDirection;
+export type FixtureColorSwatchProps = Renderer.Component.ColorSwatchProps;
+export type FixtureColorSwatchGroupProps = Renderer.Component.ColorSwatchGroupProps;
+export type FixtureCustomColorSwatchProps = Renderer.Component.CustomColorSwatchProps;
+export type FixtureOrderableListProps = Renderer.Component.OrderableListProps;
+export type FixtureOrderableItemProps = Renderer.Component.OrderableItemProps;
+export type FixtureVirtualListProps = Renderer.Component.VirtualListProps<string>;
+export type FixtureVirtualListRef = Renderer.Component.VirtualListRef;
+export type FixtureVirtualListAlign = Renderer.Component.VirtualListAlign;
+export type ErrorBoundaryTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.ErrorBoundary>[0] extends FixtureErrorBoundaryProps ? true : false
+>;
+export type AnimateTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.Animate>[0] extends FixtureAnimateProps ? true : false
+>;
+export type ResizingAnchorTakesItsProps = Holds<
+  ConstructorParameters<typeof Renderer.Component.ResizingAnchor>[0] extends FixtureResizingAnchorProps ? true : false
+>;
+export type ColorSwatchTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.ColorSwatch>[0] extends FixtureColorSwatchProps ? true : false
+>;
+export type ColorSwatchGroupTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.ColorSwatchGroup>[0] extends FixtureColorSwatchGroupProps ? true : false
+>;
+export type CustomColorSwatchTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CustomColorSwatch>[0] extends FixtureCustomColorSwatchProps ? true : false
+>;
+export type OrderableListTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.OrderableList>[0] extends FixtureOrderableListProps ? true : false
+>;
+export type OrderableItemTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.OrderableItem>[0] extends FixtureOrderableItemProps ? true : false
+>;
+export type VirtualListTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.VirtualList<string>>[0] extends FixtureVirtualListProps ? true : false
+>;
+// What the ref scrolls with is the API's own type, not one of the library
+// that virtualizes the list.
+export type VirtualListRefTakesItsAlign = Holds<
+  Parameters<FixtureVirtualListRef["scrollToItem"]>[1] extends FixtureVirtualListAlign ? true : false
+>;
+
+// The overview cards are function components, a value only, and their props
+// are types only, so no name is a pair. The props type an extension's own data
+// and have to be what the component takes.
+export type FixtureCapacityCardProps = Renderer.Component.CapacityCardProps;
+export type FixtureCapacityCardLabels = Renderer.Component.CapacityCardLabels;
+export type FixtureStatusCardProps = Renderer.Component.StatusCardProps;
+export type FixtureStatusCardStatus = Renderer.Component.StatusCardStatus;
+export type FixtureStatusCardTone = Renderer.Component.StatusCardTone;
+export type CapacityCardTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.CapacityCard>[0] extends FixtureCapacityCardProps ? true : false
+>;
+export type StatusCardTakesItsProps = Holds<
+  Parameters<typeof Renderer.Component.StatusCard>[0] extends FixtureStatusCardProps ? true : false
+>;
+export type FixtureOverviewStyle = ReturnType<typeof Common.App.Preferences.getOverviewStyle>;
+export type OverviewStyleIsCardsOrCharts = Holds<
+  FixtureOverviewStyle extends "cards" | "charts"
+    ? "cards" | "charts" extends FixtureOverviewStyle
+      ? true
+      : false
+    : false
+>;
 
 // The same pairs in `Renderer.K8sApi`.
 export type FixtureRendererKubeApi = Renderer.K8sApi.KubeApi<Renderer.K8sApi.Pod>;

@@ -22,7 +22,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -31,12 +31,13 @@ exports[`disable workloads overview details when cluster is not relevant > given
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -82,6 +83,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -90,6 +92,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -98,6 +101,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -198,6 +202,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -206,6 +211,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -251,6 +257,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -259,6 +266,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -267,6 +275,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -275,6 +284,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -283,6 +293,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -388,6 +399,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -396,6 +408,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -415,7 +428,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-live="assertive"
               id="DndLiveRegion-4"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -742,7 +755,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -751,12 +764,13 @@ exports[`disable workloads overview details when cluster is not relevant > given
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -802,6 +816,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -810,6 +825,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -818,6 +834,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -918,6 +935,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -926,6 +944,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -971,6 +990,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -979,6 +999,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -987,6 +1008,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -995,6 +1017,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1003,6 +1026,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1108,6 +1132,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1116,6 +1141,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1135,7 +1161,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-live="assertive"
               id="DndLiveRegion-2"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -1457,7 +1483,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -1466,12 +1492,13 @@ exports[`disable workloads overview details when cluster is not relevant > given
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1517,6 +1544,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1525,6 +1553,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1533,6 +1562,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1633,6 +1663,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1641,6 +1672,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1686,6 +1718,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1694,6 +1727,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1702,6 +1736,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1710,6 +1745,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1718,6 +1754,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1823,6 +1860,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1831,6 +1869,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1850,7 +1889,7 @@ exports[`disable workloads overview details when cluster is not relevant > given
               aria-live="assertive"
               id="DndLiveRegion-0"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>

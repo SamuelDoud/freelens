@@ -22,7 +22,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -31,12 +31,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -82,6 +83,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -90,6 +92,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -98,6 +101,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -197,6 +201,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -205,6 +210,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -250,6 +256,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -258,6 +265,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -266,6 +274,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -301,6 +310,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -309,6 +319,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -414,6 +425,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -422,6 +434,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -441,7 +454,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-0"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -940,7 +953,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -949,12 +962,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1000,6 +1014,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1008,6 +1023,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1016,6 +1032,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1115,6 +1132,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1123,6 +1141,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1168,6 +1187,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1176,6 +1196,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1184,6 +1205,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1219,6 +1241,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1227,6 +1250,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1332,6 +1356,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1340,6 +1365,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1359,7 +1385,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-63"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -1863,7 +1889,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -1872,12 +1898,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1923,6 +1950,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1931,6 +1959,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -1939,6 +1968,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2038,6 +2068,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2046,6 +2077,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2091,6 +2123,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2099,6 +2132,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2107,6 +2141,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2142,6 +2177,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2150,6 +2186,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2255,6 +2292,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2263,6 +2301,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2282,7 +2321,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-37"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -2885,7 +2924,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -2894,12 +2933,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2945,6 +2985,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2953,6 +2994,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -2961,6 +3003,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3060,6 +3103,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3068,6 +3112,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3113,6 +3158,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3121,6 +3167,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3129,6 +3176,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3164,6 +3212,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3172,6 +3221,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3277,6 +3327,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3285,6 +3336,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3304,7 +3356,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-48"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -3855,7 +3907,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -3864,12 +3916,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3915,6 +3968,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3923,6 +3977,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -3931,6 +3986,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4030,6 +4086,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4038,6 +4095,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4083,6 +4141,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4091,6 +4150,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4099,6 +4159,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4134,6 +4195,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4142,6 +4204,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4247,6 +4310,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4255,6 +4319,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4274,7 +4339,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-53"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -4927,7 +4992,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -4936,12 +5001,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4987,6 +5053,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -4995,6 +5062,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5003,6 +5071,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5102,6 +5171,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5110,6 +5180,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5155,6 +5226,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5163,6 +5235,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5171,6 +5244,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5206,6 +5280,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5214,6 +5289,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5319,6 +5395,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5327,6 +5404,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -5346,7 +5424,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-56"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -6001,7 +6079,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -6010,12 +6088,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6061,6 +6140,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6069,6 +6149,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6077,6 +6158,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6176,6 +6258,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6184,6 +6267,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6229,6 +6313,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6237,6 +6322,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6245,6 +6331,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6280,6 +6367,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6288,6 +6376,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6393,6 +6482,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6401,6 +6491,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -6420,7 +6511,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-42"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -7037,7 +7128,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -7046,12 +7137,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7097,6 +7189,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7105,6 +7198,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7113,6 +7207,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7212,6 +7307,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7220,6 +7316,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7265,6 +7362,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7273,6 +7371,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7281,6 +7380,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7316,6 +7416,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7324,6 +7425,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7429,6 +7531,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7437,6 +7540,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -7456,7 +7560,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-7"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -8068,7 +8172,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -8077,12 +8181,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8128,6 +8233,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8136,6 +8242,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8144,6 +8251,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8243,6 +8351,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8251,6 +8360,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8296,6 +8406,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8304,6 +8415,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8312,6 +8424,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8347,6 +8460,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8355,6 +8469,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8460,6 +8575,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8468,6 +8584,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -8487,7 +8604,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-19"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -9090,7 +9207,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -9099,12 +9216,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9150,6 +9268,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9158,6 +9277,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9166,6 +9286,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9265,6 +9386,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9273,6 +9395,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9318,6 +9441,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9326,6 +9450,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9334,6 +9459,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9369,6 +9495,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9377,6 +9504,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9482,6 +9610,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9490,6 +9619,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -9509,7 +9639,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-12"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -10112,7 +10242,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -10121,12 +10251,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10172,6 +10303,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10180,6 +10312,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10188,6 +10321,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10287,6 +10421,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10295,6 +10430,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10340,6 +10476,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10348,6 +10485,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10356,6 +10494,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10391,6 +10530,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10399,6 +10539,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10504,6 +10645,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10512,6 +10654,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -10531,7 +10674,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-4"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -11134,7 +11277,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -11143,12 +11286,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11194,6 +11338,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11202,6 +11347,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11210,6 +11356,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11309,6 +11456,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11317,6 +11465,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11362,6 +11511,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11370,6 +11520,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11378,6 +11529,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11413,6 +11565,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11421,6 +11574,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11526,6 +11680,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11534,6 +11689,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -11553,7 +11709,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-35"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -11961,7 +12117,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -11970,12 +12126,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12021,6 +12178,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12029,6 +12187,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12037,6 +12196,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12136,6 +12296,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12144,6 +12305,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12189,6 +12351,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12197,6 +12360,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12205,6 +12369,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12240,6 +12405,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12248,6 +12414,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12353,6 +12520,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12361,6 +12529,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -12380,7 +12549,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-26"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -12992,7 +13161,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -13001,12 +13170,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13052,6 +13222,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13060,6 +13231,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13068,6 +13240,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13167,6 +13340,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13175,6 +13349,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13220,6 +13395,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13228,6 +13404,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13236,6 +13413,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13271,6 +13449,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13279,6 +13458,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13384,6 +13564,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13392,6 +13573,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -13411,7 +13593,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-30"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -14014,7 +14196,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -14023,12 +14205,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14074,6 +14257,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14082,6 +14266,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14090,6 +14275,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14189,6 +14375,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14197,6 +14384,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14242,6 +14430,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14250,6 +14439,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14258,6 +14448,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14293,6 +14484,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14301,6 +14493,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14406,6 +14599,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14414,6 +14608,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -14433,7 +14628,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-32"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -15036,7 +15231,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px; background: var(--halfGray); color: rgb(255, 255, 255);"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -15045,12 +15240,13 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
             />
           </div>
           <div
-            class="container sidebarNav sidebar-active-status"
+            class="OrderableList sidebarNav sidebar-active-status"
           >
             <div
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15096,6 +15292,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15104,6 +15301,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15112,6 +15310,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15211,6 +15410,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15219,6 +15419,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15264,6 +15465,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15272,6 +15474,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15280,6 +15483,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15315,6 +15519,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15323,6 +15528,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15428,6 +15634,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15436,6 +15643,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"
               aria-roledescription="sortable"
+              class="OrderableItem"
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
@@ -15455,7 +15663,7 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               aria-live="assertive"
               id="DndLiveRegion-28"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px 0px 0px 0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>

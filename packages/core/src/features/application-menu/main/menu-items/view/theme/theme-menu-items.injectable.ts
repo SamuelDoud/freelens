@@ -5,14 +5,16 @@
 
 import { getInjectable } from "@ogre-tools/injectable";
 import { computed, runInAction } from "mobx";
-import { defaultColorThemePreference } from "../../../../../../common/vars";
-import { getThemePalette } from "../../../../../theme/palettes/common/palettes";
+import { defaultThemePreference } from "../../../../../../common/vars";
+import { findBuiltInTheme } from "../../../../../theme/files/common/builtin-theme";
 import userPreferencesStateInjectable from "../../../../../user-preferences/common/state.injectable";
 import applicationMenuItemInjectionToken from "../../application-menu-item-injection-token";
 import { getApplicationMenuSeparatorInjectable } from "../../get-application-menu-separator-injectable";
 
-// View → Theme: the theme (auto, light, dark) and the color palette, the same
-// two preferences that Preferences → Application → Theme sets.
+import type { ThemeVariantPreference } from "../../../../../user-preferences/common/preferences-helpers";
+
+// View → Theme: the variant (system, light, dark) and the built-in theme, the same two preferences
+// that Preferences → Personalization sets. Imported themes are chosen there.
 
 export const themeSeparatorForViewInjectable = getApplicationMenuSeparatorInjectable({
   id: "separator-4-for-view",
@@ -32,70 +34,73 @@ export const themeSubMenuInjectable = getInjectable({
   injectionToken: applicationMenuItemInjectionToken,
 });
 
-// The values of the colorTheme preference: "system" follows the operating
-// system, and the built-in themes are named "Light" and "Dark".
-const getThemeModeMenuItemInjectable = (colorTheme: string, label: string, orderNumber: number) =>
+const getThemeVariantMenuItemInjectable = (variant: ThemeVariantPreference, label: string, orderNumber: number) =>
   getInjectable({
-    id: `theme-mode-menu-item-${colorTheme}`,
+    id: `theme-variant-menu-item-${variant}`,
     instantiate: (di) => {
       const state = di.inject(userPreferencesStateInjectable);
 
       return {
         kind: "radio-menu-item" as const,
         parentId: "theme",
-        id: `theme-mode-${colorTheme.toLowerCase()}`,
+        id: `theme-mode-${variant}`,
         orderNumber,
         label,
-        isChecked: computed(() => (state.colorTheme || defaultColorThemePreference) === colorTheme),
-        onClick: () => runInAction(() => (state.colorTheme = colorTheme)),
+        isChecked: computed(() => state.themeVariant === variant),
+        onClick: () => runInAction(() => (state.themeVariant = variant)),
       };
     },
     injectionToken: applicationMenuItemInjectionToken,
   });
 
-export const autoThemeMenuItemInjectable = getThemeModeMenuItemInjectable(
-  defaultColorThemePreference,
+export const systemThemeVariantMenuItemInjectable = getThemeVariantMenuItemInjectable(
+  "system",
   "Auto (sync with computer)",
   10,
 );
-export const lightThemeMenuItemInjectable = getThemeModeMenuItemInjectable("Light", "Light", 20);
-export const darkThemeMenuItemInjectable = getThemeModeMenuItemInjectable("Dark", "Dark", 30);
+export const lightThemeVariantMenuItemInjectable = getThemeVariantMenuItemInjectable("light", "Light", 20);
+export const darkThemeVariantMenuItemInjectable = getThemeVariantMenuItemInjectable("dark", "Dark", 30);
 
-export const themePaletteSeparatorInjectable = getApplicationMenuSeparatorInjectable({
-  id: "separator-for-theme-palettes",
+export const themeNamesSeparatorInjectable = getApplicationMenuSeparatorInjectable({
+  id: "separator-for-theme-names",
   parentId: "theme",
   orderNumber: 40,
 });
 
-const getPaletteMenuItemInjectable = (paletteId: string, orderNumber: number) => {
-  const palette = getThemePalette(paletteId);
+const getThemeMenuItemInjectable = (name: string, orderNumber: number) => {
+  const theme = findBuiltInTheme(name);
 
-  if (palette.id !== paletteId) {
-    throw new Error(`No color palette "${paletteId}" for the Theme menu`);
+  if (!theme) {
+    throw new Error(`No built-in theme "${name}" for the Theme menu`);
   }
 
   return getInjectable({
-    id: `theme-palette-menu-item-${paletteId}`,
+    id: `theme-name-menu-item-${name}`,
     instantiate: (di) => {
       const state = di.inject(userPreferencesStateInjectable);
 
       return {
         kind: "radio-menu-item" as const,
         parentId: "theme",
-        id: `theme-palette-${paletteId}`,
+        id: `theme-name-${name}`,
         orderNumber,
-        label: palette.name,
-        isChecked: computed(() => getThemePalette(state.colorPalette).id === paletteId),
-        onClick: () => runInAction(() => (state.colorPalette = paletteId)),
+        label: theme.spec.displayName,
+        isChecked: computed(() => (state.theme || defaultThemePreference) === name),
+        onClick: () => runInAction(() => (state.theme = name)),
       };
     },
     injectionToken: applicationMenuItemInjectionToken,
   });
 };
 
-export const freelensPaletteMenuItemInjectable = getPaletteMenuItemInjectable("freelens", 50);
-export const oceanPaletteMenuItemInjectable = getPaletteMenuItemInjectable("ocean", 60);
-export const forestPaletteMenuItemInjectable = getPaletteMenuItemInjectable("forest", 70);
-export const sunsetPaletteMenuItemInjectable = getPaletteMenuItemInjectable("sunset", 80);
-export const graphitePaletteMenuItemInjectable = getPaletteMenuItemInjectable("graphite", 90);
-export const highContrastPaletteMenuItemInjectable = getPaletteMenuItemInjectable("high-contrast", 100);
+export const freelensThemeMenuItemInjectable = getThemeMenuItemInjectable("freelens", 50);
+export const ayuThemeMenuItemInjectable = getThemeMenuItemInjectable("ayu", 60);
+export const ayuMirageThemeMenuItemInjectable = getThemeMenuItemInjectable("ayu-mirage", 70);
+export const catppuccinThemeMenuItemInjectable = getThemeMenuItemInjectable("catppuccin", 80);
+export const draculaThemeMenuItemInjectable = getThemeMenuItemInjectable("dracula", 90);
+export const graphiteThemeMenuItemInjectable = getThemeMenuItemInjectable("graphite", 100);
+export const solarizedThemeMenuItemInjectable = getThemeMenuItemInjectable("solarized", 110);
+export const oceanThemeMenuItemInjectable = getThemeMenuItemInjectable("ocean", 120);
+export const forestThemeMenuItemInjectable = getThemeMenuItemInjectable("forest", 130);
+export const sunsetThemeMenuItemInjectable = getThemeMenuItemInjectable("sunset", 140);
+export const highContrastThemeMenuItemInjectable = getThemeMenuItemInjectable("high-contrast", 150);
